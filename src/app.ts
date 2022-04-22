@@ -6,7 +6,7 @@ import {
   cite,
   a,
   span,
-} from "@jefri/jiffies/dom/html.js";
+} from "@davidsouther/jiffies/dom/html.js";
 import { Resume, AboutMe } from "./resume.js";
 
 export const App = () => {
