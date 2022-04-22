@@ -302,8 +302,8 @@ const App = () => {
             justifyContent: "space-between",
         },
     }, "© David Souther 2022", cite(a({
-        href: "https://github.com/jefri/jefri-jiffies/tree/master/apps/resume",
-    }, "Page Source", span({ class: "print-only" }, ": github.com/jefri/jiffies/apps/resume"))));
+        href: "https://github.com/davidsouther/resume",
+    }, "Page Source", span({ class: "print-only" }, ": github.com/davidsouther/resume"))));
     fetch("./resume.json").then(async (result) => {
         if (result.ok) {
             const resume = await result.json();

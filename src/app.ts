@@ -23,10 +23,10 @@ export const App = () => {
     cite(
       a(
         {
-          href: "https://github.com/jefri/jefri-jiffies/tree/master/apps/resume",
+          href: "https://github.com/davidsouther/resume",
         },
         "Page Source",
-        span({ class: "print-only" }, ": github.com/jefri/jiffies/apps/resume")
+        span({ class: "print-only" }, ": github.com/davidsouther/resume")
       )
     )
   );
