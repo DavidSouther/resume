@@ -42,9 +42,10 @@ export const Resume = (resume: ResumeTypes.ResumeData) => [
       },
       ".job, .education": {
         display: "grid",
-        grid: `'_a org _b' auto
-               'about details competences' auto
-               / 1fr 4fr 1fr`,
+        grid:
+          "'_a org _b' auto\n" +
+          "'about details competences' auto\n" +
+          "/ 1fr 4fr 1fr",
         gap: "calc(var(--block-spacing-vertical) / 2) calc(var(--block-spacing-horizontal) / 2)",
       },
       ".about": {
