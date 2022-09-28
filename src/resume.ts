@@ -186,9 +186,7 @@ const role = (role: ResumeTypes.Role) =>
       { class: "about" },
       em({ class: "name" }, role.name),
       small({ class: "start date" }, role.startDate),
-      ...(role.finishDate
-        ? [small({ class: "finish date" }, role.finishDate)]
-        : [])
+      small({ class: "finish date" }, role.finishDate ?? 'Current')
     ),
     div(
       { class: "details" },

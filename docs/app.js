@@ -265,9 +265,7 @@ const Links = (relevantLinks) => nav(ul(...relevantLinks.map((link) => li(a({ hr
 const jobDetails = (jobs) => article(header(h3("Work Experience")), ...jobs.map(jobDetail));
 const jobDetail = (job) => div({ class: "job" }, organization(job.organization), ...job.roles.map(role));
 const organization = (org) => h4({ class: "organization" }, org.URL ? a({ href: org.URL }, org.name) : org.name);
-const role = (role) => div({ class: "role" }, div({ class: "about" }, em({ class: "name" }, role.name), small({ class: "start date" }, role.startDate), ...(role.finishDate
-    ? [small({ class: "finish date" }, role.finishDate)]
-    : [])), div({ class: "details" }, ...role.challenges.map(({ description }) => p({ class: "justify" }, description))), div({ class: "competences" }, small((role.competences ?? []).map(({ name }) => name).join(", "))));
+const role = (role) => div({ class: "role" }, div({ class: "about" }, em({ class: "name" }, role.name), small({ class: "start date" }, role.startDate), small({ class: "finish date" }, role.finishDate ?? 'Current')), div({ class: "details" }, ...role.challenges.map(({ description }) => p({ class: "justify" }, description))), div({ class: "competences" }, small((role.competences ?? []).map(({ name }) => name).join(", "))));
 const studies = (knowledge) => article(header(h3("Education")), ...knowledge.map(education));
 const education = (study) => div({ class: "education" }, h4({ class: "organization" }, ...(study.institution ? [organization(study.institution)] : [])), div({ class: "about" }, em({ class: "name" }, study.name), small({ class: "start" }, study.startDate), ...(study.finishDate
     ? [small({ class: "finish" }, study.finishDate)]

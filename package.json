@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "start": "node --experimental-loader @jefri/jiffies/loader.mjs src/main.ts",
+    "start": "node --experimental-loader @davidsouther/jiffies/loader.mjs src/main.ts",
     "build": "./build.sh"
   },
   "author": "",

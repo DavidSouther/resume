@@ -24,7 +24,7 @@
         "URL": "https://github.com/davidsouther"
       },
       {
-        "type": "email",
+        "type": "other",
         "URL": "mailto:davidsouther+resume@gmail.com"
       }
     ]
@@ -43,7 +43,7 @@
                 "description": "Lead instructor for Code Fellows Javascript 201 and Javascript 401, providing students with an introduction to Javascript, HTML, and CSS web development in 201 and Javascript full stack development using React and NextJS in 401."
               }
             ],
-            "startDate": "2022-03",
+            "startDate": "2022-03-10",
             "competences": [
               {
                 "name": "javascript",
@@ -67,15 +67,41 @@
               },
               {
                 "name": "instructing",
-                "type": "skill"
+                "type": "practice"
               },
               {
                 "name": "interview training",
-                "type": "skill"
+                "type": "practice"
               },
               {
                 "name": "curriculum development",
-                "type": "skill"
+                "type": "practice"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "organization": {
+          "name": "Amazon Web Services"
+        },
+        "roles": [
+          {
+            "name": "Sr Programmer Writer",
+            "challenges": [
+              {
+                "description": "Lead engineer documeting the AWS Rust SDK. Creating informative documentation for all aspects of the Rust SDK. Developing cross-service scenarios to emphasize SDK utilities across the SDK language boundaries. Engineering guidance and mentorship for engineers in adjacent languages."
+              }
+            ],
+            "startDate": "2022-09-12",
+            "competences": [
+              {
+                "name": "rust",
+                "type": "technology"
+              },
+              {
+                "name": "amazon-web-services",
+                "type": "technology"
               }
             ]
           }
@@ -94,6 +120,7 @@
               }
             ],
             "startDate": "2021-07-01",
+            "finishDate": "2022-06-06",
             "competences": [
               {
                 "name": "rust",
@@ -186,7 +213,10 @@
                 "name": "Google Cloud Platform",
                 "type": "technology"
               },
-              { "name": "Graph Algorithms", "type": "domain" }
+              {
+                "name": "Graph Algorithms",
+                "type": "domain"
+              }
             ]
           }
         ]
@@ -746,7 +776,9 @@
         },
         "type": "achievement",
         "publishingDate": "2019-06-01",
-        "tags": ["DPub (Patent)"]
+        "tags": [
+          "DPub (Patent)"
+        ]
       }
     ]
   },
