@@ -8,7 +8,7 @@
     "profile": {
       "name": "David",
       "surnames": "Souther",
-      "title": "Sr Software Engineer at SpaceX Starlink",
+      "title": "Sr Programmer Writer; Lead Instructor",
       "avatar": {
         "link": "headshot.jpg"
       },
@@ -31,6 +31,32 @@
   },
   "experience": {
     "jobs": [
+      {
+        "organization": {
+          "name": "Amazon Web Services"
+        },
+        "roles": [
+          {
+            "name": "Sr Programmer Writer",
+            "challenges": [
+              {
+                "description": "Lead engineer documeting the AWS Rust SDK. Creating informative documentation for all aspects of the Rust SDK. Developing cross-service scenarios to emphasize SDK utilities across the SDK language boundaries. Engineering guidance and mentorship for engineers in adjacent languages."
+              }
+            ],
+            "startDate": "2022-09-12",
+            "competences": [
+              {
+                "name": "rust",
+                "type": "technology"
+              },
+              {
+                "name": "amazon-web-services",
+                "type": "technology"
+              }
+            ]
+          }
+        ]
+      },
       {
         "organization": {
           "name": "Code Fellows"
@@ -76,32 +102,6 @@
               {
                 "name": "curriculum development",
                 "type": "practice"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "organization": {
-          "name": "Amazon Web Services"
-        },
-        "roles": [
-          {
-            "name": "Sr Programmer Writer",
-            "challenges": [
-              {
-                "description": "Lead engineer documeting the AWS Rust SDK. Creating informative documentation for all aspects of the Rust SDK. Developing cross-service scenarios to emphasize SDK utilities across the SDK language boundaries. Engineering guidance and mentorship for engineers in adjacent languages."
-              }
-            ],
-            "startDate": "2022-09-12",
-            "competences": [
-              {
-                "name": "rust",
-                "type": "technology"
-              },
-              {
-                "name": "amazon-web-services",
-                "type": "technology"
               }
             ]
           }

@@ -186,7 +186,7 @@ const role = (role: ResumeTypes.Role) =>
       { class: "about" },
       em({ class: "name" }, role.name),
       small({ class: "start date" }, role.startDate),
-      small({ class: "finish date" }, role.finishDate ?? 'Current')
+      small({ class: "finish date" }, role.finishDate ?? "Current")
     ),
     div(
       { class: "details" },
@@ -234,9 +234,17 @@ const publications = (artifacts: ResumeTypes.PublicArtifact[]) =>
           marginBottom: "0",
           p: {
             display: "grid",
-            grid: "fit-content(0) / 3fr minmax(fit-content, 1fr);",
+            gridTemplateColumns: "1fr 1in",
             gap: "0 calc(var(--block-spacing-vertical) / 2)",
             marginBottom: "0",
+          },
+        },
+        "@media (print)": {
+          ".publications section": {
+            columns: "1",
+            "p span.print-only": {
+              order: "1",
+            },
           },
         },
       })

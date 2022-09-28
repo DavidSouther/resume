@@ -100,7 +100,7 @@
       </style>
       <hgroup>
         <h1>David Souther</h1>
-        <h2>Sr Software Engineer at SpaceX Starlink</h2>
+        <h2>Sr Programmer Writer; Lead Instructor</h2>
       </hgroup>
       <figure>
         <img
@@ -186,6 +186,28 @@
       <article>
         <header><h3>Work Experience</h3></header>
         <div class="job">
+          <h4 class="organization">Amazon Web Services</h4>
+          <div class="role">
+            <div class="about">
+              <em class="name">Sr Programmer Writer</em
+              ><small class="start date">2022-09-12</small
+              ><small class="finish date">Current</small>
+            </div>
+            <div class="details">
+              <p class="justify">
+                Lead engineer documeting the AWS Rust SDK. Creating informative
+                documentation for all aspects of the Rust SDK. Developing
+                cross-service scenarios to emphasize SDK utilities across the
+                SDK language boundaries. Engineering guidance and mentorship for
+                engineers in adjacent languages.
+              </p>
+            </div>
+            <div class="competences">
+              <small>rust, amazon-web-services</small>
+            </div>
+          </div>
+        </div>
+        <div class="job">
           <h4 class="organization">Code Fellows</h4>
           <div class="role">
             <div class="about">
@@ -206,28 +228,6 @@
                 >javascript, html, css, react, nextjs, instructing, interview
                 training, curriculum development</small
               >
-            </div>
-          </div>
-        </div>
-        <div class="job">
-          <h4 class="organization">Amazon Web Services</h4>
-          <div class="role">
-            <div class="about">
-              <em class="name">Sr Programmer Writer</em
-              ><small class="start date">2022-09-12</small
-              ><small class="finish date">Current</small>
-            </div>
-            <div class="details">
-              <p class="justify">
-                Lead engineer documeting the AWS Rust SDK. Creating informative
-                documentation for all aspects of the Rust SDK. Developing
-                cross-service scenarios to emphasize SDK utilities across the
-                SDK language boundaries. Engineering guidance and mentorship for
-                engineers in adjacent languages.
-              </p>
-            </div>
-            <div class="competences">
-              <small>rust, amazon-web-services</small>
             </div>
           </div>
         </div>
@@ -745,11 +745,23 @@
             margin-bottom: 0;
           }
 
+          @media print {
+            .publications section {
+              columns: 1;
+            }
+          }
+
           .publications section p {
             display: grid;
-            grid: fit-content(0) / 3fr minmax(fit-content, 1fr);
+            grid-template-columns: 1fr 1in;
             gap: 0 calc(var(--block-spacing-vertical) / 2);
             margin-bottom: 0;
+          }
+
+          @media print {
+            .publications section p span.print-only {
+              order: 1;
+            }
           }
         </style>
         <header><h3>publications</h3></header>
