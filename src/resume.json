@@ -40,7 +40,7 @@
             "name": "Sr Programmer Writer",
             "challenges": [
               {
-                "description": "Lead engineer documeting the AWS Rust SDK. Creating informative documentation for all aspects of the Rust SDK. Developing cross-service scenarios to emphasize SDK utilities across the SDK language boundaries. Engineering guidance and mentorship for engineers in adjacent languages."
+                "description": "Lead engineer creating sample code and applications using the [AWS SDK for Rust](https://github.com/awslabs/aws-sdk-rust) ([example repo](https://github.com/awsdocs/aws-doc-sdk-examples/tree/main/rust_dev_preview)). Primary duties are writing informative code samples for all aspects of the Rust SDK. Longer-terim projects develop cross-service scenarios to emphasize SDK utilities across the SDK language boundaries. These examples show customers "real-world" approaches to implement software projects which combine multple AWS SDKs. Highlights include a REST system using Amazon RDS Data & Amazon SES, and a photo asset manager using Amazon S3 Glacier storage, Amazon Rekognition image tagging, and Amazon SQS notifications. Engineering guidance and mentorship for engineers in adjacent languages."
               }
             ],
             "startDate": "2022-09-12",
@@ -66,7 +66,7 @@
             "name": "Lead Instructor",
             "challenges": [
               {
-                "description": "Lead instructor for Code Fellows Javascript 201 and Javascript 401, providing students with an introduction to Javascript, HTML, and CSS web development in 201 and Javascript full stack development using React and NextJS in 401."
+                "description": "Lead instructor for [Code 401: Advanced Software Development in Full Stack JavaScript](https://www.codefellows.org/courses/code-401/advanced-software-development-in-full-stack-javascript/). Educational duties include online classroom instruction, career coaching, curriculum development, and student evaluation. Students consistently ranked my courses at 100 net promoter score, on a weekly survey. Organized & lead an instructor-wide project revamping the school's whiteboarding process. This project rewrote the whiteboarding guide, formalized a rubric for grading whiteboards & tech interviews, and revamped problem & training materials for a dozen instructors across four languages. Code Fellows was ranked as a [2023 top coding bootcamp](https://fortune.com/education/bootcamps/best-cybersecurity-bootcamps/) by Fortune Education "
               }
             ],
             "startDate": "2022-03-10",
@@ -353,7 +353,7 @@
             "name": "Software Architect",
             "challenges": [
               {
-                "description": "As head of Front End Development at Novus Partners, I lead a team of four developers (including myself) in a complete front-end rewrite. Our previous platform was a brittle Scala Server Pages implementation. After releasing this rewrite, our slick & fast AngularJS frontend has become decoupled from the Scala backend, allowing both services to become much more focused and performant. We also build and maintain the NVD3 open-source charting library. I have led an ongoing effort to refactor the original prototype codebase into a maintainable, extensible, and testable library that will serve front-end charting for years to come."
+                "description": "As head of Front End Development at Novus Partners, I lead a team of four developers in a complete front-end rewrite. Our previous platform was a brittle Scala Server Pages implementation. After releasing this rewrite, our slick & fast AngularJS frontend has become decoupled from the Scala backend, allowing both services to become much more focused and performant. We also build and maintain the NVD3 open-source charting library. I have led an ongoing effort to refactor the original prototype codebase into a maintainable, extensible, and testable library that will serve front-end charting for years to come."
               }
             ],
             "startDate": "2013-10-01",
@@ -388,7 +388,7 @@
             "name": "Software Engineer",
             "challenges": [
               {
-                "description": "Full-stack developer of the NYT5 rebuild team, rebuilding the nytimes.com property from the ground up. The core online presence of the New York Times handles 45 million unique monthly visitors. Core member of the Prorotype team, building and testing potential new features for the proto.nytimes.com domain. Responsible for the backend stack, including Node servers for data management and AB testing, as well as a variety of systems administration to handle our traffic. Invited to speak on emerging technologies to internal development groups, as well as on behalf of the Times at regional college tech events and tech meetups. Internal git guru."
+                "description": "Full-stack developer of the NYT5 rebuild team, rebuilding the nytimes.com property from the ground up. The core online presence of the New York Times handles 45 million unique monthly visitors in 2012. Core member of the Prorotype team, building and testing potential new features for the proto.nytimes.com domain. Responsible for the backend stack, including Node servers for data management and AB testing, as well as a variety of systems administration to handle our traffic. Invited to speak on emerging technologies to internal development groups, as well as on behalf of the Times at regional college tech events and tech meetups. Internal git guru."
               }
             ],
             "startDate": "2012-07-01",
@@ -419,7 +419,7 @@
             "name": "Software Engineer",
             "challenges": [
               {
-                "description": "After a week at PFI, I was asked to join a new internal team developing PFI's core data handling framework. Synapse is a tool in the Government Open Source Software realm designed to bring large-scale data handling and visualization to the browser. Our technology handles tens to hundreds of thousands of records shared between discreet OWF widgets, small iframe applications in a shared web desktop. These widgets provide a range of visualizations and tools for intelligence analysts to make the most use of the disparate data sources streaming in from the modern threat space, enabling them to make decisions that save lives of both military troops and civilians around the world."
+                "description": "Synapse is a tool in the Government Open Source Software realm designed to bring large-scale data handling and visualization to the browser. Our technology handles tens to hundreds of thousands of records shared between discreet OWF widgets, small iframe applications in a shared web desktop. These widgets provide a range of visualizations and tools for intelligence analysts to make the most use of the disparate data sources streaming in from the modern threat space, enabling them to make decisions that save lives of both military troops and civilians around the world."
               }
             ],
             "startDate": "2011-09-01",
