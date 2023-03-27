@@ -1,30 +1,26 @@
 {
+  "exclude": ["./cypress", "./cypress.config.ts"],
+  "include": ["remix.env.d.ts", "**/*.ts", "**/*.tsx"],
   "compilerOptions": {
-    // Assume browser environment & esm
-    "lib": ["es2021", "DOM", "DOM.Iterable"],
-    "target": "es2022",
-    "module": "es2022",
+    "lib": ["DOM", "DOM.Iterable", "ES2019"],
+    "types": ["vitest/globals"],
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "jsx": "react-jsx",
+    "module": "CommonJS",
     "moduleResolution": "node",
-    "skipLibCheck": true,
-    "allowJs": true,
-    "checkJs": true,
-
-    // Checks and strictness
+    "resolveJsonModule": true,
+    "target": "ES2019",
     "strict": true,
-    "allowUnreachableCode": false,
-    "allowUnusedLabels": false,
-    // "exactOptionalPropertyTypes": true,
-    "noFallthroughCasesInSwitch": true,
-    // "noImplicitOverride": true,
-    "noImplicitReturns": true,
-    // "noPropertyAccessFromIndexSignature": true,
-    // "noUncheckedIndexedAccess": true,
-    // "noUnusedLocals": true,
-    // "noUnusedParameters": true,
+    "allowJs": true,
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": ".",
+    "paths": {
+      "~/*": ["./app/*"]
+    },
+    "skipLibCheck": true,
 
-    "incremental": true,
-    "outDir": "build",
-    "declaration": true
-  },
-  "include": ["src/**/*"]
+    // Remix takes care of building everything in `remix build`.
+    "noEmit": true
+  }
 }
