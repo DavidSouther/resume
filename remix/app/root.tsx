@@ -1,5 +1,4 @@
-import type { LinksFunction, LoaderArgs } from "@remix-run/node";
-import { json } from "@remix-run/node";
+import type { LinksFunction } from "@remix-run/node";
 import {
   Links,
   LiveReload,
@@ -9,29 +8,32 @@ import {
   ScrollRestoration,
 } from "@remix-run/react";
 
-import tailwindStylesheetUrl from "./styles/tailwind.css";
-import { getUser } from "./session.server";
+import stylesheetUrl from "./styles/index.css";
 
 export const links: LinksFunction = () => {
-  return [{ rel: "stylesheet", href: tailwindStylesheetUrl }];
+  return [
+    {
+      rel: "stylesheet",
+      href: "https://unpkg.com/@picocss/pico@latest/css/pico.min.css",
+    },
+    {
+      rel: "stylesheet",
+      href: stylesheetUrl,
+    },
+  ];
 };
-
-export async function loader({ request }: LoaderArgs) {
-  return json({
-    user: await getUser(request),
-  });
-}
 
 export default function App() {
   return (
-    <html lang="en" className="h-full">
+    <html lang="en">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width,initial-scale=1" />
         <Meta />
         <Links />
+        <title>David Souther - Resume</title>
       </head>
-      <body className="h-full">
+      <body className="container">
         <Outlet />
         <ScrollRestoration />
         <Scripts />

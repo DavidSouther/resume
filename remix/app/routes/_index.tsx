@@ -1,141 +1,241 @@
+import type * as ResumeTypes from "~/resume";
+
 import type { V2_MetaFunction } from "@remix-run/node";
-import { Link } from "@remix-run/react";
+import { useLoaderData } from "@remix-run/react";
 
-import { useOptionalUser } from "~/utils";
+import resume from "./resume.json";
 
-export const meta: V2_MetaFunction = () => [{ title: "Remix Notes" }];
+export const meta: V2_MetaFunction = () => [
+  { title: "David Souther - Resume" },
+];
+
+export async function loader() {
+  return resume;
+}
 
 export default function Index() {
-  const user = useOptionalUser();
-  return (
-    <main className="relative min-h-screen bg-white sm:flex sm:items-center sm:justify-center">
-      <div className="relative sm:pb-16 sm:pt-8">
-        <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
-          <div className="relative shadow-xl sm:overflow-hidden sm:rounded-2xl">
-            <div className="absolute inset-0">
-              <img
-                className="h-full w-full object-cover"
-                src="https://user-images.githubusercontent.com/1500684/157774694-99820c51-8165-4908-a031-34fc371ac0d6.jpg"
-                alt="Sonic Youth On Stage"
-              />
-              <div className="absolute inset-0 bg-[color:rgba(254,204,27,0.5)] mix-blend-multiply" />
-            </div>
-            <div className="relative px-4 pt-16 pb-8 sm:px-6 sm:pt-24 sm:pb-14 lg:px-8 lg:pb-20 lg:pt-32">
-              <h1 className="text-center text-6xl font-extrabold tracking-tight sm:text-8xl lg:text-9xl">
-                <span className="block uppercase text-yellow-500 drop-shadow-md">
-                  Indie Stack
-                </span>
-              </h1>
-              <p className="mx-auto mt-6 max-w-lg text-center text-xl text-white sm:max-w-3xl">
-                Check the README.md file for instructions on how to get this
-                project deployed.
-              </p>
-              <div className="mx-auto mt-10 max-w-sm sm:flex sm:max-w-none sm:justify-center">
-                {user ? (
-                  <Link
-                    to="/notes"
-                    className="flex items-center justify-center rounded-md border border-transparent bg-white px-4 py-3 text-base font-medium text-yellow-700 shadow-sm hover:bg-yellow-50 sm:px-8"
-                  >
-                    View Notes for {user.email}
-                  </Link>
-                ) : (
-                  <div className="space-y-4 sm:mx-auto sm:inline-grid sm:grid-cols-2 sm:gap-5 sm:space-y-0">
-                    <Link
-                      to="/join"
-                      className="flex items-center justify-center rounded-md border border-transparent bg-white px-4 py-3 text-base font-medium text-yellow-700 shadow-sm hover:bg-yellow-50 sm:px-8"
-                    >
-                      Sign up
-                    </Link>
-                    <Link
-                      to="/login"
-                      className="flex items-center justify-center rounded-md bg-yellow-500 px-4 py-3 font-medium text-white hover:bg-yellow-600"
-                    >
-                      Log In
-                    </Link>
-                  </div>
-                )}
-              </div>
-              <a href="https://remix.run">
-                <img
-                  src="https://user-images.githubusercontent.com/1500684/158298926-e45dafff-3544-4b69-96d6-d3bcc33fc76a.svg"
-                  alt="Remix"
-                  className="mx-auto mt-16 w-full max-w-[12rem] md:max-w-[16rem]"
-                />
-              </a>
-            </div>
-          </div>
-        </div>
+  const resume = useLoaderData<ResumeTypes.ResumeData>();
 
-        <div className="mx-auto max-w-7xl py-2 px-4 sm:px-6 lg:px-8">
-          <div className="mt-6 flex flex-wrap justify-center gap-8">
-            {[
-              {
-                src: "https://user-images.githubusercontent.com/1500684/157764397-ccd8ea10-b8aa-4772-a99b-35de937319e1.svg",
-                alt: "Fly.io",
-                href: "https://fly.io",
-              },
-              {
-                src: "https://user-images.githubusercontent.com/1500684/157764395-137ec949-382c-43bd-a3c0-0cb8cb22e22d.svg",
-                alt: "SQLite",
-                href: "https://sqlite.org",
-              },
-              {
-                src: "https://user-images.githubusercontent.com/1500684/157764484-ad64a21a-d7fb-47e3-8669-ec046da20c1f.svg",
-                alt: "Prisma",
-                href: "https://prisma.io",
-              },
-              {
-                src: "https://user-images.githubusercontent.com/1500684/157764276-a516a239-e377-4a20-b44a-0ac7b65c8c14.svg",
-                alt: "Tailwind",
-                href: "https://tailwindcss.com",
-              },
-              {
-                src: "https://user-images.githubusercontent.com/1500684/157764454-48ac8c71-a2a9-4b5e-b19c-edef8b8953d6.svg",
-                alt: "Cypress",
-                href: "https://www.cypress.io",
-              },
-              {
-                src: "https://user-images.githubusercontent.com/1500684/157772386-75444196-0604-4340-af28-53b236faa182.svg",
-                alt: "MSW",
-                href: "https://mswjs.io",
-              },
-              {
-                src: "https://user-images.githubusercontent.com/1500684/157772447-00fccdce-9d12-46a3-8bb4-fac612cdc949.svg",
-                alt: "Vitest",
-                href: "https://vitest.dev",
-              },
-              {
-                src: "https://user-images.githubusercontent.com/1500684/157772662-92b0dd3a-453f-4d18-b8be-9fa6efde52cf.png",
-                alt: "Testing Library",
-                href: "https://testing-library.com",
-              },
-              {
-                src: "https://user-images.githubusercontent.com/1500684/157772934-ce0a943d-e9d0-40f8-97f3-f464c0811643.svg",
-                alt: "Prettier",
-                href: "https://prettier.io",
-              },
-              {
-                src: "https://user-images.githubusercontent.com/1500684/157772990-3968ff7c-b551-4c55-a25c-046a32709a8e.svg",
-                alt: "ESLint",
-                href: "https://eslint.org",
-              },
-              {
-                src: "https://user-images.githubusercontent.com/1500684/157773063-20a0ed64-b9f8-4e0b-9d1e-0b65a3d4a6db.svg",
-                alt: "TypeScript",
-                href: "https://typescriptlang.org",
-              },
-            ].map((img) => (
-              <a
-                key={img.href}
-                href={img.href}
-                className="flex h-16 w-32 justify-center p-1 grayscale transition hover:grayscale-0 focus:grayscale-0"
-              >
-                <img alt={img.alt} src={img.src} className="object-contain" />
-              </a>
-            ))}
-          </div>
-        </div>
-      </div>
-    </main>
+  return (
+    <>
+      <header>
+        {resume ? <AboutMe aboutMe={resume.aboutMe} /> : <h1>Resume</h1>}
+      </header>
+      {resume ? (
+        <main>
+          <JobDetails jobs={resume.experience.jobs} />
+          <Studies knowledge={resume.knowledge.studies ?? []} />
+          <Projects projects={resume.experience.projects} />
+          <Publications artifacts={resume.experience.publicArtifacts} />
+        </main>
+      ) : (
+        <main aria-busy={true} />
+      )}
+      <footer>
+        © David Souther 2022
+        <cite>
+          <a href="https://github.com/davidsouther/resume">Page Source</a>
+          <span className="print-only"> github.com/davidsouther/resume</span>
+        </cite>
+      </footer>
+    </>
   );
 }
+
+export const AboutMe = ({ aboutMe }: { aboutMe: ResumeTypes.AboutMe }) => (
+  <>
+    <hgroup>
+      <h1>
+        {aboutMe.profile.name} {aboutMe.profile.surnames ?? ""}
+      </h1>
+      <h2>{aboutMe.profile.title}</h2>
+    </hgroup>
+    {aboutMe.profile.avatar && <Avatar avatar={aboutMe.profile.avatar} />}
+    {aboutMe.profile.location && (
+      <Location location={aboutMe.profile.location} />
+    )}
+    {aboutMe.relevantLinks && <Links links={aboutMe.relevantLinks} />}
+  </>
+);
+
+const Avatar = ({ avatar }: { avatar: ResumeTypes.Image }) => (
+  <figure>
+    <img
+      height="136"
+      width="136"
+      alt="David Souther Professional Headshot"
+      src={
+        (avatar as ResumeTypes.ImageLink).link
+          ? (avatar as ResumeTypes.ImageLink).link
+          : `data:${(avatar as ResumeTypes.ImageData).mediaType};base64,${
+              (avatar as ResumeTypes.ImageData).data
+            }`
+      }
+    />
+  </figure>
+);
+
+const Location = ({ location }: { location: ResumeTypes.Location }) => (
+  <div className="location">
+    {Object.entries(location).map(([k, v]) => (
+      <span key={k} className={`location ${k}`}>
+        {v}
+      </span>
+    ))}
+  </div>
+);
+
+const Links = ({ links }: { links: ResumeTypes.Link[] }) => (
+  <nav>
+    <ul>
+      {links.map((link) => (
+        <li key={link.URL}>
+          <a href={link.URL}>
+            <span className="no-print">{link.type}</span>
+          </a>
+        </li>
+      ))}
+    </ul>
+  </nav>
+);
+
+const JobDetails = ({ jobs }: { jobs: ResumeTypes.JobExperience[] }) => (
+  <article>
+    <header>
+      <h3>Work Experience</h3>
+      {jobs.map((job) => (
+        <JobDetail key={JSON.stringify(job)} job={job} />
+      ))}
+    </header>
+  </article>
+);
+
+const JobDetail = ({ job }: { job: ResumeTypes.JobExperience }) => (
+  <div className="job">
+    <Organization org={job.organization} />
+    {job.roles.map((role) => (
+      <Role key={role.name} role={role} />
+    ))}
+  </div>
+);
+
+const Organization = ({ org }: { org: ResumeTypes.PublicEntityDetails }) => (
+  <h4 className="organization">
+    {org.URL ? <a href={org.URL}>{org.name}</a> : org.name}
+  </h4>
+);
+
+const Role = ({ role }: { role: ResumeTypes.Role }) => (
+  <div className="role">
+    <div className="about">
+      <em className="name">{role.name}</em>
+      <small className="start date">{role.startDate}</small>
+      <small className="finish date">{role.finishDate ?? "Current"}</small>
+    </div>
+    <div className="details">
+      {role.challenges.map(({ description }) => (
+        <p key={description} className="justify">
+          {description}
+        </p>
+      ))}
+    </div>
+    <div className="competences">
+      <small>
+        {(role.competences ?? []).map(({ name }) => name).join(", ")}
+      </small>
+    </div>
+  </div>
+);
+
+const Studies = ({ knowledge }: { knowledge: ResumeTypes.Study[] }) => (
+  <article>
+    <header>
+      <h3>Education</h3>
+    </header>
+    {knowledge.map((study) => (
+      <Education key={study.name} study={study} />
+    ))}
+  </article>
+);
+
+const Education = ({ study }: { study: ResumeTypes.Study }) => (
+  <div className="education">
+    {study.institution && <Organization org={study.institution} />}
+    <div className="about">
+      <em className="name">{study.name}</em>
+      <small className="start">{study.startDate}</small>
+      {study.finishDate && <small className="finish">{study.finishDate}</small>}
+    </div>
+    <p className="details justify">{study.description ?? ""}</p>
+  </div>
+);
+
+const Projects = ({
+  projects,
+}: {
+  projects: ResumeTypes.ProjectExperience[];
+}) => (
+  <article>
+    <header>
+      <h3>Projects</h3>
+    </header>
+    {projects.map((project) => (
+      <ProjectDetail key={project.details?.name} project={project} />
+    ))}
+  </article>
+);
+
+const Publications = ({
+  artifacts,
+}: {
+  artifacts: ResumeTypes.PublicArtifact[];
+}) => (
+  <article className="publications">
+    <header>
+      <h3>publications</h3>
+    </header>
+    <section>
+      {artifacts
+        .filter(({ details: { URL } }) => URL != undefined)
+        .map((publication) => (
+          <Publication
+            key={publication.details.name}
+            publication={publication}
+          />
+        ))}
+    </section>
+  </article>
+);
+
+const ProjectDetail = ({
+  project: { details },
+}: {
+  project: ResumeTypes.ProjectExperience;
+}) =>
+  details ? (
+    <div className="project">
+      <span>
+        {details.URL ? <a href={details.URL}>{details.name}</a> : details.name}
+      </span>
+      {details.description && <p>{details.description}</p>}
+    </div>
+  ) : (
+    <></>
+  );
+
+const Publication = ({
+  publication: {
+    details: { name, URL },
+    publishingDate,
+  },
+}: {
+  publication: ResumeTypes.PublicArtifact;
+}) => (
+  <p>
+    <a href={URL}>{name}</a>
+    <span className="print-only">{URL ?? ""}</span>
+    <small>
+      <em>{publishingDate}</em>
+    </small>
+  </p>
+);
