@@ -1,4 +1,5 @@
 import type * as ResumeTypes from "~/resume";
+import { P } from "../P";
 
 export const ProjectDetail = ({
   project: { details },
@@ -6,12 +7,12 @@ export const ProjectDetail = ({
   project: ResumeTypes.ProjectExperience;
 }) =>
   details ? (
-    <div className="project">
-      <span>
+    <section className="project">
+      <h4>
         {details.URL ? <a href={details.URL}>{details.name}</a> : details.name}
-      </span>
-      {details.description && <p>{details.description}</p>}
-    </div>
+      </h4>
+      {details.description && <P>{details.description}</P>}
+    </section>
   ) : (
     <></>
   );

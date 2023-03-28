@@ -25,7 +25,7 @@ export const Resume = ({ resume }: { resume: ResumeData }) => {
       )}
 
       {knowledge.studies && (
-        <Card className="education" header="Education">
+        <Card className="studies" header="Education">
           {knowledge.studies.map((study) => (
             <Education key={study.name} study={study} />
           ))}

@@ -1,4 +1,5 @@
 import type * as ResumeTypes from "~/resume";
+import { P } from "../P";
 import { Organization } from "./Organization";
 
 export const JobDetail = ({ job }: { job: ResumeTypes.JobExperience }) => (
@@ -12,16 +13,14 @@ export const JobDetail = ({ job }: { job: ResumeTypes.JobExperience }) => (
 
 const Role = ({ role }: { role: ResumeTypes.Role }) => (
   <section className="role">
-    <div className="about">
+    <h4 className="about">
       <em className="name">{role.name}</em>
       <small className="start date">{role.startDate}</small>
       <small className="finish date">{role.finishDate ?? "Current"}</small>
-    </div>
+    </h4>
     <div className="details">
       {role.challenges.map(({ description }) => (
-        <p key={description} className="justify">
-          {description}
-        </p>
+        <P key={description}>{description}</P>
       ))}
     </div>
     <div className="competences">
