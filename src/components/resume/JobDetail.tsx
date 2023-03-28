@@ -18,11 +18,13 @@ const Role = ({ role }: { role: ResumeTypes.Role }) => (
       <small className="start date">{role.startDate}</small>
       <small className="finish date">{role.finishDate ?? "Current"}</small>
     </h4>
-    <div className="details">
-      {role.challenges.map(({ description }) => (
-        <P key={description}>{description}</P>
-      ))}
-    </div>
+    {role.challenges && (
+      <div className="details">
+        {role.challenges.map(({ description }) => (
+          <P key={description}>{description}</P>
+        ))}
+      </div>
+    )}
     <div className="competences">
       <small>
         {(role.competences ?? []).map(({ name }) => name).join(", ")}

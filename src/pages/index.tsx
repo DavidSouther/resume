@@ -1,6 +1,7 @@
 import Head from "next/head";
 import { AboutMe } from "~/components/resume/AboutMe";
 import { Resume } from "~/components/resume/Resume";
+import * as ResumeTypes from "~/resume";
 import resume from "./resume.json";
 
 export default function Home() {
@@ -15,13 +16,13 @@ export default function Home() {
           {/* <link rel="icon" href="/favicon.ico" /> */}
         </Head>
         <header>
-          <AboutMe aboutMe={resume.aboutMe} />
+          <AboutMe aboutMe={resume.aboutMe as ResumeTypes.AboutMe} />
         </header>
         <main>
-          <Resume resume={resume} />
+          <Resume resume={resume as ResumeTypes.ResumeData} />
         </main>
         <footer>
-          © {name} 2008-{new Date().getFullYear()}
+          © {name} 2008-{new Date(resume.settings.lastUpdate).getFullYear()}
           <cite>
             <a href="https://github.com/davidsouther/resume">Page Source</a>
             <span className="print-only">github.com/davidsouther/resume</span>

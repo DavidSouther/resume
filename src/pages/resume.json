@@ -2,7 +2,8 @@
   "$schema": "https://raw.githubusercontent.com/getmanfred/mac/v0.3/schema/schema.json",
   "settings": {
     "language": "EN",
-    "MACVersion": "0.3"
+    "MACVersion": "0.3",
+    "lastUpdate": "2023-03-28"
   },
   "aboutMe": {
     "profile": {

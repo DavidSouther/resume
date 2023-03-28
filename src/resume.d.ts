@@ -16,12 +16,8 @@ export interface ResumeData {
 
 export interface Settings {
   language: string;
-  lastUpdate?: string;
-  experience: {
-    jobs: JobExperience[];
-    projects: ProjectExperience[];
-    publicArtifacts: PublicArtifact[];
-  };
+  lastUpdate: string;
+  MACVersion?: string;
 }
 
 export interface JobExperience {
@@ -55,7 +51,7 @@ export interface AboutMe {
     amount: number;
     relevantPerks?: { type: string }[];
   };
-  recommendations: {
+  recommendations?: {
     title: string;
     type?: RecommendationType;
     URL?: string;
@@ -89,7 +85,7 @@ export interface Role {
   name: string;
   startDate: string;
   finishDate?: string;
-  challenges: { description: string; actions?: string[] }[];
+  challenges?: { description: string; actions?: string[] }[];
   competences?: Competence[];
   referrals?: Person[];
   notes?: string;
@@ -199,5 +195,5 @@ export type Image = ImageLink | ImageData;
 export interface Link {
   type: "linkedin" | "github" | "twitter" | "website" | "other";
   URL: string;
-  description: string;
+  description?: string;
 }
