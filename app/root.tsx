@@ -10,6 +10,12 @@ import {
 
 import stylesheetUrl from "./styles/index.css";
 
+export function headers() {
+  return {
+    "Cache-Control": "public, s-maxage=360",
+  };
+}
+
 export const links: LinksFunction = () => {
   return [
     {
@@ -31,7 +37,6 @@ export default function App() {
         <meta name="viewport" content="width=device-width,initial-scale=1" />
         <Meta />
         <Links />
-        <title>David Souther - Resume</title>
       </head>
       <body className="container">
         <Outlet />
