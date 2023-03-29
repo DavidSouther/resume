@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "export": "next build && next export -o docs && echo 'davidsouther.com' > docs/CNAME"
+    "export": "next build && next export -o docs && echo 'davidsouther.com' > docs/CNAME && touch out/.nojekyll"
   },
   "dependencies": {
     "@types/node": "18.15.10",
