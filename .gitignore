@@ -4,3 +4,4 @@ build/
 dist/
 .parcel-cache
 jefri-jiffies-*.tgz
+.next
