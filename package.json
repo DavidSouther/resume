@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "export": "next build && next export -o docs"
+    "export": "next build && next export -o docs && echo 'davidsouther.com' > docs/CNAME"
   },
   "dependencies": {
     "@types/node": "18.15.10",

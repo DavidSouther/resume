@@ -6,14 +6,14 @@ import resume from "./resume.json";
 
 export default function Home() {
   const name = `${resume.aboutMe.profile.name} ${resume.aboutMe.profile.surnames}`;
+  const title = `${name} - Resume`;
   return (
     <>
       <div className="root">
         <Head>
-          <title>{name} - Resume</title>
+          <title>{title}</title>
           <meta name="description" content={`${name} - Resume`} />
           <meta name="viewport" content="width=device-width, initial-scale=1" />
-          {/* <link rel="icon" href="/favicon.ico" /> */}
         </Head>
         <header>
           <AboutMe aboutMe={resume.aboutMe as ResumeTypes.AboutMe} />
