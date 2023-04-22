@@ -1,0 +1,14 @@
+{
+  "name": "David Souther - Resume",
+  "short_name": "David Souther",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/headshot.png",
+      "type": "image/png",
+      "sizes": "460x460"
+    }
+  ]
+}
