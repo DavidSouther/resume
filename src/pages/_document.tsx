@@ -29,16 +29,21 @@ export default function Document() {
   body {
       font-size: 10pt;
   }
-  .container {
-      max-width: 100vw;
+  body.container {
+      max-width: 100vw !important;
   }
-  .projects, .publications {
-      width: 50vw;
+}
+  .artifacts {
+    display: grid;
+    grid-template-columns: 1fr 1fr ;
   }
-  .projects { float: left;}
-  .publications {float: right;}
-  footer { clear: both; }
-}`}
+  // .projects, .publications {
+  //     width: 50vw;
+  // }
+  // .projects { float: left;}
+  // .publications {float: right;}
+  // footer { clear: both; }
+`}
         </style>
       </Head>
       <body className="container">

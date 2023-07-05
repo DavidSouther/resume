@@ -1,9 +1,8 @@
 import { ResumeData } from "~/resume";
 import { Card } from "../Card";
 import { JobDetail } from "./JobDetail";
-import { ProjectDetail } from "./Project";
-import { Publication } from "./Publication";
 import { Education } from "./Studies";
+import { A, P } from "../P";
 
 export const Resume = ({ resume }: { resume: ResumeData }) => {
   const {
@@ -31,23 +30,60 @@ export const Resume = ({ resume }: { resume: ResumeData }) => {
           ))}
         </Card>
       )}
-      {projects && (
-        <Card className="projects" header="Projects">
-          {projects.map((project) => (
-            <ProjectDetail key={project.details?.name} project={project} />
-          ))}
-        </Card>
-      )}
-      {publicArtifacts && (
-        <Card className="publications" header="Publications">
-          {publications.map((publication) => (
-            <Publication
-              key={publication.details.name}
-              publication={publication}
-            />
-          ))}
-        </Card>
+      {(projects || publicArtifacts) && (
+        <div className="artifacts">
+          {projects && (
+            <Card className="projects" header="Projects">
+              {projects
+                .filter((p) => p.details)
+                .map((project) => (
+                  <Pub key={project.details?.name} details={project.details} />
+                ))}
+            </Card>
+          )}
+          {publicArtifacts && (
+            <Card className="publications" header="Publications">
+              {publications
+                .sort((a, b) => {
+                  let da = new Date(a.publishingDate ?? "1970-01-01");
+                  let db = new Date(b.publishingDate ?? "1970-01-01");
+                  return da < db ? 1 : da > db ? -1 : 0;
+                })
+                .filter(({ hide }) => hide != true)
+                .map((publication) => (
+                  <Pub
+                    key={publication.details.name}
+                    details={publication.details}
+                    date={publication.publishingDate}
+                  />
+                ))}
+            </Card>
+          )}
+        </div>
       )}
     </>
   );
 };
+
+export const Pub = ({
+  details: { name, URL, description },
+  date: publishingDate,
+}: {
+  details: ResumeTypes.PublicArtifact.details;
+  date?: string;
+}) => (
+  <>
+    <section className="pub">
+      <p>
+        <A href={URL}>{name}</A>
+        {publishingDate && (
+          <small>
+            {" "}
+            <em>{publishingDate}</em>
+          </small>
+        )}
+      </p>
+      {description && <P>{description}</P>}
+    </section>
+  </>
+);

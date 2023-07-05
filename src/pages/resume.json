@@ -41,7 +41,7 @@
             "name": "Sr Software Engineer",
             "challenges": [
               {
-                "description": "Sr engineer creating sample code and applications using the [AWS SDK for Rust](https://github.com/awslabs/aws-sdk-rust) ([example repo](https://github.com/awsdocs/aws-doc-sdk-examples/tree/main/rust_dev_preview)). Primary duties are writing informative code samples for all aspects of the Rust SDK. Longer-term projects develop cross-service scenarios to emphasize SDK utilities across the SDK language boundaries. These examples show customers \"real-world\" approaches to implement software projects which combine multiple AWS SDKs. Highlights include a REST system using Amazon RDS Data & Amazon SES, and a photo asset manager using Amazon S3 Glacier storage, Amazon Rekognition image tagging, and Amazon SQS notifications. Engineering guidance and mentorship for engineers in adjacent languages."
+                "description": "Sr Engineer creating example code and applications using the [AWS SDK for Rust](https://github.com/awslabs/aws-sdk-rust) ([example repo](https://github.com/awsdocs/aws-doc-sdk-examples/tree/main/rust_dev_preview)). Primary duties are writing informative code samples for all aspects of the Rust SDK. Longer-term projects develop cross-service scenarios to emphasize SDK utilities across the SDK language and service boundaries. These examples show customers real-world approaches to developing software that combines multiple AWS SDKs.\n\n Highlights include:\n- a [REST system](https://github.com/awsdocs/aws-doc-sdk-examples/tree/main/rust_dev_preview/cross_service/rest_ses) using [Amazon RDS Data](https://aws.amazon.com/rds/) & [Amazon SES](https://aws.amazon.com/ses/)\n- a [photo asset manager](https://community.aws/posts/cloud-journeys/01-serverless-image-recognition-app) using [Amazon S3](https://aws.amazon.com/s3/) [intelligent tiering](https://aws.amazon.com/s3/storage-classes/intelligent-tiering/) storage, [Amazon Rekognition](https://aws.amazon.com/rekognition/) image tagging, & [Amazon SQS](https://aws.amazon.com/sqs/) notifications\n- an [ML Ops pipeline]() using [AWS Step Functions](https://aws.amazon.com/step-functions/) to orchestrate [Amazon Textract](https://aws.amazon.com/textract/), [Amazon Comprehend](https://aws.amazon.com/comprehend/), and [Amazon Polly](https://aws.amazon.com/polly/)\n\n I provide engineering guidance and mentorship for teammates in adjacent languages, and develop tooling to streamline example creation and publishing."
               }
             ],
             "startDate": "2022-09-12",
@@ -53,6 +53,22 @@
               {
                 "name": "amazon-web-services",
                 "type": "technology"
+              },
+              {
+                "name": "golang",
+                "type": "technology"
+              },
+              {
+                "name": "python",
+                "type": "technology"
+              },
+              {
+                "name": "front end",
+                "type": "practice"
+              },
+              {
+                "name": "technical writing",
+                "type": "practice"
               }
             ]
           }
@@ -67,29 +83,26 @@
             "name": "Lead Instructor",
             "challenges": [
               {
-                "description": "Lead instructor for [Code 401: Advanced Software Development in Full Stack JavaScript](https://www.codefellows.org/courses/code-401/advanced-software-development-in-full-stack-javascript/). Educational duties include online classroom instruction, career coaching, curriculum development, and student evaluation. Students consistently ranked my courses at 100 net promoter score, both on weekly survey and course final evaluations. Organized & lead an instructor-wide project revamping the school's white-boarding process. This project rewrote the white-boarding guide, formalized a rubric for grading whiteboards & tech interviews, and revamped problem & training materials for a dozen instructors across four languages. Code Fellows was ranked as a [2023 top coding boot camp](https://fortune.com/education/bootcamps/best-cybersecurity-bootcamps/) by Fortune Education."
+                "description": "Lead instructor for [Code 401: Advanced Software Development in Full Stack JavaScript](https://www.codefellows.org/courses/code-401/advanced-software-development-in-full-stack-JavaScript/). Educational duties include online classroom instruction, career coaching, curriculum development, and student evaluation. Students consistently ranked my courses at 100 net promoter score, both on weekly survey and course final evaluations. Organized & lead an instructor-wide project revamping the school's white-boarding process. This project rewrote the white-boarding guide, formalized a rubric for grading whiteboards & tech interviews, and revamped problem & training materials for a dozen instructors across four languages. Code Fellows was ranked as a [2023 top coding boot camp](https://fortune.com/education/bootcamps/best-cybersecurity-bootcamps/) by Fortune Education."
               }
             ],
             "startDate": "2022-03-10",
+            "finishDate": "2023-06-30",
             "competences": [
               {
-                "name": "javascript",
+                "name": "JavaScript",
                 "type": "technology"
               },
               {
-                "name": "html",
+                "name": "TypeScript",
                 "type": "technology"
               },
               {
-                "name": "css",
+                "name": "html & css",
                 "type": "technology"
               },
               {
                 "name": "react",
-                "type": "technology"
-              },
-              {
-                "name": "nextjs",
                 "type": "technology"
               },
               {
@@ -117,14 +130,14 @@
             "name": "Sr Software Engineer",
             "challenges": [
               {
-                "description": "Responsible Engineer for a global ISP's ground network off-prem cloud tooling, including global data acquisition, Data Center Infrastructure Management (DCIM), automated authentication, and more. Migrated and managed these systems in a variety of VM & Service Mesh settings. RE and Subject Matter Expert for a DDoS detection, alerting, and mitigation system protecting a global ISP's core infrastructure and Xm customers."
+                "description": "Responsible Engineer for a global ISP's ground network off-prem cloud tooling, including global data acquisition, Data Center Infrastructure Management (DCIM), automated authentication, and more. Migrated and managed these systems in a variety of VM & Service Mesh settings. RE and Subject Matter Expert for a DDoS detection, alerting, and mitigation system protecting a global ISP's core infrastructure and Xm customers. Responsible Engineer for managing and optimizing cloud spend, migrating ~30% on prem and reducing overall utilization ~10% while user base grew ~50%."
               }
             ],
             "startDate": "2021-07-01",
             "finishDate": "2022-06-06",
             "competences": [
               {
-                "name": "rust",
+                "name": "Rust",
                 "type": "technology"
               },
               {
@@ -152,7 +165,7 @@
             "name": "TLM",
             "challenges": [
               {
-                "description": "As a tech lead, I set strategic direction for our feature area as well as mentoring and guiding my team in their engineering and career. I Lead a team of 10 (4 direct) migrating cloud management tool from AngularJS to Angular. During the migration, I organized additional feature work to maintain market parity and leadership during the migration.\n\nAs a manager, I developed junior and Noogler engineers in Cloud, Angular, and Typescript. I successfully promoted an L4 Noogler to L5 in three performance review cycles and an L3 Googler to L4 during the second cycle as manager, and guided an L3 who received an NI through a PIP who was then promoted to L4 two cycles after departure. I achieved this through managing and mentoring junior engineers, writing performance reviews and promotion packets, and coordinating task priority and HR concerns."
+                "description": "As a tech lead, I set strategic direction for our feature area as well as mentoring and guiding my team in their engineering and career. I Lead a team of 10 (4 direct) migrating cloud management tool from AngularJS to Angular. During the migration, I organized additional feature work to maintain market parity and leadership during the migration.\n\nAs a manager, I developed junior and Noogler engineers in Cloud, Angular, and TypeScript. I successfully promoted an L4 Noogler to L5 in three performance review cycles and an L3 Googler to L4 during the second cycle as manager, and guided an L3 who received an NI through a PIP who was then promoted to L4 two cycles after departure. I achieved this through managing and mentoring junior engineers, writing performance reviews and promotion packets, and coordinating task priority and HR concerns."
               }
             ],
             "startDate": "2020-07-01",
@@ -172,6 +185,10 @@
               },
               {
                 "name": "TypeScript",
+                "type": "technology"
+              },
+              {
+                "name": "angular",
                 "type": "technology"
               }
             ]
@@ -193,10 +210,22 @@
             "startDate": "2018-11-01",
             "finishDate": "2020-06-30",
             "competences": [
-              { "name": "Typescript", "type": "technology" },
-              { "name": "Kubernetes", "type": "technology" },
-              { "name": "Istio", "type": "technology" },
-              { "name": "Kompose", "type": "technology" },
+              {
+                "name": "TypeScript",
+                "type": "technology"
+              },
+              {
+                "name": "Kubernetes",
+                "type": "technology"
+              },
+              {
+                "name": "Istio",
+                "type": "technology"
+              },
+              {
+                "name": "Kompose",
+                "type": "technology"
+              },
               { "name": "Svg", "type": "technology" },
               { "name": "Microservices", "type": "domain" },
               { "name": "Serverless", "type": "domain" },
@@ -318,7 +347,7 @@
             "finishDate": "2015-07-31",
             "competences": [
               {
-                "name": "node.js",
+                "name": "nodejs",
                 "type": "technology"
               },
               {
@@ -357,7 +386,7 @@
                 "type": "technology"
               },
               {
-                "name": "node.js",
+                "name": "nodejs",
                 "type": "technology"
               },
               {
@@ -423,7 +452,7 @@
                 "type": "technology"
               },
               {
-                "name": "javascript",
+                "name": "JavaScript",
                 "type": "technology"
               },
               {
@@ -454,7 +483,7 @@
             "finishDate": "2011-07-31",
             "competences": [
               {
-                "name": "javascript",
+                "name": "JavaScript",
                 "type": "technology"
               },
               {
@@ -524,30 +553,29 @@
     "projects": [
       {
         "details": {
-          "name": "DavidSouther/computron5k",
-          "URL": "https://github.com/DavidSouther/computron5k"
+          "name": "Jiffies CSS",
+          "description": "Jiffies CSS is a \"postmodern\" CSS full-page reset. It uses the most recent 100% pure CSS standards, including layers, native css nesting, and a variable structure to define user and application specific overrides.",
+          "URL": "https://jefri.github.io/jiffies-css//"
         },
         "type": "openSource",
         "roles": [
           {
             "name": "Developer",
-            "startDate": "2021-01-01",
-            "finishDate": "2021-10-31"
+            "startDate": "2021-01-01"
           }
         ]
       },
       {
         "details": {
-          "name": "DavidSouther/cpsc5200",
-          "description": "F# implementation of a parser for a mini-Java programming language (emits to .net CLR).",
-          "URL": "https://github.com/DavidSouther/cpsc5200"
+          "name": "nand2tetris/web-ide",
+          "description": "Online web IDE for the [nand2tetris](https://www.nand2tetris.org/) computer architecture & language course.",
+          "URL": "https://github.com/nand2tetris/web-ide"
         },
         "type": "openSource",
         "roles": [
           {
             "name": "Developer",
-            "startDate": "2021-01-01",
-            "finishDate": "2021-03-31"
+            "startDate": "2021-01-01"
           }
         ]
       },
@@ -583,21 +611,6 @@
       },
       {
         "details": {
-          "name": "DavidSouther/jterm-Mandelbrot",
-          "description": "Android Mandelbrot explorer, for the 2017 JTerm android class.",
-          "URL": "https://github.com/DavidSouther/jterm-Mandelbrot"
-        },
-        "type": "openSource",
-        "roles": [
-          {
-            "name": "Developer",
-            "startDate": "2017-01-01",
-            "finishDate": "2017-01-31"
-          }
-        ]
-      },
-      {
-        "details": {
           "name": "DavidSouther/softd",
           "description": "Pure typeScript CPU-only 3d software renderer, capable of rendering scenes with constant ambient lighting and thousands of polygons at 60fps.",
           "URL": "https://github.com/DavidSouther/softd"
@@ -610,39 +623,28 @@
             "finishDate": "2016-03-31"
           }
         ]
-      },
-      {
-        "details": {
-          "name": "DavidSouther/song-flux-theory",
-          "description": "A blog post overviewing the theory of song-flux. song-flux is an early implementation and description of Reactive stateful programming, and includes ideas that have seen production use in a number of popular open source packages.",
-          "URL": "https://github.com/DavidSouther/song-flux-theory"
-        },
-        "type": "openSource",
-        "roles": [
-          {
-            "name": "Developer",
-            "startDate": "2015-01-01",
-            "finishDate": "2015-01-31"
-          }
-        ]
-      },
-      {
-        "details": {
-          "name": "DavidSouther/StarTracks",
-          "description": "Simple visualization of astronomical main-sequence star data.",
-          "URL": "https://github.com/DavidSouther/StarTracks"
-        },
-        "type": "openSource",
-        "roles": [
-          {
-            "name": "Developer",
-            "startDate": "2014-03-01",
-            "finishDate": "2014-03-31"
-          }
-        ]
       }
     ],
     "publicArtifacts": [
+      {
+        "details": {
+          "name": "Cloud Journeys: Building a Serverless Image Recognition Website with Machine Learning",
+          "description": "The Code Examples team tells the story of how they created a serverless application that detects labels for images and lets the user download those images by label. This is the first entry in a new content category called Cloud Journeys.",
+          "URL": "https://community.aws/posts/cloud-journeys/01-serverless-image-recognition-app"
+        },
+        "type": "post",
+        "publishingDate": "2023-06-23"
+      },
+      {
+        "details": {
+          "name": "Visualization by Organizing Connections in Collapsible Hierarchical Graphs",
+          "description": "Abstract Network graphs in certain applications, e.g., cloud-network graphs, have connections in multiple dimensions. At present, it is difficult or inconvenient for a user to visualize such graphs at varying levels of granularity or hierarchy. Per the techniques of this disclosure, a hull is defined as a node with descendants, and a segment is defined as a bundle of edges between descendants below a pair of nodes. By enabling a user to expand or collapse a hull, and by routing edges via segments connecting parent nodes, the described techniques enable a high-level visualization of large graph networks that can be quickly refocused into low-level pictures.",
+          "URL": "https://www.tdcommons.org/dpubs_series/2996/"
+        },
+        "type": "achievement",
+        "publishingDate": "2019-06-01",
+        "tags": ["DPub (Patent)"]
+      },
       {
         "details": {
           "name": "Is stat() an expensive system call?",
@@ -665,7 +667,8 @@
           "URL": "https://stackoverflow.com/questions/11171013/using-node-inspector-with-grunt-tasks/12739260#12739260"
         },
         "type": "post",
-        "publishingDate": "2012-10-01"
+        "publishingDate": "2012-10-01",
+        "hide": true
       },
       {
         "details": {
@@ -673,7 +676,8 @@
           "URL": "https://stackoverflow.com/questions/7086465/posting-input-type-file-problem-no-value-posted/7086476#7086476"
         },
         "type": "post",
-        "publishingDate": "2011-08-01"
+        "publishingDate": "2011-08-01",
+        "hide": true
       },
       {
         "details": {
@@ -681,7 +685,8 @@
           "URL": "https://stackoverflow.com/questions/5836662/extending-from-two-classes/5836714#5836714"
         },
         "type": "post",
-        "publishingDate": "2011-04-01"
+        "publishingDate": "2011-04-01",
+        "hide": true
       },
       {
         "details": {
@@ -704,11 +709,11 @@
             "type": "technology"
           },
           {
-            "name": "javascript",
+            "name": "JavaScript",
             "type": "technology"
           },
           {
-            "name": "node.js",
+            "name": "nodejs",
             "type": "technology"
           },
           {
@@ -760,16 +765,6 @@
             "type": "technology"
           }
         ]
-      },
-      {
-        "details": {
-          "name": "Graph Visualization by Organizing Connections in Collapsible Hierarchical Graphs",
-          "description": "Abstract Network graphs in certain applications, e.g., cloud-network graphs, have connections in multiple dimensions. At present, it is difficult or inconvenient for a user to visualize such graphs at varying levels of granularity or hierarchy. Per the techniques of this disclosure, a hull is defined as a node with descendants, and a segment is defined as a bundle of edges between descendants below a pair of nodes. By enabling a user to expand or collapse a hull, and by routing edges via segments connecting parent nodes, the described techniques enable a high-level visualization of large graph networks that can be quickly refocused into low-level pictures.",
-          "URL": "https://www.tdcommons.org/dpubs_series/2996/"
-        },
-        "type": "achievement",
-        "publishingDate": "2019-06-01",
-        "tags": ["DPub (Patent)"]
       }
     ]
   },

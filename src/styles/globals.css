@@ -73,15 +73,8 @@ article > header > h3 {
   grid-area: competences;
 }
 
-.publications section {
-  columns: 2;
-  margin-bottom: 0;
-}
-.publications section p {
-  display: grid;
-  grid-template-columns: 1fr 1in;
-  gap: 0 calc(var(--block-spacing-vertical) / 2);
-  margin-bottom: 0;
+.competences li {
+  list-style: none;
 }
 
 @media print {

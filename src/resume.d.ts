@@ -38,6 +38,7 @@ export interface PublicArtifact {
   publishingDate?: string;
   relatedCompetences?: Competence[];
   tags?: Tags;
+  hide?: boolean;
 }
 
 export interface AboutMe {
@@ -120,6 +121,7 @@ export interface Competence {
   name: string;
   type: "tool" | "technology" | "practice" | "hardware" | "domain";
   description?: string;
+  URL?: string;
 }
 
 export interface Tags {}
