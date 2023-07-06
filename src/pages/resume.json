@@ -637,6 +637,15 @@
       },
       {
         "details": {
+          "name": "Technical Whiteboarding",
+          "description": "A series of posts on how to approach technical whiteboarding. Technical whiteboarding is often encountered in an interview setting, but the techniques to solve an interview question apply equally well to a wide range of design and development scenarios. This several-part series presents a checklist of steps to work through a technical problem, shows a variety of ways to diagram programs, and has an extensive glossary of data structures & algorithms topics. A section on the \"Forward/Backward Method\" applies mathematical proof techniques to have a systematic approach to DS&A problem solving.",
+          "URL": "https://codefellows.github.io/common_curriculum/challenges/code/whiteboarding"
+        },
+        "type": "post",
+        "publishingDate": "2023-04-01"
+      },
+      {
+        "details": {
           "name": "Visualization by Organizing Connections in Collapsible Hierarchical Graphs",
           "description": "Abstract Network graphs in certain applications, e.g., cloud-network graphs, have connections in multiple dimensions. At present, it is difficult or inconvenient for a user to visualize such graphs at varying levels of granularity or hierarchy. Per the techniques of this disclosure, a hull is defined as a node with descendants, and a segment is defined as a bundle of edges between descendants below a pair of nodes. By enabling a user to expand or collapse a hull, and by routing edges via segments connecting parent nodes, the described techniques enable a high-level visualization of large graph networks that can be quickly refocused into low-level pictures.",
           "URL": "https://www.tdcommons.org/dpubs_series/2996/"
