@@ -13,11 +13,11 @@ export const JobDetail = ({ job }: { job: ResumeTypes.JobExperience }) => (
 
 const Role = ({ role }: { role: ResumeTypes.Role }) => (
   <section className="role">
-    <h4 className="about">
+    <h5 className="about">
       <em className="name">{role.name}</em>
       <small className="start date">{role.startDate}</small>
       <small className="finish date">{role.finishDate ?? "Current"}</small>
-    </h4>
+    </h5>
     {role.challenges && (
       <div className="details">
         {role.challenges.map(({ description }) => (

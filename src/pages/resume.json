@@ -38,7 +38,7 @@
         },
         "roles": [
           {
-            "name": "Sr Software Engineer",
+            "name": "Sr Examples Engineer",
             "challenges": [
               {
                 "description": "Sr Engineer creating example code and applications using the [AWS SDK for Rust](https://github.com/awslabs/aws-sdk-rust) ([example repo](https://github.com/awsdocs/aws-doc-sdk-examples/tree/main/rust_dev_preview)). Primary duties are writing informative code samples for all aspects of the Rust SDK. Longer-term projects develop cross-service scenarios to emphasize SDK utilities across the SDK language and service boundaries. These examples show customers real-world approaches to developing software that combines multiple AWS SDKs.\n\n Highlights include:\n- a [REST system](https://github.com/awsdocs/aws-doc-sdk-examples/tree/main/rust_dev_preview/cross_service/rest_ses) using [Amazon RDS Data](https://aws.amazon.com/rds/) & [Amazon SES](https://aws.amazon.com/ses/)\n- a [photo asset manager](https://community.aws/posts/cloud-journeys/01-serverless-image-recognition-app) using [Amazon S3](https://aws.amazon.com/s3/) [intelligent tiering](https://aws.amazon.com/s3/storage-classes/intelligent-tiering/) storage, [Amazon Rekognition](https://aws.amazon.com/rekognition/) image tagging, & [Amazon SQS](https://aws.amazon.com/sqs/) notifications\n- an [ML Ops pipeline]() using [AWS Step Functions](https://aws.amazon.com/step-functions/) to orchestrate [Amazon Textract](https://aws.amazon.com/textract/), [Amazon Comprehend](https://aws.amazon.com/comprehend/), and [Amazon Polly](https://aws.amazon.com/polly/)\n\n I provide engineering guidance and mentorship for teammates in adjacent languages, and develop tooling to streamline example creation and publishing."
@@ -162,7 +162,7 @@
         },
         "roles": [
           {
-            "name": "TLM",
+            "name": "Tech Lead & Manager",
             "challenges": [
               {
                 "description": "As a tech lead, I set strategic direction for our feature area as well as mentoring and guiding my team in their engineering and career. I Lead a team of 10 (4 direct) migrating cloud management tool from AngularJS to Angular. During the migration, I organized additional feature work to maintain market parity and leadership during the migration.\n\nAs a manager, I developed junior and Noogler engineers in Cloud, Angular, and TypeScript. I successfully promoted an L4 Noogler to L5 in three performance review cycles and an L3 Googler to L4 during the second cycle as manager, and guided an L3 who received an NI through a PIP who was then promoted to L4 two cycles after departure. I achieved this through managing and mentoring junior engineers, writing performance reviews and promotion packets, and coordinating task priority and HR concerns."
@@ -201,7 +201,7 @@
         },
         "roles": [
           {
-            "name": "TL",
+            "name": "Tech Lead",
             "challenges": [
               {
                 "description": "Cloud Topology allows GCP customers to visualize their large scale deployments in the Cloud ecosystem.\n\n* I created a rich kubernetes visualization, capable of rendering 10k nodes at 60fps and performing hierarchical graph layout in <1s, by writing high-performance graph rendering engine and conducting research with internal and external k8s users.\n* I created a graphical data model & visualization to improve situational awareness of k8s cluster communications patterns, measured by early adopters reporting improved cluster deployment actions using Google Kubernetes Engine, achieved through researching and providing actionable details from early adopter teams.\n* I Demonstrated and enabled testing kubernetes clusters of 10k nodes by building a large scale kubernetes test bed, making it available and documented for internal teams."

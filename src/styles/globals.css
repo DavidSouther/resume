@@ -20,6 +20,27 @@
     --card-box-shadow: none !important;
     --card-sectioning-background-color: white !important;
   }
+
+  html {
+    font-size: 10pt;
+  }
+
+  body {
+    --font-size: 10pt;
+  }
+
+  body.container {
+    max-width: 99% !important;
+  }
+
+  a {
+    --color: var(--color);
+    --color: hsl(205, 20%, 32%);
+  }
+
+  a::after {
+    content: " (" attr(href) ")";
+  }
 }
 
 @media not print {
@@ -52,9 +73,10 @@ article > header > h3 {
 .education {
   display: grid;
   grid:
-    "_a org _b" auto
-    "about details competences" auto
-    / 1fr 4fr 1fr;
+    "_a org" auto
+    "about details" auto
+    "competences details"
+    / 2fr 5fr;
   gap: calc(var(--block-spacing-vertical) / 2)
     calc(var(--block-spacing-horizontal) / 2);
 }
@@ -63,6 +85,7 @@ article > header > h3 {
   grid-area: about;
   display: flex;
   flex-direction: column;
+  margin-bottom: 0;
 }
 
 .details {
@@ -90,12 +113,24 @@ article > header > h3 {
 .root > header {
   display: grid;
   grid:
-    "avatar name links" auto
-    "avatar title links" auto
-    "avatar location links" auto
+    "avatar name" auto
+    "avatar title" auto
+    "avatar location" auto
+    "avatar links"
     / 150px auto;
   gap: 0 var(--block-spacing-horizontal);
 }
+
+@media (min-width: 425px) {
+  .root > header {
+    grid:
+      "avatar name links" auto
+      "avatar title links" auto
+      "avatar location links" auto
+      / 150px auto;
+  }
+}
+
 .root > header hgroup {
   display: contents;
 }
@@ -127,10 +162,26 @@ article > header > h3 {
   flex-direction: row-reverse;
 }
 .root > header nav ul {
-  flex-direction: column;
+  flex-direction: row;
+}
+@media (min-width: 425px) {
+  .root > header nav ul {
+    flex-direction: column;
+  }
 }
 
 .root > footer {
   display: flex;
   justify-content: space-between;
+}
+
+.artifacts {
+  display: grid;
+  grid-template-colums: 1fr;
+}
+
+@media (min-width: 768px) {
+  .artifacts {
+    grid-template-columns: 1fr 1fr;
+  }
 }

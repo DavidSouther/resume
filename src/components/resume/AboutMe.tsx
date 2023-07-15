@@ -57,9 +57,10 @@ const Links = ({ links }: { links: ResumeTypes.Link[] }) => (
     <ul>
       {links.map((link) => (
         <li key={link.URL}>
-          <a href={link.URL}>
-            <span className="no-print">{link.type}</span>
+          <a href={link.URL} className="no-print">
+            <span>{link.type}</span>
           </a>
+          <span className="print-only">{link.URL}</span>
         </li>
       ))}
     </ul>

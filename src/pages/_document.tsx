@@ -19,32 +19,6 @@ export default function Document() {
           media="(prefers-color-scheme: dark)"
           content="black"
         />
-        <style>
-          {`
-@media print {
-  p, li {
-    --font-size: 10pt;
-  }
-
-  body {
-      font-size: 10pt;
-  }
-  body.container {
-      max-width: 100vw !important;
-  }
-}
-  .artifacts {
-    display: grid;
-    grid-template-columns: 1fr 1fr ;
-  }
-  // .projects, .publications {
-  //     width: 50vw;
-  // }
-  // .projects { float: left;}
-  // .publications {float: right;}
-  // footer { clear: both; }
-`}
-        </style>
       </Head>
       <body className="container">
         <Main />

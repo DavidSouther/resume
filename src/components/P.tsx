@@ -8,7 +8,6 @@ export const A = ({ href, children }: { children: string; href?: string }) =>
   href ? (
     <>
       <a href={href}>{children}</a>
-      <span className="print-only">({href ?? ""})</span>
     </>
   ) : (
     <span>{children}</span>
