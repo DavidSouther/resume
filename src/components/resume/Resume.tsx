@@ -1,4 +1,4 @@
-import { ResumeData } from "~/resume";
+import { PublicEntityDetails, ResumeData } from "~/resume";
 import { Card } from "../Card";
 import { JobDetail } from "./JobDetail";
 import { Education } from "./Studies";
@@ -37,7 +37,7 @@ export const Resume = ({ resume }: { resume: ResumeData }) => {
               {projects
                 .filter((p) => p.details)
                 .map((project) => (
-                  <Pub key={project.details?.name} details={project.details} />
+                  <Pub key={project.details?.name} details={project.details!} />
                 ))}
             </Card>
           )}
@@ -69,7 +69,7 @@ export const Pub = ({
   details: { name, URL, description },
   date: publishingDate,
 }: {
-  details: ResumeTypes.PublicArtifact.details;
+  details: PublicEntityDetails;
   date?: string;
 }) => (
   <>
