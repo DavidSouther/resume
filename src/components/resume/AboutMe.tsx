@@ -1,11 +1,14 @@
 import Image from "next/image";
+import Link from "next/link";
 import type * as ResumeTypes from "~/resume";
 
 export const AboutMe = ({ aboutMe }: { aboutMe: ResumeTypes.AboutMe }) => (
   <>
     <hgroup>
       <h1>
-        {aboutMe.profile.name} {aboutMe.profile.surnames ?? ""}
+        <Link href="/">
+          {aboutMe.profile.name} {aboutMe.profile.surnames ?? ""}
+        </Link>
       </h1>
       <h2>{aboutMe.profile.title}</h2>
     </hgroup>

@@ -9,14 +9,14 @@
     "profile": {
       "name": "David",
       "surnames": "Souther",
-      "title": "Sr Examples Engineer; Lead Instructor",
+      "title": "Sr Examples Engineer",
       "avatar": {
         "link": "https://avatars.githubusercontent.com/u/498712?v=4"
       },
       "location": {
         "country": "US",
-        "region": "Washington",
-        "municipality": "Seattle"
+        "region": "New York",
+        "municipality": "Brooklyn"
       }
     },
     "relevantLinks": [
