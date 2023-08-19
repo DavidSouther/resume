@@ -4,10 +4,7 @@ export default function Document() {
   return (
     <Html lang="en">
       <Head>
-        <link
-          rel="stylesheet"
-          href="https://unpkg.com/@picocss/pico@latest/css/pico.min.css"
-        />
+        <link rel="stylesheet" href="/jiffies-css/index.css" />
         <link rel="manifest" href="/manifest.json" />
         <meta
           name="theme-color"

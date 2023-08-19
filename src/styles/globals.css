@@ -1,15 +1,31 @@
 :root {
+  --luminance: 0.8;
+  --chroma: 0.6;
+  --color-hue: 200deg;
   --line-height: 1.25; /* 1.5 */
-  --spacing: 0.25rem; /* 1rem */
+  /* --spacing: 0.25rem; */ /* 1rem */
   --typography-spacing-vertical: 1.15rem; /* 1.5rem */
   --grid-spacing-horizontal: 1rem; /* var(--spacing) */
   --form-element-spacing-vertical: 0.15rem; /* .75rem */
   --form-element-spacing-horizontal: 0.25rem; /* 1rem */
 }
 
+@media (prefers-color-scheme: dark) {
+  :root {
+    --luminance: 0.6;
+    --chroma: 0.3;
+  }
+}
+
 @media print {
+  :root {
+    --chroma: 0;
+    --luminance: 1;
+    --spacing-block-vertical: 0.1rem;
+  }
+
   .no-print {
-    display: none;
+    display: none !important;
   }
 
   .print-only {
@@ -40,6 +56,7 @@
 
   a::after {
     content: " (" attr(href) ")";
+    text-decoration: underline;
   }
 }
 
@@ -73,19 +90,50 @@ article > header > h3 {
 .education {
   display: grid;
   grid:
-    "_a org" auto
-    "about details" auto
-    "competences details"
-    / 2fr 5fr;
+    "org" auto
+    "about" auto
+    "details" auto
+    "competences" auto
+    / 1fr;
   gap: calc(var(--block-spacing-vertical) / 2)
     calc(var(--block-spacing-horizontal) / 2);
+}
+
+@media (min-width: 768px) {
+  .job,
+  .education {
+    grid:
+      "_a org" auto
+      "about details" auto
+      "competences details"
+      / 2fr 5fr;
+  }
 }
 
 .about {
   grid-area: about;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: baseline;
+  justify-content: space-between;
   margin-bottom: 0;
+}
+
+.competences ul li {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+@media (min-width: 768px) {
+  .about {
+    flex-direction: column;
+  }
+
+  .competences ul li {
+    flex-direction: row;
+  }
 }
 
 .details {
@@ -96,8 +144,20 @@ article > header > h3 {
   grid-area: competences;
 }
 
+.competences ul {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
 .competences li {
   list-style: none;
+}
+
+@media (min-width: 768px) {
+  .competences ul {
+    flex-direction: column;
+  }
 }
 
 @media print {
@@ -147,41 +207,67 @@ article > header > h3 {
 .root > header figure img {
   border-radius: 10%;
 }
-.root > header div.location {
+.root > header p.location {
   grid-area: location;
   display: flex;
   flex-direction: row-reverse;
   justify-content: flex-end;
   gap: 0.25em;
 }
-.root > header div.location span:not(:first-child)::after {
+.root > header p.location span:not(:first-child)::after {
   content: ",";
 }
 .root > header nav {
   grid-area: links;
-  flex-direction: row-reverse;
 }
 .root > header nav ul {
   flex-direction: row;
 }
+.root > header nav ul li {
+  text-align: right;
+}
+
 @media (min-width: 425px) {
   .root > header nav ul {
     flex-direction: column;
   }
 }
 
-.root > footer {
+.root > footer > nav {
   display: flex;
   justify-content: space-between;
+  align-content: baseline;
 }
 
 .artifacts {
   display: grid;
   grid-template-colums: 1fr;
+  gap: calc(var(--block-spacing-vertical) / 2)
+    calc(var(--block-spacing-horizontal) / 2);
 }
 
 @media (min-width: 768px) {
   .artifacts {
     grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media print {
+  .artifacts {
+    grid-template-columns: 1fr;
+  }
+}
+
+.posts {
+  display: grid;
+  grid: "title" auto "summary" auto / 1fr;
+  gap: calc(var(--block-spacing-vertical) / 2)
+    calc(var(--block-spacing-horizontal) / 2);
+}
+
+@media (min-width: 768px) {
+  .posts {
+    display: grid;
+    grid: "_a title" auto "_b summary" auto / 2fr 5fr;
   }
 }

@@ -24,12 +24,14 @@ export interface JobExperience {
   organization: PublicEntityDetails;
   type?: OrganizationType;
   roles: Role[];
+  full?: boolean;
 }
 
 export interface ProjectExperience {
   details?: PublicEntityDetails;
   type?: ProjectType;
   roles: Role[];
+  full?: boolean;
 }
 
 export interface PublicArtifact {
@@ -39,6 +41,7 @@ export interface PublicArtifact {
   relatedCompetences?: Competence[];
   tags?: Tags;
   hide?: boolean;
+  full?: boolean;
 }
 
 export interface AboutMe {
@@ -90,6 +93,7 @@ export interface Role {
   competences?: Competence[];
   referrals?: Person[];
   notes?: string;
+  full?: boolean;
 }
 
 export type OrganizationType =
@@ -149,6 +153,7 @@ export interface Study {
   description?: string;
   institution?: PublicEntityDetails;
   linkedCompetences?: Competence[];
+  full?: boolean;
 }
 
 export type StudyType =

@@ -6,6 +6,7 @@ import { Resume } from "~/components/resume/Resume";
 import { getSortedPosts } from "~/lib/posts";
 import * as ResumeTypes from "~/resume";
 import resume from "./resume.json";
+import Link from "next/link.js";
 
 export function getStaticProps() {
   const posts = getSortedPosts();
@@ -19,12 +20,21 @@ export default function Home({
   const title = `${name} - Resume`;
   return (
     <Layout title={title}>
-      <Card header="Posts">
-        <IDLinkList
-          items={posts}
-          pathname="blog/[id]"
-          link={({ title }) => title ?? "Unknown"}
-        />
+      <Card header="Posts" className="posts no-print">
+        {posts.map(({ id, title, summary }) => (
+          <>
+            <div style={{ gridArea: "title" }}>
+              <h4>
+                <Link href={{ pathname: "blog/[id]", query: { id } }}>
+                  {title}
+                </Link>
+              </h4>
+            </div>
+            <p key={id} style={{ gridArea: "summary" }}>
+              {summary}
+            </p>
+          </>
+        ))}
       </Card>
       <Resume resume={resume as ResumeTypes.ResumeData} />
     </Layout>

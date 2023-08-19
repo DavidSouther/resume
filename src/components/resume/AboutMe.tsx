@@ -46,13 +46,13 @@ const Avatar = ({
 );
 
 const Location = ({ location }: { location: ResumeTypes.Location }) => (
-  <div className="location">
+  <p className="location">
     {Object.entries(location).map(([k, v]) => (
       <span key={k} className={`location ${k}`}>
         {v}
       </span>
     ))}
-  </div>
+  </p>
 );
 
 const Links = ({ links }: { links: ResumeTypes.Link[] }) => (

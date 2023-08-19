@@ -29,6 +29,7 @@ export function getSortedPosts() {
         id,
         date,
         show,
+        summary: front.data.summary as string | undefined,
         title: front.data.title as string | undefined,
       };
     })

@@ -1,15 +1,19 @@
 import type * as ResumeTypes from "~/resume";
 import { A, P } from "../P";
 import { Organization } from "./Organization";
+import { show } from "~/lib/util";
 
-export const JobDetail = ({ job }: { job: ResumeTypes.JobExperience }) => (
-  <section className="job">
-    <Organization org={job.organization} />
-    {job.roles.map((role) => (
-      <Role key={role.name} role={role} />
-    ))}
-  </section>
-);
+export const JobDetail = ({ job }: { job: ResumeTypes.JobExperience }) => {
+  const hide = show(job.roles.at(-1)?.finishDate) ? "" : "no-print";
+  return (
+    <section className={`job ${hide}`}>
+      <Organization org={job.organization} />
+      {job.roles.map((role) => (
+        <Role key={role.name} role={role} />
+      ))}
+    </section>
+  );
+};
 
 const Role = ({ role }: { role: ResumeTypes.Role }) => (
   <section className="role">

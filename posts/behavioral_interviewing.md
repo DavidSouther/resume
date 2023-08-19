@@ -1,6 +1,7 @@
 ---
 title: Behavioral Interviewing
 date: 2023-08-17
+summary: Learn how to tell your story in the STAR narrative format. Interviewers want to hire candidates who have demonstrated success in their past performance. During a behavioral interview, you can help your interviewer understand your successes by applying STAR to your past roles.
 ---
 
 When an organization is looking to hire, they want to find a candidate who will bring value to their team in as little time as possible. The best way to know if a person will bring value to a team is to work with them for a period of time, and then evaluate if it’s a good fit. Internships are a great strategy for this kind of hiring, but for professionals who have started their career, this time commitment is unrealistic. Instead, companies rely on the assertion that _future behavior is best indicated by past performance_.
@@ -105,17 +106,10 @@ While automated systems screen resumes for keywords, a human reviewing the resum
 
 Here's the line on each of their resumes.
 
-|<em>Individual Contributor</em> |<em>Tech Lead / Manager</em> |
-| _Individual Contributor_ | _Tech Lead / Manager_ |
-| ------------------------------------------- | -------------------------------------------------------------------------------- |
-|Created automated deployment for mission critical network infrastructure source of truth. Migrated from >1 yr out of date version to current version. Added two missing business critical features.|
-
-<br /><br />
-“Applications”, Python, Django, AWS, EC2, Kubernetes, Prometheus, Grafana |Lead team of 10 (4 direct) migrating cloud management tools from AngularJS to Angular. Organized additional feature work to maintain market parity and leadership during the migration.
-<br /><br />
-AngularJS, Angular, TypeScript, NgRX, “Cloud Platform”, “VMS”, “VMS Groups” |
-
-</table>
+| _Individual Contributor_                                                                                                                                                                            | _Tech Lead / Manager_                                                                                                                                                                   |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Created automated deployment for mission critical network infrastructure source of truth. Migrated from >1 yr out of date version to current version. Added two missing business critical features. | Lead team of 10 (4 direct) migrating cloud management tools from AngularJS to Angular. Organized additional feature work to maintain market parity and leadership during the migration. |
+| “Applications”, Python, Django, AWS, EC2, Kubernetes, Prometheus, Grafana                                                                                                                           | AngularJS, Angular, TypeScript, NgRX, “Cloud Platform”, “VMS”, “VMS Groups”                                                                                                             |
 
 ### What have we covered?
 

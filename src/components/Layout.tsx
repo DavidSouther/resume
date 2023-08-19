@@ -10,7 +10,7 @@ export default function Layout({
 }: PropsWithChildren<{ title: string }>) {
   return (
     <>
-      <div className="root">
+      <div id="root" className="root">
         <Head>
           <title>{title}</title>
           <meta name="description" content={title} />
@@ -20,13 +20,16 @@ export default function Layout({
           <AboutMe aboutMe={resume.aboutMe as ResumeTypes.AboutMe} />
         </header>
         <main>{children}</main>
-        <footer>
-          © David Souther 2008-
-          {new Date(resume.settings.lastUpdate).getFullYear()}
-          <cite>
-            <a href="https://github.com/davidsouther/resume">Page Source</a>
-            <span className="print-only">github.com/davidsouther/resume</span>
-          </cite>
+        <footer className="no-print">
+          <nav>
+            <p>
+              © David Souther 2008-
+              {new Date(resume.settings.lastUpdate).getFullYear()}
+            </p>
+            <cite>
+              <a href="https://github.com/davidsouther/resume">Page Source</a>
+            </cite>
+          </nav>
         </footer>
       </div>
     </>
