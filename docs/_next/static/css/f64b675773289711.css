@@ -1,0 +1,1 @@
+.shelf_shelf__CUSM_{display:absolute;width:74.75in;background:tan;height:2in;display:flex;padding:0 4in;justify-content:space-between;counter-reset:count 0}.shelf_bracket__dh36M{width:1in;background:brown;counter-increment:count 1;text-align:center}.shelf_bracket__dh36M:before{content:"Bracket " counter(count) " " attr(offsetLeft)}
