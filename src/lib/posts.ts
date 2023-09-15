@@ -6,16 +6,24 @@ import { remark } from "remark";
 import remarkGfm from "remark-gfm";
 import remarkHtml from "remark-html";
 
-export function getPostPaths() {
+export interface Post {
+  id: string;
+  show: boolean;
+  date?: string;
+  summary?: string;
+  title?: string;
+  body?: string;
+}
+
+export function getPostPaths(): string[] {
   const postsDir = join(cwd(), "posts");
   const paths = readdirSync(postsDir).map((filename) => {
-    const id = filename.replace(/\.md$/, "");
-    return { params: { id } };
+    return filename.replace(/\.md$/, "");
   });
   return paths;
 }
 
-export function getSortedPosts() {
+export function getSortedPosts(): Post[] {
   const postsDir = join(cwd(), "posts");
   const posts = readdirSync(postsDir)
     .map((filename) => {
@@ -41,7 +49,7 @@ export function getSortedPosts() {
   return posts;
 }
 
-export async function getPost(id: string) {
+export async function getPost(id: string): Promise<Post> {
   const filename = join(cwd(), "posts", id);
   const postText = readFileSync(filename + ".md", "utf-8");
   const front = matter(postText);
@@ -53,6 +61,6 @@ export async function getPost(id: string) {
     .use(remarkHtml)
     .process(front.content);
   const contentHtml = processedContent.toString();
-  const post = { id, date, title, body: contentHtml };
+  const post = { id, date, title, body: contentHtml, show: true };
   return post;
 }

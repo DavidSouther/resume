@@ -1,4 +1,5 @@
-import type * as ResumeTypes from "~/resume";
+"use client";
+import type * as ResumeTypes from "~/lib/resume";
 import { A, P } from "../P";
 import { Organization } from "./Organization";
 import { show } from "~/lib/util";

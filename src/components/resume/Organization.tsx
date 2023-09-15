@@ -1,4 +1,4 @@
-import type * as ResumeTypes from "~/resume";
+import type * as ResumeTypes from "~/lib/resume";
 
 export const Organization = ({
   org,

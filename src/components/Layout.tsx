@@ -1,8 +1,9 @@
+"use client";
 import { PropsWithChildren } from "react";
 import Head from "next/head";
 import { AboutMe } from "./resume/AboutMe";
-import * as ResumeTypes from "~/resume";
-import resume from "../pages/resume.json";
+import * as ResumeTypes from "~/lib/resume";
+import resume from "../app/resume.json";
 
 export default function Layout({
   children,

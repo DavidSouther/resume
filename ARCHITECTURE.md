@@ -107,7 +107,7 @@ The only person with a face to get an egg is me, so, that's my own quality bar.
 I'm doing this as a hobby project, which has a long history of starting strong and losing steam.
 Let's see how much I like using this tool, how much people want me to be writing, and how much feedback I get on wanting to write with it.
 
-Tech debt is that it's on NextJS pages router and needs to get migrated to app router, and ongoing interest payments in keeping NextJS up to date.
+~Tech debt is that it's on NextJS pages router and needs to get migrated to app router, and~ ongoing interest payments in keeping NextJS up to date.
 
 ### Glossary
 

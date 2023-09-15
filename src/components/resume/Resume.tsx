@@ -1,4 +1,4 @@
-import { PublicEntityDetails, ResumeData } from "~/resume";
+import { PublicEntityDetails, ResumeData } from "~/lib/resume";
 import { Card } from "../Card";
 import { JobDetail } from "./JobDetail";
 import { Education } from "./Studies";

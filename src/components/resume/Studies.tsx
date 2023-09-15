@@ -1,4 +1,4 @@
-import type * as ResumeTypes from "~/resume";
+import type * as ResumeTypes from "~/lib/resume";
 import { Organization } from "./Organization";
 
 export const Education = ({ study }: { study: ResumeTypes.Study }) => {

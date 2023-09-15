@@ -1,6 +1,7 @@
+"use client";
 import Image from "next/image";
 import Link from "next/link";
-import type * as ResumeTypes from "~/resume";
+import type * as ResumeTypes from "~/lib/resume";
 
 export const AboutMe = ({ aboutMe }: { aboutMe: ResumeTypes.AboutMe }) => (
   <>
@@ -43,8 +44,9 @@ const Avatar = ({
       }
       style={{
         maxWidth: "100%",
-        height: "auto"
-      }} />
+        height: "auto",
+      }}
+    />
   </figure>
 );
 
