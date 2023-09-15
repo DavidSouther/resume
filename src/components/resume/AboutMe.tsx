@@ -1,4 +1,4 @@
-import Image from "next/legacy/image";
+import Image from "next/image";
 import Link from "next/link";
 import type * as ResumeTypes from "~/resume";
 
@@ -41,7 +41,10 @@ const Avatar = ({
               (avatar as ResumeTypes.ImageData).data
             }`
       }
-    />
+      style={{
+        maxWidth: "100%",
+        height: "auto"
+      }} />
   </figure>
 );
 
