@@ -1,9 +1,10 @@
-import { addMessagesToContent, loadContent } from "~/lib/content";
-import { FileSystem } from "@davidsouther/jiffies/lib/esm/fs";
-import { NodeFileSystemAdapter } from "~/lib/fs";
-import { join } from "path";
-import ContentList from "./content_list";
 import { Card } from "~/components/Card";
+import ContentList from "./content_list";
+import { NodeFileSystemAdapter } from "~/lib/fs";
+import { FileSystem } from "@davidsouther/jiffies/lib/esm/fs";
+import { join } from "path";
+import { addMessagesToContent, loadContent } from "~/lib/content";
+import GenerateAll from "./generate_all";
 
 const adapter = new NodeFileSystemAdapter();
 const fs = new FileSystem(adapter);
@@ -13,8 +14,13 @@ export default async function ContentPage() {
   const content = await loadContent(fs);
   const summary = await addMessagesToContent(content);
   return (
-    <Card>
-      <ContentList contents={content} summary={summary} />
-    </Card>
+    <div className="grid" style={{ gridTemplateColumns: "2fr 1fr" }}>
+      <Card header="Content list">
+        <ContentList contents={content} />
+      </Card>
+      <Card header="Generation">
+        <GenerateAll summary={summary} />
+      </Card>
+    </div>
   );
 }
