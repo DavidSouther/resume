@@ -2,6 +2,7 @@
 title: Behavioral Interviewing
 date: 2023-08-17
 summary: Learn how to tell your story in the STAR narrative format. Interviewers want to hire candidates who have demonstrated success in their past performance. During a behavioral interview, you can help your interviewer understand your successes by applying STAR to your past roles.
+prompt: I am writing a long form article on how to apply the STAR narrative format to behavioral interviewing.
 ---
 
 When an organization is looking to hire, they want to find a candidate who will bring value to their team in as little time as possible. The best way to know if a person will bring value to a team is to work with them for a period of time, and then evaluate if it’s a good fit. Internships are a great strategy for this kind of hiring, but for professionals who have started their career, this time commitment is unrealistic. Instead, companies rely on the assertion that _future behavior is best indicated by past performance_.
