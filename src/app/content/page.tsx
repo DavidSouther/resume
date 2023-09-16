@@ -1,4 +1,4 @@
-import { loadContent } from "~/lib/content";
+import { addMessagesToContent, loadContent } from "~/lib/content";
 import { FileSystem } from "@davidsouther/jiffies/lib/esm/fs";
 import { NodeFileSystemAdapter } from "~/lib/fs";
 import { join } from "path";
@@ -11,9 +11,10 @@ fs.cd(join(process.cwd(), "content"));
 
 export default async function ContentPage() {
   const content = await loadContent(fs);
+  const summary = await addMessagesToContent(content);
   return (
     <Card>
-      <ContentList contents={content} />
+      <ContentList contents={content} summary={summary} />
     </Card>
   );
 }

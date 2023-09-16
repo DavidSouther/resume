@@ -1,6 +1,7 @@
 import { FileSystem, Stats } from "@davidsouther/jiffies/lib/esm/fs";
+import { get_encoding } from "@dqbd/tiktoken";
 import matter from "gray-matter";
-import { join, normalize } from "path/posix";
+import { join, normalize } from "path";
 
 // Content is ordered on the file system using NN_id folders and nnp_id.md files.
 // The Content needs to keep track of where in the file system it is, so that a Prompt can write a Response.
@@ -9,11 +10,13 @@ export interface Content {
   path: string;
   system: string[];
   order: number;
-  type: "system" | "prompt" | "response";
+  type: "prompt" | "response";
   id: string;
   predecessor?: Content;
   content: string;
   head?: unknown;
+  messages?: Message[];
+  tokens?: Uint32Array;
 }
 
 const MISSING: Stats = {
@@ -111,10 +114,54 @@ export async function loadContent(
   const folders: Content[] = [];
   for (const folder of dir.folders) {
     fs.pushd(folder.name);
-    let contents = await loadContent(fs, [...system, sys]);
+    let contents = await loadContent(fs, [...system, matter(sys).content]);
     folders.push(...contents);
     fs.popd();
   }
 
   return [...files, ...folders];
+}
+
+const encoding = get_encoding("cl100k_base");
+export async function addMessagesToContent(
+  contents: Content[]
+): Promise<Summary> {
+  const summary: Summary = { conversations: contents.length, tokens: 0 };
+  for (const content of contents) {
+    const messages = getMessages(content);
+    const tokens = await encoding.encode(
+      messages.map(({ content }) => content).join("\n")
+    );
+    content.messages = messages;
+    content.tokens = tokens;
+    summary.tokens += tokens.length;
+  }
+  return summary;
+}
+
+export interface Message {
+  role: "system" | "user" | "assistant";
+  content: string;
+}
+
+export function getMessages(content: Content): Message[] {
+  const system = content.system.join("\n");
+  const history: Content[] = [];
+  while (content) {
+    history.push(content);
+    content = content.predecessor!;
+  }
+  history.reverse();
+  return [
+    { role: "system", content: system },
+    ...history.map(({ type, content }) => ({
+      role: (type == "prompt" ? "user" : "assistant") as "user" | "assistant",
+      content,
+    })),
+  ];
+}
+
+export interface Summary {
+  tokens: number;
+  conversations: number;
 }

@@ -7,6 +7,14 @@ const nextConfig = {
     unoptimized: true,
     remotePatterns: [{ hostname: "avatars.githubusercontent.com" }],
   },
+  webpack(config, _) {
+    config.experiments = {
+      asyncWebAssembly: true,
+      layers: true,
+    };
+
+    return config;
+  },
 };
 
 module.exports = nextConfig;
