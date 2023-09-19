@@ -1,6 +1,17 @@
-import { FileSystemAdapter, Stats } from "@davidsouther/jiffies/lib/esm/fs";
+import {
+  FileSystem,
+  FileSystemAdapter,
+  Stats,
+} from "@davidsouther/jiffies/lib/esm/fs";
 import { copyFile, readdir, readFile, rm, stat, writeFile } from "fs/promises";
 import { basename, join } from "path";
+
+export class NodeFileSystem extends FileSystem {
+  constructor(cd: string = process.cwd()) {
+    super(new NodeFileSystemAdapter());
+    this.cd(cd);
+  }
+}
 
 /** Jiffies FileSystemAdapter using NodeJS' fs/promises. */
 export class NodeFileSystemAdapter implements FileSystemAdapter {

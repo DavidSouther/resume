@@ -199,24 +199,3 @@ export interface Summary {
   tokens: number;
   prompts: number;
 }
-
-// TODO make this async*
-export async function generateAll() {
-  const fs = new FileSystem(new NodeFileSystemAdapter());
-  fs.cd(join(process.cwd(), "content"));
-  const content = await loadContent(fs);
-  const summary = await addMessagesToContent(content);
-
-  await Promise.all(
-    content.map(async (c) => {
-      const generated = (c.messages ?? [])
-        .map((m) => JSON.stringify(m))
-        .join("\n");
-      const path = join(dirname(c.path), `${c.order}r_${c.id}`);
-      await fs.writeFile(
-        path,
-        `{"comment":"Generated ${new Date().toISOString()}"}\n${generated}`
-      );
-    })
-  );
-}
