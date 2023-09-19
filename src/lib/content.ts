@@ -1,7 +1,11 @@
 import { FileSystem, Stats } from "@davidsouther/jiffies/lib/esm/fs";
 import { get_encoding } from "@dqbd/tiktoken";
 import matter from "gray-matter";
-import { join, normalize } from "path";
+import { dirname, join, normalize } from "path";
+import { NodeFileSystemAdapter } from "./fs";
+
+type TODOGrayMatterData = Record<string, any>;
+const isDefined = <T>(t: T | undefined): t is T => t !== undefined;
 
 // Content is ordered on the file system using NN_id folders and nnp_id.md files.
 // The Content needs to keep track of where in the file system it is, so that a Prompt can write a Response.
@@ -10,13 +14,13 @@ export interface Content {
   path: string;
   system: string[];
   order: number;
-  type: "prompt" | "response";
+  prompt: string;
+  response?: string;
   id: string;
   predecessor?: Content;
-  content: string;
-  head?: unknown;
+  head?: TODOGrayMatterData;
   messages?: Message[];
-  tokens?: Uint32Array;
+  tokens?: number;
 }
 
 const MISSING: Stats = {
@@ -78,43 +82,58 @@ function splitOrderedName(name: string): Ordering {
 async function loadFile(
   fs: FileSystem,
   file: Stats,
-  system: string[]
+  system: string[],
+  head: TODOGrayMatterData
 ): Promise<Content | undefined> {
   const ordering = splitOrderedName(file.name);
-  if (ordering.type == "prompt" || ordering.type == "response") {
-    const { content, data } = matter(
-      await fs.readFile(file.name).catch((e) => "")
-    );
-    return {
-      ...ordering,
-      system,
-      path: join(fs.cwd(), file.name),
-      content,
-      head: data,
-    };
-  } else {
-    return undefined;
+  const cwd = fs.cwd();
+  switch (ordering.type) {
+    case "prompt":
+      const { content, data } = matter(
+        await fs.readFile(join(cwd, file.name)).catch((e) => "")
+      );
+      const { content: response } = matter(
+        await fs
+          .readFile(join(cwd, `${ordering.order}r_${ordering.id}`))
+          .catch((e) => "")
+      );
+      return {
+        order: ordering.order,
+        id: ordering.id,
+        system,
+        path: join(fs.cwd(), file.name),
+        prompt: content,
+        response,
+        head: { ...head, data },
+      };
+    default:
+      return undefined;
   }
 }
 
 export async function loadContent(
   fs: FileSystem,
-  system: string[] = []
+  system: string[] = [],
+  head: TODOGrayMatterData = {}
 ): Promise<Content[]> {
-  const sys = await fs.readFile("_s").catch((e) => "");
+  const sys = matter(await fs.readFile("_s.md").catch((e) => ""));
+  head = { ...head, ...sys.data };
+  system = [...system, sys.content];
   const dir = await loadDir(fs).catch((e) => defaultPartitionedDirectory());
   const files: Content[] = (
-    await Promise.all(dir.files.map((file) => loadFile(fs, file, system)))
-  ).filter((c): c is Content => c !== undefined);
-  files.sort((a, b) => b.order - a.order);
-  for (let i = files.length - 1; i > 0; i--) {
-    files[i].predecessor = files[i - 1];
+    await Promise.all(dir.files.map((file) => loadFile(fs, file, system, head)))
+  ).filter(isDefined);
+  if (!Boolean(head.isolated)) {
+    files.sort((a, b) => a.order - b.order);
+    for (let i = files.length - 1; i > 0; i--) {
+      files[i].predecessor = files[i - 1];
+    }
   }
 
   const folders: Content[] = [];
   for (const folder of dir.folders) {
     fs.pushd(folder.name);
-    let contents = await loadContent(fs, [...system, matter(sys).content]);
+    let contents = await loadContent(fs, system, head);
     folders.push(...contents);
     fs.popd();
   }
@@ -126,15 +145,21 @@ const encoding = get_encoding("cl100k_base");
 export async function addMessagesToContent(
   contents: Content[]
 ): Promise<Summary> {
-  const summary: Summary = { conversations: contents.length, tokens: 0 };
+  const summary: Summary = { prompts: 0, tokens: 0 };
   for (const content of contents) {
-    const messages = getMessages(content);
-    const tokens = await encoding.encode(
-      messages.map(({ content }) => content).join("\n")
-    );
-    content.messages = messages;
-    content.tokens = tokens;
-    summary.tokens += tokens.length;
+    content.messages = getMessages(content);
+    content.tokens = 0;
+    for (const message of content.messages) {
+      content.tokens += message.tokens = (
+        await encoding.encode(message.content)
+      ).length;
+    }
+    summary.prompts += 1;
+    summary.tokens +=
+      content.tokens -
+      (content.messages?.at(-1)?.role == "assistant"
+        ? content.messages.at(-1)?.tokens ?? 0
+        : 0);
   }
   return summary;
 }
@@ -142,6 +167,7 @@ export async function addMessagesToContent(
 export interface Message {
   role: "system" | "user" | "assistant";
   content: string;
+  tokens?: number;
 }
 
 export function getMessages(content: Content): Message[] {
@@ -154,14 +180,43 @@ export function getMessages(content: Content): Message[] {
   history.reverse();
   return [
     { role: "system", content: system },
-    ...history.map(({ type, content }) => ({
-      role: (type == "prompt" ? "user" : "assistant") as "user" | "assistant",
-      content,
-    })),
+    ...history
+      .map<Array<Message | undefined>>((content) => [
+        {
+          role: "user",
+          content: content.prompt,
+        },
+        content.response
+          ? { role: "assistant", content: content.response }
+          : undefined,
+      ])
+      .flat()
+      .filter(isDefined),
   ];
 }
 
 export interface Summary {
   tokens: number;
-  conversations: number;
+  prompts: number;
+}
+
+// TODO make this async*
+export async function generateAll() {
+  const fs = new FileSystem(new NodeFileSystemAdapter());
+  fs.cd(join(process.cwd(), "content"));
+  const content = await loadContent(fs);
+  const summary = await addMessagesToContent(content);
+
+  await Promise.all(
+    content.map(async (c) => {
+      const generated = (c.messages ?? [])
+        .map((m) => JSON.stringify(m))
+        .join("\n");
+      const path = join(dirname(c.path), `${c.order}r_${c.id}`);
+      await fs.writeFile(
+        path,
+        `{"comment":"Generated ${new Date().toISOString()}"}\n${generated}`
+      );
+    })
+  );
 }

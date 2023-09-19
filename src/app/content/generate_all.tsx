@@ -7,6 +7,7 @@ export default function GenerateAll({ summary }: { summary: Summary }) {
   const [status, setStatus] = useState<string>("Not yet run");
 
   async function generateAll() {
+    debugger;
     console.log("Action");
     let { message } = await generateAllAction();
     setStatus(message);
@@ -26,11 +27,13 @@ const IN_COST = 0.012;
 
 export function ContentSummary({ summary }: { summary: Summary }) {
   const [outLength, setOutLength] = useState(125);
-  const cost = (outLength * OUT_COST + summary.tokens * IN_COST) / 1000;
+  const cost = Number(
+    (outLength * OUT_COST + summary.tokens * IN_COST) / 1000
+  ).toFixed(6);
   return (
     <p>
-      This generation set has {summary.tokens} total tokens in{" "}
-      {summary.conversations} conversations. Using an output size of{" "}
+      This generation set has {summary.tokens} total tokens in {summary.prompts}{" "}
+      conversations. Using an output size of{" "}
       <input
         className="inline"
         style={{ width: "inherit" }}

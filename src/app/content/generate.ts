@@ -1,6 +1,8 @@
 "use server";
 
+import { generateAll } from "~/lib/content";
+
 export async function generateAllAction() {
-  console.log("Generating via OpenAI");
+  await generateAll();
   return { message: "Generating" };
 }
