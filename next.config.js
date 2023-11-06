@@ -2,7 +2,6 @@
 const nextConfig = {
   productionBrowserSourceMaps: true,
   distDir: "docs",
-  experimental: { serverActions: true },
   images: {
     unoptimized: true,
     remotePatterns: [{ hostname: "avatars.githubusercontent.com" }],

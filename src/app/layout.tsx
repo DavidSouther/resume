@@ -21,7 +21,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <link rel="stylesheet" href="/jiffies-css/index.css" />
+        <link rel="stylesheet" href="/jiffies-css-bundle.min.css" />
       </head>
       <body className="container">
         {children}
