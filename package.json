@@ -5,9 +5,9 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "postbuild": "echo 'davidsouther.com' > docs/CNAME && touch docs/.nojekyll",
     "start": "next start",
-    "lint": "next lint",
-    "export": "next build && echo 'davidsouther.com' > docs/CNAME && touch docs/.nojekyll"
+    "lint": "next lint"
   },
   "dependencies": {
     "@davidsouther/jiffies": "^2.0.6",
