@@ -12,7 +12,12 @@ export default function BlogPage({
   return (
     <Card
       header={`${title} - ${date?.replace(/T.*/, "")}`}
-      className={styles.blogPage}
+      footer={
+        <>
+          <a href="../../">Back</a>
+        </>
+      }
+      className={styles.BlogPage}
     >
       <div dangerouslySetInnerHTML={{ __html: body ?? "" }}></div>
     </Card>

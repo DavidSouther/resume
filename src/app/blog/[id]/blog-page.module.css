@@ -1,10 +1,28 @@
-.blogPage main {
-  width: 576px;
+.BlogPage main {
+  width: 1440px;
   margin: 0 auto;
 }
 
-@media (max-width: 576px) {
-  .blogPage main {
+@media (max-width: 1440px) {
+  .BlogPage main {
+    width: 1024px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .BlogPage main {
+    width: 768px;
+  }
+}
+
+@media (max-width: 768px) {
+  .BlogPage main {
+    width: 425px;
+  }
+}
+
+@media (max-width: 425px) {
+  .BlogPage main {
     width: 100%;
   }
 }

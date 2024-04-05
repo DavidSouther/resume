@@ -1,1 +1,0 @@
-{"version":3,"sources":["webpack://_N_E/src/app/blog/[id]/blog-page.module.css"],"names":[],"mappings":"AAAA,gCACE,WAAY,CACZ,aACF,CAEA,yBACE,gCACE,UACF,CACF","file":"static/css/c34f345ee7fcb4f3.css","sourcesContent":[".blogPage main {\n  width: 576px;\n  margin: 0 auto;\n}\n\n@media (max-width: 576px) {\n  .blogPage main {\n    width: 100%;\n  }\n}\n"],"sourceRoot":""}
