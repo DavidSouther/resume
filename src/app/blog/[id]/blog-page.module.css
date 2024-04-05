@@ -1,0 +1,10 @@
+.blogPage main {
+  width: 576px;
+  margin: 0 auto;
+}
+
+@media (max-width: 576px) {
+  .blogPage main {
+    width: 100%;
+  }
+}

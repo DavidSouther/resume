@@ -1,0 +1,149 @@
+---
+combined: true
+isolated: true
+---
+
+David Souther Sr Examples Engineer David Professional Photo US New York Brooklyn
+
+Posts
+Behavioral Interviewing
+Learn how to tell your story in the STAR narrative format. Interviewers want to hire candidates who have demonstrated success in their past performance. During a behavioral interview, you can help your interviewer understand your successes by applying STAR to your past roles.
+
+Roles & Positions
+
+Amazon Web Services Sr Examples Engineer 2022-09-12 to Current
+Sr Engineer creating example code and applications using the AWS SDK for Rust (example repo). Primary duties are writing informative code samples for all aspects of the Rust SDK. Longer-term projects develop cross-service scenarios to emphasize SDK utilities across the SDK language and service boundaries. These examples show customers real-world approaches to developing software that combines multiple AWS SDKs.
+
+Highlights include:
+
+a REST system using Amazon RDS Data & Amazon SES
+a photo asset manager using Amazon S3 intelligent tiering storage, Amazon Rekognition image tagging, & Amazon SQS notifications
+an ML Ops pipeline using AWS Step Functions to orchestrate Amazon Textract, Amazon Comprehend, and Amazon Polly
+I am the tech lead for the AWS SDK Code Examples Tooling group, who create and maintain Continuous Integration, Continuous Delivery, and Product Excellence tooling for AWS Code Examples. This tooling enforces quality standards on first-part example code for the docs.aws.amazon.com property, and requires coordination across engineering, writing, editing, and product teams spanning AWS technology and marketing.
+
+Code Fellows Lead Instructor 2022-03-10 to 2023-06-30
+Lead instructor for Code 401: Advanced Software Development in Full Stack JavaScript. Educational duties include online classroom instruction, career coaching, curriculum development, and student evaluation. Students consistently ranked my courses at 100 net promoter score, both on weekly survey and course final evaluations. Organized & lead an instructor-wide project revamping the school's white-boarding process. This project rewrote the white-boarding guide, formalized a rubric for grading whiteboards & tech interviews, and revamped problem & training materials for a dozen instructors across four languages. Code Fellows was ranked as a 2023 top coding boot camp by Fortune Education.
+
+JavaScript TypeScript html & css react instructing interview training curriculum development
+
+SpaceX Starlink Sr Software Engineer 2021-07-01 to 2022-06-06
+Responsible Engineer for a global ISP's ground network off-prem cloud tooling, including global data acquisition, Data Center Infrastructure Management (DCIM), automated authentication, and more. Migrated and managed these systems in a variety of VM & Service Mesh settings. RE and Subject Matter Expert for a DDoS detection, alerting, and mitigation system protecting a global ISP's core infrastructure and Xm customers. Responsible Engineer for managing and optimizing cloud spend, migrating ~30% on prem and reducing overall utilization ~10% while user base grew ~50%.
+Rust c++ kubernetes python
+
+GCP - Compute Front End Tech Lead & Manager 2020-07-01 to 2021-07-31
+As a tech lead, I set strategic direction for our feature area as well as mentoring and guiding my team in their engineering and career. I Lead a team of 10 (4 direct) migrating cloud management tool from AngularJS to Angular. During the migration, I organized additional feature work to maintain market parity and leadership during the migration.
+
+As a manager, I developed junior and Noogler engineers in Cloud, Angular, and TypeScript. I successfully promoted an L4 Noogler to L5 in three performance review cycles and an L3 Googler to L4 during the second cycle as manager, and guided an L3 who received an NI through a PIP who was then promoted to L4 two cycles after departure. I achieved this through managing and mentoring junior engineers, writing performance reviews and promotion packets, and coordinating task priority and HR concerns.
+google-cloud-platform google-compute-engine GraphQL TypeScript angular
+
+GCP - Cloud Topology Tech Lead 2018-11-01 to 2020-06-30
+Cloud Topology allows GCP customers to visualize their large scale deployments in the Cloud ecosystem.
+
+I created a rich kubernetes visualization, capable of rendering 10k nodes at 60fps and performing hierarchical graph layout in <1s, by writing high-performance graph rendering engine and conducting research with internal and external k8s users.
+I created a graphical data model & visualization to improve situational awareness of k8s cluster communications patterns, measured by early adopters reporting improved cluster deployment actions using Google Kubernetes Engine, achieved through researching and providing actionable details from early adopter teams.
+I Demonstrated and enabled testing kubernetes clusters of 10k nodes by building a large scale kubernetes test bed, making it available and documented for internal teams.
+TypeScript Kubernetes Istio Kompose Svg Microservices Serverless Graph rendering Visualization
+
+Chatham University Lecturer 2016-08-01 to 2017-05-31
+As a guest lecturer at Chatham University in Pittsburgh, PA, I taught an undergraduate business course on the effects of technology in the 21st century. The course served as an overview of technological topics and their intersection with business ethics. Students learned how technology can be used to handle everyday business needs, while also exploring the implications of big data, always-on-connectivity, and how many engineering tools have an effect on their day to day lives in ways that are almost always unseen.
+
+Google Shopping Software Engineer 2015-06-01 to 2017-04-30
+Front End Engineer with Channel Intelligence. I lead development on a user interface to manage product-level experiments for shopping data. Architect of the core platform & tooling. I taught internal courses on TypeScript & Angular, with my teams building over a dozen screens. Includes complex workflows to manage creating nuanced experimental hypotheses, treatments, and groupings. In prior quarters, I contributed to an effort across several working groups to migrate from existing GWT web UIs to modern, component-base Angular architectures. I brought a strong emphasis to Test Driven Develpment in our FE environment, including techniques, best practices, and general cheer leading. I worked with several groups to offer, and personally taught, several collegiate courses including a two-week intensive course on TDD & industry practices at Mt Holyoke College.
+
+Angular AngularJS Dart TypeScript Mt Holyoke College & Google Instructor 2015-11-01 to 2017-01-31
+Working with colleagues at Google, I developed and taught winter courses in mobile software development and team software engineering at Mt Holyoke College and Smith University. Our materials covered test-driven development in Python, Android development on real devices, and included significant team project components.
+
+Microsoft TEALS Instructor 2013-08-01, 2016-05-31
+TEALS pairs computer science professionals with an in-classroom high school teacher to augment a school's technical literacy program offerings. In this role, I served as a lecturer and TA for several high school classes in NYC and Pittsburgh. Classes included intro to programming with Scratch, intro to programming with Python, and AP Computer Science in Java. Beyond teaching and running labs, I wrote several utilities for students to have a "Python Scavenger Hunt", needing to upload programs to solve simple python challenges. Think Leet Code for Kids.
+mit-scratch python
+
+Third Cat, LLC Software Architect, Consultant, Training Instructor 2014-06-01 to 2015-07-31
+Owner and Founder, Third Cat LLC. A consulting firm specializing in Javascript technologies, including Node.js backend and AngularJS frontend solutions. Clients include Data Online, a manufacturing firm in New Jersey, where we architected and built a scalable, real-time monitoring platform for various client consumables, and trained the team in building Single Page Applications (SPAs) with AngularJS. We provide ongoing on-site training for new developers on the MEAN stack platform. Projects include work with DartmouthX, providing visualizations for an online engineering course. Long term engagements also include work with ProTech, a leading provider of IT training solutions, as a Javascript and Web Development trainer.
+nodejs socket.io redis angularjs
+
+Novus Partners Inc Software Architect 2013-10-01 to 2014-06-30
+As head of Front End Development at Novus Partners, I lead a team of four developers in a complete front-end rewrite. Our previous platform was a brittle Scala Server Pages implementation. After releasing this rewrite, our slick & fast AngularJS frontend has become decoupled from the Scala backend, allowing both services to become much more focused and performant. We also build and maintain the NVD3 open-source charting library. I have led an ongoing effort to refactor the original prototype codebase into a maintainable, extensible, and testable library that will serve front-end charting for years to come.
+angularjs nodejs gruntjs scala
+
+The New York Times Software Engineer 2012-07-01 to 2013-10-31
+Full-stack developer of the NYT5 rebuild team, rebuilding the nytimes.com property from the ground up. The core online presence of the New York Times handles 45 million unique monthly visitors in 2012. Core member of the Prorotype team, building and testing potential new features for the proto.nytimes.com domain. Responsible for the backend stack, including Node servers for data management and AB testing, as well as a variety of systems administration to handle our traffic. Invited to speak on emerging technologies to internal development groups, as well as on behalf of the Times at regional college tech events and tech meetups. Internal git guru.
+nodejs coffeescript git
+
+Potomac Fusion, inc
+Software Engineer
+2011-09-01
+2012-06-30
+Synapse is a tool in the Government Open Source Software realm designed to bring large-scale data handling and visualization to the browser. Our technology handles tens to hundreds of thousands of records shared between discreet OWF widgets, small iframe applications in a shared web desktop. These widgets provide a range of visualizations and tools for intelligence analysts to make the most use of the disparate data sources streaming in from the modern threat space, enabling them to make decisions that save lives of both military troops and civilians around the world.
+java
+JavaScript
+owf
+synapse
+Design Delegates
+Software Architect
+2010-10-01
+2011-07-31
+Responsible for the entire technology stack at a start-up software development company. Accomplishments include developing several platforms to facilitate web programing, implementing a continuous integration server across several languages and frameworks, and architecting several medium-scale projects with a team of five developers and designers.
+
+Our largest project was a field agent tracking system, responsible for maintaining scheduling and routing information for hundreds of in-store field marketing agents in Australia. The project combined a variety of technologies, including a scalable PHP backend, dynamic mobile frontend, and extensive reporting capabilities.
+
+In the course of the project, we developed JEFRi, a Javascript Entity Framework to facilitate our mobile development work.
+JavaScript
+jefri
+php
+crosslight
+kohana
+sqlite
+linux
+Entre Technology Services, LLC
+Software Developer
+2007-09-01
+2010-09-30
+I managed medium-scale software projects for several Montana companies, including the Stillwater Mining Company, Town Pump of Montana, and Crowley Fleck Law Firm. Developed and implemented a unique solution to e-discovery motions. Projects included writing OSHA tracking software, modules for inventory management software, and support on web development for several clients.
+java
+.net
+entity-framework
+linux
+Education
+Seattle University
+Master of Science Computer Science
+2011-01-01
+2011-01-01
+Part time Master's student, pursuing a research focus on approaches to teaching software engineering to mid-career professionals with little to no programming experience.
+Rocky Mountain College
+B.S. Mathematics
+2007-08-01
+2011-05-31
+Tutored for three years. Brought a group of math majors together for regular study sessions, helping all of us work through not just our homework, but the big ideas on topics from philosophy to religion to science, and how they fit together with the material we studied.
+Rocky Mountain College
+B.S. Computer Science
+2006-08-01
+2011-05-31
+Earned two Bachelors of Science (Computer Science, Mathematics) in five years. Worked on several software development projects with other students in the CS department, including tools to help computational biology research students perform genome analysis on Rocky's local computing cluster.
+Projects
+Jiffies CSS
+
+Jiffies CSS is a "postmodern" CSS full-page reset. It uses the most recent 100% pure CSS standards, including layers, native css nesting, and a variable structure to define user and application specific overrides.
+nand2tetris/web-ide
+
+Online web IDE for the nand2tetris computer architecture & language course.
+DavidSouther/software_craftsmanship
+
+Software Craftsmanship for the Lay Person is an introduction project based book for a first exposure to programming. The main text is language agnostic, while the three workbooks have project-specific instruction in Python, TypeScript, and Rust.
+DavidSouther/Montana-News-Archive
+
+Montana News Archive is a long-term archival and search tool for local broadcasting companies. This project has been used by a number of Montana and regional news networks to include historical archival footage in their broadcasts.
+DavidSouther/softd
+
+Pure typeScript CPU-only 3d software renderer, capable of rendering scenes with constant ambient lighting and thousands of polygons at 60fps.
+Publications
+Cloud Journeys: Building a Serverless Image Recognition Website with Machine Learning 2023-06-23
+
+The Code Examples team tells the story of how they created a serverless application that detects labels for images and lets the user download those images by label. This is the first entry in a new content category called Cloud Journeys.
+Technical Whiteboarding 2023-04-01
+
+A series of posts on how to approach technical whiteboarding. Technical whiteboarding is often encountered in an interview setting, but the techniques to solve an interview question apply equally well to a wide range of design and development scenarios. This several-part series presents a checklist of steps to work through a technical problem, shows a variety of ways to diagram programs, and has an extensive glossary of data structures & algorithms topics. A section on the "Forward/Backward Method" applies mathematical proof techniques to have a systematic approach to DS&A problem solving.
+Visualization by Organizing Connections in Collapsible Hierarchical Graphs 2019-06-01
+
+Abstract Network graphs in certain applications, e.g., cloud-network graphs, have connections in multiple dimensions. At present, it is difficult or inconvenient for a user to visualize such graphs at varying levels of granularity or hierarchy. Per the techniques of this disclosure, a hull is defined as a node with descendants, and a segment is defined as a bundle of edges between descendants below a pair of nodes. By enabling a user to expand or collapse a hull, and by routing edges via segments connecting parent nodes, the described techniques enable a high-level visualization of large graph networks that can be quickly refocused into low-level pictures.
+Is stat() an expensive system call? 2013-06-01
+Format Date time in AngularJS 2012-10-01

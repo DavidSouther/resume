@@ -3,7 +3,7 @@
   "settings": {
     "language": "EN",
     "MACVersion": "0.3",
-    "lastUpdate": "2023-03-28"
+    "lastUpdate": "2024-04-04"
   },
   "aboutMe": {
     "profile": {
@@ -41,7 +41,7 @@
             "name": "Sr Examples Engineer",
             "challenges": [
               {
-                "description": "Sr Engineer creating example code and applications using the [AWS SDK for Rust](https://github.com/awslabs/aws-sdk-rust) ([example repo](https://github.com/awsdocs/aws-doc-sdk-examples/tree/main/rust_dev_preview)). Primary duties are writing informative code samples for all aspects of the Rust SDK. Longer-term projects develop cross-service scenarios to emphasize SDK utilities across the SDK language and service boundaries. These examples show customers real-world approaches to developing software that combines multiple AWS SDKs.\n\n Highlights include:\n- a [REST system](https://github.com/awsdocs/aws-doc-sdk-examples/tree/main/rust_dev_preview/cross_service/rest_ses) using [Amazon RDS Data](https://aws.amazon.com/rds/) & [Amazon SES](https://aws.amazon.com/ses/)\n- a [photo asset manager](https://community.aws/posts/cloud-journeys/01-serverless-image-recognition-app) using [Amazon S3](https://aws.amazon.com/s3/) [intelligent tiering](https://aws.amazon.com/s3/storage-classes/intelligent-tiering/) storage, [Amazon Rekognition](https://aws.amazon.com/rekognition/) image tagging, & [Amazon SQS](https://aws.amazon.com/sqs/) notifications\n- an [ML Ops pipeline]() using [AWS Step Functions](https://aws.amazon.com/step-functions/) to orchestrate [Amazon Textract](https://aws.amazon.com/textract/), [Amazon Comprehend](https://aws.amazon.com/comprehend/), and [Amazon Polly](https://aws.amazon.com/polly/)\n\nI am the tech lead for the [AWS SDK Code Examples](https://github.com/awsdocs/aws-doc-sdk-examples) Tooling group, who create and maintain Continuous Integration, Continuous Delivery, and Product Excellence tooling for AWS Code Examples. This tooling enforces quality standards on first-part example code for the [docs.aws.amazon.com](https://docs.aws.amazon.com) property, and requires coordination across engineering, writing, editing, and product teams spanning AWS technology and marketing."
+                "description": "Sr Engineer creating example code and applications using the [AWS SDK for Rust](https://github.com/awslabs/aws-sdk-rust) ([example repo](https://github.com/awsdocs/aws-doc-sdk-examples/tree/main/rust_dev_preview)). Primary duties are writing informative code samples for all aspects of the Rust SDK. Longer-term projects develop cross-service scenarios to emphasize SDK utilities across the SDK language and service boundaries. These examples show customers real-world approaches to developing software that combines multiple AWS SDKs.\n\n Highlights include:\n- a [REST system](https://github.com/awsdocs/aws-doc-sdk-examples/tree/main/rust_dev_preview/cross_service/rest_ses) using [Amazon RDS Data](https://aws.amazon.com/rds/) & [Amazon SES](https://aws.amazon.com/ses/)\n- a [photo asset manager](https://community.aws/posts/cloud-journeys/01-serverless-image-recognition-app) using [Amazon S3](https://aws.amazon.com/s3/) [intelligent tiering](https://aws.amazon.com/s3/storage-classes/intelligent-tiering/) storage, [Amazon Rekognition](https://aws.amazon.com/rekognition/) image tagging, & [Amazon SQS](https://aws.amazon.com/sqs/) notifications\n- an [ML Ops pipeline]() using [AWS Step Functions](https://aws.amazon.com/step-functions/) to orchestrate [Amazon Textract](https://aws.amazon.com/textract/), [Amazon Comprehend](https://aws.amazon.com/comprehend/), and [Amazon Polly](https://aws.amazon.com/polly/)\n- a multi-language [Coupon Newsletter](https://github.com/awsdocs/aws-doc-sdk-examples/tree/main/workflows/sesv2_weekly_mailer) using [Amazon Simple Email Service](https://aws.amazon.com/ses/).\n- Utilized Ailly & Bedrock to develop [bespoke human-navigator LLM workflow](https://github.com/DavidSouther/aws-doc-sdk-examples/tree/workflow/sesv2/mailer/workflows/sesv2_weekly_mailer/content) for Code Examples team, speeding development by 20%.\n\nI am the tech lead for the [AWS SDK Code Examples](https://github.com/awsdocs/aws-doc-sdk-examples) Tooling group, who create and maintain Continuous Integration, Continuous Delivery, and Product Excellence tooling for AWS Code Examples. This tooling enforces quality standards on first-part example code for the [docs.aws.amazon.com](https://docs.aws.amazon.com) property, and requires coordination across engineering, writing, editing, and product teams spanning AWS technology and marketing."
               }
             ],
             "startDate": "2022-09-12",
@@ -553,6 +553,20 @@
     "projects": [
       {
         "details": {
+          "name": "Ailly",
+          "description": "Load your writing. Guide Ailly to your voice. Write your outline. Prompt Ailly to continue to continue the writing. Edit its output, and get even more like that.\n\nRhymes with Daily.\n\nAilly's best feature is rapidly itearting on prompt engineering. By keeping your prompts in snippets on the file system, you can make very fine-grained changes to your prompt and immediately see the difference. You can also use all your normal source control tooling to track changes over time - both your changes, and what the LLM does.",
+          "URL": "https://github.com/DavidSouther/ailly"
+        },
+        "type": "openSource",
+        "roles": [
+          {
+            "name": "Developer",
+            "startDate": "2023-10-04"
+          }
+        ]
+      },
+      {
+        "details": {
           "name": "Jiffies CSS",
           "description": "Jiffies CSS is a \"postmodern\" CSS full-page reset. It uses the most recent 100% pure CSS standards, including layers, native css nesting, and a variable structure to define user and application specific overrides.",
           "URL": "https://jefri.github.io/jiffies-css//"
@@ -606,21 +620,6 @@
             "name": "Developer",
             "startDate": "2015-10-01",
             "finishDate": "2017-07-31"
-          }
-        ]
-      },
-      {
-        "details": {
-          "name": "DavidSouther/softd",
-          "description": "Pure typeScript CPU-only 3d software renderer, capable of rendering scenes with constant ambient lighting and thousands of polygons at 60fps.",
-          "URL": "https://github.com/DavidSouther/softd"
-        },
-        "type": "openSource",
-        "roles": [
-          {
-            "name": "Developer",
-            "startDate": "2016-03-01",
-            "finishDate": "2016-03-31"
           }
         ]
       }

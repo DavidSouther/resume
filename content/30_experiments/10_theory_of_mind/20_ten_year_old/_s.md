@@ -1,5 +1,0 @@
----
-isolated: true
----
-
-Complete this story as told by a 10 year old child.

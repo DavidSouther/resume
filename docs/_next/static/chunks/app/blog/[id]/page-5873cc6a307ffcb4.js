@@ -1,0 +1,10 @@
+(self.webpackChunk_N_E=self.webpackChunk_N_E||[]).push([[548],{9819:function(e,r,n){Promise.resolve().then(n.bind(n,8504))},8504:function(e,r,n){"use strict";n.r(r),n.d(r,{default:function(){return l}});var t=n(7437),o=n(7839),s=n(5361),c=n.n(s);function l(e){let{post:{title:r,body:n,date:s}}=e;return(0,t.jsx)(o.Card,{header:"".concat(r," - ").concat(null==s?void 0:s.replace(/T.*/,"")),className:c().blogPage,children:(0,t.jsx)("div",{dangerouslySetInnerHTML:{__html:null!=n?n:""}})})}},7839:function(e,r,n){"use strict";n.r(r),n.d(r,{Card:function(){return o}});var t=n(7437);let o=e=>{let{className:r="",header:n,children:o,footer:s}=e;return(0,t.jsx)("article",{className:r,children:(0,t.jsxs)(t.Fragment,{children:[n&&(0,t.jsx)("header",{children:(0,t.jsx)("h3",{children:n})}),(0,t.jsx)("main",{children:o}),s&&(0,t.jsx)("footer",{children:s})]})})}},5361:function(e){e.exports={blogPage:"blog-page_blogPage__HuM0o"}},622:function(e,r,n){"use strict";/**
+ * @license React
+ * react-jsx-runtime.production.min.js
+ *
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */var t=n(2265),o=Symbol.for("react.element"),s=Symbol.for("react.fragment"),c=Object.prototype.hasOwnProperty,l=t.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED.ReactCurrentOwner,u={key:!0,ref:!0,__self:!0,__source:!0};function a(e,r,n){var t,s={},a=null,i=null;for(t in void 0!==n&&(a=""+n),void 0!==r.key&&(a=""+r.key),void 0!==r.ref&&(i=r.ref),r)c.call(r,t)&&!u.hasOwnProperty(t)&&(s[t]=r[t]);if(e&&e.defaultProps)for(t in r=e.defaultProps)void 0===s[t]&&(s[t]=r[t]);return{$$typeof:o,type:e,key:a,ref:i,props:s,_owner:l.current}}r.Fragment=s,r.jsx=a,r.jsxs=a},7437:function(e,r,n){"use strict";e.exports=n(622)}},function(e){e.O(0,[971,596,744],function(){return e(e.s=9819)}),_N_E=e.O()}]);
+//# sourceMappingURL=page-5873cc6a307ffcb4.js.map
