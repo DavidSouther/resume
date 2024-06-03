@@ -13,6 +13,7 @@ export interface Post {
   summary?: string;
   title?: string;
   body?: string;
+  image?: string;
 }
 
 export function getPostPaths(): string[] {
@@ -39,6 +40,7 @@ export function getSortedPosts(): Post[] {
         show,
         summary: front.data.summary as string | undefined,
         title: front.data.title as string | undefined,
+        image: front.data.image as string | undefined,
       };
     })
     .filter(({ show }) => show);
@@ -56,11 +58,19 @@ export async function getPost(id: string): Promise<Post> {
   const date =
     (front.data.date as Date | undefined)?.toISOString() ?? undefined;
   const title = front.data.title ?? "Unknown Title";
+  const image = front.data.image;
   const processedContent = await remark()
     .use(remarkGfm)
     .use(remarkHtml)
     .process(front.content);
   const contentHtml = processedContent.toString();
-  const post = { id, date, title, body: contentHtml, show: true };
+  const post = {
+    id,
+    date,
+    title,
+    body: contentHtml,
+    show: true,
+    ...(image ? { image } : {}),
+  };
   return post;
 }

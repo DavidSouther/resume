@@ -1,5 +1,3 @@
-"use client";
-
 import { Card } from "~/components/Card";
 import { Post } from "~/lib/posts";
 import styles from "./blog-page.module.css";
@@ -10,16 +8,18 @@ export default function BlogPage({
   post: Post;
 }) {
   return (
-    <Card
-      header={`${title} - ${date?.replace(/T.*/, "")}`}
-      footer={
-        <>
-          <a href="../../">Back</a>
-        </>
-      }
-      className={styles.BlogPage}
-    >
-      <div dangerouslySetInnerHTML={{ __html: body ?? "" }}></div>
-    </Card>
+    <>
+      <Card
+        header={`${title} - ${date?.replace(/T.*/, "")}`}
+        footer={
+          <>
+            <a href="../../">Back</a>
+          </>
+        }
+        className={styles.BlogPage}
+      >
+        <div dangerouslySetInnerHTML={{ __html: body ?? "" }}></div>
+      </Card>
+    </>
   );
 }

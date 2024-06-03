@@ -2,6 +2,7 @@
 title: Fuzzy Homomorphic Endofunctors
 date: 2024-04-04
 summary: LLMs are exploratory fuzzy homomorphic endofunctors mapping between points on the manifold of syntactically valid documents, traversing diverse paths of meaning.
+image: "/fuzzy_llm.png"
 ---
 
 Git commits are [isomorphic contours in source-code phase space](https://www.reddit.com/r/programming/comments/embdf/git_complicated_of_course_not_commits_map_to/), and so do LLMs!
