@@ -171,10 +171,13 @@ export interface Location {
   notes?: string;
 }
 
-export interface PublicProfile {
-  type: "manfred" | "linkedin" | "stackoverflow" | "xing" | "other";
+export interface Link {
+  type: String;
   URL: string;
+  description?: string;
 }
+
+export interface PublicProfile extends Link {}
 
 export interface PhoneNumber {
   countryCode: number;
@@ -199,8 +202,8 @@ export interface ImageData {
 
 export type Image = ImageLink | ImageData;
 
-export interface Link {
-  type: "linkedin" | "github" | "twitter" | "website" | "other";
-  URL: string;
-  description?: string;
+export interface Contact {
+  phoneNumbers?: Array<{ countryCode: number; number: string }>;
+  contactMails?: string[];
+  publicProfiles?: Link[];
 }

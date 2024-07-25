@@ -225,6 +225,12 @@ article > header > h3 {
 .root > header nav ul {
   flex-direction: row;
 }
+
+.root > header nav a {
+  font-size: 0.8rem;
+  line-height: 1.5rem;
+}
+
 .root > header nav ul li {
   text-align: right;
 }

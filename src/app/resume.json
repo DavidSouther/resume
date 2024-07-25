@@ -17,18 +17,18 @@
         "country": "US",
         "region": "New York",
         "municipality": "Brooklyn"
-      }
-    },
-    "relevantLinks": [
-      {
-        "type": "github",
-        "URL": "https://github.com/davidsouther"
       },
-      {
-        "type": "other",
-        "URL": "mailto:davidsouther+resume@gmail.com"
+      "contact": {
+        "contactMails": ["davidsouther+resume@gmail.com"],
+        "phoneNumbers": [{ "number": "650.495.5402", "countryCode": 1 }],
+        "publicProfiles": [
+          {
+            "type": "github",
+            "URL": "https://github.com/davidsouther"
+          }
+        ]
       }
-    ]
+    }
   },
   "experience": {
     "jobs": [

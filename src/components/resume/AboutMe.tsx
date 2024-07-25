@@ -1,7 +1,38 @@
 "use client";
 import Image from "next/image";
 import Link from "next/link";
-import type * as ResumeTypes from "~/lib/resume";
+import * as ResumeTypes from "~/lib/resume";
+
+export const Contact = ({
+  links = [],
+  contact = {},
+}: {
+  links?: ResumeTypes.Link[];
+  contact?: ResumeTypes.Contact;
+}) => {
+  const contactLinks: ResumeTypes.Link[] = [
+    ...(contact.publicProfiles ?? []),
+    ...(contact.contactMails?.map(
+      (p) =>
+        ({
+          type: "email",
+          URL: `mailto:${p}`,
+        } satisfies ResumeTypes.Link),
+    ) ?? []),
+    ...(contact.phoneNumbers?.map(
+      (p) =>
+        ({
+          type: "tel",
+          URL: `tel:+${p.countryCode} ${p.number}`,
+        } satisfies ResumeTypes.Link),
+    ) ?? []),
+  ];
+  const allLinks = [...links, ...contactLinks].map((p) => ({
+    type: p.URL,
+    URL: p.URL,
+  }));
+  return allLinks && <Links className="contact" links={allLinks} />;
+};
 
 export const AboutMe = ({ aboutMe }: { aboutMe: ResumeTypes.AboutMe }) => (
   <>
@@ -19,7 +50,7 @@ export const AboutMe = ({ aboutMe }: { aboutMe: ResumeTypes.AboutMe }) => (
     {aboutMe.profile.location && (
       <Location location={aboutMe.profile.location} />
     )}
-    {aboutMe.relevantLinks && <Links links={aboutMe.relevantLinks} />}
+    <Contact links={aboutMe.relevantLinks} contact={aboutMe.profile.contact} />
   </>
 );
 
@@ -60,8 +91,14 @@ const Location = ({ location }: { location: ResumeTypes.Location }) => (
   </p>
 );
 
-const Links = ({ links }: { links: ResumeTypes.Link[] }) => (
-  <nav>
+const Links = ({
+  links,
+  className = "",
+}: {
+  links: ResumeTypes.Link[];
+  className?: string;
+}) => (
+  <nav className={className}>
     <ul>
       {links.map((link) => (
         <li key={link.URL}>
