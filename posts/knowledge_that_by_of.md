@@ -1,6 +1,6 @@
 ---
 title: "Beyond Knowledge-That: LLMs' Indirect Understanding"
-date: 2024-08-17
+date: 2024-04-17
 summary: We say LLM AIs "know" things, yet also claim they "don't actually know." This isn't contradictory—it's about different knowledge types. LLMs have knowledge-of from data, but lack humans' genuine knowledge-that (justified true belief) and knowledge-by (direct experience). Key distinction!
 ---
 

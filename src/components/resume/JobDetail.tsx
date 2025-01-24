@@ -36,19 +36,47 @@ const Role = ({ role }: { role: ResumeTypes.Role }) => (
   </section>
 );
 
+export const COMPETENCES_LCL = new Map([
+  ["amazon-web-services", "Amazon Web Services (AWS)"],
+  ["angular", "Angular"],
+  ["angularjs", "AngularJS"],
+  ["aws", "Amazon Web Services (AWS)"],
+  ["bedrock", "Amazon Bedrock"],
+  ["curriculum development", "Curriculum Development"],
+  ["front end", "Front End"],
+  ["html & css", "HTML & CSS"],
+  ["instructing", "Instructor"],
+  ["interview training", "Technical Interview Training"],
+  ["javascript", "JavaScript"],
+  ["k8s", "Kubernetes"],
+  ["kubernetes", "Kubernetes"],
+  ["llm", "Large Language Models"],
+  ["mit-scratch", "MIT Scratch"],
+  ["node", "NodeJS"],
+  ["nodejs", "NodeJS"],
+  ["python", "Python"],
+  ["react", "React"],
+  ["rust", "Rust"],
+  ["technical writing", "Technical Writing"],
+  ["typescript", "TypeScript"],
+]);
+
 export const COMPETENCES_MAP = new Map([
-  ["AngularJS", "https://angularjs.org"],
-  ["Dart", "http://dart.dev"],
-  ["GraphQL", "https://graphql.org/"],
-  ["Istio", "https://istio.io"],
-  ["Kompose", "https://kompose.io/"],
-  ["Kubernetes", "https://kubernetes.io"],
   ["amazon-web-services", "https://aws.amazon.com"],
   ["angular", "https://angular.io/"],
+  ["angularjs", "https://angularjs.org"],
+  ["bedrock", "https://aws.amazon.com/bedrock/"],
+  ["dart", "http://dart.dev"],
   ["golang", "https://go.dev"],
   ["google-cloud-platform", "https://cloud.google.com/"],
   ["google-compute-engine", "https://cloud.google.com/compute"],
+  ["graphql", "https://graphql.org/"],
+  ["istio", "https://istio.io"],
+  ["kompose", "https://kompose.io/"],
+  ["kubernetes", "https://kubernetes.io"],
+  ["mit-scratch", "https://scratch.mit.edu"],
   ["node.js", "https://nodejs.org"],
+  ["nodejs", "https://nodejs.org"],
   ["python", "https://www.python.org"],
   ["react", "https://react.dev/"],
   ["redis", "redis.io"],
@@ -65,7 +93,9 @@ const Competences = ({
   <ul>
     {competences.map(({ name }) => (
       <li key={name}>
-        <A href={COMPETENCES_MAP.get(name.toLowerCase())}>{name}</A>
+        <A href={COMPETENCES_MAP.get(name.toLowerCase())}>
+          {COMPETENCES_LCL.get(name.toLowerCase()) ?? `${name}`}
+        </A>
       </li>
     ))}
   </ul>

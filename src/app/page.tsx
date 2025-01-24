@@ -2,12 +2,13 @@ import { Card } from "~/components/Card";
 import Layout from "~/components/Layout";
 import { Resume } from "~/components/resume/Resume";
 import { getSortedPosts } from "~/lib/posts";
-import * as ResumeTypes from "~/lib/resume";
-import resume from "./resume.json";
 import Link from "next/link.js";
+import { jsonLoader, ResumeLoader, tomlLoader } from "~/lib/loader";
+
+const resumeLoader: ResumeLoader = tomlLoader;
 
 export default async function Home() {
-  const posts = await getSortedPosts();
+  const [posts, resume] = await Promise.all([getSortedPosts(), resumeLoader()]);
   const name = `${resume.aboutMe.profile.name} ${resume.aboutMe.profile.surnames}`;
   const title = `${name} - Resume`;
   return (
@@ -26,7 +27,7 @@ export default async function Home() {
           </>
         ))}
       </Card>
-      <Resume resume={resume as ResumeTypes.ResumeData} />
+      <Resume resume={resume} />
     </Layout>
   );
 }

@@ -10,7 +10,11 @@ export default function BlogPage({
   return (
     <>
       <Card
-        header={`${title} - ${date?.replace(/T.*/, "")}`}
+        header={
+          <>
+            <a href="/">David Souther</a> - {title} - {date?.replace(/T.*/, "")}
+          </>
+        }
         footer={
           <>
             <a href="../../">Back</a>
