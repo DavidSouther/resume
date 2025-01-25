@@ -45,10 +45,12 @@ Every good story needs conflict. What needed to be done to advance the team’s 
 | &{#task_ic};             | &{task_tl};           |
 
 > {section #task_ic}
-> The source of truth service ran as a single point of failure monolithic application on a single cloud VM instance. It was running out of date software and had a fragile update process. The business needed the system to be more robust, more secure, and more resilient. It was also necessary to remain in place for both human and automated users during upgrade and migration.
+
+The source of truth service ran as a single point of failure monolithic application on a single cloud VM instance. It was running out of date software and had a fragile update process. The business needed the system to be more robust, more secure, and more resilient. It was also necessary to remain in place for both human and automated users during upgrade and migration.
 
 > {section #task_tl}
-> I was manager for four local front end developers, and Tech Lead for ten total distributed FE devs. This team was responsible for migrating “Groups”, about one quarter of the affected “VMS” functionality. These engineers were distributed between central Europe and the US west coast.
+
+I was manager for four local front end developers, and Tech Lead for ten total distributed FE devs. This team was responsible for migrating “Groups”, about one quarter of the affected “VMS” functionality. These engineers were distributed between central Europe and the US west coast.
 
 #### Action
 
@@ -59,10 +61,12 @@ The thing that you personally did when presented with that task. Anyone could pi
 | &{#action_ic};           | &{#action_tl};        |
 
 > {section #action_ic}
-> I developed the necessary scripts and migrations to handle safely moving to the then-current version of the software. These scripts additionally allow continued future upgrades as software updates are made available. <br /><br />I coordinated with internal IT and security teams to configure and enable corporate single sign on to the system.<br /><br />I coordinated modernizing a half-dozen custom-made plugins (rewriting two myself, documenting the process and guiding the original authors for the others) through the upgrade process. I added logging and metrics for API calls, allowing SLO monitoring & outage detection.
+
+I developed the necessary scripts and migrations to handle safely moving to the then-current version of the software. These scripts additionally allow continued future upgrades as software updates are made available. <br /><br />I coordinated with internal IT and security teams to configure and enable corporate single sign on to the system.<br /><br />I coordinated modernizing a half-dozen custom-made plugins (rewriting two myself, documenting the process and guiding the original authors for the others) through the upgrade process. I added logging and metrics for API calls, allowing SLO monitoring & outage detection.
 
 > {section #action_tl}
-> I coordinated AngularJS feature work with Angular migration work, collaborating with PM and UX stakeholders on direction & priority. I mentored several junior and noogler engineers in the org on how to work in the org, use Angular, program Typescript, and general career development.<br /><br />I engaged with the wider PTeam ecosystem on a variety of developer experience initiatives. This included TypeScript language readability guidance, GraphQL utilities & API feedback, and promulgating NgRX best practices. The NgRX best practices doc was written by one of my direct reports, whom I championed and guided through the wider cross-org process.
+
+I coordinated AngularJS feature work with Angular migration work, collaborating with PM and UX stakeholders on direction & priority. I mentored several junior and noogler engineers in the org on how to work in the org, use Angular, program Typescript, and general career development.<br /><br />I engaged with the wider PTeam ecosystem on a variety of developer experience initiatives. This included TypeScript language readability guidance, GraphQL utilities & API feedback, and promulgating NgRX best practices. The NgRX best practices doc was written by one of my direct reports, whom I championed and guided through the wider cross-org process.
 
 #### Results
 
@@ -83,7 +87,8 @@ SSO Integration allows audited access, and reduces operator burden of needing mu
 The upgraded version includes a GraphQL API, which allows analysts to greatly improve their tooling. This brings a commensurate improvement to their customer support abilities.
 
 > {section #results_tl}
-> The extended team migrated the bulk of our pages in six months (from a three quarter estimate), while developing new features in tandem, including the Groups Policy Selection, and the Groups CRON scheduler widget. The Policy Selection was especially streamlined by the improved GraphQL utilities, and the CRON widget drove much of our understanding that went into the NgRX best practices document.
+
+The extended team migrated the bulk of our pages in six months (from a three quarter estimate), while developing new features in tandem, including the Groups Policy Selection, and the Groups CRON scheduler widget. The Policy Selection was especially streamlined by the improved GraphQL utilities, and the CRON widget drove much of our understanding that went into the NgRX best practices document.
 
 I had a clean handoff of Groups ownership from the US to Europe at the end of tenure, allowing the Europe team to complete the migration on schedule.
 
