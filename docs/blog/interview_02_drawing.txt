@@ -1,77 +1,72 @@
-1:HL["/_next/static/css/fef2051bebc1224a.css",{"as":"style"}]
-0:["aGqQErIkoIOsd7PFUynAp",[[["",{"children":["blog",{"children":[["id","interview_02_drawing","d"],{"children":["__PAGE__?{\"id\":\"interview_02_drawing\"}",{}]}]}]},"$undefined","$undefined",true],"$L2",[[["$","link","0",{"rel":"stylesheet","href":"/_next/static/css/fef2051bebc1224a.css","precedence":"next"}]],"$L3"]]]]
+1:HL["/_next/static/css/69a5d79ab785c99e.css",{"as":"style"}]
+0:["jnSBSlNAGBB3DLEMRcPGB",[[["",{"children":["blog",{"children":[["id","interview_02_drawing","d"],{"children":["__PAGE__?{\"id\":\"interview_02_drawing\"}",{}]}]}]},"$undefined","$undefined",true],"$L2",[[["$","link","0",{"rel":"stylesheet","href":"/_next/static/css/69a5d79ab785c99e.css","precedence":"next"}]],"$L3"]]]]
 4:HL["/_next/static/css/188c8aff756c3f67.css",{"as":"style"}]
-5:I{"id":7767,"chunks":["272:static/chunks/webpack-aeac45c82ebe15f5.js","971:static/chunks/fd9d1056-edf0048f965d11ef.js","596:static/chunks/596-e3269281f6a80cbc.js"],"name":"default","async":false}
-6:I{"id":7920,"chunks":["272:static/chunks/webpack-aeac45c82ebe15f5.js","971:static/chunks/fd9d1056-edf0048f965d11ef.js","596:static/chunks/596-e3269281f6a80cbc.js"],"name":"default","async":false}
-9:I{"id":6852,"chunks":["13:static/chunks/13-a14f4f8488530559.js","599:static/chunks/599-57c8542fa14d7dc7.js","185:static/chunks/app/layout-69f12350d3705464.js"],"name":"","async":false}
+5:I{"id":7767,"chunks":["272:static/chunks/webpack-1aeb902c31204970.js","971:static/chunks/fd9d1056-e3a194a6ec4d2e15.js","596:static/chunks/596-5a1b15e53df196e1.js"],"name":"default","async":false}
+6:I{"id":7920,"chunks":["272:static/chunks/webpack-1aeb902c31204970.js","971:static/chunks/fd9d1056-e3a194a6ec4d2e15.js","596:static/chunks/596-5a1b15e53df196e1.js"],"name":"default","async":false}
+9:I{"id":6852,"chunks":["13:static/chunks/13-e68ef30e5128474d.js","599:static/chunks/599-539e914410ef267f.js","185:static/chunks/app/layout-40b050b05077d61f.js"],"name":"","async":false}
 2:[null,["$","html",null,{"lang":"en","children":[["$","head",null,{"children":["$","link",null,{"rel":"stylesheet","href":"/jiffies-css-bundle.min.css"}]}],["$","body",null,{"className":"container","children":[["$","$L5",null,{"parallelRouterKey":"children","segmentPath":["children"],"loading":"$undefined","loadingStyles":"$undefined","hasLoading":false,"error":"$undefined","errorStyles":"$undefined","template":["$","$L6",null,{}],"templateStyles":"$undefined","notFound":[["$","title",null,{"children":"404: This page could not be found."}],["$","div",null,{"style":{"fontFamily":"system-ui,\"Segoe UI\",Roboto,Helvetica,Arial,sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\"","height":"100vh","textAlign":"center","display":"flex","flexDirection":"column","alignItems":"center","justifyContent":"center"},"children":["$","div",null,{"children":[["$","style",null,{"dangerouslySetInnerHTML":{"__html":"body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}"}}],["$","h1",null,{"className":"next-error-h1","style":{"display":"inline-block","margin":"0 20px 0 0","padding":"0 23px 0 0","fontSize":24,"fontWeight":500,"verticalAlign":"top","lineHeight":"49px"},"children":"404"}],["$","div",null,{"style":{"display":"inline-block"},"children":["$","h2",null,{"style":{"fontSize":14,"fontWeight":400,"lineHeight":"49px","margin":0},"children":"This page could not be found."}]}]]}]}]],"notFoundStyles":[],"childProp":{"current":["$","$L5",null,{"parallelRouterKey":"children","segmentPath":["children","blog","children"],"loading":"$undefined","loadingStyles":"$undefined","hasLoading":false,"error":"$undefined","errorStyles":"$undefined","template":["$","$L6",null,{}],"templateStyles":"$undefined","notFound":"$undefined","notFoundStyles":"$undefined","childProp":{"current":["$","$L5",null,{"parallelRouterKey":"children","segmentPath":["children","blog","children",["id","interview_02_drawing","d"],"children"],"loading":"$undefined","loadingStyles":"$undefined","hasLoading":false,"error":"$undefined","errorStyles":"$undefined","template":["$","$L6",null,{}],"templateStyles":"$undefined","notFound":"$undefined","notFoundStyles":"$undefined","childProp":{"current":["$L7","$L8",null],"segment":"__PAGE__?{\"id\":\"interview_02_drawing\"}"},"styles":[["$","link","0",{"rel":"stylesheet","href":"/_next/static/css/188c8aff756c3f67.css","precedence":"next"}]]}],"segment":["id","interview_02_drawing","d"]},"styles":[]}],"segment":"blog"},"styles":[]}],["$","$L9",null,{}]]}]]}],null]
 3:[["$","meta","0",{"charSet":"utf-8"}],["$","title","1",{"children":"Drawing Data Structures - David Souther"}],["$","meta","2",{"name":"description","content":"davidsouther.com - resume, blog, playground"}],["$","link","3",{"rel":"author","href":"davidsouther.com"}],["$","meta","4",{"name":"author","content":"David Souther"}],["$","link","5",{"rel":"manifest","href":"/manifest.json"}],["$","meta","6",{"name":"theme-color","media":"(prefers-color-scheme: light)","content":"white"}],["$","meta","7",{"name":"theme-color","media":"(prefers-color-scheme: dark)","content":"black"}],["$","meta","8",{"name":"viewport","content":"width=device-width, initial-scale=1"}],["$","meta","9",{"name":"twitter:card","content":"summary"}]]
-a:I{"id":7839,"chunks":["548:static/chunks/app/blog/[id]/page-6269816b04da5638.js"],"name":"Card","async":false}
-b:T1201,<h1>Drawing Data Structures</h1>
-<p>Part two of a series on <a href="https://davidsouther.com/blog/interview_01_whiteboard">technical whiteboarding</a>.</p>
+a:I{"id":7839,"chunks":["548:static/chunks/app/blog/[id]/page-59034e0249cd5d93.js"],"name":"Card","async":false}
+b:T12ad,<section>
+<h1 id="drawing-data-structures">Drawing Data Structures</h1>
+<p>Part two of a series on <a href="/blog/interview_01_whiteboard">technical whiteboarding</a>.</p>
 <p>Visual communication is a valuable but often overlooked skill in software development. This guide provides a set of useful ways to draw common data structures and values. These can be used in any number of settings. They are especially useful when creating test cases, developing how an algorithm could solve a problem, and when stepping through code that relies heavily on data structures.</p>
-<h2>Primitives</h2>
+<section>
+<h2 id="primitives">Primitives</h2>
+<p><img src="/images/Technical_Whiteboarding_Drawing_Primitives.png" class="float" alt="Several numbers, strings, and boolean values." width="400px" /></p>
 <ul>
-<li>
-<p>Numbers are written as numbers. For languages that distinguish between integer and floating point, it is easiest to write the number with a decimal . for floating point and without the decimal for integers. Alternatively, the machine size, if necessary, can be part of the number itself, like 12.5f32 or 15u8 for a 32-bit floating point and an 8-bit unsigned integer, respectively.</p>
+<li><p>Numbers are written as numbers. For languages that distinguish between integer and floating point, it is easiest to write the number with a decimal . for floating point and without the decimal for integers. Alternatively, the machine size, if necessary, can be part of the number itself, like 12.5f32 or 15u8 for a 32-bit floating point and an 8-bit unsigned integer, respectively.</p>
 </li>
-<li>
-<p>Strings are written with surrounding quotes, when they are short and when their structure isn’t critical to the algorithm at hand. Otherwise, they can be treated as objects and written to the right of the table, as shown below.</p>
+<li><p>Strings are written with surrounding quotes, when they are short and when their structure isn’t critical to the algorithm at hand. Otherwise, they can be treated as objects and written to the right of the table, as shown below.</p>
 </li>
-<li>
-<p>Boolean values are written as true and false. (Or True / False in Python.)</p>
+<li><p>Boolean values are written as true and false. (Or True / False in Python.)</p>
 </li>
 </ul>
-<p><img src="/images/Technical_Whiteboarding_Drawing_Primitives.png" alt="Several numbers, strings, and boolean values."></p>
-<h2>Lists</h2>
+</section>
+<section>
+<h2 id="lists">Lists</h2>
+<p><img src="/images/Technical_Whiteboarding_Drawing_Simple.png" class="float" alt="Three items in a tuple (or fixed-length array, depending on the language). An array of prime numbers. A list of famous book opening lines. A linked list with 4 nodes." width="400px" /></p>
 <ul>
-<li>
-<p>Small, constant lists (three or fewer values that don’t change) can be written inline with three horizontal boxes.</p>
+<li><p>Small, constant lists (three or fewer values that don’t change) can be written inline with three horizontal boxes.</p>
 </li>
-<li>
-<p>Larger lists should be written with a set of boxes adjacent one another. Additional boxes can be added as the list grows.</p>
+<li><p>Larger lists should be written with a set of boxes adjacent one another. Additional boxes can be added as the list grows.</p>
 </li>
-<li>
-<p>Values inside the boxes for each list index are drawn as primitives, or as arrows to other lists and objects.</p>
+<li><p>Values inside the boxes for each list index are drawn as primitives, or as arrows to other lists and objects.</p>
 </li>
-<li>
-<p>Linked Lists can be drawn as squares or circles with their value inside (either primitive or arrow from the middle to another value), and a line from the edge to the “next” node in the list. Nodes with a “null” next value can point at empty space, or elide their next arrow entirely. For problems where the value isn’t important, only the structure, use the color of the circle to signify differing values.</p>
+<li><p>Linked Lists can be drawn as squares or circles with their value inside (either primitive or arrow from the middle to another value), and a line from the edge to the “next” node in the list. Nodes with a “null” next value can point at empty space, or elide their next arrow entirely. For problems where the value isn’t important, only the structure, use the color of the circle to signify differing values.</p>
 </li>
 </ul>
-<p><img src="/images/Technical_Whiteboarding_Drawing_Simple.png" alt="Drawing Simple Lists."></p>
-<p>Three items in a tuple (or fixed-length array, depending on the language). An array of prime numbers. A list of famous book opening lines. A linked list with 4 nodes.</p>
-<h2>Trees</h2>
+</section>
+<section>
+<h2 id="trees">Trees</h2>
 <ul>
-<li>
-<p>Similar to linked lists, tree nodes are boxes or circles with their values in the middle and arrows from the edge to another node.</p>
+<li><p>Similar to linked lists, tree nodes are boxes or circles with their values in the middle and arrows from the edge to another node.</p>
 </li>
-<li>
-<p>Binary trees should have two arrows out of the bottom, for left and right. A missing left or right can either point to an empty area, or be elided entirely.</p>
+<li><p>Binary trees should have two arrows out of the bottom, for left and right. A missing left or right can either point to an empty area, or be elided entirely.</p>
 </li>
-<li>
-<p>N-Array trees can point to an intermediate child list, if the structure of the list is important, or simply have N arrows to child nodes out of the parent node.</p>
+<li><p>N-Array trees can point to an intermediate child list, if the structure of the list is important, or simply have N arrows to child nodes out of the parent node.</p>
 </li>
-<li>
-<p>DOM Trees can be drawn with nested boxes, showing the nesting structure of the DOM tags.</p>
+<li><p>DOM Trees can be drawn with nested boxes, showing the nesting structure of the DOM tags.</p>
 </li>
 </ul>
-<p><img src="/images/Technical_Whiteboarding_Drawing_Trees.png" alt="Drawing Trees"></p>
-<p>A binary tree with depth 3 and 6 nodes. An N-ary tree with depth 3 and 7 nodes. A DOM structure with body, header, nav, main, and footer.</p>
-<h2>Objects</h2>
+<p><img src="/images/Technical_Whiteboarding_Drawing_Trees.png" alt="A binary tree with depth 3 and 6 nodes. An N-ary tree with depth 3 and 7 nodes. A DOM structure with body, header, nav, main, and footer." /></p>
+</section>
+<section>
+<h2 id="objects">Objects</h2>
 <ul>
-<li>
-<p>Objects, or key/value pairs, should always be drawn on the heap.</p>
+<li><p>Objects, or key/value pairs, should always be drawn on the heap.</p>
 </li>
-<li>
-<p>An object is a box with a T-Table inside it (see “Tracing Code”). The names are the properties of the object, and the values are those properties’ values, in the same format as other values. The Name / Value header can be elided, but above the box, the class the object was created from should be written (if applicable).</p>
+<li><p>An object is a box with a T-Table inside it (see “Tracing Code”). The names are the properties of the object, and the values are those properties’ values, in the same format as other values. The Name / Value header can be elided, but above the box, the class the object was created from should be written (if applicable).</p>
 </li>
-<li>
-<p>It is not necessary to draw the methods or functional properties of an object, however, in a typed language, it can be helpful to write the type of the object above the card.</p>
+<li><p>It is not necessary to draw the methods or functional properties of an object, however, in a typed language, it can be helpful to write the type of the object above the card.</p>
 </li>
 </ul>
-<p><img src="/images/Technical_Whiteboarding_Drawing_Objects.png" alt="Drawing Objects"></p>
-<p>A Person object with information about the author. Several Room objects, with the connections from the hallway to its adjacent rooms.</p>
-<h1>Summary</h1>
+<p><img src="/images/Technical_Whiteboarding_Drawing_Objects.png" alt="A Person object with information about the author. Several Room objects, with the connections from the hallway to its adjacent rooms." /></p>
+</section>
+</section>
+<section>
+<h1 id="summary">Summary</h1>
 <p>While there is no single “correct” way to draw any data structure, drawing it consistently is important for clear communication. These recommendations are a set that have worked well in a variety of educational and professional settings.</p>
+</section>
 8:["$","$La",null,{"header":[["$","a",null,{"href":"/","children":"David Souther"}]," - ","Drawing Data Structures"," - ","2024-08-13"],"footer":["$","a",null,{"href":"../../","children":"Back"}],"className":"blog-page_BlogPage__t8vJA","children":["$","div",null,{"dangerouslySetInnerHTML":{"__html":"$b"}}]}]
 7:null
