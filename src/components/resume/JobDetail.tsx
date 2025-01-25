@@ -1,6 +1,6 @@
 "use client";
 import type * as ResumeTypes from "~/lib/resume";
-import { A, P } from "../P";
+import { A, MD } from "../P";
 import { Organization } from "./Organization";
 import { show } from "~/lib/util";
 
@@ -18,15 +18,17 @@ export const JobDetail = ({ job }: { job: ResumeTypes.JobExperience }) => {
 
 const Role = ({ role }: { role: ResumeTypes.Role }) => (
   <section className="role">
-    <h5 className="about">
+    <h5>
       <em className="name">{role.name}</em>
+    </h5>
+    <h5 className="about">
       <small className="start date">{role.startDate}</small>
       <small className="finish date">{role.finishDate ?? "Current"}</small>
     </h5>
     {role.challenges && (
       <div className="details">
         {role.challenges.map(({ description }) => (
-          <P key={description}>{description}</P>
+          <MD key={description}>{description}</MD>
         ))}
       </div>
     )}

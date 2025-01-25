@@ -2,7 +2,7 @@ import { PublicEntityDetails, ResumeData } from "~/lib/resume";
 import { Card } from "../Card";
 import { JobDetail } from "./JobDetail";
 import { Education } from "./Studies";
-import { A, P } from "../P";
+import { A, MD } from "../P";
 
 export const Resume = ({ resume }: { resume: ResumeData }) => {
   const {
@@ -83,7 +83,7 @@ export const Pub = ({
           </small>
         )}
       </p>
-      {description && <P>{description}</P>}
+      {description && <MD>{description}</MD>}
     </section>
   </>
 );

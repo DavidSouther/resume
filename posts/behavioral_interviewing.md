@@ -2,7 +2,6 @@
 title: Behavioral Interviewing
 date: 2023-08-17
 summary: Learn how to tell your story in the STAR narrative format. Interviewers want to hire candidates who have demonstrated success in their past performance. During a behavioral interview, you can help your interviewer understand your successes by applying STAR to your past roles.
-prompt: I am writing a long form article on how to apply the STAR narrative format to behavioral interviewing.
 ---
 
 When an organization is looking to hire, they want to find a candidate who will bring value to their team in as little time as possible. The best way to know if a person will bring value to a team is to work with them for a period of time, and then evaluate if it’s a good fit. Internships are a great strategy for this kind of hiring, but for professionals who have started their career, this time commitment is unrealistic. Instead, companies rely on the assertion that _future behavior is best indicated by past performance_.
@@ -25,37 +24,68 @@ Let’s explore the STAR format using two examples. One role this engineer had w
 
 The background context for the story. What organization was this at? What market are they in? Who was on the team? (But only those teammates who will be necessary to tell the story.) Set the scene! Except, leave out one person - the hero, you.
 
-| _Individual Contributor_                                                                                                                                                                                                                                                                                                                                                                                                                                    | _Tech Lead / Manager_                                                                                                                                                                                                                                                                                                            |
-| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| “SSS” is a small (~1m customer) global (>20 country) Internet Service Provider. “SSS” maintains a number of networking sites globally. These include satellite ground stations, ISP Points of Presences (POPs), and other network devices. It has a central office, as well as a small travel team responsible for setup and installation of those facilities. “SSS” has a shelf-hosted internal system that manages the source of truth for these details. | “VM Service (VMS)” underlies xx% of “Cloud Provider”’s revenue. The website control panel remains a primary entry point to managing “VMS” workloads, in addition to command line and API access. PTeam, the team managing the website control panel infrastructure, mandated a migration from AngularJS to Angular + Typescript. |
+| _Individual Contributor_ | _Tech Lead / Manager_ |
+| ------------------------ | --------------------- |
+| &{#situation_ic};        | &{#situation_tl};     |
+
+> {section #situation_ic}
+
+“SSS” is a small (~1m customer) global (>20 country) Internet Service Provider. “SSS” maintains a number of networking sites globally. These include satellite ground stations, ISP Points of Presences (POPs), and other network devices. It has a central office, as well as a small travel team responsible for setup and installation of those facilities. “SSS” has a shelf-hosted internal system that manages the source of truth for these details.
+
+> {section #situation_tl}
+
+“VM Service (VMS)” underlies xx% of “Cloud Provider”’s revenue. The website control panel remains a primary entry point to managing “VMS” workloads, in addition to command line and API access. PTeam, the team managing the website control panel infrastructure, mandated a migration from AngularJS to Angular + Typescript.
 
 #### Task
 
 Every good story needs conflict. What needed to be done to advance the team’s mission? With the scene set, what was the dilemma? What was the missing piece holding the organization back? What needed to be changed, fixed or solved in order to make progress and move forward?
 
-| _Individual Contributor_                                                                                                                                                                                                                                                                                                                                                              | _Tech Lead / Manager_                                                                                                                                                                                                                                                                       |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| The source of truth service ran as a single point of failure monolithic application on a single cloud VM instance. It was running out of date software and had a fragile update process. The business needed the system to be more robust, more secure, and more resilient. It was also necessary to remain in place for both human and automated users during upgrade and migration. | I was manager for four local front end developers, and Tech Lead for ten total distributed FE devs. This team was responsible for migrating “Groups”, about one quarter of the affected “VMS” functionality. These engineers were distributed between central Europe and the US west coast. |
+| _Individual Contributor_ | _Tech Lead / Manager_ |
+| ------------------------ | --------------------- |
+| &{#task_ic};             | &{task_tl};           |
 
-</table>
+> {section #task_ic}
+> The source of truth service ran as a single point of failure monolithic application on a single cloud VM instance. It was running out of date software and had a fragile update process. The business needed the system to be more robust, more secure, and more resilient. It was also necessary to remain in place for both human and automated users during upgrade and migration.
+
+> {section #task_tl}
+> I was manager for four local front end developers, and Tech Lead for ten total distributed FE devs. This team was responsible for migrating “Groups”, about one quarter of the affected “VMS” functionality. These engineers were distributed between central Europe and the US west coast.
 
 #### Action
 
 The thing that you personally did when presented with that task. Anyone could pick up the task. Enter the hero - you! Why did you pick up this task? How did you decide on this task vs any other task? What steps did you take to achieve the task? This is the bulk of the story, and can be a bit longer. You’ll be going through two or three of these stories for each interview, so if you’re rehearsing these stories, you can take up to five minutes of prepared time to leave time for questions & nerves.
 
-| _Individual Contributor_                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | _Tech Lead / Manager_                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| I developed the necessary scripts and migrations to handle safely moving to the then-current version of the software. These scripts additionally allow continued future upgrades as software updates are made available. <br /><br />I coordinated with internal IT and security teams to configure and enable corporate single sign on to the system.<br /><br />I coordinated modernizing a half-dozen custom-made plugins (rewriting two myself, documenting the process and guiding the original authors for the others) through the upgrade process. I added logging and metrics for API calls, allowing SLO monitoring & outage detection. | I coordinated AngularJS feature work with Angular migration work, collaborating with PM and UX stakeholders on direction & priority. I mentored several junior and noogler engineers in the org on how to work in the org, use Angular, program Typescript, and general career development.<br /><br />I engaged with the wider PTeam ecosystem on a variety of developer experience initiatives. This included TypeScript language readability guidance, GraphQL utilities & API feedback, and promulgating NgRX best practices. The NgRX best practices doc was written by one of my direct reports, whom I championed and guided through the wider cross-org process. |
+| _Individual Contributor_ | _Tech Lead / Manager_ |
+| ------------------------ | --------------------- |
+| &{#action_ic};           | &{#action_tl};        |
+
+> {section #action_ic}
+> I developed the necessary scripts and migrations to handle safely moving to the then-current version of the software. These scripts additionally allow continued future upgrades as software updates are made available. <br /><br />I coordinated with internal IT and security teams to configure and enable corporate single sign on to the system.<br /><br />I coordinated modernizing a half-dozen custom-made plugins (rewriting two myself, documenting the process and guiding the original authors for the others) through the upgrade process. I added logging and metrics for API calls, allowing SLO monitoring & outage detection.
+
+> {section #action_tl}
+> I coordinated AngularJS feature work with Angular migration work, collaborating with PM and UX stakeholders on direction & priority. I mentored several junior and noogler engineers in the org on how to work in the org, use Angular, program Typescript, and general career development.<br /><br />I engaged with the wider PTeam ecosystem on a variety of developer experience initiatives. This included TypeScript language readability guidance, GraphQL utilities & API feedback, and promulgating NgRX best practices. The NgRX best practices doc was written by one of my direct reports, whom I championed and guided through the wider cross-org process.
 
 #### Results
 
 The specific (preferably measurable) outcomes that only happened because you succeeded (or failed) in that task. The task is done, the project finished, our hero’s journey comes to an end and normalcy returns to the land. What happened? What changed? Use numbers as much as possible. (You can anonymize the specific number to the order of magnitude to protect confidentiality, but the number should be available to those with permission to access it.) Nearly every organization claims to be data driven - give them the data to realize that!
 
-| _Individual Contributor_                                                                                                                                                                                                                                                                                                                                                                                                                  | _Tech Lead / Manager_                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
-| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| System updates are now a 10 minute blue/green rollout, with manual rollback and automated monitoring for critical API endpoints.<br /><br />SSO Integration allows audited access, and reduces operator burden of needing multiple passwords.<br /><br />The upgraded version includes a GraphQL API, which allows analysts to greatly improve their tooling. This brings a commensurate improvement to their customer support abilities. | The extended team migrated the bulk of our pages in six months (from a three quarter estimate), while developing new features in tandem, including the Groups Policy Selection, and the Groups CRON scheduler widget. The Policy Selection was especially streamlined by the improved GraphQL utilities, and the CRON widget drove much of our understanding that went into the NgRX best practices document.<br /><br />I had a clean handoff of Groups ownership from the US to Europe at the end of tenure, allowing the Europe team to complete the migration on schedule. |
+| _Individual Contributor_ | _Tech Lead / Manager_ |
+| ------------------------ | --------------------- |
+| &{#results_ic};          | &{#results_tl};       |
 
 By telling a narrative, both the candidate and interviewer have a specific frame of reference to draw from. A narrative with characters, and a beginning, middle, and end of the story, fits human thought in natural ways. And these are your stories, where you are the hero. The question is not how great your team was, it was what you personally did that moved the project to its results. Other people were certainly critical to other parts, but this interview is about _you_.
+
+> {section #results_ic}
+
+System updates are now a 10 minute blue/green rollout, with manual rollback and automated monitoring for critical API endpoints.
+
+SSO Integration allows audited access, and reduces operator burden of needing multiple passwords.
+
+The upgraded version includes a GraphQL API, which allows analysts to greatly improve their tooling. This brings a commensurate improvement to their customer support abilities.
+
+> {section #results_tl}
+> The extended team migrated the bulk of our pages in six months (from a three quarter estimate), while developing new features in tandem, including the Groups Policy Selection, and the Groups CRON scheduler widget. The Policy Selection was especially streamlined by the improved GraphQL utilities, and the CRON widget drove much of our understanding that went into the NgRX best practices document.
+
+I had a clean handoff of Groups ownership from the US to Europe at the end of tenure, allowing the Europe team to complete the migration on schedule.
 
 #### Probing & Challenging
 
@@ -63,10 +93,26 @@ It’s impossible to cover every possible aspect of the story in one telling. An
 
 Then, expect challenging questions to understand how your answer fits their organization’s culture and values. Again, the organization has that culture and those values already in place. The narrative lets you tell how you’ve performed in the past - but the organization wants to know if that’s how they want you to perform in the future. Your stories didn’t happen in an organization with the same values, so you and the interviewer need to work together to show how it would work with theirs.
 
-| _Individual Contributor_                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | _Tech Lead / Manager_                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
-| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Question: You said there was a fragile update process, but also that it hadn’t been updated in a year. What’s the difference there?                                                                                                                                                                                                                                                                                                                                                                                                                         | Question: You said you had a “clean handoff”, what does that mean in this context?                                                                                                                                                                                                                                                                                                                                                                                                |
-| When I took over as RE, I was told that the prior RE had tried to update a couple times, but had been overwhelmed by the custom plugins, and how the updates had changed the plugin architecture. The prior RE was a network engineer- very talented, but minimal programming experience. So as I understood it, they had deployed maybe 18 months before I took over; they had done one or two point version updates but had lost data at least once, and then gave up because it was working and the blast radius in terms of downstream teams had grown. | When we handed off the project, we agreed to one month of work hours on-call for any questions that might arise. We expected to need an hour or two of questions a week, but at the end of the month the Europe team hadn’t sent any questions or issues to the on-call. We had a final retrospective, and they confirmed they hadn’t needed to send any questions - the code, documentation, and training had all been sufficient for them to unblock before they needed to ask. |
+| _Individual Contributor_ | _Tech Lead / Manager_    |
+| ------------------------ | ------------------------ |
+| &{#probing_ic_question}; | &{#probing_tl_question}; |
+| &{#probing_ic_answer};   | &{#probing_tl_answer};   |
+
+> {section #probing_ic_question}
+
+Question: You said there was a fragile update process, but also that it hadn’t been updated in a year. What’s the difference there?
+
+> {section #probing_ic_answer}
+
+When I took over as RE, I was told that the prior RE had tried to update a couple times, but had been overwhelmed by the custom plugins, and how the updates had changed the plugin architecture. The prior RE was a network engineer- very talented, but minimal programming experience. So as I understood it, they had deployed maybe 18 months before I took over; they had done one or two point version updates but had lost data at least once, and then gave up because it was working and the blast radius in terms of downstream teams had grown.
+
+> {section #probing_tl_question}
+
+Question: You said you had a “clean handoff”, what does that mean in this context?
+
+> {section #probing_tl_answer}
+
+When we handed off the project, we agreed to one month of work hours on-call for any questions that might arise. We expected to need an hour or two of questions a week, but at the end of the month the Europe team hadn’t sent any questions or issues to the on-call. We had a final retrospective, and they confirmed they hadn’t needed to send any questions - the code, documentation, and training had all been sufficient for them to unblock before they needed to ask.
 
 ### Interview Prep
 
@@ -80,11 +126,27 @@ Finally, connect each STAR narrative of yours with two or three organization val
 
 If the candidates we've been following applied to a role at Amazon, here's how they could connect these stories to Amazon’s leadership principles.
 
-| _Individual Contributor_                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | _Tech Lead / Manager_                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
-| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Amazon Leadership Principles:**<br /><br />_Bias for Action_ The outdated system had been in production for over a year with no updates. There was ask for budget to redevelop the system to internal tools. Instead, I did a practice migration to demonstrate it could be done; research to show it had the necessary features with an upgrade; and then performed the remaining work.<br /><br />_Customer Obsession_ While the specific customers were internal facilities engineers and support analysts, their ability to improve their workflows made installs faster and reduced support resolution times. | **Amazon Leadership Principles:**<br /><br /> _Ownership_ “Stop the world” migrations, with no feature work, can kill a project or business. Competitors will not stop, and neither could we. By working with the PM org, we were able to find two specific high value features, and implement them in a way that worked in the existing pages but did not add significant time to the migration.<br /><br />_Deliver Results_ On time, on budget, with a successful handoff. |
+| _Individual Contributor_ | _Tech Lead / Manager_ |
+| ------------------------ | --------------------- |
+| &{#prep_ic};             | &{#prep_tl};          |
 
 **Warning:** What if none of the organization’s values align with your own? Maybe take that as a sign to skip that interview…
+
+> {section #prep_ic}
+
+**Amazon Leadership Principles:**
+
+_Bias for Action_ The outdated system had been in production for over a year with no updates. There was ask for budget to redevelop the system to internal tools. Instead, I did a practice migration to demonstrate it could be done; research to show it had the necessary features with an upgrade; and then performed the remaining work.
+
+_Customer Obsession_ While the specific customers were internal facilities engineers and support analysts, their ability to improve their workflows made installs faster and reduced support resolution times.
+
+> {section #prep_tl}
+
+**Amazon Leadership Principles:**
+
+_Ownership_ “Stop the world” migrations, with no feature work, can kill a project or business. Competitors will not stop, and neither could we. By working with the PM org, we were able to find two specific high value features, and implement them in a way that worked in the existing pages but did not add significant time to the migration.
+
+_Deliver Results_ On time, on budget, with a successful handoff.
 
 ### “What questions do you have?”
 
@@ -107,10 +169,22 @@ While automated systems screen resumes for keywords, a human reviewing the resum
 
 Here's the line on each of their resumes.
 
-| _Individual Contributor_                                                                                                                                                                            | _Tech Lead / Manager_                                                                                                                                                                   |
-| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Created automated deployment for mission critical network infrastructure source of truth. Migrated from >1 yr out of date version to current version. Added two missing business critical features. | Lead team of 10 (4 direct) migrating cloud management tools from AngularJS to Angular. Organized additional feature work to maintain market parity and leadership during the migration. |
-| “Applications”, Python, Django, AWS, EC2, Kubernetes, Prometheus, Grafana                                                                                                                           | AngularJS, Angular, TypeScript, NgRX, “Cloud Platform”, “VMS”, “VMS Groups”                                                                                                             |
+| _Individual Contributor_ | _Tech Lead / Manager_ |
+| ------------------------ | --------------------- |
+| &{#resume_ic_1};         | &{#resume_tl_1};      |
+| &{#resume_ic_2};         | &{#resume_tl_2};      |
+
+> {section#resume_ic_1}
+> Created automated deployment for mission critical network infrastructure source of truth. Migrated from >1 yr out of date version to current version. Added two missing business critical features.
+
+> {section#resume_ic_2}
+> “Applications”, Python, Django, AWS, EC2, Kubernetes, Prometheus, Grafana
+
+> {section#resume_tl_1}
+> Lead team of 10 (4 direct) migrating cloud management tools from AngularJS to Angular. Organized additional feature work to maintain market parity and leadership during the migration.
+
+> {section#resume_tl_2}
+> AngularJS, Angular, TypeScript, NgRX, “Cloud Platform”, “VMS”, “VMS Groups”
 
 ### What have we covered?
 

@@ -5,11 +5,13 @@ summary: Having a consistent way to draw and represent data structures helps com
 ---
 # Drawing Data Structures
 
-Part two of a series on [technical whiteboarding](https://davidsouther.com/blog/interview_01_whiteboard).
+Part two of a series on [technical whiteboarding](/blog/interview_01_whiteboard).
 
 Visual communication is a valuable but often overlooked skill in software development. This guide provides a set of useful ways to draw common data structures and values. These can be used in any number of settings. They are especially useful when creating test cases, developing how an algorithm could solve a problem, and when stepping through code that relies heavily on data structures.
 
 ## Primitives
+
+![{.float [width=400px]} Several numbers, strings, and boolean values.](/images/Technical_Whiteboarding_Drawing_Primitives.png)
 
 * Numbers are written as numbers. For languages that distinguish between integer and floating point, it is easiest to write the number with a decimal . for floating point and without the decimal for integers. Alternatively, the machine size, if necessary, can be part of the number itself, like 12.5f32 or 15u8 for a 32-bit floating point and an 8-bit unsigned integer, respectively.
 
@@ -17,10 +19,10 @@ Visual communication is a valuable but often overlooked skill in software develo
 
 * Boolean values are written as true and false. (Or True / False in Python.)
 
-![Several numbers, strings, and boolean values.](/images/Technical_Whiteboarding_Drawing_Primitives.png)
-
 
 ## Lists
+
+![{.float [width=400px]} Three items in a tuple (or fixed-length array, depending on the language). An array of prime numbers. A list of famous book opening lines. A linked list with 4 nodes.](/images/Technical_Whiteboarding_Drawing_Simple.png)
 
 * Small, constant lists (three or fewer values that don’t change) can be written inline with three horizontal boxes.
 
@@ -30,9 +32,6 @@ Visual communication is a valuable but often overlooked skill in software develo
 
 * Linked Lists can be drawn as squares or circles with their value inside (either primitive or arrow from the middle to another value), and a line from the edge to the “next” node in the list. Nodes with a “null” next value can point at empty space, or elide their next arrow entirely. For problems where the value isn’t important, only the structure, use the color of the circle to signify differing values.
 
-![Drawing Simple Lists.](/images/Technical_Whiteboarding_Drawing_Simple.png)
-
-Three items in a tuple (or fixed-length array, depending on the language). An array of prime numbers. A list of famous book opening lines. A linked list with 4 nodes.
 
 ## Trees
 
@@ -44,9 +43,8 @@ Three items in a tuple (or fixed-length array, depending on the language). An ar
 
 * DOM Trees can be drawn with nested boxes, showing the nesting structure of the DOM tags.
 
-![Drawing Trees](/images/Technical_Whiteboarding_Drawing_Trees.png)
+![A binary tree with depth 3 and 6 nodes. An N-ary tree with depth 3 and 7 nodes. A DOM structure with body, header, nav, main, and footer.](/images/Technical_Whiteboarding_Drawing_Trees.png)
 
-A binary tree with depth 3 and 6 nodes. An N-ary tree with depth 3 and 7 nodes. A DOM structure with body, header, nav, main, and footer.
 
 ## Objects
 
@@ -56,9 +54,7 @@ A binary tree with depth 3 and 6 nodes. An N-ary tree with depth 3 and 7 nodes. 
 
 * It is not necessary to draw the methods or functional properties of an object, however, in a typed language, it can be helpful to write the type of the object above the card.
 
-![Drawing Objects](/images/Technical_Whiteboarding_Drawing_Objects.png)
-
-A Person object with information about the author. Several Room objects, with the connections from the hallway to its adjacent rooms.
+![A Person object with information about the author. Several Room objects, with the connections from the hallway to its adjacent rooms.](/images/Technical_Whiteboarding_Drawing_Objects.png)
 
 # Summary
 

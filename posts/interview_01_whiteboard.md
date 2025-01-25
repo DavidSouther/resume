@@ -4,7 +4,13 @@ date: 2024-08-13
 summary: Technical Whiteboarding is a systematic approach to designing algorithmic programming solutions to problems identified in a software environment. While the practice is best known for its use in technical interviewing, the process works any time there is a problem to solve with code! Applying a consistent approach to problem solving is shown to improve the quality of the solution and shorten development time.
 ---
 
-Part one of a series on [technical whiteboarding](https://davidsouther.com/blog/interview_01_whiteboard).
+Part one of a series on [technical whiteboarding](/blog/interview_01_whiteboard).
+
+* Part two: [Drawing Data Structures](/blog/interview_02_drawing)
+* Part three: [Tracing Code](/blog/interview_03_tracing)
+* Part four: [The Forward/Backward Method](/blog/interview_04_forward_backward)
+* Part five: [Analyzing Algorithms](/blog/interview_05_analyzing)
+* Part six: [DS&A Glossary](/blog/interview_06_glossary)
 
 Technical Whiteboarding is a systematic approach to designing algorithmic programming solutions to problems identified in a software environment. While the practice is best known for its use in technical interviewing, the process works any time there is a problem to solve with code\! Applying a consistent approach to problem solving is shown to improve the quality of the solution and shorten development time.
 
@@ -69,13 +75,12 @@ Provide a Big O analysis, justifying the time and space complexity. Using either
 
 ## Timing
 
-<figure>
-<img src="/images/Technical_Whiteboarding_Overview_Timing.png" width=256 />
-</figure>
+![{.float.left[width=256px]} Breakdown of your time during a technical interview.](/images/Technical_Whiteboarding_Overview_Timing.png)
 
 An average breakdown of the relative amount of time spent in each step of the process. Defining & researching the problem space and identifying appropriate test cases should take about a quarter of the time allotted for the task. The forward/backward method’s two portions, the visualization development and the plain language description, are an iterative process that can build on one another. Either way, the design work here should take half of the remaining time after researching and defining the problem. In this design-heavy approach, coding alone takes about a quarter of the time for the task. Verification is the important final step.
 
 In a 45 minute interview, leave 5 minutes for general conversation & buffer time. Then, aim for about 10 minutes getting into the problem. By that 10 minute mark, settle on a test case for the problem. Visualizing and planning should be about 50/50 of their portions, finishing at about 25 minutes in. The biggest chunk, but not a majority, of time should be spent coding, about 15 minutes. Leave another 5 minutes to work through the test case, fixing any issues that arise.
+
 
 ## Summary
 

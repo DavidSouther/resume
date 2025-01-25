@@ -2,9 +2,7 @@ import { readFileSync, readdirSync } from "fs";
 import matter from "gray-matter";
 import { join } from "path";
 import { cwd } from "process";
-import { remark } from "remark";
-import remarkGfm from "remark-gfm";
-import remarkHtml from "remark-html";
+import { toHTML as jiffdown } from "@davidsouther/jiffdown";
 
 export interface Post {
   id: string;
@@ -59,11 +57,7 @@ export async function getPost(id: string): Promise<Post> {
     (front.data.date as Date | undefined)?.toISOString() ?? undefined;
   const title = front.data.title ?? "Unknown Title";
   const image = front.data.image;
-  const processedContent = await remark()
-    .use(remarkGfm)
-    .use(remarkHtml)
-    .process(front.content);
-  const contentHtml = processedContent.toString();
+  const contentHtml = jiffdown(front.content);
   const post = {
     id,
     date,

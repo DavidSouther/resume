@@ -41,17 +41,16 @@ startDate = "2024-12-01"
 
 [[experience.jobs.roles.challenges]]
 description = """
-Technical Lead for Code Examples Tooling. Maintain a build process that provides
- >10,000 snippets across >3000 examples for 15 core AWS SDK technologies. These 
-snippets and examples are embedded in a range of AWS technical documentation, an
-d are the primary touch point many engineers have with learning AWS SDK programm
-ing.
+Technical Lead for Code Examples Tooling. Maintain a build process that provides >10,000
+snippets across >3000 examples for 15 core AWS SDK technologies. These snippets
+and examples are embedded in a range of AWS technical documentation, and
+are the primary touch point many engineers have with learning AWS SDK programming.
 
-The build process coordinates contributions from dozens of developers and hundre
-ds of writers to ensure accurate examples, that remain up to date with best prac
-tices. This is achieved through extensive CI automation, internal and external c
-ontent treatments, and appropriate dashboards for stakeholder visibility into th
-is central element of AWS technical documentaiton.
+The build process coordinates contributions from dozens of developers and hundreds
+of writers to ensure accurate examples, that remain up to date with best practices.
+This is achieved through extensive CI automation, internal and external content
+treatments, and appropriate dashboards for stakeholder visibility into this central
+element of AWS technical documentaiton.
 """
 
 [[experience.jobs.roles.competences]]

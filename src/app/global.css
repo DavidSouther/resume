@@ -279,3 +279,17 @@ article > header > h3 {
     grid: "_a title" auto "_b summary" auto / 2fr 5fr;
   }
 }
+
+.float {
+    float: left;
+    margin-right: 1em;
+}
+
+.float.right {
+    float: right;
+    margin-left: 1em;
+}
+
+section:has(img.float) + section {
+    clear: both;
+}

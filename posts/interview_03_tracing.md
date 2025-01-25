@@ -5,7 +5,7 @@ summary: Tracing the behavior of a section of code using pen and paper gives dev
 ---
 # Tracing Code
 
-Part three of a series on [technical whiteboarding](https://davidsouther.com/blog/interview_01_whiteboard).
+Part three of a series on [technical whiteboarding](/blog/interview_01_whiteboard).
 
 Tracing code is a tool to execute code on pen & paper (or, without running it on a computer). As a learning tool, tracing by hand with pen & paper drives a deeper understanding of programming. In practice, it is a quick and easy mechanism to evaluate and explore the implications of certain programming patterns. Developing this skill improves the abilities of a programmer in many areas.
 
@@ -71,7 +71,7 @@ When tracing a function call, draw a horizontal line across the table (leaving s
 
 When returning from a function, add a final entry in the name column as return (or ret), with the return value in the value column. Draw an arrow along the left side of the stack back to the variable the return value is assigned to. Copy this value (or arrow) to that value slot. Finally, cross out with a large X the completed function invocation.
 
-![Tracing function calls in gcdr](/images/Technical_Whiteboarding_Tracing_Recursion.png)
+![{[width=800px]} Tracing function calls in gcdr](/images/Technical_Whiteboarding_Tracing_Recursion.png)
 
 A recursive implementation of the GCD algorithm. Each recursive call received a new stack frame (the horizontal lines), with the two arguments. As the functions returned, the arrow filled in the return value for the prior invocation and the frame got crossed off as “complete”.
 
