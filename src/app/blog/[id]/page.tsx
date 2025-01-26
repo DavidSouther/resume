@@ -1,4 +1,4 @@
-import { getPost, getPostPaths } from "~/lib/posts";
+import { getPost, getPostPaths, Post } from "~/lib/posts";
 import BlogPage from "./blog-page";
 import type { Metadata } from "next";
 
@@ -7,10 +7,11 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata({
-  params: { id },
+  params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }): Promise<Metadata> {
+  const { id } = await params;
   const { title, image } = await getPost(id);
   const openGraph = {
     images: [...(image ? [image] : [])],
@@ -23,10 +24,11 @@ export async function generateMetadata({
 }
 
 export default async function Page({
-  params: { id },
+  params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = await params;
   const post = await getPost(id);
   return <BlogPage post={post} />;
 }

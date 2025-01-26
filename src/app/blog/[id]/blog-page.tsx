@@ -2,11 +2,8 @@ import { Card } from "~/components/Card";
 import { Post } from "~/lib/posts";
 import styles from "./blog-page.module.css";
 
-export default function BlogPage({
-  post: { title, body, date },
-}: {
-  post: Post;
-}) {
+export default async function BlogPage({ post }: { post: Post }) {
+  const { title, body, date } = post;
   return (
     <>
       <Card
