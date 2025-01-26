@@ -104,9 +104,9 @@ finishDate = "2024-11-30"
 
 [[experience.jobs.roles.challenges]]
 description = """
-Sr Engineer creating example code and applications using the [AWS SDK for 
-Rust](https://github.com/awslabs/aws-sdk-rust) ([example 
-repo](https://github.com/awsdocs/aws-doc-sdk-examples/tree/main/rust_dev_preview)).
+Sr Engineer creating example code and applications using the
+[AWS SDK for Rust](https://github.com/awslabs/aws-sdk-rust)
+([example repo](https://github.com/awsdocs/aws-doc-sdk-examples/tree/main/rust_dev_preview)).
 Primary duties are writing informative code samples for all aspects of the 
 Rust SDK. Longer-term projects develop cross-service scenarios to emphasize SDK 
 utilities across the SDK language and service boundaries. These examples show 
@@ -114,29 +114,16 @@ customers real-world approaches to developing software that combines multiple
 AWS SDKs.
 
 Highlights include:
-- a [REST 
-    system](https://github.com/awsdocs/aws-doc-sdk-examples/tree/main/rust_dev_previ
-    ew/cross_service/rest_ses) using [Amazon RDS Data](https://aws.amazon.com/rds/) 
-    & [Amazon SES](https://aws.amazon.com/ses/)
-- a [photo asset 
-    manager](https://community.aws/posts/cloud-journeys/01-serverless-image-recognit
-    ion-app) using [Amazon S3](https://aws.amazon.com/s3/) [intelligent 
-    tiering](https://aws.amazon.com/s3/storage-classes/intelligent-tiering/) 
-    storage, [Amazon Rekognition](https://aws.amazon.com/rekognition/) image 
-    tagging, & [Amazon SQS](https://aws.amazon.com/sqs/) notifications
-- Utilized Ailly & Bedrock to develop [bespoke human-navigator LLM 
-    workflow](https://github.com/DavidSouther/aws-doc-sdk-examples/tree/workflow/ses
-    v2/mailer/workflows/sesv2_weekly_mailer/content) for Code Examples team, 
-    speeding development by 20%.
-
-I am the tech lead for the [AWS SDK Code 
-Examples](https://github.com/awsdocs/aws-doc-sdk-examples) Tooling group, who 
-create and maintain Continuous Integration, Continuous Delivery, and Product 
-Excellence tooling for AWS Code Examples. This tooling enforces quality 
-standards on first-part example code for the 
-[docs.aws.amazon.com](https://docs.aws.amazon.com) property, and requires 
-coordination across engineering, writing, editing, and product teams spanning 
-AWS technology and marketing.
+- a [REST system](https://github.com/awsdocs/aws-doc-sdk-examples/tree/main/rust_dev_preview/cross_service/rest_ses)
+    using [Amazon RDS Data](https://aws.amazon.com/rds/) & [Amazon SES](https://aws.amazon.com/ses/)
+- a [photo asset manager](https://community.aws/posts/cloud-journeys/01-serverless-image-recognition-app)
+    using [Amazon S3](https://aws.amazon.com/s3/)
+    [intelligent tiering](https://aws.amazon.com/s3/storage-classes/intelligent-tiering/)
+    storage, [Amazon Rekognition](https://aws.amazon.com/rekognition/) image tagging,
+    & [Amazon SQS](https://aws.amazon.com/sqs/) notifications.
+- Utilized Ailly & Bedrock to develop
+    [bespoke human-navigator LLM workflow](https://github.com/DavidSouther/aws-doc-sdk-examples/tree/workflow/sesv2/mailer/workflows/sesv2_weekly_mailer/content)
+    for Code Examples team, speeding development by 20%.
 """
 
 [[experience.jobs.roles.competences]]

@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Poppins:ital,wght@0,400;0,700;1,400&display=swap');
+
 :root {
   --luminance: 0.8;
   --chroma: 0.6;
@@ -8,6 +10,9 @@
   --grid-spacing-horizontal: 1rem; /* var(--spacing) */
   --form-element-spacing-vertical: 0.15rem; /* .75rem */
   --form-element-spacing-horizontal: 0.25rem; /* 1rem */
+  --font-family: "Poppins", var(--font-family-base);
+  --font-family-header: "Libre Baskerville", var(--font-family-base);
+
 }
 
 @media (prefers-color-scheme: dark) {
@@ -150,6 +155,7 @@ article > header > h3 {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
+  flex-wrap: wrap;
 }
 
 .competences li {
@@ -178,12 +184,12 @@ article > header > h3 {
     "avatar name" auto
     "avatar title" auto
     "avatar location" auto
-    "avatar links"
+    "links links"
     / 150px auto;
   gap: 0 var(--block-spacing-horizontal);
 }
 
-@media (min-width: 425px) {
+@media (min-width: 1024px) {
   .root > header {
     grid:
       "avatar name links" auto
@@ -249,7 +255,7 @@ article > header > h3 {
 
 .artifacts {
   display: grid;
-  grid-template-colums: 1fr;
+  grid-template-columns: 1fr;
   gap: calc(var(--block-spacing-vertical) / 2)
     calc(var(--block-spacing-horizontal) / 2);
 }
