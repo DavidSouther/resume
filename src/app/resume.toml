@@ -9,7 +9,7 @@ lastUpdate = "2024-04-04"
 [aboutMe.profile]
 name = "David"
 surnames = "Souther"
-title = "Sr Examples Engineer"
+title = "Sr Software Engineer"
 
 [aboutMe.profile.avatar]
 link = "https://avatars.githubusercontent.com/u/498712?v=4"
@@ -36,13 +36,13 @@ URL = "https://github.com/davidsouther"
 name = "AWS Technical Content Experience"
 
 [[experience.jobs.roles]]
-name = "Sr Software Engineer"
+name = "[SDE III - L6 - Senior SDE](https://www.levels.fyi/companies/amazon/salaries/software-engineer/levels/sde-iii)"
 startDate = "2024-12-01"
 
 [[experience.jobs.roles.challenges]]
 description = """
-Technical Lead for Code Examples Tooling. Maintain a build process that provides >10,000
-snippets across >3000 examples for 15 core AWS SDK technologies. These snippets
+Technical Lead for Content Automations. Maintain a build process that provides >50,000
+snippets across >5000 examples for 15 core AWS SDK technologies. These snippets
 and examples are embedded in a range of AWS technical documentation, and
 are the primary touch point many engineers have with learning AWS SDK programming.
 
@@ -51,6 +51,12 @@ of writers to ensure accurate examples, that remain up to date with best practic
 This is achieved through extensive CI automation, internal and external content
 treatments, and appropriate dashboards for stakeholder visibility into this central
 element of AWS technical documentaiton.
+
+IAM Modernization - I lead a multifaceted team providing large-scale code migration
+for a diverse technical writer organization. The project extracted, verified, and
+corrected 12,000 IAM policies across 250 technical guides over one quarter. The 
+project reduced labor from an estimated 4,000 hours to a logged 1800 hours, with
+a framework in place for future migrations requiring substantially larger labor gains.
 """
 
 [[experience.jobs.roles.competences]]
@@ -70,7 +76,7 @@ type = "technology"
 name = "AWS TCX AI Lab"
 
 [[experience.jobs.roles]]
-name = "Sr Software Engineer"
+name = "[SDE III - L6 - Senior SDE](https://www.levels.fyi/companies/amazon/salaries/software-engineer/levels/sde-iii)"
 startDate = "2024-01-01"
 
 [[experience.jobs.roles.challenges]]
@@ -98,7 +104,7 @@ type = "technology"
 name = "Amazon Web Services"
 
 [[experience.jobs.roles]]
-name = "Sr Code Examples Engineer"
+name = "[SDE III - L6 - Senior SDE](https://www.levels.fyi/companies/amazon/salaries/software-engineer/levels/sde-iii), Code Examples"
 startDate = "2022-09-12"
 finishDate = "2024-11-30"
 
@@ -210,7 +216,7 @@ type = "practice"
 name = "SpaceX Starlink"
 
 [[experience.jobs.roles]]
-name = "Sr Software Engineer"
+name = "[L3 - Sr Software Engineer](https://www.levels.fyi/companies/spacex/salaries/software-engineer/levels/l3)"
 startDate = "2021-07-01"
 finishDate = "2022-06-06"
 
@@ -247,7 +253,7 @@ type = "technology"
 name = "GCP - Compute Front End"
 
 [[experience.jobs.roles]]
-name = "Tech Lead & Manager"
+name = "[L5 Sr Software Engineer](https://www.levels.fyi/companies/google/salaries/software-engineer/levels/l5)"
 startDate = "2020-07-01"
 finishDate = "2021-07-31"
 
@@ -293,7 +299,7 @@ type = "technology"
 name = "GCP - Cloud Topology"
 
 [[experience.jobs.roles]]
-name = "Tech Lead"
+name = "[L5 Sr Software Engineer](https://www.levels.fyi/companies/google/salaries/software-engineer/levels/l5)"
 startDate = "2018-11-01"
 finishDate = "2020-06-30"
 
@@ -377,7 +383,7 @@ day to day lives in ways that are almost always unseen.
 name = "Google Shopping"
 
 [[experience.jobs.roles]]
-name = "Software Engineer"
+name = "[L4](https://www.levels.fyi/companies/google/salaries/software-engineer/levels/l4) Software Engineer"
 startDate = "2015-06-01"
 finishDate = "2017-04-30"
 
@@ -483,7 +489,7 @@ type = "technology"
 name = "Novus Partners Inc"
 
 [[experience.jobs.roles]]
-name = "Software Architect"
+name = "Software Engineer"
 startDate = "2013-10-01"
 finishDate = "2014-06-30"
 
@@ -520,7 +526,7 @@ type = "technology"
 name = "The New York Times"
 
 [[experience.jobs.roles]]
-name = "Software Engineer"
+name = "Associate Software Engineer"
 startDate = "2012-07-01"
 finishDate = "2013-10-31"
 
