@@ -12,7 +12,6 @@
   --form-element-spacing-horizontal: 0.25rem; /* 1rem */
   --font-family: "Poppins", var(--font-family-base);
   --font-family-header: "Libre Baskerville", var(--font-family-base);
-
 }
 
 @media (prefers-color-scheme: dark) {
@@ -64,6 +63,11 @@
   a::after {
     content: " (" attr(href) ")";
     text-decoration: underline;
+    font-size: smaller;
+  }
+
+  .no-print-href a::after {
+    content: ""
   }
 }
 

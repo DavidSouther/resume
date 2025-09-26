@@ -19,7 +19,9 @@ export const JobDetail = ({ job }: { job: ResumeTypes.JobExperience }) => {
 const Role = ({ role }: { role: ResumeTypes.Role }) => (
   <section className="role">
     <h5>
-      <em className="name">{role.name}</em>
+      <em className="name no-print-href">
+        <MD key={role.name}>{role.name}</MD>
+      </em>
     </h5>
     <h5 className="about">
       <small className="start date">{role.startDate}</small>

@@ -1,18 +1,7 @@
 .BlogPage main {
-  width: 1440px;
+  width: 768px;
   margin: 0 auto;
-}
-
-@media (max-width: 1440px) {
-  .BlogPage main {
-    width: 1024px;
-  }
-}
-
-@media (max-width: 1024px) {
-  .BlogPage main {
-    width: 768px;
-  }
+  background-color: hsl(var(--color-hue) 20% 10%);
 }
 
 @media (max-width: 768px) {
