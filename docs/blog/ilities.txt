@@ -6,13 +6,13 @@
 8:I[6213,[],"MetadataBoundary"]
 a:I[6213,[],"ViewportBoundary"]
 c:I[4835,[],""]
-:HL["/_next/static/css/78dfec9bdd22e972.css","style"]
-:HL["/_next/static/css/188c8aff756c3f67.css","style"]
-0:{"P":null,"b":"noc4bS1CHjU5XfnHLXCLQ","p":"","c":["","blog","ilities"],"i":false,"f":[[["",{"children":["blog",{"children":[["id","ilities","d"],{"children":["__PAGE__",{}]}]}]},"$undefined","$undefined",true],["",["$","$1","c",{"children":[[["$","link","0",{"rel":"stylesheet","href":"/_next/static/css/78dfec9bdd22e972.css","precedence":"next","crossOrigin":"$undefined","nonce":"$undefined"}]],["$","html",null,{"lang":"en","children":[["$","head",null,{"children":["$","link",null,{"rel":"stylesheet","href":"/jiffies-css-bundle.min.css"}]}],["$","body",null,{"className":"container","children":[["$","$L2",null,{"parallelRouterKey":"children","segmentPath":["children"],"error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":[[],[["$","title",null,{"children":"404: This page could not be found."}],["$","div",null,{"style":{"fontFamily":"system-ui,\"Segoe UI\",Roboto,Helvetica,Arial,sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\"","height":"100vh","textAlign":"center","display":"flex","flexDirection":"column","alignItems":"center","justifyContent":"center"},"children":["$","div",null,{"children":[["$","style",null,{"dangerouslySetInnerHTML":{"__html":"body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}"}}],["$","h1",null,{"className":"next-error-h1","style":{"display":"inline-block","margin":"0 20px 0 0","padding":"0 23px 0 0","fontSize":24,"fontWeight":500,"verticalAlign":"top","lineHeight":"49px"},"children":404}],["$","div",null,{"style":{"display":"inline-block"},"children":["$","h2",null,{"style":{"fontSize":14,"fontWeight":400,"lineHeight":"49px","margin":0},"children":"This page could not be found."}]}]]}]}]]],"forbidden":"$undefined","unauthorized":"$undefined"}],["$","$L4",null,{}]]}]]}]]}],{"children":["blog",["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","segmentPath":["children","blog","children"],"error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]]}],{"children":[["id","ilities","d"],["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","segmentPath":["children","blog","children","$0:f:0:1:2:children:2:children:0","children"],"error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]]}],{"children":["__PAGE__",["$","$1","c",{"children":["$L5",[["$","link","0",{"rel":"stylesheet","href":"/_next/static/css/188c8aff756c3f67.css","precedence":"next","crossOrigin":"$undefined","nonce":"$undefined"}]],["$","$L6",null,{"children":"$L7"}]]}],{},null,false]},null,false]},null,false]},null,false],["$","$1","h",{"children":[null,["$","$1","02FBSeF8BGcM6yoQwSChn",{"children":[["$","$L8",null,{"children":"$L9"}],["$","$La",null,{"children":"$Lb"}],null]}]]}],false]],"m":"$undefined","G":["$c","$undefined"],"s":false,"S":true}
+:HL["/_next/static/css/8ebba7f93e3c8b18.css","style"]
+:HL["/_next/static/css/4c8a1bdc98674eb5.css","style"]
+0:{"P":null,"b":"asRczg1dYFnzcoTVAYZ_U","p":"","c":["","blog","ilities"],"i":false,"f":[[["",{"children":["blog",{"children":[["id","ilities","d"],{"children":["__PAGE__",{}]}]}]},"$undefined","$undefined",true],["",["$","$1","c",{"children":[[["$","link","0",{"rel":"stylesheet","href":"/_next/static/css/8ebba7f93e3c8b18.css","precedence":"next","crossOrigin":"$undefined","nonce":"$undefined"}]],["$","html",null,{"lang":"en","children":[["$","head",null,{"children":["$","link",null,{"rel":"stylesheet","href":"/jiffies-css-bundle.min.css"}]}],["$","body",null,{"className":"container","children":[["$","$L2",null,{"parallelRouterKey":"children","segmentPath":["children"],"error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":[[],[["$","title",null,{"children":"404: This page could not be found."}],["$","div",null,{"style":{"fontFamily":"system-ui,\"Segoe UI\",Roboto,Helvetica,Arial,sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\"","height":"100vh","textAlign":"center","display":"flex","flexDirection":"column","alignItems":"center","justifyContent":"center"},"children":["$","div",null,{"children":[["$","style",null,{"dangerouslySetInnerHTML":{"__html":"body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}"}}],["$","h1",null,{"className":"next-error-h1","style":{"display":"inline-block","margin":"0 20px 0 0","padding":"0 23px 0 0","fontSize":24,"fontWeight":500,"verticalAlign":"top","lineHeight":"49px"},"children":404}],["$","div",null,{"style":{"display":"inline-block"},"children":["$","h2",null,{"style":{"fontSize":14,"fontWeight":400,"lineHeight":"49px","margin":0},"children":"This page could not be found."}]}]]}]}]]],"forbidden":"$undefined","unauthorized":"$undefined"}],["$","$L4",null,{}]]}]]}]]}],{"children":["blog",["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","segmentPath":["children","blog","children"],"error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]]}],{"children":[["id","ilities","d"],["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","segmentPath":["children","blog","children","$0:f:0:1:2:children:2:children:0","children"],"error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]]}],{"children":["__PAGE__",["$","$1","c",{"children":["$L5",[["$","link","0",{"rel":"stylesheet","href":"/_next/static/css/4c8a1bdc98674eb5.css","precedence":"next","crossOrigin":"$undefined","nonce":"$undefined"}]],["$","$L6",null,{"children":"$L7"}]]}],{},null,false]},null,false]},null,false]},null,false],["$","$1","h",{"children":[null,["$","$1","lTC9M7HGP5JaP35aL_BJ2",{"children":[["$","$L8",null,{"children":"$L9"}],["$","$La",null,{"children":"$Lb"}],null]}]]}],false]],"m":"$undefined","G":["$c","$undefined"],"s":false,"S":true}
 d:I[973,["567","static/chunks/app/blog/%5Bid%5D/page-1ba1c95a36064a59.js"],"Card"]
 e:T4faf,<p><em>This is a transcript of a talk given to a Code Fellows 401 JavaScript course.</em></p>
 <section>
-<h1 id="introduction-distinguishing-between-functional-and-non-functional-requirements">Introduction: Distinguishing Between Functional and Non-Functional Requirements</h1>
+<h3 id="introduction-distinguishing-between-functional-and-non-functional-requirements">Introduction: Distinguishing Between Functional and Non-Functional Requirements</h3>
 <p>Good afternoon, aspiring developers!</p>
 <p>First, I&#39;d like to express my gratitude for having me here today. Transitioning careers is no small feat, and diving into full-stack React JavaScript development requires both passion and perseverance. I applaud your efforts and commitment.</p>
 <p>Today, we&#39;ll be delving into an essential yet often overlooked aspect of software development: the distinction between functional and non-functional requirements. Now, I understand that in the throes of coding, when you&#39;re wrestling with state management in React or figuring out the intricacies of a new API, these terminologies might seem a bit abstract. But trust me, they underpin the foundation of every software product out there.</p>
@@ -20,7 +20,7 @@ e:T4faf,<p><em>This is a transcript of a talk given to a Code Fellows 401 JavaSc
 <p>By the end of this lecture, I hope to equip you with a clearer understanding of these two categories, ensuring that the software you build not only works but works well for your users. Let&#39;s begin our journey into the backbone of software requirements!</p>
 </section>
 <section>
-<h1 id="transitioning-to-the--ilities-measuring-non-functional-requirements">Transitioning to the &#39;-ilities&#39;: Measuring Non-Functional Requirements</h1>
+<h3 id="transitioning-to-the--ilities-measuring-non-functional-requirements">Transitioning to the &#39;-ilities&#39;: Measuring Non-Functional Requirements</h3>
 <p>Having laid the groundwork with the distinction between functional and non-functional requirements, let&#39;s now delve deeper into the heart of non-functional requirements. You might have heard the term &#39;-ilities&#39; thrown around in software development discussions. No, it&#39;s not some secret developer code language, but it&#39;s a foundational concept that gives structure and specificity to non-functional requirements.</p>
 <p>The &#39;-ilities&#39; refer to characteristics of the system that don&#39;t directly define its behavior but rather describe its quality, performance, and user experience. Think of them as the standards that determine how well your software performs its functional tasks.</p>
 <p>The first -ility is “Quality” - do we as a team care that the program works? That it we do our best? This isn’t a trait shared by all teams, or all members of a team. Actively choosing quality is the first and necessary step in achieving other -ilities.</p>
@@ -55,13 +55,13 @@ e:T4faf,<p><em>This is a transcript of a talk given to a Code Fellows 401 JavaSc
 </tbody></table>
 <p>Let’s embark on this exploration of the &#39;-ilities&#39;, shedding light on how we measure and ensure that our software isn’t just operational, but exceptional.</p>
 <section>
-<h2 id="usability--accessibility">Usability &amp; Accessibility</h2>
+<h4 id="usability--accessibility">Usability &amp; Accessibility</h4>
 <section>
-<h3 id="1-usability">1. Usability</h3>
+<h5 id="1-usability">1. Usability</h5>
 <p>Definition: Does the software work for the people it was designed for?</p>
 <p>Usability focuses on the ease with which your target users can understand, learn, and use the software. A system could have all the required features, but if users struggle to navigate it or find it unintuitive, then its usability is compromised.</p>
 <section>
-<h4 id="ways-to-verify-usability">Ways to Verify Usability</h4>
+<h6 id="ways-to-verify-usability">Ways to Verify Usability</h6>
 <ul>
 <li><strong>User Testing:</strong> Gather a group of your target users and observe them using your software. Take notes on areas where they get stuck or express confusion.  </li>
 <li><strong>Feedback Surveys:</strong> After users have interacted with your software, provide them with a short survey asking about their experience.  </li>
@@ -70,11 +70,11 @@ e:T4faf,<p><em>This is a transcript of a talk given to a Code Fellows 401 JavaSc
 </section>
 </section>
 <section>
-<h3 id="2-accessibility">2. Accessibility</h3>
+<h5 id="2-accessibility">2. Accessibility</h5>
 <p>Definition: Does the software work for people it wasn’t designed for? (Implies usability)</p>
 <p>Accessibility goes a step further than usability. It ensures that your software is usable not just for its target audience but also for people with disabilities. This could include individuals with visual, auditory, cognitive, or motor impairments.</p>
 <section>
-<h4 id="ways-to-verify-accessibility">Ways to Verify Accessibility</h4>
+<h6 id="ways-to-verify-accessibility">Ways to Verify Accessibility</h6>
 <ul>
 <li><strong>Automated Accessibility Testing Tools:</strong> Tools like Axe or Wave can scan your website and provide feedback on accessibility issues.  </li>
 <li><strong>Manual Testing with Screen Readers:</strong> Test your software with screen readers like JAWS or NVDA to ensure it&#39;s navigable and understandable for visually impaired users.  </li>
@@ -86,14 +86,14 @@ e:T4faf,<p><em>This is a transcript of a talk given to a Code Fellows 401 JavaSc
 </section>
 </section>
 <section>
-<h2 id="maintainability--extensibility">Maintainability &amp; Extensibility</h2>
+<h4 id="maintainability--extensibility">Maintainability &amp; Extensibility</h4>
 <p>Now that we&#39;ve delved into the user-centric foundations of Usability and Accessibility, let&#39;s pivot our attention towards the developer-centric foundations: Maintainability and Extensibility.</p>
 <section>
-<h3 id="3-maintainability">3. Maintainability</h3>
+<h5 id="3-maintainability">3. Maintainability</h5>
 <p>Definition: Are team members able to add features and remediate issues over time?</p>
 <p>Maintainability is about ensuring that, as your software grows and evolves, it doesn&#39;t become a tangled mess that&#39;s impossible to manage. Software that&#39;s easy to maintain can adapt to changing requirements without inordinate effort, time, or cost.</p>
 <section>
-<h4 id="ways-to-verify-maintainability">Ways to Verify Maintainability</h4>
+<h6 id="ways-to-verify-maintainability">Ways to Verify Maintainability</h6>
 <ul>
 <li><strong>Code Reviews:</strong> Regularly reviewing code among team members can identify potential maintenance issues and promote best practices.  </li>
 <li><strong>Technical Debt Tracking:</strong> Track and manage &quot;quick fixes&quot; or &quot;temporary solutions&quot; as they can pile up and become maintainability nightmares.  </li>
@@ -102,11 +102,11 @@ e:T4faf,<p><em>This is a transcript of a talk given to a Code Fellows 401 JavaSc
 </section>
 </section>
 <section>
-<h3 id="4-extensibility">4. Extensibility</h3>
+<h5 id="4-extensibility">4. Extensibility</h5>
 <p>Definition: Are non-team members able to adapt the software to novel situations? (Implies maintainability)</p>
 <p>Extensibility is the ability of your software to be expanded with new capabilities without major changes to the existing system. Think of it as preparing your software for the unknown—situations you didn&#39;t anticipate but others might find use for.</p>
 <section>
-<h4 id="ways-to-verify-extensibility">Ways to Verify Extensibility</h4>
+<h6 id="ways-to-verify-extensibility">Ways to Verify Extensibility</h6>
 <ul>
 <li><strong>Plugin Architecture:</strong> Design your software to allow for plugins or extensions, letting other developers build on top of your core functionality.  </li>
 <li><strong>Clear Documentation:</strong> By providing comprehensive documentation for APIs, modules, and functionalities, you empower other developers to leverage and extend your software.  </li>
@@ -118,14 +118,14 @@ e:T4faf,<p><em>This is a transcript of a talk given to a Code Fellows 401 JavaSc
 </section>
 </section>
 <section>
-<h2 id="availability--scalability">Availability &amp; Scalability</h2>
+<h4 id="availability--scalability">Availability &amp; Scalability</h4>
 <p>Having explored user-focused and development-centric &#39;-ilities&#39;, we now transition to a realm which both developers and users equally care about: the performance and reliability of a system. Enter: Availability and Scalability.</p>
 <section>
-<h3 id="5-availability">5. Availability:</h3>
+<h5 id="5-availability">5. Availability:</h5>
 <p>Definition: Does the system respond successfully with appropriate latency under typical load conditions?</p>
 <p>Availability speaks to the uptime of your system and its reliability. An available system ensures that users can access it when they need to without encountering unexpected downtimes or slow responses.</p>
 <section>
-<h4 id="ways-to-verify-availability">Ways to Verify Availability</h4>
+<h6 id="ways-to-verify-availability">Ways to Verify Availability</h6>
 <ul>
 <li><strong>Monitoring Tools:</strong> Employ tools like Nagios, Prometheus, or Datadog to constantly monitor system health and performance.  </li>
 <li><strong>Regular Health Checks:</strong> Implement periodic health checks on your servers and databases to identify potential availability issues.  </li>
@@ -134,11 +134,11 @@ e:T4faf,<p><em>This is a transcript of a talk given to a Code Fellows 401 JavaSc
 </section>
 </section>
 <section>
-<h3 id="6-scalability">6. Scalability:</h3>
+<h5 id="6-scalability">6. Scalability:</h5>
 <p>Definition: Does the software continue operation without catastrophic loss of data when experiencing spikes in load? (Implies availability)</p>
 <p>Scalability addresses how your system performs under increased load, whether that&#39;s more users, more data, or increased concurrent requests. A scalable system can handle growth seamlessly.</p>
 <section>
-<h4 id="ways-to-verify-scalability">Ways to Verify Scalability</h4>
+<h6 id="ways-to-verify-scalability">Ways to Verify Scalability</h6>
 <ul>
 <li><strong>Load Testing:</strong> Use tools like JMeter or LoadRunner to simulate spikes in traffic and see how your system responds.  </li>
 <li><strong>Horizontal Scaling:</strong> Add more machines to your system or scale out, so as the load increases, you can easily distribute it across multiple servers.  </li>
@@ -150,14 +150,14 @@ e:T4faf,<p><em>This is a transcript of a talk given to a Code Fellows 401 JavaSc
 </section>
 </section>
 <section>
-<h2 id="security--auditability">Security &amp; Auditability</h2>
+<h4 id="security--auditability">Security &amp; Auditability</h4>
 <p>Our exploration of &#39;-ilities&#39; now brings us to a domain that&#39;s of paramount importance in today&#39;s digital age: the realm of Security and Auditability. With data breaches becoming increasingly common and the value of data soaring, ensuring the security and traceability of our software systems is crucial.</p>
 <section>
-<h3 id="7-security">7. Security</h3>
+<h5 id="7-security">7. Security</h5>
 <p>Definition: Is data appropriately stored, and visible only to authorized users?</p>
 <p>Security ensures that unauthorized access is denied to sensitive data, services, or resources. It also encompasses the confidentiality, integrity, and availability of data.</p>
 <section>
-<h4 id="ways-to-verify-security">Ways to Verify Security</h4>
+<h6 id="ways-to-verify-security">Ways to Verify Security</h6>
 <ul>
 <li><strong>Penetration Testing:</strong> Engage security experts to simulate cyber attacks on your system to identify vulnerabilities.  </li>
 <li><strong>Data Encryption:</strong> Ensure data at rest and in transit is encrypted. For web apps, HTTPS should be a standard, and databases should encrypt sensitive data.  </li>
@@ -166,11 +166,11 @@ e:T4faf,<p><em>This is a transcript of a talk given to a Code Fellows 401 JavaSc
 </section>
 </section>
 <section>
-<h3 id="8-auditability">8. Auditability</h3>
+<h5 id="8-auditability">8. Auditability</h5>
 <p>Definition: Is it possible to audit data modification and access over defined periods of time, e.g., the last 30 days? (Implies security)</p>
 <p>Auditability ensures that all transactions and modifications within a system are traceable. This is crucial for understanding system activity, investigating incidents, and ensuring compliance with regulations.</p>
 <section>
-<h4 id="ways-to-verify-auditability">Ways to Verify Auditability</h4>
+<h6 id="ways-to-verify-auditability">Ways to Verify Auditability</h6>
 <ul>
 <li><strong>Logging Mechanisms:</strong> Implement comprehensive logging that captures all system and user activities. Tools like ELK Stack (Elasticsearch, Logstash, Kibana) can be used to analyze logs.  </li>
 <li><strong>Immutable Logs:</strong> Ensure logs are immutable and cannot be tampered with once written. This might mean storing them in a write-once, read-many storage system.  </li>
@@ -184,7 +184,7 @@ e:T4faf,<p><em>This is a transcript of a talk given to a Code Fellows 401 JavaSc
 </section>
 </section>
 <section>
-<h1 id="the--ilities-a-journey-not-a-destination">The &#39;-ilities&#39;: A Journey, Not a Destination</h1>
+<h3 id="the--ilities-a-journey-not-a-destination">The &#39;-ilities&#39;: A Journey, Not a Destination</h3>
 <p>As we wrap up our deep dive into the &#39;-ilities&#39;, I want to leave you with a crucial perspective: mastering the &#39;-ilities&#39; is a journey, not a one-time destination. For those just embarking on their software development careers, it&#39;s easy to feel overwhelmed by the sheer depth and breadth of these concepts. And that&#39;s okay!</p>
 <p>Here&#39;s what I&#39;d like you to remember:</p>
 <ul>
@@ -197,7 +197,7 @@ e:T4faf,<p><em>This is a transcript of a talk given to a Code Fellows 401 JavaSc
 <p>To sum up, embark on your coding journey with a curious mind and an open heart. Celebrate the milestones you achieve, be patient with the challenges, and remember that every &#39;-ility&#39; you encounter is a stepping stone to becoming not just a developer, but a craftsman of technology. Embrace the journey, and you&#39;ll find that growth, both professional and personal, awaits at every turn.</p>
 </section>
 <section>
-<h1 id="building-robust-software-homes">Building Robust Software Homes</h1>
+<h3 id="building-robust-software-homes">Building Robust Software Homes</h3>
 <p>As we&#39;ve journeyed through the intricate landscape of software development today, we&#39;ve explored the delicate balance between Functional and Non-functional Requirements.</p>
 <p>Just as in constructing a home, while functional requirements dictate the rooms and spaces we have, the non-functional requirements act as the specifications for the materials, insulation, and foundational elements that ensure the home stands the test of time. The rooms serve our immediate needs, but it&#39;s the quality of materials and construction that ensure safety, comfort, and longevity.</p>
 <p>Through our &#39;-ilities&#39;, we delved into:</p>
