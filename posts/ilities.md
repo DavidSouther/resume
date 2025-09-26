@@ -6,7 +6,7 @@ summary: As software projects grow beyond a single user, understanding functiona
 
 _This is a transcript of a talk given to a Code Fellows 401 JavaScript course._
 
-# Introduction: Distinguishing Between Functional and Non-Functional Requirements
+### Introduction: Distinguishing Between Functional and Non-Functional Requirements
 
 Good afternoon, aspiring developers\!
 
@@ -18,7 +18,7 @@ Imagine you're constructing a building. The functional requirements might be the
 
 By the end of this lecture, I hope to equip you with a clearer understanding of these two categories, ensuring that the software you build not only works but works well for your users. Let's begin our journey into the backbone of software requirements\!
 
-# Transitioning to the '-ilities': Measuring Non-Functional Requirements
+### Transitioning to the '-ilities': Measuring Non-Functional Requirements
 
 Having laid the groundwork with the distinction between functional and non-functional requirements, let's now delve deeper into the heart of non-functional requirements. You might have heard the term '-ilities' thrown around in software development discussions. No, it's not some secret developer code language, but it's a foundational concept that gives structure and specificity to non-functional requirements.
 
@@ -35,27 +35,27 @@ The first \-ility is “Quality” \- do we as a team care that the program work
 
 Let’s embark on this exploration of the '-ilities', shedding light on how we measure and ensure that our software isn’t just operational, but exceptional.
 
-## Usability & Accessibility
+#### Usability & Accessibility
 
-### 1\. Usability
+##### 1\. Usability
 
 Definition: Does the software work for the people it was designed for?
 
 Usability focuses on the ease with which your target users can understand, learn, and use the software. A system could have all the required features, but if users struggle to navigate it or find it unintuitive, then its usability is compromised.
 
-#### Ways to Verify Usability
+###### Ways to Verify Usability
 
 * **User Testing:** Gather a group of your target users and observe them using your software. Take notes on areas where they get stuck or express confusion.  
 * **Feedback Surveys:** After users have interacted with your software, provide them with a short survey asking about their experience.  
 * **Heuristic Evaluations:** Apply usability principles, often called heuristics, to evaluate potential usability issues. This can be done even before user testing.
 
-### 2\. Accessibility
+##### 2\. Accessibility
 
 Definition: Does the software work for people it wasn’t designed for? (Implies usability)
 
 Accessibility goes a step further than usability. It ensures that your software is usable not just for its target audience but also for people with disabilities. This could include individuals with visual, auditory, cognitive, or motor impairments.
 
-#### Ways to Verify Accessibility
+###### Ways to Verify Accessibility
 
 * **Automated Accessibility Testing Tools:** Tools like Axe or Wave can scan your website and provide feedback on accessibility issues.  
 * **Manual Testing with Screen Readers:** Test your software with screen readers like JAWS or NVDA to ensure it's navigable and understandable for visually impaired users.  
@@ -65,29 +65,29 @@ It's worth noting that while usability often considers the majority or the 'aver
 
 Remember, by ensuring both usability and accessibility, we're not just ticking off boxes; *we're creating software that serves and respects all users*. Next, we'll delve into how some of our advanced '-ilities' build on these foundational concepts.
 
-## Maintainability & Extensibility
+#### Maintainability & Extensibility
 
 Now that we've delved into the user-centric foundations of Usability and Accessibility, let's pivot our attention towards the developer-centric foundations: Maintainability and Extensibility.
 
-### 3\. Maintainability
+##### 3\. Maintainability
 
 Definition: Are team members able to add features and remediate issues over time?
 
 Maintainability is about ensuring that, as your software grows and evolves, it doesn't become a tangled mess that's impossible to manage. Software that's easy to maintain can adapt to changing requirements without inordinate effort, time, or cost.
 
-#### Ways to Verify Maintainability
+###### Ways to Verify Maintainability
 
 * **Code Reviews:** Regularly reviewing code among team members can identify potential maintenance issues and promote best practices.  
 * **Technical Debt Tracking:** Track and manage "quick fixes" or "temporary solutions" as they can pile up and become maintainability nightmares.  
 * **Automated Testing:** Implement unit, integration, and end-to-end tests. A well-tested application can prevent regressions, ensuring new changes don't break existing functionality.
 
-### 4\. Extensibility
+##### 4\. Extensibility
 
 Definition: Are non-team members able to adapt the software to novel situations? (Implies maintainability)
 
 Extensibility is the ability of your software to be expanded with new capabilities without major changes to the existing system. Think of it as preparing your software for the unknown—situations you didn't anticipate but others might find use for.
 
-#### Ways to Verify Extensibility
+###### Ways to Verify Extensibility
 
 * **Plugin Architecture:** Design your software to allow for plugins or extensions, letting other developers build on top of your core functionality.  
 * **Clear Documentation:** By providing comprehensive documentation for APIs, modules, and functionalities, you empower other developers to leverage and extend your software.  
@@ -97,29 +97,29 @@ In the realm of React, the concept of componentization promotes both maintainabi
 
 As we dive deeper into the '-ilities', it's fascinating to see how they interconnect. Just as extensibility implies maintainability, our upcoming '-ilities' will further build upon these core foundations. Let's continue our journey.
 
-## Availability & Scalability
+#### Availability & Scalability
 
 Having explored user-focused and development-centric '-ilities', we now transition to a realm which both developers and users equally care about: the performance and reliability of a system. Enter: Availability and Scalability.
 
-### 5\. Availability:
+##### 5\. Availability:
 
 Definition: Does the system respond successfully with appropriate latency under typical load conditions?
 
 Availability speaks to the uptime of your system and its reliability. An available system ensures that users can access it when they need to without encountering unexpected downtimes or slow responses.
 
-#### Ways to Verify Availability
+###### Ways to Verify Availability
 
 * **Monitoring Tools:** Employ tools like Nagios, Prometheus, or Datadog to constantly monitor system health and performance.  
 * **Regular Health Checks:** Implement periodic health checks on your servers and databases to identify potential availability issues.  
 * **Distributed Systems:** By distributing your application across multiple servers or even geographical locations, you can ensure higher availability. If one server fails, others can pick up the slack.
 
-### 6\. Scalability:
+##### 6\. Scalability:
 
 Definition: Does the software continue operation without catastrophic loss of data when experiencing spikes in load? (Implies availability)
 
 Scalability addresses how your system performs under increased load, whether that's more users, more data, or increased concurrent requests. A scalable system can handle growth seamlessly.
 
-#### Ways to Verify Scalability
+###### Ways to Verify Scalability
 
 * **Load Testing:** Use tools like JMeter or LoadRunner to simulate spikes in traffic and see how your system responds.  
 * **Horizontal Scaling:** Add more machines to your system or scale out, so as the load increases, you can easily distribute it across multiple servers.  
@@ -129,29 +129,29 @@ In the context of JavaScript and React, consider the back-end environment where 
 
 Both availability and scalability ensure that as your software garners more users and faces unforeseen circumstances, it remains robust and reliable. As we further explore our '-ilities', we'll see how these foundational concepts play a role in shaping the overall quality of any software system.
 
-## Security & Auditability
+#### Security & Auditability
 
 Our exploration of '-ilities' now brings us to a domain that's of paramount importance in today's digital age: the realm of Security and Auditability. With data breaches becoming increasingly common and the value of data soaring, ensuring the security and traceability of our software systems is crucial.
 
-### 7\. Security
+##### 7\. Security
 
 Definition: Is data appropriately stored, and visible only to authorized users?
 
 Security ensures that unauthorized access is denied to sensitive data, services, or resources. It also encompasses the confidentiality, integrity, and availability of data.
 
-#### Ways to Verify Security
+###### Ways to Verify Security
 
 * **Penetration Testing:** Engage security experts to simulate cyber attacks on your system to identify vulnerabilities.  
 * **Data Encryption:** Ensure data at rest and in transit is encrypted. For web apps, HTTPS should be a standard, and databases should encrypt sensitive data.  
 * **Authentication and Authorization:** Implement strong authentication mechanisms, like two-factor authentication, and ensure that authorization mechanisms are in place so that users can only access what they are allowed to.
 
-### 8\. Auditability
+##### 8\. Auditability
 
 Definition: Is it possible to audit data modification and access over defined periods of time, e.g., the last 30 days? (Implies security)
 
 Auditability ensures that all transactions and modifications within a system are traceable. This is crucial for understanding system activity, investigating incidents, and ensuring compliance with regulations.
 
-#### Ways to Verify Auditability
+###### Ways to Verify Auditability
 
 * **Logging Mechanisms:** Implement comprehensive logging that captures all system and user activities. Tools like ELK Stack (Elasticsearch, Logstash, Kibana) can be used to analyze logs.  
 * **Immutable Logs:** Ensure logs are immutable and cannot be tampered with once written. This might mean storing them in a write-once, read-many storage system.  
@@ -163,7 +163,7 @@ Security and auditability are not just technical requirements but are often mand
 
 As we conclude our exploration of the '-ilities', remember that these are not isolated concepts but interwoven facets of a holistic software development approach.
 
-# The '-ilities': A Journey, Not a Destination
+### The '-ilities': A Journey, Not a Destination
 
 As we wrap up our deep dive into the '-ilities', I want to leave you with a crucial perspective: mastering the '-ilities' is a journey, not a one-time destination. For those just embarking on their software development careers, it's easy to feel overwhelmed by the sheer depth and breadth of these concepts. And that's okay\!
 
@@ -177,7 +177,7 @@ Here's what I'd like you to remember:
 
 To sum up, embark on your coding journey with a curious mind and an open heart. Celebrate the milestones you achieve, be patient with the challenges, and remember that every '-ility' you encounter is a stepping stone to becoming not just a developer, but a craftsman of technology. Embrace the journey, and you'll find that growth, both professional and personal, awaits at every turn.
 
-# Building Robust Software Homes
+### Building Robust Software Homes
 
 As we've journeyed through the intricate landscape of software development today, we've explored the delicate balance between Functional and Non-functional Requirements.
 

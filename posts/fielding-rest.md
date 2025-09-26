@@ -5,7 +5,7 @@ summary: My notes when reading Roy Fielding's REST dissertation, circa 2022. The
 ---
 Software Architecture has two unique but alternately useful meanings. The first is how the in-the-silicon processing that the programs in a system perform, called the run-time abstraction \[Ch1.1\]. The second, which Roy Fielding uses in his [dissertation](https://ics.uci.edu/~fielding/pubs/dissertation/top.htm) to motivate the development of HTTP, is the layering of system constraints to create increasingly focused architectural styles \[Ch1\]. As a practicing engineer, the approach to software architecture as descriptions of constraints and styles allows projects to consider their designs and possible implementations before the expensive task of coding. After a system is deployed and as it grows, teams necessarily begin using the runtime architecture model to understand, monitor, and troubleshoot the application.
 
-## Fielding’s REST
+#### Fielding’s REST
 
 Fielding’s research was motivated by the first decade of the Internet, to his writing in 2000\. Through this time, the Internet transitioned from a network of research institutes to a network of the general public. This distributed (and in many ways anarchic) collection of actors pushed Fielding to look for architectural patterns and styles that could be resilient given such a shared resource. The Internet is a global, distributed, hypermedia system. The Internet is defined by its distributed nature, variable latency & low reliability network connections, multiple trust boundaries, and large grain data objects \[Pg3\]. In creating REST, Fielding is looking to describe a set of constraints that will create a useful style for the Internet, its components, and their connectors \[Ch1.2\].
 
@@ -35,23 +35,23 @@ Specific Notes:
 * 6.5.2 HTTP is not RPC: of course not. See above. RPC is an application concern, and the implementation details of the connector being HTTP or RMI or gRPC are unrelated concerns.  
 * 6.5.2b REST is not RPC: “Requests are directed to resources using a generic interface with standard semantics that can be interpreted by intermediaries”. It is not unreasonable to approach a procedure call as a resource. The identifier is the procedure and the input arguments; the resource is the algorithm it wraps, and the representation is the return value of the procedure. Describing this using REST can certainly be contortions \- not all RPCs easily fit into REST’s architecture, especially highly stateful procedures. This model works wonderfully, though, when applied to 6.2.3 Remote Authoring, as Remote Authoring is a well-understood set of RPC actions that fit the REST architectural model.
 
-## REST as RPC
+##### REST as RPC
 
 As laid out, REST is intended as a hypermedia retrieval system. With the introduction of AJAX and Web2.0, this paradigm is flipped on its head. It is interesting that without significant effort, HTTP as designed following the REST style still works in Web 2.0. I find myself most satisfied when I come across a question that I had never before considered for a software system, and the existing architecture has a clear and direct solution. While the details of POST/PUT/PATCH semantics cause headaches, that they existed in the HTTP spec to begin with provides a clear and direct solution for using HTTP as a Resource RPC tool. With only a few more constraints on how the HTTP primitives are assembled, REST has naturally grown from the document distribution system Fielding describes in 2000 into the core of 21st century Internet.
 
-### Resource Identifiers
+##### Resource Identifiers
 
 REST URIs are left as-is. A URI when using REST as an RPC still "identifies a concept rather than a document" \[Pg111\]. The first constraint moving to REST as RPC is applying a structure to the path portion of a URI. This structure creates a resource hierarchy, creating an alternating pattern of resource\_type and resource\_id. Each resource\_type in the hierarchy serves as a collection, possibly constrained in a tree structure of its parents, and a resource\_type/resource\_id path component pair identify a resource uniquely. When requesting this resource, the client and server can treat it in any number of formats. The representation of the resource, as transmitted, is negotiated but retains "the semantics of what the author \[or service\] intends to identify" \[Pg111\]. These representations can contain additional metadata about the resource.
 
-### Verbs, Common and Otherwise
+##### Verbs, Common and Otherwise
 
 HTTP request methods GET and HEAD are, like much of HTTP1.0, designed with distributed document retrieval in mind. Thus, they are designed with the REST constraints described by Fielding. What isn’t described is how the modifying methods POST, PUT, PATCH, and DELETE are RESTful. Using REST as an RPC mechanism requires the modifying methods to also be stateless. This is achieved by treating the body of the method as a representation of the resource that is identified by the request’s URI. When a client wishes to modify the server’s understanding of a resource, it does so by preparing an appropriate HTTP request and filling the payload with a representation of the data in a format the service understands. It then sends that request to the server, which (if the request is allowed via authentication policies), the server can update its internal storage for the identifier with the new data. While the semantics require care when implementing, it is straightforward to map common RPC commands of Create, Retrieve, Update, and Delete to POST, GET, PUT/PATH, and DELETE directly. Custom verbs can be achieved by defining resource types specific to that action, and rephrasing it in the common commands.
 
-### HATEOAS vs Resource Discovery
+##### HATEOAS vs Resource Discovery
 
 Hypertext as the Engine Of Application State [\[roy\]](https://github.com/DavidSouther/cpsc5200/blob/main/01_20200112_rest_notes.adoc#roy) and Resource Discovery [\[disc\]](https://github.com/DavidSouther/cpsc5200/blob/main/01_20200112_rest_notes.adoc#disc) are alternative architectural styles to describe the shape of a REST API. In Resource Discovery, a REST RPC Service publishes a single document that contains the schema of the entire API. This includes data types, resource hierarchies, available RPC methods (both common and custom), formats for constructing URIs, and other metadata like access control rules. HATEOAS distinguishes itself by including resource information in the API responses themselves. When representing a resource, HATEOAS includes structured metadata about related resources. This includes what the resource is intended to be used as, and critically, the URI of the resource. By including this information with every resource, HATEOAS can in effect include valid business rules available to the resource at a given point in time. Discovery APIs allow a client to retrieve the schema a single time, and make requests with a known structure against a stable API. This can reduce the payload size of each request, as the discovery schema contains all the information necessary to know what valid URIs may be, but is unable to encode business logic like HATEAOS. HATEAOS provides increased flexibility (in that representations may skew separately from their identifier) and increased accuracy (in that only valid transitions are included in the representation), but does have increased overhead in larger message sizes for every request.
 
-## REST is many things
+#### REST is many things
 
 REST started as a motivating philosophy for developing the HTTP specification. Its foundation is the separation from identifier to content, and the separation of content and representation. These architectural constraints allowed the Internet to anneal around a set of protocols that could handle its distributed, anarchic nature gracefully and resiliently. Since that formulation, the Internet has seen a radical transformation, from a document sharing system requiring moderate technical investment into an application delivery platform powering a significant portion of the worldwide economy & communications. With that growth, so to has the concept of the REST architecture grown from a hypermedia retrieval architecture into a complete RPC mechanism. Through that growth, its core constraint of stateless requests meets the needs of the ongoing, evolving Internet.
 
@@ -59,7 +59,7 @@ But if you need a definition for a textbook, I propose this:
 
 *REST is a range of software architectures that harness and exploit the mechanics of HTTP/1.1 and related transfer protocols. These include as the minimum architectural constraints layered client/server, URI addressing, & state management being restricted to authentication proof, and may include caching and advanced flow control from HTTP/2,3 or gRPC to include multiple Resource Representations in a single transport Request.*
 
-## References
+#### References
 
 * "Architectural Styles and the Design of Network-based Software Architectures." Fielding, Roy. 2000\.
 

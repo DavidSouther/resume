@@ -3,8 +3,8 @@ title: Forward/Backward Method for Algorithms
 date: 2024-08-13
 summary: The Forward/Backward method is a technique to develop an algorithm or program given some known inputs and return values for a function. After brainstorming the test cases, the forward/backward method guides the programmer through leading questions to find appropriate data structures and algorithms for the middle of their code. At the end, they'll have a working idea for how to solve a problem, and can turn that into a plain text description of their algorithm.
 ---
-# The Forward/Backward Method for Developing Algorithms
-## Example: Circular Linked List
+### The Forward/Backward Method for Developing Algorithms
+#### Example: Circular Linked List
 
 Part three of a series on [technical whiteboarding](/blog/interview_01_whiteboard).
 
@@ -46,12 +46,12 @@ This write up describes the forward and backward steps in an algorithmic way. It
 
 This approach to problem solving works best with a good understanding and recognition of the common data structures, their methods, and the algorithms to work on. While any problem may need specific domain knowledge, generally, knowing how to construct and traverse arrays, linked lists, binary trees, n-ary child trees, and hashmaps, as well as how stacks, queues, and sets augment traversals for those structures, is a solid starting point.
 
-## Recursive Algorithms
+#### Recursive Algorithms
 
 A problem may have a very clear recursive solution. When the problem can be rephrased as “Do the same operation on two parts of the input”, or “do the operation on the head, and then repeat”, it might be amenable to recursion. Recursion requires two pieces: the base case, and the operation. Identify the base case (usually either empty or one item in the data structure), the recursion on one or more parts of the data structure, and any logic necessary to combine those results.
 
 In recursion, the empty case becomes critical to identify, as this case (and possibly the one or two item case) will come to define the base case of the recursion. Failure to identify the base case at this time will greatly increase the difficulty in the remainder of the interview.
 
-# References
+### References
 
 SOLOW, D. 2014\. Chapter 2, The Forward Backward Method. In How to Read and Do Proofs (Sixth Edition). John Wiley & Sons, Danvers, MA, 9-24

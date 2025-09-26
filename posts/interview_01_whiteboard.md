@@ -23,7 +23,7 @@ Technical Whiteboarding is a systematic approach to designing algorithmic progra
    1. **Walk through the small, interesting test case.** After writing your code, the next step is to walk through the examples used during forward / backward to ensure that your solution works correctly. This will involve running the code on the test case and verifying that it produces the expected output. If this is truly a “whiteboard only” without an editor and runtime, instead perform a memory trace of the function with the minimum interesting example.  
    2. **Analyze the complexity and efficiency of your algorithm and implementation using big-O notation.** The final step in your process is to evaluate the Big-O of your solution. This will help you understand the performance characteristics of your solution and ensure that it is scalable and efficient.
 
-## Diagram
+#### Diagram
 
 The output of this process is a whiteboard that looks something like this.
 
@@ -31,11 +31,11 @@ The output of this process is a whiteboard that looks something like this.
 
 This whiteboard shows a completed “Circular Linked List” interview process. The problem statement box copied the problem, and defined specific terms in the prompt. The whiteboard captures three test cases: the empty list, a list with a loop, and a list without. The visualization shows the conclusion of the forward/backward process for both true and false test cases. The algorithm is a plain language summary of those steps. The code includes the definition of the Node data type (though it elides the value, which isn’t used in this problem). It then uses JavaScript built in data structures, and iterates the list as described. The step through here is “completed”, but during its creation the “current” arrow was duplicated, updated, and changed from gray (active value) to red (prior values). Finally, the big-O was analyzed with remarks.
 
-## Approach
+#### Approach
 
 Creating a white board is challenging because the problems that need software are challenging. This approach incorporates a number of techniques that have been shown to be effective for understanding the programming process. Being intentional in following these steps as listed guides the process, letting the engineer focus on the hard questions specific to the problem.
 
-### 1\. Problem Statement & 2\. Small, Interesting Test Case
+##### 1\. Problem Statement & 2\. Small, Interesting Test Case
 
 State or restate the problem in a single, clear sentence. Some interviews will already be in a short problem statement. Others will be presented as a word story, and pulling out the problem statement can take a bit of time. Write down the high level nouns and verbs, and ask for clarification if possible and repetition if necessary. Highlight and define domain specific words & phrases, and areas of possible misunderstanding. Nouns will become values and objects; adjectives or descriptors will be the properties of the data. Verbs are the actions that the algorithm will perform on the data to get the desired result.
 
@@ -49,7 +49,7 @@ Choose a test case to use for the rest of the white board. The small, interestin
 
 *Interview Timing:* this part of the interview should aim to take about 5 minutes. Write the interview prompt verbatim. Highlight jargon and key phrases, and ask for clarification & definitions. Write down the answers to those questions. Finding the Small, Interesting Input relies on experience doing walkthroughs with a range of data structures and problems. That said, for most problems, three to five items should feel about right.
 
-### 3\. Visualization & 4\. Algorithm
+##### 3\. Visualization & 4\. Algorithm
 
 Draw the small, interesting input at the top of the visualization and the output at the bottom. The second phase of the whiteboard is developing a general solution to the problem, which will handle any input. The visualization and algorithm developed here will have the full details of how to take an input and generate the correct output.
 
@@ -61,7 +61,7 @@ Describe, in plain language, the steps the visualization describes. Pseudocode i
 
 *Interview timing:* this should take the bulk of the time of the interview. Twenty minutes is not an unreasonable amount of time to spend iterating between the algorithm and the visualization. While it’s important to leave enough time for the code & walkthrough, fully developing the algorithm should make that a straightforward process. However, the thirty minute mark should be an absolute last time to move on to coding.
 
-### 5\. Code & 6\. Verification
+##### 5\. Code & 6\. Verification
 
 Write code to implement those steps, using your language’s idioms. With the algorithm written and visualization sketched out, it’s time to translate that to the language of choice. While the algorithm is written as “for every item in input”, the code may change depending on what the input type is. If it’s an array, and the index isn’t used in the algorithm, the loop could be `for (const item of array) { … }` or `array.forEach(item \=\> …)`. But if it’s a linked list, that would need to traverse with `let current \= linked\_list.head; while (current \!== null) { …; current \= current.next; }`.
 
@@ -73,7 +73,7 @@ Provide a Big O analysis, justifying the time and space complexity. Using either
 
 *Interview Timing:* Ten minutes for coding and five minutes for a walkthrough is reasonable with a well-developed algorithm in part 3\. By the time the walkthrough is complete, the Big-O should be apparent and can be stated in a few moments. Some engineers may prefer to spend more time iterating on the code. That’s up to the individual engineer to know where they are more comfortable developing their ideas.
 
-## Timing
+#### Timing
 
 ![{.float.left[width=256px]} Breakdown of your time during a technical interview.](/images/Technical_Whiteboarding_Overview_Timing.png)
 
@@ -82,7 +82,7 @@ An average breakdown of the relative amount of time spent in each step of the pr
 In a 45 minute interview, leave 5 minutes for general conversation & buffer time. Then, aim for about 10 minutes getting into the problem. By that 10 minute mark, settle on a test case for the problem. Visualizing and planning should be about 50/50 of their portions, finishing at about 25 minutes in. The biggest chunk, but not a majority, of time should be spent coding, about 15 minutes. Leave another 5 minutes to work through the test case, fixing any issues that arise.
 
 
-## Summary
+#### Summary
 
 Technical Whiteboarding is a systematic approach to designing algorithmic programming solutions to problems identified in a software environment. This approach involves defining the problem’s input and output types, identifying a small, interesting test case, creating a visualization and plain language algorithm, writing code, walking through the small, interesting test case, and evaluating the big-O of the solution. This process helps to improve the quality of the solution and shorten development time.
 
@@ -90,7 +90,7 @@ This process is particularly useful when solving complex problems with code, as 
 
 ---
 
-## Checklist
+#### Checklist
 
 Step 1: Define the problem
 

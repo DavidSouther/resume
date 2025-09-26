@@ -4,7 +4,7 @@ date: 2024-08-13
 summary: This post is a glossary of common data structures, their properties, and the algorithms they use. It works best as a study guide - if you're comfortable with an item in the glossary, move on until you find one you're less familiar with. Then, spend time researching that!
 ---
 
-# Data Structures & Algorithms Glossary
+### Data Structures & Algorithms Glossary
 
 Part six of a series on [technical whiteboarding](https://davidsouther.com/blog/interview_01_whiteboard).
 
@@ -12,7 +12,7 @@ There are a lot of ways to do a successful whiteboard interview. To perform effi
 
 This glossary is best used as a study guide. For items that are familiar and comfortable, you’re good to go. For items that are unfamiliar, find practice questions on the internet to improve your understanding and increase your comfort with that item.
 
-## Concepts
+#### Concepts
 
 While each data structure has its own specifics and details, they can all be generally understood by looking at these four details.
 
@@ -24,7 +24,7 @@ While each data structure has its own specifics and details, they can all be gen
 
 **Traversal** How do you operate on all items of the data structure? How do you operate on all items to modify each one? How do you operate on all items to create a new data structure from some or all of those values?
 
-## Array
+#### Array
 
 An array is a linear collection of items that can be accessed and modified in constant time, often all with the same type, but otherwise have no information about the relative position or details of the items. Changing the order of the items, or moving items around relative to one another, or growing the array to be able to handle more items, are all expensive operations. It is also expensive to find values inside the array, as each item must be examined individually.
 
@@ -42,7 +42,7 @@ An array is a linear collection of items that can be accessed and modified in co
 
 **Sort**: The array sort operation takes a comparator function and results in an array with the items in sorted order. The comparator function takes two arguments, typically called self and other, and returns a number less than zero if self should be sorted earlier in the array than other, or returns a number greater than zero if self should appear later in the array than other. If it returns 0, the items are considered equal and their order is unchanged. Depending on the language, sort may change the original array, or it may leave the original array intact and return a new array.
 
-## Linked List
+#### Linked List
 
 Linked Lists defines its items in terms of followers, or the next pointer. Adding items in the list immediately after a referenced item is inexpensive, which is desirable for situations where data is added and removed often. That makes linked lists especially useful for implementing Stacks and Queues.
 
@@ -58,7 +58,7 @@ Linked Lists defines its items in terms of followers, or the next pointer. Addin
 
 **Traversal**: Traversing a linked list involves looking at all items in the list. Typically, traversing uses a while loop and a current node. The current variable starts at the head, advances by setting the variable to the next property, and continues until reaching the empty node past the end of the list.
 
-## Trees
+#### Trees
 
 **Root**: The root is the topmost node of a tree data structure. It is the starting point from which all other nodes in the tree are derived. The root node has no parent and serves as the unique entry point for accessing the tree.
 
@@ -74,13 +74,13 @@ Linked Lists defines its items in terms of followers, or the next pointer. Addin
 
 **Depth**: The depth of a tree is a measure of the maximum number of edges or levels in the longest path from the root node to a leaf node. In other words, it is the same as the tree’s height. The depth of an empty tree is considered to be \-1, while a tree with only a root node has a depth of 0\. The depth of the tree is often used to assess the complexity and performance of tree-based algorithms, as it can impact the time and space requirements for traversing and processing the tree.
 
-## Binary Tree
+#### Binary Tree
 
 A binary tree is a tree data structure where each node has at most two children, which are distinguished as left and right. The binary tree is a simple and widely-used structure that can be utilized for various applications, such as searching, sorting, and implementing data storage.
 
 **Creating nodes**: A node in a binary tree has three attributes: value, left, and right. The ‘value’ attribute stores the data associated with the node. The ‘left’ and ‘right’ attributes are references to the left and right children of the node, respectively. If a node does not have a left or right child, the respective reference is considered empty or null.
 
-### Traversals:
+##### Traversals:
 
 **Depth First Pre-order**: In a pre-order traversal, the nodes of a binary tree are visited in the following order: root, left subtree, and right subtree. This traversal is performed recursively, meaning that the entire left subtree is processed before moving on to the right subtree.
 
@@ -100,7 +100,7 @@ A binary tree is a tree data structure where each node has at most two children,
 
 **Balanced Binary Search Tree**: A balanced binary search tree is a binary search tree that is also a balanced binary tree. This means that the height difference between the left and right subtrees of every node is at most one. Balanced binary search trees provide optimal performance for search, insertion, and deletion operations, as their height is minimized, ensuring that these operations have a logarithmic time complexity. Examples of balanced binary search trees include AVL trees and Red-Black trees.
 
-## Other Trees
+#### Other Trees
 
 **N-ary Tree**: An N-ary tree is a tree data structure where each node can have an arbitrary number of children, organized in an ordered way. N-ary trees generalize the concept of binary trees and are used in various applications, such as representing hierarchical relationships or organizing data in a more flexible manner.
 
@@ -116,7 +116,7 @@ A binary tree is a tree data structure where each node has at most two children,
 
 **Breadth-first traversal**: Breadth-first traversal in an N-ary or K-ary tree is a way of visiting nodes by exploring each level of the tree before moving on to the next level. This traversal visits nodes in a horizontal manner, starting from the root and moving left to right for each level. Breadth-first traversal is typically implemented using a queue data structure to maintain the order of nodes to be visited.
 
-## Map & Set
+#### Map & Set
 
 Map: A map, also known as a dictionary, associative array, or hash table, is a data structure that stores a collection of key-value pairs, where each key is associated with a single value. Maps allow for efficient retrieval, insertion, and deletion of values based on their corresponding keys, making them useful in various applications, such as caching, storing configuration settings, and implementing symbol tables in compilers. Do not confuse the Map data structure with the array map operation.
 
@@ -134,7 +134,7 @@ Map: A map, also known as a dictionary, associative array, or hash table, is a d
 
 **Big O implications**: Maps and sets are often used in situations where their O(1) average-case time complexity for insertion, deletion, and retrieval operations is desirable. This efficiency is particularly useful when working with large datasets or when frequent lookups and updates are required. By using maps and sets, the performance of algorithms can be significantly improved, as opposed to using data structures with higher time complexity, such as arrays or linked lists, which may require O(n) time for these operations.
 
-## Stacks & Queues
+#### Stacks & Queues
 
 **Stack**: A stack is a linear data structure that follows the Last In, First Out (LIFO) principle, meaning that the last element added to the stack is the first one to be removed. It is commonly used in depth-first traversal algorithms and function call execution.
 
@@ -154,7 +154,7 @@ Map: A map, also known as a dictionary, associative array, or hash table, is a d
 
 **Linked Lists**: When implemented with a linked list, the time complexity of these operations are constant time, O(1).
 
-## Recursion
+#### Recursion
 
 Recursion is a programming technique where a function calls itself in order to solve a problem by breaking it down into smaller instances of the same problem. Recursive solutions typically consist of a base case, one or more recursive cases, and function logic that guides the process.
 
@@ -187,7 +187,7 @@ The base case for linked lists, binary trees, and general trees is essential for
 
 In this example, the helper function is the recursive helper function that simplifies the main max\_depth function’s logic. The helper function takes two parameters: the current node being processed and the current depth of the tree. It then recursively computes the depth of the left and right subtrees and returns the maximum depth.
 
-## Graphs
+#### Graphs
 
 A graph is a data structure that represents a collection of objects (nodes) and the relationships (edges) between them. Graphs can be used to model a wide variety of real-world scenarios and problems, such as social networks, transportation systems, or computer networks. Graphs can be directed (edges have a specific direction) or undirected (edges have no direction), and edges can be weighted (with associated values) or unweighted. Graph algorithms, such as Breadth First Search and Depth First Search, can be used to traverse, analyze, and solve problems on graphs.
 
@@ -207,7 +207,7 @@ A graph is a data structure that represents a collection of objects (nodes) and 
 
 **Depth First Traversal (DFT)**: is a graph traversal algorithm that explores as far as possible along a branch before backtracking. Starting from a source node, DFT visits a node and then recursively visits its unvisited neighbors. DFS can be used to detect cycles, find connected components, or traverse the graph in a specific order. The nodes to visit in a DFT are tracked with a stack.
 
-### BFT & DFT Algorithm
+##### BFT & DFT Algorithm
 
     Create an empty queue Q (or stack S)
     Enqueue (or push) the source node to Q (or S).

@@ -3,13 +3,13 @@ title: Drawing Data Structures
 date: 2024-08-13
 summary: Having a consistent way to draw and represent data structures helps communicate on the job and in an interview. In this article, we'll look at some simple ways to draw common data structures, with a focus on trees, lists, and objects.
 ---
-# Drawing Data Structures
+### Drawing Data Structures
 
 Part two of a series on [technical whiteboarding](/blog/interview_01_whiteboard).
 
 Visual communication is a valuable but often overlooked skill in software development. This guide provides a set of useful ways to draw common data structures and values. These can be used in any number of settings. They are especially useful when creating test cases, developing how an algorithm could solve a problem, and when stepping through code that relies heavily on data structures.
 
-## Primitives
+#### Primitives
 
 ![{.float [width=400px]} Several numbers, strings, and boolean values.](/images/Technical_Whiteboarding_Drawing_Primitives.png)
 
@@ -20,7 +20,7 @@ Visual communication is a valuable but often overlooked skill in software develo
 * Boolean values are written as true and false. (Or True / False in Python.)
 
 
-## Lists
+#### Lists
 
 ![{.float [width=400px]} Three items in a tuple (or fixed-length array, depending on the language). An array of prime numbers. A list of famous book opening lines. A linked list with 4 nodes.](/images/Technical_Whiteboarding_Drawing_Simple.png)
 
@@ -33,7 +33,7 @@ Visual communication is a valuable but often overlooked skill in software develo
 * Linked Lists can be drawn as squares or circles with their value inside (either primitive or arrow from the middle to another value), and a line from the edge to the “next” node in the list. Nodes with a “null” next value can point at empty space, or elide their next arrow entirely. For problems where the value isn’t important, only the structure, use the color of the circle to signify differing values.
 
 
-## Trees
+#### Trees
 
 * Similar to linked lists, tree nodes are boxes or circles with their values in the middle and arrows from the edge to another node.
 
@@ -46,7 +46,7 @@ Visual communication is a valuable but often overlooked skill in software develo
 ![A binary tree with depth 3 and 6 nodes. An N-ary tree with depth 3 and 7 nodes. A DOM structure with body, header, nav, main, and footer.](/images/Technical_Whiteboarding_Drawing_Trees.png)
 
 
-## Objects
+#### Objects
 
 * Objects, or key/value pairs, should always be drawn on the heap.
 
@@ -56,6 +56,6 @@ Visual communication is a valuable but often overlooked skill in software develo
 
 ![A Person object with information about the author. Several Room objects, with the connections from the hallway to its adjacent rooms.](/images/Technical_Whiteboarding_Drawing_Objects.png)
 
-# Summary
+### Summary
 
 While there is no single “correct” way to draw any data structure, drawing it consistently is important for clear communication. These recommendations are a set that have worked well in a variety of educational and professional settings.

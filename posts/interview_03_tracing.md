@@ -3,7 +3,7 @@ title: Tracing Algorithms
 date: 2024-08-13
 summary: Tracing the behavior of a section of code using pen and paper gives developers a deeper understanding of what their program is dong. This technique applies to all languages and styles of programming. In this article, we will look at several similar examples, and see how tracking the change of variables' state in a program over time tells us a lot about what we should expect from an algorithm.
 ---
-# Tracing Code
+### Tracing Code
 
 Part three of a series on [technical whiteboarding](/blog/interview_01_whiteboard).
 
@@ -11,7 +11,7 @@ Tracing code is a tool to execute code on pen & paper (or, without running it on
 
 While there are many possible ways to trace the behavior of code with pen and paper, the approach described here has been validated in a number of scenarios as being clear, extensible, and productive in meeting educational goals.
 
-## Name/Value Table
+#### Name/Value Table
 
 Tracing starts with a print out of the code to work through. Without code, there’s nothing to trace\! With the code available, create a T table of names on the left and values on the right.
 
@@ -21,19 +21,19 @@ This is a complete trace of calling a Greatest Common Divisor (GCD) function. Th
 
 Read through the code, parsing each statement and expression..
 
-### 1\. Check variable names in the table.
+##### 1\. Check variable names in the table.
 
 If the code has a variable name on the left hand side of an \= assignment operator, check for the name in the table. If the line declares the variable and the name is in the table, that is an error.
 
 Look for each variable in the right hand side of the \=, or the condition of the control flow. If the name for the right hand side variables are not in the table, that is an error.
 
-### 2\. Evaluate expressions.
+##### 2\. Evaluate expressions.
 
 Look up variable names in the table, and copy their values.
 
 For objects and arrays, follow . and \[\] for properties and indexes. Perform arithmetic, and apply functions to arguments.
 
-### 3\. On lines that have an assignment operator \=, update variables in the table.
+##### 3\. On lines that have an assignment operator \=, update variables in the table.
 
 Ensure the variable on the left of the \= is already in the table. Evaluate the expression on the right of the \=. Cross out the last value in the table. Write or draw the new value from the evaluated expression?.
 
@@ -41,7 +41,7 @@ Ensure the variable on the left of the \= is already in the table. Evaluate the 
 
 This version of GCD uses the “Long Division” improvement to Euclid’s algorithm, resulting in many fewer iterations. It also uses the JavaScript argument spread syntax, to avoid creating an intermediate variable inside the while loop.
 
-### 4\. Follow control flow.
+##### 4\. Follow control flow.
 
 Function calls for code that has been written in this solution should be traced. See [Function Calls](https://codefellows.github.io/common_curriculum/challenges/code/tracing#heading=h.nga0zn5w473p), below.
 
@@ -51,9 +51,9 @@ While loops check the condition. If the condition is true, they execute the next
 
 For loops come in several flavors, but generally work as a while loop with an additional assignment. Depending on the flavor of the for loop, the assignment will happen after the body has run, or as part of a “has next item / get next item” operation pair. See languages for specifics.
 
-### 5\. Where there is no control flow, move to the next line and repeat until finished\!
+##### 5\. Where there is no control flow, move to the next line and repeat until finished\!
 
-## State
+#### State
 
 The core purpose of this tracing technique is to understand how program state changes over time. To make this readily apparent, this approach does not erase prior values. Instead, this approach crosses out those values, so that on review, it is apparent how they changed over the course of a program. It becomes immediately visually apparent to the reader (and more importantly, the tracer) which variables change, any patterns to their change, and any exceptions to the expected pattern.
 
@@ -63,7 +63,7 @@ Primitive values (booleans, numbers, short strings, and small arrays with three 
 
 This walk through of a circular linked list detection algorithm shows a number of arrows for objects. The listHead doesn’t actually point to an object, but points to the reference that is the head of the passed in linked list. Each node then has a color to represent its value, and an arrow for its next pointer. This could also be drawn as a name/value table, but because Linked List nodes are well known, they have a streamlined representation. The yellow node has a next arrow pointing back to blue, forming the circle. The visited set, like the list nodes, uses a shorthand notation wrapping copies of the nodes in curly braces (their next pointers would technically be set, but are elided for clarity). The current node moved several times through the algorithm, with old positions colored red. At the end of the fourth loop iteration, the arrow from current to the blue node was red, and the arrow from current to the yellow node was gray.
 
-## Function Calls
+#### Function Calls
 
 Some function calls or method invocations do not need to be traced. Library methods that have a well known interface can be evaluated and their result used in an expression. However, functions and methods that are part of the solution being traced should be represented on the table of variables.
 
@@ -75,9 +75,9 @@ When returning from a function, add a final entry in the name column as return (
 
 A recursive implementation of the GCD algorithm. Each recursive call received a new stack frame (the horizontal lines), with the two arguments. As the functions returned, the arrow filled in the return value for the prior invocation and the frame got crossed off as “complete”.
 
-## Extensions
+#### Extensions
 
-### Fewer Arrows with Heap Pointers
+##### Fewer Arrows with Heap Pointers
 
 Instead of arrows to the heap, each heap object can have a “memory address” assigned. These should be chosen pseudo-randomly, and always written in hexadecimal. For the object or list in the heap, write its fake address to the top left of the visualization, and put the same number in the value column for the pointer variable. Arrows are optional \- they will reinforce what the pointer values are, and they make it obvious to see when an object is no longer in use (all arrows pointing to it are crossed out), but they may be over cluttering for some pointer-heavy programs.
 
@@ -85,7 +85,7 @@ Instead of arrows to the heap, each heap object can have a “memory address” 
 
 A good rule of thumb for pointers is to start at 0x10, incrementing the first hex digit by one for each new object, and incrementing the second digit by 1 for each field or item in the array. This does imply a limit of 16 items in an array, or 16 fields in a struct, and does imply word-aligned member access.
 
-### Expression Evaluation as Variables
+##### Expression Evaluation as Variables
 
 Programmers with complex expressions may want to track those computations during execution. Adding an expression to the T-table where the left column is the expression of interest, and the right column is its value, is a convenient way to track these pieces of information.
 
@@ -95,7 +95,7 @@ The extractValue function looks at the value of the item at index 2 in the list 
 
 When using a debugger, this functionality is often available as a “watch” entry.
 
-### Scope
+##### Scope
 
 Many languages have block scopes for variables. In Java, scopes are created at any pair of braces. JavaScript creates scopes at any pair of control flow braces (for let and const variables). In either case, variables defined within the scope are no longer valid after the scope.
 
@@ -105,7 +105,7 @@ When tracing a function that has a scope block, draw a dashed line instead of a 
 
 In this JavaScript example, using `const` in a `while` loop creates a new `t` value. We show this in the trace by adding a light dashed line to know we're in the same function, but also to offset the scope. Like returning from functions, we also cross out the scope when it exits, that is, when the `while` loop repeats at the top.
 
-## References
+#### References
 
 1. Matthew Hertz and Maria Jump. 2013\. Trace-based teaching in early programming courses. In Proceedings of the 44th ACM technical symposium on Computer science education (SIGCSE ‘13). Association for Computing Machinery, New York, NY, USA, 561–566. [https://doi.org/10.1145/2445196.2445364](https://doi.org/10.1145/2445196.2445364)
 
