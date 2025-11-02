@@ -1,22 +1,22 @@
 1:"$Sreact.fragment"
 2:I[5244,[],""]
 3:I[3866,[],""]
-4:I[379,["829","static/chunks/829-341774b777d6f278.js","177","static/chunks/app/layout-2963253080626e5a.js"],"default"]
+4:I[379,["829","static/chunks/829-341774b777d6f278.js","177","static/chunks/app/layout-bffb39256b82b6dd.js"],"default"]
 6:I[6213,[],"OutletBoundary"]
 8:I[6213,[],"MetadataBoundary"]
 a:I[6213,[],"ViewportBoundary"]
 c:I[4835,[],""]
-:HL["/_next/static/css/8ebba7f93e3c8b18.css","style"]
+:HL["/_next/static/css/7de01b8bb033d018.css","style"]
 :HL["/_next/static/css/4c8a1bdc98674eb5.css","style"]
-0:{"P":null,"b":"asRczg1dYFnzcoTVAYZ_U","p":"","c":["","blog","interview_02_drawing"],"i":false,"f":[[["",{"children":["blog",{"children":[["id","interview_02_drawing","d"],{"children":["__PAGE__",{}]}]}]},"$undefined","$undefined",true],["",["$","$1","c",{"children":[[["$","link","0",{"rel":"stylesheet","href":"/_next/static/css/8ebba7f93e3c8b18.css","precedence":"next","crossOrigin":"$undefined","nonce":"$undefined"}]],["$","html",null,{"lang":"en","children":[["$","head",null,{"children":["$","link",null,{"rel":"stylesheet","href":"/jiffies-css-bundle.min.css"}]}],["$","body",null,{"className":"container","children":[["$","$L2",null,{"parallelRouterKey":"children","segmentPath":["children"],"error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":[[],[["$","title",null,{"children":"404: This page could not be found."}],["$","div",null,{"style":{"fontFamily":"system-ui,\"Segoe UI\",Roboto,Helvetica,Arial,sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\"","height":"100vh","textAlign":"center","display":"flex","flexDirection":"column","alignItems":"center","justifyContent":"center"},"children":["$","div",null,{"children":[["$","style",null,{"dangerouslySetInnerHTML":{"__html":"body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}"}}],["$","h1",null,{"className":"next-error-h1","style":{"display":"inline-block","margin":"0 20px 0 0","padding":"0 23px 0 0","fontSize":24,"fontWeight":500,"verticalAlign":"top","lineHeight":"49px"},"children":404}],["$","div",null,{"style":{"display":"inline-block"},"children":["$","h2",null,{"style":{"fontSize":14,"fontWeight":400,"lineHeight":"49px","margin":0},"children":"This page could not be found."}]}]]}]}]]],"forbidden":"$undefined","unauthorized":"$undefined"}],["$","$L4",null,{}]]}]]}]]}],{"children":["blog",["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","segmentPath":["children","blog","children"],"error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]]}],{"children":[["id","interview_02_drawing","d"],["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","segmentPath":["children","blog","children","$0:f:0:1:2:children:2:children:0","children"],"error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]]}],{"children":["__PAGE__",["$","$1","c",{"children":["$L5",[["$","link","0",{"rel":"stylesheet","href":"/_next/static/css/4c8a1bdc98674eb5.css","precedence":"next","crossOrigin":"$undefined","nonce":"$undefined"}]],["$","$L6",null,{"children":"$L7"}]]}],{},null,false]},null,false]},null,false]},null,false],["$","$1","h",{"children":[null,["$","$1","7l-z2GLoq-cgNEn3wpLZw",{"children":[["$","$L8",null,{"children":"$L9"}],["$","$La",null,{"children":"$Lb"}],null]}]]}],false]],"m":"$undefined","G":["$c","$undefined"],"s":false,"S":true}
-d:I[973,["567","static/chunks/app/blog/%5Bid%5D/page-1ba1c95a36064a59.js"],"Card"]
-e:T12ad,<section>
+0:{"P":null,"b":"OGdqJHwiG3xx8xRF8nUn0","p":"","c":["","blog","interview_02_drawing"],"i":false,"f":[[["",{"children":["blog",{"children":[["id","interview_02_drawing","d"],{"children":["__PAGE__",{}]}]}]},"$undefined","$undefined",true],["",["$","$1","c",{"children":[[["$","link","0",{"rel":"stylesheet","href":"/_next/static/css/7de01b8bb033d018.css","precedence":"next","crossOrigin":"$undefined","nonce":"$undefined"}]],["$","html",null,{"lang":"en","children":[["$","head",null,{"children":["$","link",null,{"rel":"stylesheet","href":"/jiffies-css-bundle.min.css"}]}],["$","body",null,{"className":"container","children":[["$","$L2",null,{"parallelRouterKey":"children","segmentPath":["children"],"error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":[[],[["$","title",null,{"children":"404: This page could not be found."}],["$","div",null,{"style":{"fontFamily":"system-ui,\"Segoe UI\",Roboto,Helvetica,Arial,sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\"","height":"100vh","textAlign":"center","display":"flex","flexDirection":"column","alignItems":"center","justifyContent":"center"},"children":["$","div",null,{"children":[["$","style",null,{"dangerouslySetInnerHTML":{"__html":"body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}"}}],["$","h1",null,{"className":"next-error-h1","style":{"display":"inline-block","margin":"0 20px 0 0","padding":"0 23px 0 0","fontSize":24,"fontWeight":500,"verticalAlign":"top","lineHeight":"49px"},"children":404}],["$","div",null,{"style":{"display":"inline-block"},"children":["$","h2",null,{"style":{"fontSize":14,"fontWeight":400,"lineHeight":"49px","margin":0},"children":"This page could not be found."}]}]]}]}]]],"forbidden":"$undefined","unauthorized":"$undefined"}],["$","$L4",null,{}]]}]]}]]}],{"children":["blog",["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","segmentPath":["children","blog","children"],"error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]]}],{"children":[["id","interview_02_drawing","d"],["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","segmentPath":["children","blog","children","$0:f:0:1:2:children:2:children:0","children"],"error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]]}],{"children":["__PAGE__",["$","$1","c",{"children":["$L5",[["$","link","0",{"rel":"stylesheet","href":"/_next/static/css/4c8a1bdc98674eb5.css","precedence":"next","crossOrigin":"$undefined","nonce":"$undefined"}]],["$","$L6",null,{"children":"$L7"}]]}],{},null,false]},null,false]},null,false]},null,false],["$","$1","h",{"children":[null,["$","$1","nDRdvaG-KKrov9ddc5pI0",{"children":[["$","$L8",null,{"children":"$L9"}],["$","$La",null,{"children":"$Lb"}],null]}]]}],false]],"m":"$undefined","G":["$c","$undefined"],"s":false,"S":true}
+d:I[973,["567","static/chunks/app/blog/%5Bid%5D/page-4cfc312f5be928d8.js"],"Card"]
+e:T129b,<section>
 <h3 id="drawing-data-structures">Drawing Data Structures</h3>
 <p>Part two of a series on <a href="/blog/interview_01_whiteboard">technical whiteboarding</a>.</p>
 <p>Visual communication is a valuable but often overlooked skill in software development. This guide provides a set of useful ways to draw common data structures and values. These can be used in any number of settings. They are especially useful when creating test cases, developing how an algorithm could solve a problem, and when stepping through code that relies heavily on data structures.</p>
 <section>
 <h4 id="primitives">Primitives</h4>
-<p><img src="/images/Technical_Whiteboarding_Drawing_Primitives.png" class="float" alt="Several numbers, strings, and boolean values." width="400px" /></p>
+<p><img src="/images/Technical_Whiteboarding_Drawing_Primitives.png" alt="{.float [width=400px]} Several numbers, strings, and boolean values."></p>
 <ul>
 <li><p>Numbers are written as numbers. For languages that distinguish between integer and floating point, it is easiest to write the number with a decimal . for floating point and without the decimal for integers. Alternatively, the machine size, if necessary, can be part of the number itself, like 12.5f32 or 15u8 for a 32-bit floating point and an 8-bit unsigned integer, respectively.</p>
 </li>
@@ -28,7 +28,7 @@ e:T12ad,<section>
 </section>
 <section>
 <h4 id="lists">Lists</h4>
-<p><img src="/images/Technical_Whiteboarding_Drawing_Simple.png" class="float" alt="Three items in a tuple (or fixed-length array, depending on the language). An array of prime numbers. A list of famous book opening lines. A linked list with 4 nodes." width="400px" /></p>
+<p><img src="/images/Technical_Whiteboarding_Drawing_Simple.png" alt="{.float [width=400px]} Three items in a tuple (or fixed-length array, depending on the language). An array of prime numbers. A list of famous book opening lines. A linked list with 4 nodes."></p>
 <ul>
 <li><p>Small, constant lists (three or fewer values that don’t change) can be written inline with three horizontal boxes.</p>
 </li>
@@ -52,7 +52,7 @@ e:T12ad,<section>
 <li><p>DOM Trees can be drawn with nested boxes, showing the nesting structure of the DOM tags.</p>
 </li>
 </ul>
-<p><img src="/images/Technical_Whiteboarding_Drawing_Trees.png" alt="A binary tree with depth 3 and 6 nodes. An N-ary tree with depth 3 and 7 nodes. A DOM structure with body, header, nav, main, and footer." /></p>
+<p><img src="/images/Technical_Whiteboarding_Drawing_Trees.png" alt="A binary tree with depth 3 and 6 nodes. An N-ary tree with depth 3 and 7 nodes. A DOM structure with body, header, nav, main, and footer."></p>
 </section>
 <section>
 <h4 id="objects">Objects</h4>
@@ -64,7 +64,7 @@ e:T12ad,<section>
 <li><p>It is not necessary to draw the methods or functional properties of an object, however, in a typed language, it can be helpful to write the type of the object above the card.</p>
 </li>
 </ul>
-<p><img src="/images/Technical_Whiteboarding_Drawing_Objects.png" alt="A Person object with information about the author. Several Room objects, with the connections from the hallway to its adjacent rooms." /></p>
+<p><img src="/images/Technical_Whiteboarding_Drawing_Objects.png" alt="A Person object with information about the author. Several Room objects, with the connections from the hallway to its adjacent rooms."></p>
 </section>
 </section>
 <section>
