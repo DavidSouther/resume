@@ -56,8 +56,8 @@
   }
 
   a {
-    --color: var(--color);
     --color: hsl(205, 20%, 32%);
+    color: var(--color);
   }
 
   a::after {

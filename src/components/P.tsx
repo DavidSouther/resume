@@ -8,10 +8,4 @@ export const MD = ({ children }: { children: string }) => {
 };
 
 export const A = ({ href, children }: { children: string; href?: string }) =>
-  href ? (
-    <>
-      <a href={href}>{children}</a>
-    </>
-  ) : (
-    <span>{children}</span>
-  );
+  href ? <a href={href}>{children}</a> : <span>{children}</span>;
