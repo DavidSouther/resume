@@ -1,7 +1,7 @@
 .BlogPage main {
   width: 768px;
   margin: 0 auto;
-  background-color: hsl(var(--color-hue) 20% 10%);
+  background-color: var(--blog-color);
 }
 
 @media (max-width: 768px) {
