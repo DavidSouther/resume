@@ -21,7 +21,7 @@ export async function generateMetadata(): Promise<Metadata> {
         Saturday, March 28th, 2026
         Midtown, Manhattan
         Location TBA,
-        Hotel Block TBA,
+        Hotel Block Kimpton Eventi,
         Tentative RSVP with David or Annie by Feb 20th`,
 			images: [
 				{
@@ -47,13 +47,18 @@ export default function Page() {
 					<p>Saturday, March 28th, 2026</p>
 					<p>Midtown, Manhattan</p>
 					<p>Location TBA</p>
-					<p>Hotel Block TBA</p>
 				</div>
 
 				<div className="divider"></div>
 
 				<div className="rsvp">
-					Tentative RSVP with David or Annie by Feb 20th
+					<p>Tentative RSVP with David or Annie by Feb 20th</p>
+					<ul>
+						<li>Hotel Block Booking Links:</li>
+						<li><a href="https://www.ihg.com/redirect?path=asearch&brandCode=KI&localeCode=en&regionCode=1&hotelCode=NYCAA&checkInDate=27&checkInMonthYear=022026&checkOutDate=29&checkOutMonthYear=022026&rateCode=6CBARC&_PMID=99801505&GPC=EUF&cn=no&adjustMonth=false&showApp=true&monthIndex=00">Kimpton Eventi $299</a></li>
+						<li><a href="https://app.marriott.com/reslink?id=1770236208872&key=GRP&app=resvlink">Moxy NYC Chelsea $249</a></li>
+						<li>Last day to book: Wednesday, February 25, 2026</li>
+					</ul>
 				</div>
 			</article>
 		</div>
