@@ -55,7 +55,8 @@ h1 {
   color: var(--subtle-color);
   margin-bottom: 20px;
 
-  p, ul {
+  p,
+  ul {
     margin: 15px 0;
     color: var(--subtle-color);
 
@@ -69,7 +70,6 @@ h1 {
     color: var(--subtle-color);
   }
 }
-
 
 .divider {
   width: 100px;
@@ -86,31 +86,23 @@ h1 {
     margin-top: 30px;
     font-style: italic;
   }
-   ul {
+  ul {
     margin: 0;
     padding: 0;
     font-size: 1.2rem;
     li {
       list-style-type: none;
 
-      a {
-        color: var(--link-color);
-        text-decoration: underline;
-        &:hover {
-          text-decoration: none;
-        }
-      }
-
       &:first-of-type {
         color: var(--highlight-color);
       }
 
       &:last-of-type {
-        font-size: 1.0rem;
+        font-size: 1rem;
         background-color: var(--highlight-color);
       }
     }
-   }
+  }
 }
 
 @media (max-width: 768px) {
@@ -128,5 +120,13 @@ h1 {
 
   .container {
     padding: 40px 30px;
+  }
+}
+
+a {
+  color: var(--link-color);
+  text-decoration: underline;
+  &:hover {
+    text-decoration: none;
   }
 }

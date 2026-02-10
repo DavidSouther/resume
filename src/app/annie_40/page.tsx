@@ -47,6 +47,7 @@ export default function Page() {
 					<p>Saturday, March 28th, 2026</p>
 					<p>Midtown, Manhattan</p>
 					<p>Location TBA</p>
+					<p>Afterparty: <a href="https://www.hoteleventi.com/chelsea-bars/">Kimpton Eventi Back Bar</a></p>
 				</div>
 
 				<div className="divider"></div>
