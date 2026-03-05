@@ -19,10 +19,9 @@ export async function generateMetadata(): Promise<Metadata> {
 		openGraph: {
 			description: `Save the Date! Annie's 40th Birthday
         Saturday, March 28th, 2026
-        Midtown, Manhattan
-        Location TBA,
-        Hotel Block Kimpton Eventi,
-        Tentative RSVP with David or Annie by Feb 20th`,
+		1234 Broadway #147
+        Hotel: Kimpton Eventi,
+        Food & Music; BYOB`,
 			images: [
 				{
 					url: "https://davidsouther.com/annie_40/cover.jpg",
@@ -45,15 +44,15 @@ export default function Page() {
 
 				<div className="details">
 					<p>Saturday, March 28th, 2026</p>
-					<p>Midtown, Manhattan</p>
-					<p>Location TBA</p>
+					<p>6:30pm 1234 Broadway #147</p>
+					<p>Food, soft drinks, & music provided; BYOB</p>
 					<p>Afterparty: <a href="https://www.hoteleventi.com/chelsea-bars/">Kimpton Eventi Back Bar</a></p>
 				</div>
 
 				<div className="divider"></div>
 
 				<div className="rsvp">
-					<p>Tentative RSVP with David or Annie by Feb 20th</p>
+					<p>RSVP with David or Annie by March 21st</p>
 					<ul>
 						<li>Hotel Block Booking Links:</li>
 						<li><a href="https://www.ihg.com/redirect?path=asearch&brandCode=KI&localeCode=en&regionCode=1&hotelCode=NYCAA&checkInDate=27&checkInMonthYear=022026&checkOutDate=29&checkOutMonthYear=022026&rateCode=6CBARC&_PMID=99801505&GPC=EUF&cn=no&adjustMonth=false&showApp=true&monthIndex=00">Kimpton Eventi $299</a></li>
