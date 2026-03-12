@@ -37,8 +37,7 @@ name = "Apollo GraphQL"
 
 [[experience.jobs.roles]]
 name = "[Staff Software Engineer](https://www.levels.fyi/companies/apollo-graphql/salaries/software-engineer?country=254&yoeChoice=senior)"
-startDate = "2024-12-01"
-finishDate = "2025-12-01"
+startDate = "2025-12-02"
 
 [[experience.jobs.roles.challenges]]
 description = """
@@ -75,7 +74,7 @@ name = "AWS Technical Content Experience"
 [[experience.jobs.roles]]
 name = "[SDE III - L6 - Senior SDE](https://www.levels.fyi/companies/amazon/salaries/software-engineer/levels/sde-iii)"
 startDate = "2024-12-01"
-finishDate = "2025-12-01"
+finishDate = "2025-11-26"
 
 [[experience.jobs.roles.challenges]]
 description = """
