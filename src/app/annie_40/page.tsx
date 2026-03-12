@@ -46,6 +46,7 @@ export default function Page() {
 					<p>Saturday, March 28th, 2026</p>
 					<p>6:30pm 1234 Broadway #147</p>
 					<p>Food, soft drinks, & music provided; BYOB</p>
+					<p>Dress code: Millenial Dance Party / that thing you never wear</p>
 					<p>Afterparty: <a href="https://www.hoteleventi.com/chelsea-bars/">Kimpton Eventi Back Bar</a></p>
 				</div>
 

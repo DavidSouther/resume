@@ -33,16 +33,54 @@ URL = "https://github.com/davidsouther"
 [experience]
 [[experience.jobs]]
 [experience.jobs.organization]
+name = "Apollo GraphQL"
+
+[[experience.jobs.roles]]
+name = "[Staff Software Engineer](https://www.levels.fyi/companies/apollo-graphql/salaries/software-engineer?country=254&yoeChoice=senior)"
+startDate = "2024-12-01"
+finishDate = "2025-12-01"
+
+[[experience.jobs.roles.challenges]]
+description = """
+Apollo's MCP Gateway is a core network component for enterprise MCP management.
+Apollo provides a dedicated control plane allowing organizations to expose, orient, and secure MCP deployments.
+The MCP Gateway deploys as a stand alone component in a customer's environment, brokering all MCP sessions while enforcing authentication and other policies.
+
+I designed the runtime components, allowing clean deployments in environments ranging from local dev to small docker compose instances through full Kubernetes operator orchestration.
+I championed an organizational pivot away from direct control-plane-to-gateway configuration into an infrastructure-as-code centered approach that grows from click-ops to git-ops.
+I implemented portions of those and other designs in the Rust codebase.
+I mentor and guide new-to-Rust engineers across the company, with a focus on finding composable design patterns that work with the grain in both Rust and the application.
+"""
+
+[[experience.jobs.roles.competences]]
+name = "rust"
+type = "technology"
+
+[[experience.jobs.roles.competences]]
+name = "Distributed Systems"
+type = "technology"
+
+[[experience.jobs.roles.competences]]
+name = "mcp"
+type = "technology"
+
+[[experience.jobs.roles.competences]]
+name = "agentic-ai"
+type = "technology"
+
+[[experience.jobs]]
+[experience.jobs.organization]
 name = "AWS Technical Content Experience"
 
 [[experience.jobs.roles]]
 name = "[SDE III - L6 - Senior SDE](https://www.levels.fyi/companies/amazon/salaries/software-engineer/levels/sde-iii)"
 startDate = "2024-12-01"
+finishDate = "2025-12-01"
 
 [[experience.jobs.roles.challenges]]
 description = """
-Technical Lead for Content Automations. Maintain a build process that provides >50,000
-snippets across >5000 examples for 15 core AWS SDK technologies. These snippets
+Technical Lead for Content Automations. We maintain a build process that provides >50,000
+snippets across >5,000 examples for 15 core AWS SDK technologies. These snippets
 and examples are embedded in a range of AWS technical documentation, and
 are the primary touch point many engineers have with learning AWS SDK programming.
 
@@ -78,6 +116,7 @@ name = "AWS TCX AI Lab"
 [[experience.jobs.roles]]
 name = "[SDE III - L6 - Senior SDE](https://www.levels.fyi/companies/amazon/salaries/software-engineer/levels/sde-iii)"
 startDate = "2024-01-01"
+finishDate = "2024-12-01"
 
 [[experience.jobs.roles.challenges]]
 description = """
