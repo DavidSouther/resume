@@ -1,70 +1,71 @@
-import { readFileSync, readdirSync } from "fs";
+import { toHTML as jiffdown } from "@davidsouther/jiffdown";
+import { readdirSync, readFileSync } from "fs";
 import matter from "gray-matter";
 import { join } from "path";
 import { cwd } from "process";
-import { toHTML as jiffdown } from "@davidsouther/jiffdown";
 
 export interface Post {
-  id: string;
-  show: boolean;
-  date?: string;
-  summary?: string;
-  title?: string;
-  body?: string;
-  image?: string;
+	id: string;
+	show: boolean;
+	date?: string;
+	summary?: string;
+	title?: string;
+	body?: string;
+	image?: string;
 }
 
 export function getPostPaths(): string[] {
-  const postsDir = join(cwd(), "posts");
-  const paths = readdirSync(postsDir).map((filename) => {
-    return filename.replace(/\.md$/, "");
-  });
-  return paths;
+	const postsDir = join(cwd(), "posts");
+	const paths = readdirSync(postsDir).map((filename) => {
+		return filename.replace(/\.md$/, "");
+	});
+	return paths;
 }
 
 export function getSortedPosts(): Post[] {
-  const postsDir = join(cwd(), "posts");
-  const posts = readdirSync(postsDir)
-    .map((filename) => {
-      const id = filename.replace(/.md$/, "");
-      const post = readFileSync(join(postsDir, filename), "utf-8");
-      const front = matter(post);
-      const date =
-        (front.data.date as Date | undefined)?.toISOString() ?? undefined;
-      const show = Boolean(front.data.show ?? true);
-      return {
-        id,
-        date,
-        show,
-        summary: front.data.summary as string | undefined,
-        title: front.data.title as string | undefined,
-        image: front.data.image as string | undefined,
-      };
-    })
-    .filter(({ show }) => show);
+	const postsDir = join(cwd(), "posts");
+	const posts = readdirSync(postsDir)
+		.map((filename) => {
+			const id = filename.replace(/.md$/, "");
+			const post = readFileSync(join(postsDir, filename), "utf-8");
+			const front = matter(post);
+			const date =
+				(front.data.date as Date | undefined)?.toISOString() ?? undefined;
+			const show = Boolean(front.data.show ?? true);
+			return {
+				id,
+				date,
+				show,
+				summary: front.data.summary as string | undefined,
+				title: front.data.title as string | undefined,
+				image: front.data.image as string | undefined,
+			};
+		})
+		.filter(({ show }) => show);
 
-  posts.sort(({ date: dateA = "2999" }, { date: dateB = "2999" }) =>
-    dateA.localeCompare(dateB)
-  );
-  return posts;
+	posts.sort(({ date: dateA = "2999" }, { date: dateB = "2999" }) =>
+		dateA.localeCompare(dateB),
+	);
+	posts.reverse();
+	return posts;
 }
 
 export async function getPost(id: string): Promise<Post> {
-  const filename = join(cwd(), "posts", id);
-  const postText = readFileSync(filename + ".md", "utf-8");
-  const front = matter(postText);
-  const date =
-    (front.data.date as Date | undefined)?.toISOString() ?? undefined;
-  const title = front.data.title ?? "Unknown Title";
-  const image = front.data.image;
-  const contentHtml = jiffdown(front.content);
-  const post = {
-    id,
-    date,
-    title,
-    body: contentHtml,
-    show: true,
-    ...(image ? { image } : {}),
-  };
-  return post;
+	const filename = join(cwd(), "posts", id);
+	const postText = readFileSync(filename + ".md", "utf-8");
+	const front = matter(postText);
+	const date =
+		(front.data.date as Date | undefined)?.toISOString() ?? undefined;
+	const title = front.data.title ?? "Unknown Title";
+	const image = front.data.image;
+	const contentHtml = jiffdown(front.content);
+	const post = {
+		id,
+		date,
+		title,
+		body: contentHtml,
+		show: true,
+		...(image ? { image } : {}),
+	};
+	return post;
 }

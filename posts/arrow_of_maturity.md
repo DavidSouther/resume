@@ -58,7 +58,7 @@ Domain services will grow to handling multiple Entities in a single operation. T
 
 To manage the transaction’s state, the architecture introduces a Unit of Work component. Additionally, the validation and verification logic is pulled out of the API and into a dedicated Handler. At this point, there may be three distinct definitions for any type in the system - the Domain Model type (which has necessary business invariants), the Storage type, which maps cleanly to the storage model (perhaps as a ORM instance for marshaling, or specifically using the downstream SDK’s type), and a pair of Request and Response types.
 
-![An architecture diagram of a domain modeled application with aggregates. The API prepares a unit of work to encapsulate a transaction of state changes. The domain aggregate performs the appropriate operation in isolation.](/dma_2c_aggregate.png)
+![An architecture diagram of a domain modeled application with aggregates. The API prepares a unit of work to encapsulate a transaction of state changes. The domain aggregate performs the appropriate operation in isolation.](/dma_2c_aggregate_uow.png)
 
 This layer retains the three different definitions of model types, but the API layer will need an update. Rather than directly mirroring & often duplicating the domain types (especially common in resource-oriented APIs), the API’s request and response type focus on the necessary data for the Aggregate operation. While this may necessarily include much of the data the domain model requires, it buys separation between 
 
@@ -68,7 +68,7 @@ At this point, many readers begin to glaze over. “This is so much overhead, ar
 
 Production scalability in services is unlocked by introducing event-driven communication patterns. At this level, several refactorings have happened, though each can occur in isolation.The domain model gains notions of events - operations that need to happen in other services, but are not part of the transaction boundary. That is, they can either fail with no repercussions, or can effect the wider system of services in an eventually consistent way.
 
-![An architecture diagram of a fully event sourced application. Aggregates are triggered by events from a message bus. Views are separated from query and alter paths. Changes in other components are advertised by sending events on completion of a unit of work.](/dma_2c_aggregate.png)
+![An architecture diagram of a fully event sourced application. Aggregates are triggered by events from a message bus. Views are separated from query and alter paths. Changes in other components are advertised by sending events on completion of a unit of work.](/dma_3_event_sourced.png)
 
 Similarly, the service may need to begin responding to events - either generated internally (as part of a secondary but separate transaction), or from outside services in the system. Instead of requiring those services to invoke this service’s API directly, a common message broker handles eventing between parts of the system.
 

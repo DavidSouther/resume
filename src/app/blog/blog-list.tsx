@@ -2,7 +2,7 @@
 
 import { Card } from "~/components/Card";
 import { IDLinkList } from "~/components/List";
-import { Post } from "~/lib/posts";
+import type { Post } from "~/lib/posts";
 
 export default function BlogList({ posts }: { posts: Post[] }) {
   return (
