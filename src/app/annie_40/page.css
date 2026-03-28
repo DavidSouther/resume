@@ -78,8 +78,18 @@ h1 {
   margin: 30px auto;
 }
 
-.rsvp {
+.rsvp,
+.playlist {
   align-items: left;
+
+  iframe {
+    width: 100%;
+    min-height: 450px;
+    max-width: 660px;
+    overflow: hidden;
+    background: transparent;
+  }
+
   p {
     font-size: 1.1rem;
     color: var(--subtle-color);
