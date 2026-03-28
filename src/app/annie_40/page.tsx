@@ -42,6 +42,7 @@ export default function Page() {
 				<div className="details">
 					<p>Arrival Instructions</p>
 					<p>NEST Broadway 1234 Broadway #147 New York 10001</p>
+					<p>Entrance 38 W 31st St (<a href="https://maps.app.goo.gl/ZcwPq2GuLYk2D5Mu9">Google maps</a>) (<a href="https://maps.apple/p/KiHeGn._etPeS5">Apple maps</a>)</p>
 					<p>First, Buzz unit 147</p>
 					<p>Give us a minute to buzz you through?</p>
 					<p>Then try ButterflyMX code 349105</p>
