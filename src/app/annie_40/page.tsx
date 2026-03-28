@@ -42,7 +42,7 @@ export default function Page() {
 				<div className="details">
 					<p>Arrival Instructions</p>
 					<p>NEST Broadway 1234 Broadway #147 New York 10001</p>
-					<p>Entrance 38 W 31st St (<a href="https://maps.app.goo.gl/ZcwPq2GuLYk2D5Mu9">Google maps</a>) (<a href="https://maps.apple/p/KiHeGn._etPeS5">Apple maps</a>)</p>
+					<p>Entrance on 31st St (<a href="https://maps.app.goo.gl/6Fy7iT96TK3ucURZ8">Google maps</a>) (<a href="https://maps.apple/p/1Bzx90wK6qHHo_">Apple maps</a>)</p>
 					<p>First, Buzz unit 147</p>
 					<p>Give us a minute to buzz you through?</p>
 					<p>Then try ButterflyMX code 349105</p>
@@ -50,6 +50,7 @@ export default function Page() {
 						If that doesn't work{" "}
 						<a href="tel:+1-650-595-5402">text or call David (650) 495-5402</a>
 					</p>
+					<p>End of the hall, up the stairs, follow signs for unit 147</p>
 				</div>
 
 				<div className="divider"></div>
