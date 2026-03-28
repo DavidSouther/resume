@@ -51,6 +51,7 @@ export default function Page() {
 						<a href="tel:+1-650-595-5402">text or call David (650) 495-5402</a>
 					</p>
 					<p>End of the hall, up the stairs, follow signs for unit 147</p>
+					<p>Right from the stairs, end of the hall, door on the left.</p>
 				</div>
 
 				<div className="divider"></div>
