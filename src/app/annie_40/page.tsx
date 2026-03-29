@@ -40,18 +40,9 @@ export default function Page() {
 				<h1>Annie's 40th</h1>
 
 				<div className="details">
-					<p>Arrival Instructions</p>
-					<p>NEST Broadway 1234 Broadway #147 New York 10001</p>
-					<p>Entrance on 31st St (<a href="https://maps.app.goo.gl/6Fy7iT96TK3ucURZ8">Google maps</a>) (<a href="https://maps.apple/p/1Bzx90wK6qHHo_">Apple maps</a>)</p>
-					<p>First, Buzz unit 147</p>
-					<p>Give us a minute to buzz you through?</p>
-					<p>Then try ButterflyMX code 349105</p>
-					<p>
-						If that doesn't work{" "}
-						<a href="tel:+1-650-595-5402">text or call David (650) 495-5402</a>
-					</p>
-					<p>End of the hall, up the stairs, follow signs for unit 147</p>
-					<p>Right from the stairs, end of the hall, door on the left.</p>
+					<p>Photo Booooooth</p>
+					<p><a href="https://photos.app.goo.gl/ZJPPdbvcX15qyJSs8">Shared Google Album</a></p>
+					<p>Please upload and share your photos - of the party, or any memories you want to share!</p>
 				</div>
 
 				<div className="divider"></div>
@@ -64,22 +55,6 @@ export default function Page() {
 						src="https://embed.music.apple.com/us/playlist/40th-birthday/pl.u-06oxp9gFJ3XAG6"
 					></iframe>
 				</div>
-
-				<div className="divider"></div>
-
-				<div className="details">
-					<p>Saturday, March 28th, 2026</p>
-					<p>6:30pm 1234 Broadway #147</p>
-					<p>Food, soft drinks, & music provided; BYOB</p>
-					<p>Dress code: Millenial Dance Party / that thing you never wear</p>
-					<p>
-						Afterparty:{" "}
-						<a href="https://www.hoteleventi.com/chelsea-bars/">
-							Kimpton Eventi Back Bar
-						</a>
-					</p>
-				</div>
-
 			</article>
 		</div>
 	);
