@@ -2,15 +2,21 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 <url>
 <loc>https://davidsouther.com</loc>
-<lastmod>2026-03-29T16:27:22.196Z</lastmod>
+<lastmod>2026-04-17T01:35:21.620Z</lastmod>
 <changefreq>yearly</changefreq>
 <priority>1</priority>
 </url>
 <url>
 <loc>https://davidsouther.com/blog</loc>
-<lastmod>2026-03-29T16:27:22.196Z</lastmod>
+<lastmod>2026-04-17T01:35:21.620Z</lastmod>
 <changefreq>monthly</changefreq>
 <priority>0.8</priority>
+</url>
+<url>
+<loc>https://davidsouther.com/blog/forward_backward_method</loc>
+<lastmod>2026-04-15T00:00:00.000Z</lastmod>
+<changefreq>monthly</changefreq>
+<priority>0.5</priority>
 </url>
 <url>
 <loc>https://davidsouther.com/blog/jeopardy_search</loc>
