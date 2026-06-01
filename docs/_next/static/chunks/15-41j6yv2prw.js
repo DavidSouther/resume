@@ -1,0 +1,3 @@
+(globalThis.TURBOPACK||(globalThis.TURBOPACK=[])).push(["object"==typeof document?document.currentScript:void 0,79438,e=>{"use strict";var t=e.i(92338),n=e.i(93146);e.s(["default",0,function({urls:e}){let u=function(e){let t=()=>e[Math.random()*e.length|0],[u,o]=(0,n.useReducer)(t,t());return(0,n.useEffect)(()=>{let e=!1;return window.setTimeout(function t(){e||(o(),window.setTimeout(t,1e4))},1e4),()=>{e=!0}},[e,o]),u}(e);return(0,t.jsx)("div",{className:"background",style:{backgroundImage:`url("/annie_40/${u}")`}})}])}]);
+
+//# sourceMappingURL=2-eoc7220z39f.js.map
