@@ -3,7 +3,7 @@
 7:I[18088,["/_next/static/chunks/3ua1u3scg711j.js","/_next/static/chunks/1hq73pnj8mdxj.js","/_next/static/chunks/2slmeahopnnsi.js"],"OutletBoundary"]
 8:"$Sreact.suspense"
 :HL["/_next/static/chunks/1yvc7xux78p7a.css","style"]
-3:T2b9e,<p>Programmers and software teams grow along what I have seen as a relatively common path of architectures. The steps are 0. Prototyping, 1. Straight-through handlers, 2. three phases of DDD (Domain Model, Extracted Repository, Discovered Unit of Work), and finally 3. Event-sourced Microservices. This view is admittedly tilted towards cloud architectures - distributed systems implementing business rules.</p>
+3:T370e,<p>Programmers and software teams grow along what I have seen as a relatively common path of architectures. The steps are 0. Prototyping, 1. Straight-through handlers, 2. three phases of DDD (Domain Model, Extracted Repository, Discovered Unit of Work), and finally 3. Event-sourced Microservices. This view is admittedly tilted towards cloud architectures - distributed systems implementing business rules.</p>
 <section>
 <h2 id="prototyping--data-engineering">Prototyping &amp; Data Engineering</h2>
 <p>An audacious amount of programming happens in the Data Engineering phase. By a 2018 account, 9 out of every 10 companies used spreadsheet models to make financial and business decisions [Accounting Today, archive]. MBA programs offer specific courses on using Excel. These are real programs that perform real computation to do real work around the globe. Most of these never grow beyond a one-off analysis; some live for years (decades?) behind the scenes of a back office; and a very select few become candidates for IT departments to create fully-fledged applications through a software development lifecycle.</p>
@@ -12,6 +12,7 @@
 </section>
 <section>
 <h2 id="straight-through-handlers">Straight-through Handlers</h2>
+<p>The first stage of Software Engineering takes a design or desire for a product, and implements a straight-through code path. Commonly called “N-Tier” architectures, a server is connected to an incoming Internet socket, typically configured to speak HTTP. Incoming requests are translated directly into database calls (possibly with an ORM library), and passed directly to the database. This type of program is liable to devolve into “big ball of mud” architecture without active effort, but it’s the most common approach to teaching and starting greenfield projects. See a range of “full stack” development books, including Learning PHP, MySQL, and Javascript, Full Stack React Projects, and Zero to Production: Rust.</p>
 <p><img src="/dma_1_straight_through.png" alt="An architecture diagram of a simple CRUD application. The API invokes a collection handler, which calls an ORM method or upstream API." /></p>
 <p>This is the starting state for many services in distributed systems, and, broadly, remains the architecture that Django and Rails default to. This can work for many teams for quite a long ways, but has no guardrails that defend against collapsing into a big ball of mud.</p>
 <p>For pure-CRUD systems with no logic beyond API and ORM validation rules, there’s no reason to move beyond this view of the world, and can be provided by a Form-to-Table tool with only providing the ORM model. </p>
@@ -19,10 +20,14 @@
 </section>
 <section>
 <h2 id="three-phases-of-ddd">Three Phases of DDD</h2>
+<p>As teams and developers mature through the Straight-through Handlers phase, any focus on quality and architecture will naturally grow a domain model, arriving at some stage of Domain Driven Development (DDD). Some teams may do this as an explicit exercise; others will accidentally come to a domain model through accretion and reduction of language. Within the DDD stage, there are three broad phases of decoupling. Projects may evolve and refactor through them; teams with seasoned developers often jump to the end at their first day.</p>
+<section>
+<h3 id="domain-model">Domain Model</h3>
 <p>The first refactoring along the arrow of maturity is finding the domain model within the service. Domain models naturally exist by right of language; teams will, intentionally or not, find language that aligns along a domain model. It might not be the most consistent, the most focused, the most concise, but it will arise as the team uses language in their designs.</p>
 <p>In this stage, the data model has isolated into DDD primitive data aspects, but data objects directly interact with their database (possibly via ORM). API calls domain service and Entity items directly.This is a necessary step to transition into DDD from CRUD, and to begin applying business logic rules to the handlers. This turns the API CRUD handlers into Domain Services, limiting the ways entities and values change to well-defined lifecycles.</p>
 <p><img src="/dma_2a_domain.png" alt="An architecture diagram of a simple domain modeled application. The API loads domain entities, and provides them to specific domain services." /></p>
 <p>Because each domain service has a unique lifecycle defined by business rules, it becomes harder to find extractable library components. The ORM, if present, stays, or direct SQL if not using the ORM. Unfortunately, this has deep connections between entities, domain services, and the data persistence layer. This is not an appropriate stop on the road, and should only be a waypoint to Extracted Repositories</p>
+</section>
 <section>
 <h3 id="extracted-repository">Extracted Repository</h3>
 <p>Tying Domain objects directly to storage mixes concerns, causing substantial developer pains. Tests necessarily mix abstraction layers. Mocks abound. Edge cases accumulate, and focus wanders. By extracting repositories, clear interfaces separate storage concerns from the domain model. Unit tests in the domain exercise only and exactly the business aggregates.</p>
@@ -41,6 +46,8 @@
 </section>
 <section>
 <h2 id="event-sourced-microservices">Event-sourced Microservices</h2>
+<p>At this point, many readers begin to glaze over. “This is so much overhead, are we even buying that much value!?” Through the DDD phases, the motivating pressure has been developer productivity. But plenty of products and teams have a level of complexity that’s well handled by the team. They can move along the phases of DDD until they get to a comfortable point and stay there indefinitely. Or, indefinitely, until they hit production scaling pressures. When those requests start coming in, and SLAs show up, moving to an event-source system </p>
+<p>Production scalability in services is unlocked by introducing event-driven communication patterns. At this level, several refactorings have happened, though each can occur in isolation.The domain model gains notions of events - operations that need to happen in other services, but are not part of the transaction boundary. That is, they can either fail with no repercussions, or can effect the wider system of services in an eventually consistent way.</p>
 <p><img src="/dma_3_event_sourced.png" alt="An architecture diagram of a fully event sourced application. Aggregates are triggered by events from a message bus. Views are separated from query and alter paths. Changes in other components are advertised by sending events on completion of a unit of work." /></p>
 <p>Similarly, the service may need to begin responding to events - either generated internally (as part of a secondary but separate transaction), or from outside services in the system. Instead of requiring those services to invoke this service’s API directly, a common message broker handles eventing between parts of the system.</p>
 <p>Finally, the system may provide eventually-consistent views of its data model directly. This set of refactorings brings the service to implementing Command and Query Response Segregation. The API layer regains substantial responsibility in this mode, as it is now responsible for exposing a consistent external view to users in spite of the CQRS implementation, which may or may not be desirable to expose.This is a significant amount of complexity, but in return, buys on separate axes flexibility and responsibility. The domain model remains the only place to specify and find business logic rules. All other components have clearly specified responsibilities to safely and wrap and scale that functionality.</p>
@@ -48,10 +55,13 @@
 </section>
 <section>
 <h2 id="summary">Summary</h2>
+<p>Start with not even an app. Get data from a Google form, put it in a spreadsheet, read from the spreadsheet into any Python program, and get the data needed for a decision.</p>
+<p>At some point, start building a real app. This will have lifecycle, controls, things that Google Sheets doesn’t give you. Iterate on it for a while, until the domain model comes out. </p>
+<p>Once the domain model is apparent, extract the interface for its repository. Getting to this point is, in the author’s observation, necessary for the long term health of any code base.</p>
 <p>A further refactoring to domain aggregate and unit of work handlers can add a flourish on the architecture, but is not itself strictly necessary for most service teams.</p>
 <p>It is necessary to move to an event-sourced architecture, which unlocks several larger systems architecture patterns. This includes queue-based event delivery &amp; scaling, and read/write sharing + read-replica scaling.</p>
 </section>
-0:{"rsc":["$","$1","c",{"children":[["$","$L2",null,{"header":[["$","a",null,{"href":"/","children":"David Souther"}]," - ","Arrow of Maturity"," - ","2025-12-17"],"footer":["$","a",null,{"href":"../../","children":"Back"}],"className":"blog-page-module__707ofa__BlogPage","children":["$","div",null,{"dangerouslySetInnerHTML":{"__html":"$3"}}]}],["$L4","$L5"],"$L6"]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"3aO0Az1h6y3MyUV0iGCbe"}
+0:{"rsc":["$","$1","c",{"children":[["$","$L2",null,{"header":[["$","a",null,{"href":"/","children":"David Souther"}]," - ","Arrow of Maturity"," - ","2025-12-17"],"footer":["$","a",null,{"href":"../../","children":"Back"}],"className":"blog-page-module__707ofa__BlogPage","children":["$","div",null,{"dangerouslySetInnerHTML":{"__html":"$3"}}]}],["$L4","$L5"],"$L6"]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"Hf0I4KbObDs2Hi9Ek0wdm"}
 4:["$","link","0",{"rel":"stylesheet","href":"/_next/static/chunks/1yvc7xux78p7a.css","precedence":"next"}]
 5:["$","script","script-0",{"src":"/_next/static/chunks/030s3kgwy_r6-.js","async":true}]
 6:["$","$L7",null,{"children":["$","$8",null,{"name":"Next.MetadataOutlet","children":"$@9"}]}]

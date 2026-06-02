@@ -2,15 +2,21 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 <url>
 <loc>https://davidsouther.com</loc>
-<lastmod>2026-06-01T19:43:27.987Z</lastmod>
+<lastmod>2026-06-02T01:44:25.442Z</lastmod>
 <changefreq>yearly</changefreq>
 <priority>1</priority>
 </url>
 <url>
 <loc>https://davidsouther.com/blog</loc>
-<lastmod>2026-06-01T19:43:27.987Z</lastmod>
+<lastmod>2026-06-02T01:44:25.442Z</lastmod>
 <changefreq>monthly</changefreq>
 <priority>0.8</priority>
+</url>
+<url>
+<loc>https://davidsouther.com/blog/llm_review_is_not_human_review</loc>
+<lastmod>2026-06-01T00:00:00.000Z</lastmod>
+<changefreq>monthly</changefreq>
+<priority>0.5</priority>
 </url>
 <url>
 <loc>https://davidsouther.com/blog/forward_backward_method</loc>

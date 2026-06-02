@@ -64,7 +64,7 @@
 <h3 id="summary">Summary</h3>
 <p>While there is no single “correct” way to draw any data structure, drawing it consistently is important for clear communication. These recommendations are a set that have worked well in a variety of educational and professional settings.</p>
 </section>
-0:{"rsc":["$","$1","c",{"children":[["$","$L2",null,{"header":[["$","a",null,{"href":"/","children":"David Souther"}]," - ","Drawing Data Structures"," - ","2024-08-13"],"footer":["$","a",null,{"href":"../../","children":"Back"}],"className":"blog-page-module__707ofa__BlogPage","children":["$","div",null,{"dangerouslySetInnerHTML":{"__html":"$3"}}]}],["$L4","$L5"],"$L6"]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"3aO0Az1h6y3MyUV0iGCbe"}
+0:{"rsc":["$","$1","c",{"children":[["$","$L2",null,{"header":[["$","a",null,{"href":"/","children":"David Souther"}]," - ","Drawing Data Structures"," - ","2024-08-13"],"footer":["$","a",null,{"href":"../../","children":"Back"}],"className":"blog-page-module__707ofa__BlogPage","children":["$","div",null,{"dangerouslySetInnerHTML":{"__html":"$3"}}]}],["$L4","$L5"],"$L6"]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"Hf0I4KbObDs2Hi9Ek0wdm"}
 4:["$","link","0",{"rel":"stylesheet","href":"/_next/static/chunks/1yvc7xux78p7a.css","precedence":"next"}]
 5:["$","script","script-0",{"src":"/_next/static/chunks/030s3kgwy_r6-.js","async":true}]
 6:["$","$L7",null,{"children":["$","$8",null,{"name":"Next.MetadataOutlet","children":"$@9"}]}]

@@ -3,7 +3,7 @@
 7:I[18088,["/_next/static/chunks/3ua1u3scg711j.js","/_next/static/chunks/1hq73pnj8mdxj.js","/_next/static/chunks/2slmeahopnnsi.js"],"OutletBoundary"]
 8:"$Sreact.suspense"
 :HL["/_next/static/chunks/1yvc7xux78p7a.css","style"]
-3:T3c8c,<p>Software Architecture has two unique but alternately useful meanings. The first is how the in-the-silicon processing that the programs in a system perform, called the run-time abstraction [Ch1.1]. The second, which Roy Fielding uses in his <a href="https://ics.uci.edu/~fielding/pubs/dissertation/top.htm">dissertation</a> to motivate the development of HTTP, is the layering of system constraints to create increasingly focused architectural styles [Ch1]. As a practicing engineer, the approach to software architecture as descriptions of constraints and styles allows projects to consider their designs and possible implementations before the expensive task of coding. After a system is deployed and as it grows, teams necessarily begin using the runtime architecture model to understand, monitor, and troubleshoot the application.</p>
+3:T415e,<p>Software Architecture has two unique but alternately useful meanings. The first is how the in-the-silicon processing that the programs in a system perform, called the run-time abstraction [Ch1.1]. The second, which Roy Fielding uses in his <a href="https://ics.uci.edu/~fielding/pubs/dissertation/top.htm">dissertation</a> to motivate the development of HTTP, is the layering of system constraints to create increasingly focused architectural styles [Ch1]. As a practicing engineer, the approach to software architecture as descriptions of constraints and styles allows projects to consider their designs and possible implementations before the expensive task of coding. After a system is deployed and as it grows, teams necessarily begin using the runtime architecture model to understand, monitor, and troubleshoot the application.</p>
 <section>
 <h4 id="fieldings-rest">Fielding’s REST</h4>
 <p>Fielding’s research was motivated by the first decade of the Internet, to his writing in 2000. Through this time, the Internet transitioned from a network of research institutes to a network of the general public. This distributed (and in many ways anarchic) collection of actors pushed Fielding to look for architectural patterns and styles that could be resilient given such a shared resource. The Internet is a global, distributed, hypermedia system. The Internet is defined by its distributed nature, variable latency &amp; low reliability network connections, multiple trust boundaries, and large grain data objects [Pg3]. In creating REST, Fielding is looking to describe a set of constraints that will create a useful style for the Internet, its components, and their connectors [Ch1.2].</p>
@@ -49,13 +49,22 @@
 </section>
 <section>
 <h4 id="rest-is-many-things">REST is many things</h4>
+<p>REST started as a motivating philosophy for developing the HTTP specification. Its foundation is the separation from identifier to content, and the separation of content and representation. These architectural constraints allowed the Internet to anneal around a set of protocols that could handle its distributed, anarchic nature gracefully and resiliently. Since that formulation, the Internet has seen a radical transformation, from a document sharing system requiring moderate technical investment into an application delivery platform powering a significant portion of the worldwide economy &amp; communications. With that growth, so to has the concept of the REST architecture grown from a hypermedia retrieval architecture into a complete RPC mechanism. Through that growth, its core constraint of stateless requests meets the needs of the ongoing, evolving Internet.</p>
 <p>But if you need a definition for a textbook, I propose this:</p>
 <p><em>REST is a range of software architectures that harness and exploit the mechanics of HTTP/1.1 and related transfer protocols. These include as the minimum architectural constraints layered client/server, URI addressing, &amp; state management being restricted to authentication proof, and may include caching and advanced flow control from HTTP/2,3 or gRPC to include multiple Resource Representations in a single transport Request.</em></p>
 </section>
 <section>
 <h4 id="references">References</h4>
+<ul>
+<li><p>&quot;Architectural Styles and the Design of Network-based Software Architectures.&quot; Fielding, Roy. 2000.</p>
+</li>
+<li><p>&quot;REST APIs must be hypertext-driven.&quot; Fielding, Roy. 20 Oct. 2008.</p>
+</li>
+<li><p>&quot;Discovery Document&quot; Google, 28 Oct. 2020, developers.google.com/discovery/v1/reference/apis.</p>
+</li>
+</ul>
 </section>
-0:{"rsc":["$","$1","c",{"children":[["$","$L2",null,{"header":[["$","a",null,{"href":"/","children":"David Souther"}]," - ","Notes on Roy Fielding's REST dissertation"," - ","2021-09-20"],"footer":["$","a",null,{"href":"../../","children":"Back"}],"className":"blog-page-module__707ofa__BlogPage","children":["$","div",null,{"dangerouslySetInnerHTML":{"__html":"$3"}}]}],["$L4","$L5"],"$L6"]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"3aO0Az1h6y3MyUV0iGCbe"}
+0:{"rsc":["$","$1","c",{"children":[["$","$L2",null,{"header":[["$","a",null,{"href":"/","children":"David Souther"}]," - ","Notes on Roy Fielding's REST dissertation"," - ","2021-09-20"],"footer":["$","a",null,{"href":"../../","children":"Back"}],"className":"blog-page-module__707ofa__BlogPage","children":["$","div",null,{"dangerouslySetInnerHTML":{"__html":"$3"}}]}],["$L4","$L5"],"$L6"]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"Hf0I4KbObDs2Hi9Ek0wdm"}
 4:["$","link","0",{"rel":"stylesheet","href":"/_next/static/chunks/1yvc7xux78p7a.css","precedence":"next"}]
 5:["$","script","script-0",{"src":"/_next/static/chunks/030s3kgwy_r6-.js","async":true}]
 6:["$","$L7",null,{"children":["$","$8",null,{"name":"Next.MetadataOutlet","children":"$@9"}]}]
