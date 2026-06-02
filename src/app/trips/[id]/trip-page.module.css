@@ -1,0 +1,17 @@
+.TripPage main {
+  width: 768px;
+  margin: 0 auto;
+  background-color: var(--trip-color);
+}
+
+@media (max-width: 768px) {
+  .TripPage main {
+    width: 425px;
+  }
+}
+
+@media (max-width: 425px) {
+  .TripPage main {
+    width: 100%;
+  }
+}

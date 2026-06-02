@@ -1,0 +1,19 @@
+You are building an itinerary dataset that conforms to the Itinerary Schema.
+
+Inputs I'll give you: <paste overview / confirmation emails / spreadsheet link>.
+
+Rules:
+- Output ONE YAML file matching the schema (trip, flights, hotels,
+  ground_transportation, events). No prose outside the file.
+- Store every time as local wall-clock time PLUS an IANA timezone
+  (e.g. Europe/London). Never bake in UTC offsets - the renderer derives
+  the zone label and the "+1 day" overnight flag.
+- Give every reservation status: confirmed | to_book. Use status: confirmed
+  ONLY when a confirmation email (or my explicit confirmation) backs it, and
+  put its record locator in `confirmation`. Otherwise status: to_book.
+- Hotels: one entry per stay with check_in.date/after_time and
+  check_out.date/before_time. The renderer turns these into check-in and
+  check-out events and fills the nightly "where you sleep" line.
+- Flights: airline, airline_code, flight_number, origin/destination IATA,
+  depart/arrive datetime+timezone, plus seat/cabin if known.
+- Verify, don't invent. If a detail isn't in my sources, omit it.

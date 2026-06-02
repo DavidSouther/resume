@@ -19,7 +19,8 @@
     "nextjs-google-analytics": "2.3.7",
     "react": "^19.2.7",
     "smol-toml": "^1.6.1",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "yaml": "^2.9.0"
   },
   "dependencies": {
     "@biomejs/biome": "^2.4.16",

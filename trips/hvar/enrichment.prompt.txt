@@ -1,0 +1,24 @@
+You are building an enrichment dataset that conforms to the Enrichment Schema,
+to accompany <itinerary-file>.yaml.
+
+Rules:
+- This is a PURE display layer. Never restate booking facts (times,
+  confirmation numbers, prices). Anything here is optional and may fail to
+  load, so put nothing load-bearing in it.
+- Join keys must match the itinerary EXACTLY:
+    page_cards[].city   = a city in the trip
+    flights[].flight    = "<airline_code><flight_number>" (e.g. "DL1")
+    hotels[].hotel      = the hotel's name in the itinerary
+    activities[].event  = the event's title in the itinerary
+- Images: provide image_query SEARCH STRINGS, not hardcoded image URLs. For
+  places, also provide wikipedia { title, url, summary_api } so the app can
+  pull a license-clean lead image and first paragraph.
+- Flights: airline_status_url (airline's own page) + tracker_url on FlightAware
+  (https://flightaware.com/live/flight/<ICAO><number>; DL->DAL, OS->AUA,
+  BA->BAW, AA->AAL, UA->UAL, AF->AFR, LH->DLH).
+- Hotels: for confirmed stays add website/address/phone/map_url; for to_book
+  stays add a booking_search link to my preferred chain (IHG) for that city
+  and dates.
+- Activities: add a blurb, an official_url when one exists, and a
+  destination_ref linking to a destinations[] entry with a Wikipedia card.
+  (The renderer adds a Brave search booking link automatically.)

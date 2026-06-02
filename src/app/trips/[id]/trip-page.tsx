@@ -1,9 +1,9 @@
 import NextImage from "next/image";
 import { Card } from "~/components/Card";
 import type { Trip } from "~/lib/trips";
-import styles from "./blog-page.module.css";
+import styles from "./trip-page.module.css";
 
-export default async function BlogPage({ trip }: { trip: Trip }) {
+export default async function TripPage({ trip }: { trip: Trip }) {
 	const { title, date } = trip;
 	return (
 		<>
@@ -18,7 +18,7 @@ export default async function BlogPage({ trip }: { trip: Trip }) {
 						<a href="../../">Back</a>
 					</>
 				}
-				className={styles.BlogPage}
+				className={styles.TripPage}
 			>
 				<p>
 					Trip to {trip.title} {trip.image && <NextImage src={trip.image} alt={trip.title} width={800} height={600} />}

@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Itinerary</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,400&family=Spectral:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
+<style>
+  :root{
+    --paper:#f3ede2;
+    --paper-2:#fbf7ef;
+    --ink:#1d1a16;
+    --ink-soft:#4a443b;
+    --muted:#8a8073;
+    --line:rgba(29,26,22,.13);
+    --line-strong:rgba(29,26,22,.28);
+    --accent:#9c6b34;        /* brass */
+    --accent-deep:#5d4424;
+    --green:#33493b;
+    --card:#fbf8f2;
+    --shadow:0 1px 2px rgba(29,26,22,.05), 0 12px 30px -18px rgba(29,26,22,.35);
+    --r:18px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:"Spectral",Georgia,serif;
+    font-weight:400;
+    -webkit-font-smoothing:antialiased;
+    line-height:1.5;
+    overflow-x:hidden;
+  }
+  /* warm paper grain */
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.5;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+  }
+  .wrap{position:relative;z-index:1;max-width:760px;margin:0 auto;padding:0 18px 90px}
+
+  a{color:inherit}
+  .display{font-family:"Fraunces",Georgia,serif}
+
+  /* ---------- Hero cover ---------- */
+  .hero{
+    position:relative;margin:0 -18px 0;min-height:340px;display:flex;align-items:flex-end;
+    background:linear-gradient(150deg,#2a2620,#4a4035 55%,#6b5b44);
+    overflow:hidden;
+  }
+  @media(min-width:760px){ .hero{border-radius:0 0 26px 26px} }
+  .hero-img{position:absolute;inset:0;background-size:cover;background-position:center;opacity:0;transition:opacity .9s ease;transform:scale(1.04)}
+  .hero-img.in{opacity:1}
+  .hero::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(20,17,13,.15) 0%,rgba(20,17,13,.1) 40%,rgba(20,17,13,.82) 100%)}
+  .hero-inner{position:relative;z-index:2;padding:26px 24px 28px;color:#f6efe2;width:100%}
+  .kicker{font-family:"Fraunces";font-weight:500;letter-spacing:.32em;text-transform:uppercase;font-size:11px;opacity:.85;margin:0 0 12px}
+  .hero h1{font-family:"Fraunces";font-weight:500;font-size:clamp(34px,7vw,52px);line-height:1.02;margin:0 0 14px;letter-spacing:-.01em}
+  .hero-meta{display:flex;align-items:center;gap:12px;font-size:15px;opacity:.95}
+  .avatar{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.4);font-family:"Fraunces";font-weight:600;font-size:14px;letter-spacing:.04em;backdrop-filter:blur(4px)}
+  .hero-dates{font-variant-numeric:tabular-nums}
+  .hero-note{margin-top:10px;font-size:13.5px;opacity:.8;font-style:italic;max-width:46ch}
+
+  /* ---------- City divider ---------- */
+  .city-band{position:relative;margin:30px -18px 6px;height:128px;border-radius:16px;overflow:hidden;display:flex;align-items:flex-end;
+    background:linear-gradient(135deg,#3a342a,#5c4e3a)}
+  @media(min-width:760px){ .city-band{margin-left:0;margin-right:0} }
+  .city-band .hero-img{transform:scale(1.06)}
+  .city-band::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(20,17,13,.15),rgba(20,17,13,.7))}
+  .city-band-inner{position:relative;z-index:2;padding:14px 18px;color:#f6efe2}
+  .city-band .eyebrow{font-size:10.5px;letter-spacing:.28em;text-transform:uppercase;opacity:.85;font-family:"Fraunces";font-weight:500}
+  .city-band h2{font-family:"Fraunces";font-weight:500;margin:3px 0 0;font-size:27px;letter-spacing:-.01em}
+
+  /* ---------- Day group ---------- */
+  .day{margin-top:22px}
+  .day-head{display:flex;align-items:baseline;gap:10px;padding:6px 2px 12px}
+  .day-dow{font-family:"Fraunces";font-weight:600;font-size:17px;letter-spacing:.01em}
+  .day-date{color:var(--muted);font-size:13.5px;letter-spacing:.04em;font-variant-numeric:tabular-nums}
+
+  /* ---------- Timeline ---------- */
+  .tl{position:relative;padding-left:46px}
+  .tl::before{content:"";position:absolute;left:17px;top:6px;bottom:6px;width:2px;background:linear-gradient(var(--line-strong),var(--line))}
+  .item{position:relative;margin:0 0 12px}
+  .node{position:absolute;left:-46px;top:14px;width:36px;height:36px;border-radius:50%;background:var(--paper-2);border:1px solid var(--line);display:grid;place-items:center;color:var(--accent-deep);box-shadow:var(--shadow)}
+  .node svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.6}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+  .card.tobook{background:repeating-linear-gradient(135deg,#faf6ee,#faf6ee 12px,#f4ecdd 12px,#f4ecdd 24px);border-style:dashed;border-color:var(--line-strong)}
+  .row{width:100%;text-align:left;background:none;border:0;font:inherit;color:inherit;cursor:pointer;display:flex;gap:14px;align-items:flex-start;padding:15px 16px}
+  .row:disabled{cursor:default}
+  .row-main{flex:1;min-width:0}
+  .timeline-times{font-variant-numeric:tabular-nums;font-size:13px;color:var(--ink-soft);letter-spacing:.02em;margin-bottom:3px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .plus1{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#fff;background:var(--accent);padding:1px 7px;border-radius:999px;font-family:"Fraunces";font-weight:500}
+  .title{font-family:"Fraunces";font-weight:500;font-size:20px;line-height:1.12;letter-spacing:-.005em;margin:0;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+  .route{font-variant-numeric:tabular-nums}
+  .arrow{color:var(--accent);font-weight:500}
+  .sub{color:var(--muted);font-size:13.5px;margin-top:3px}
+  .chev{flex:none;align-self:center;color:var(--muted);transition:transform .25s ease}
+  .chev svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8}
+  .item.open .chev{transform:rotate(90deg)}
+
+  .badge{font-size:10px;letter-spacing:.12em;text-transform:uppercase;font-family:"Fraunces";font-weight:600;padding:3px 8px;border-radius:999px;vertical-align:middle}
+  .badge.book{color:var(--accent-deep);background:rgba(156,107,52,.14);border:1px solid rgba(156,107,52,.3)}
+  .badge.ok{color:var(--green);background:rgba(51,73,59,.1);border:1px solid rgba(51,73,59,.22)}
+
+  /* ---------- Detail (progressive) ---------- */
+  .detail{display:none;border-top:1px solid var(--line);padding:0 16px}
+  .item.open .detail{display:block;padding:14px 16px 16px;animation:fade .35s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+  .facts{display:flex;flex-wrap:wrap;gap:6px 20px;margin:0 0 4px}
+  .fact{font-size:13px}
+  .fact b{font-family:"Fraunces";font-weight:600;color:var(--ink-soft);font-size:11px;letter-spacing:.08em;text-transform:uppercase;display:block;margin-bottom:1px;color:var(--muted)}
+  .fact span{font-variant-numeric:tabular-nums}
+  .enrich{margin-top:10px}
+  .links{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+  .btn{display:inline-flex;align-items:center;gap:7px;text-decoration:none;font-family:"Fraunces";font-weight:500;font-size:13px;letter-spacing:.02em;
+    padding:8px 13px;border-radius:11px;border:1px solid var(--line-strong);color:var(--ink);background:var(--paper-2);transition:.18s}
+  .btn:hover{border-color:var(--accent);color:var(--accent-deep)}
+  .btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.7}
+  .blurb{font-size:14px;color:var(--ink-soft);margin:4px 0 0;font-style:italic;line-height:1.55}
+  .tips{font-size:13px;color:var(--muted);margin-top:7px}
+
+  /* wikipedia card */
+  .wiki{display:flex;gap:14px;margin-top:12px;padding:13px;border:1px solid var(--line);border-radius:13px;background:var(--paper-2);align-items:flex-start;animation:fade .4s ease}
+  .wiki-thumb{flex:none;width:104px;height:104px;border-radius:10px;background:#e6ddcd center/cover no-repeat;border:1px solid var(--line)}
+  .wiki-body{min-width:0}
+  .wiki-body h4{font-family:"Fraunces";font-weight:600;margin:0 0 4px;font-size:15px}
+  .wiki-body p{margin:0 0 6px;font-size:12.8px;color:var(--ink-soft);line-height:1.55}
+  .wiki-body a{font-size:12px;color:var(--accent-deep);text-decoration:none;border-bottom:1px solid rgba(156,107,52,.4)}
+  @media(max-width:520px){ .wiki{flex-direction:column} .wiki-thumb{width:100%;height:150px} }
+
+  /* overnight footer */
+  .moon{display:flex;align-items:center;gap:9px;margin:6px 0 2px 46px;color:var(--ink-soft);font-size:13.5px}
+  .moon svg{width:15px;height:15px;stroke:var(--accent);fill:none;stroke-width:1.6}
+  .moon i{font-style:normal;font-family:"Fraunces";font-weight:500}
+
+  /* ---------- States ---------- */
+  .center{min-height:78vh;display:grid;place-items:center;text-align:center;padding:30px}
+  .panel{max-width:440px;background:var(--card);border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow);padding:30px 26px}
+  .panel h1{font-family:"Fraunces";font-weight:500;font-size:30px;margin:0 0 6px}
+  .panel p{color:var(--ink-soft);margin:0 0 18px;font-size:15px}
+  .drop{border:1.5px dashed var(--line-strong);border-radius:16px;padding:22px;margin-bottom:14px;transition:.2s}
+  .drop.hot{border-color:var(--accent);background:rgba(156,107,52,.06)}
+  .drop label{font-family:"Fraunces";font-weight:500;font-size:14px;display:block;margin-bottom:8px}
+  .filerow{display:flex;flex-direction:column;gap:10px;text-align:left}
+  .file{font-size:13px}
+  .file b{font-family:"Fraunces";font-weight:600;font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:4px}
+  input[type=file]{font-family:inherit;font-size:13px;width:100%}
+  .go{margin-top:6px;width:100%;font-family:"Fraunces";font-weight:600;font-size:15px;letter-spacing:.02em;padding:12px;border-radius:13px;border:0;background:var(--ink);color:var(--paper);cursor:pointer;transition:.2s}
+  .go:hover{background:var(--accent-deep)}
+  .err{color:#7a2a1d;font-size:13px;margin-top:6px;min-height:18px}
+  .spinner{width:30px;height:30px;border:3px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 14px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  footer{margin-top:34px;text-align:center;color:var(--muted);font-size:12px}
+  footer button{background:none;border:0;color:var(--accent-deep);font:inherit;text-decoration:underline;cursor:pointer}
+  .skel{color:var(--muted);font-size:12.5px;font-style:italic;margin-top:8px}
+</style>
+</head>
+<body>
+<div id="app" class="wrap"></div>
+
+<script>
+"use strict";
+(function(){
+  // ---- icons ----
+  var ICON = {
+    plane:'<path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1L15 22v-1.5L13 19v-5.5z"/>',
+    bed:'<path d="M3 18v-6m0 0V8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4m-18 0h18m0 0v6M7 12V9h4v3"/>',
+    bedout:'<path d="M3 18v-6m0 0V8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4m-18 0h18m0 0v6"/><path d="M15 6l3 3-3 3M9 9h9" transform="translate(-1 0)"/>',
+    car:'<path d="M5 16a2 2 0 1 0 4 0m6 0a2 2 0 1 0 4 0M3 16v-3.5L5 7h12l2 5.5V16M3 12.5h18M7 7l-1 3"/>',
+    boat:'<path d="M4 14l1.5 5h13L20 14M3 14h18l-2-5H5zM12 4v5M9 9V6.5h6"/>',
+    compass:'<circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/>',
+    fork:'<path d="M7 3v7a2 2 0 0 0 4 0V3M9 10v11M17 3c-1.5 0-2 2-2 5s.5 4 2 4m0 0v9"/>',
+    moon:'<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
+    chev:'<path d="M9 6l6 6-6 6"/>',
+    ext:'<path d="M14 5h5v5M19 5l-8 8M19 13v6H5V5h6"/>',
+    pin:'<path d="M12 21s7-6.5 7-11a7 7 0 1 0-14 0c0 4.5 7 11 7 11z"/><circle cx="12" cy="10" r="2.4"/>',
+    phone:'<path d="M5 4h3l1.5 4-2 1.5a11 11 0 0 0 5 5l1.5-2 4 1.5V19a2 2 0 0 1-2 2A16 16 0 0 1 4 6a2 2 0 0 1 1-2z"/>'
+  };
+  function svg(name){ return '<svg viewBox="0 0 24 24">'+(ICON[name]||'')+'</svg>'; }
+
+  var IATA = {JFK:'New York',EWR:'New York',LGA:'New York',LHR:'London',LGW:'London',STN:'London',
+    VIE:'Vienna',SPU:'Split',ZAG:'Zagreb',LAX:'Los Angeles',CDG:'Paris',ZRH:'Zurich'};
+  var TZAB = {
+    'America/New_York':['EST','EDT'],'America/Los_Angeles':['PST','PDT'],
+    'Europe/London':['GMT','BST'],'Europe/Vienna':['CET','CEST'],
+    'Europe/Zagreb':['CET','CEST'],'Europe/Paris':['CET','CEST'],'Europe/Zurich':['CET','CEST']
+  };
+  var DOW=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  function $(sel,el){return (el||document).querySelector(sel);}
+  function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]);});}
+  function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e;}
+  function enc(s){return encodeURIComponent(String(s==null?'':s));}
+  function hotelCity(name){var c=matchCity(name); if(c)return c; return (String(name||'').split(/\s+—\s+|\s+-\s+|\s+hotel/i)[0]||name).trim();}
+  function ihgSearch(city,ci,co){
+    var u='https://www.ihg.com/hotels/us/en/find-hotels/select-roomrate?qDest='+enc(city)+'&qRms=1&qAdlt=2&qChld=0';
+    function part(d,pfx){if(!d)return '';var p=String(d).split('-');if(p.length<3)return '';return '&'+pfx+'D='+(+p[2])+'&'+pfx+'My='+(+p[1]-1)+p[0];}
+    return u+part(ci,'qCi')+part(co,'qCo');
+  }
+  function braveSearch(q){return 'https://search.brave.com/search?q='+enc(q);}
+  function mapsDir(o,d,mode){return 'https://www.google.com/maps/dir/?api=1&origin='+enc(o)+'&destination='+enc(d)+'&travelmode='+mode;}
+
+  // ---- date / time helpers ----
+  function dParts(dstr){ // 'YYYY-MM-DD' or Date
+    if(dstr instanceof Date)return {y:dstr.getUTCFullYear(),m:dstr.getUTCMonth()+1,d:dstr.getUTCDate()};
+    var p=String(dstr).split('-'); return {y:+p[0],m:+p[1],d:+p[2]};
+  }
+  function dtParts(s){ if(s instanceof Date){var z=function(n){return(n<10?'0':'')+n;};
+      return {date:s.getUTCFullYear()+'-'+z(s.getUTCMonth()+1)+'-'+z(s.getUTCDate()),h:s.getUTCHours(),min:s.getUTCMinutes()};}
+    var m=String(s).match(/(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+    if(!m)return null; return {date:m[1]+'-'+m[2]+'-'+m[3],h:+m[4],min:+m[5]}; }
+  function fmtClock(h,min){var ap=h<12?'AM':'PM';var hh=h%12;if(hh===0)hh=12;return hh+':'+(min<10?'0':'')+min+' '+ap;}
+  function tzAbbr(dateStr,tz){
+    if(TZAB[tz]){var mo=+dateStr.split('-')[1];var dst=(mo>=4&&mo<=10);return TZAB[tz][dst?1:0];}
+    try{var f=new Intl.DateTimeFormat('en-US',{timeZone:tz,timeZoneName:'short',hour:'numeric'});
+      var parts=f.formatToParts(new Date(dateStr+'T12:00:00Z'));
+      for(var i=0;i<parts.length;i++)if(parts[i].type==='timeZoneName')return parts[i].value;
+    }catch(e){}
+    return '';
+  }
+  function dateKeyRange(start,end){
+    function S(v){return v instanceof Date?(v.getUTCFullYear()+'-'+String(v.getUTCMonth()+1).padStart(2,'0')+'-'+String(v.getUTCDate()).padStart(2,'0')):v;}
+    start=S(start);end=S(end);
+    var out=[],a=new Date(start+'T12:00:00'),b=new Date(end+'T12:00:00');
+    for(var t=a.getTime();t<=b.getTime();t+=864e5){var d=new Date(t);
+      out.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'));}
+    return out;
+  }
+  function dowName(dateStr){return DOW[new Date(dateStr+'T12:00:00').getDay()];}
+  function prettyDate(dateStr){var p=dParts(dateStr);return MON[p.m-1]+' '+p.d;}
+  function rangeLabel(s,e){var a=dParts(s),b=dParts(e);
+    if(a.m===b.m)return MON[a.m-1]+' '+a.d+'–'+b.d+', '+b.y;
+    return MON[a.m-1]+' '+a.d+' – '+MON[b.m-1]+' '+b.d+', '+b.y;}
+  function initials(name){if(!name)return '✦';return name.trim().split(/\s+/).map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();}
+
+  // ---- wikipedia (progressive, CORS-enabled, failure-silent) ----
+  function summaryApi(wiki){
+    if(!wiki)return null;
+    if(wiki.summary_api)return wiki.summary_api;
+    var title=wiki.title;
+    if(!title&&wiki.url){var seg=wiki.url.split('/wiki/')[1];if(seg)title=seg;}
+    if(!title)return null;
+    return 'https://en.wikipedia.org/api/rest_v1/page/summary/'+title;
+  }
+  var wikiCache={};
+  function fetchWiki(api){
+    if(!api)return Promise.reject();
+    if(wikiCache[api])return wikiCache[api];
+    var p=fetch(api,{headers:{'accept':'application/json'}}).then(function(r){if(!r.ok)throw 0;return r.json();});
+    wikiCache[api]=p; return p;
+  }
+
+  // ============ STATE ============
+  var TRIP=null, ENRICH=null;
+  var app=document.getElementById('app');
+
+  // ============ LOADERS ============
+  function qp(name){try{return new URLSearchParams(location.search).get(name);}catch(e){return null;}}
+  var TRIP_URL = qp('trip') || 'trip.yaml';
+  var ENRICH_URL = qp('enrich') || 'enrichment.yaml';
+
+  function boot(){
+    showLoading();
+    fetchText(TRIP_URL).then(function(txt){
+      var data=jsyaml.load(txt,{schema:jsyaml.CORE_SCHEMA});
+      TRIP=data; renderTrip(data);
+      loadEnrichmentFromUrl();              // independent, fire-and-forget
+    }).catch(function(){
+      showPicker();                          // no server / file:// → ask for files
+    });
+  }
+  function fetchText(url){
+    return fetch(url,{cache:'no-store'}).then(function(r){if(!r.ok)throw 0;return r.text();});
+  }
+  function loadEnrichmentFromUrl(){
+    // Enrichment is optional. Any failure is swallowed; the page is untouched.
+    fetchText(ENRICH_URL).then(function(txt){
+      try{ ENRICH=jsyaml.load(txt,{schema:jsyaml.CORE_SCHEMA}); applyEnrichment(); }catch(e){}
+    }).catch(function(){ /* silent */ });
+  }
+
+  // ============ LOADING / PICKER SCREENS ============
+  function showLoading(){
+    app.innerHTML='<div class="center"><div><div class="spinner"></div>'+
+      '<p class="display" style="font-size:20px;color:var(--ink-soft)">Loading your itinerary…</p></div></div>';
+  }
+  function showPicker(){
+    app.innerHTML=''+
+    '<div class="center"><div class="panel">'+
+      '<h1 class="display">Your itinerary</h1>'+
+      '<p>Load the trip file to view it. The enrichment file is optional — the itinerary works without it.</p>'+
+      '<div class="drop" id="drop">'+
+        '<div class="filerow">'+
+          '<div class="file"><b>Itinerary (required)</b><input type="file" id="f-trip" accept=".yaml,.yml,.json"></div>'+
+          '<div class="file"><b>Enrichment (optional)</b><input type="file" id="f-enrich" accept=".yaml,.yml,.json"></div>'+
+        '</div>'+
+      '</div>'+
+      '<button class="go" id="go">View itinerary</button>'+
+      '<div class="err" id="err"></div>'+
+    '</div></div>';
+
+    var drop=$('#drop');
+    ['dragenter','dragover'].forEach(function(ev){drop.addEventListener(ev,function(e){e.preventDefault();drop.classList.add('hot');});});
+    ['dragleave','drop'].forEach(function(ev){drop.addEventListener(ev,function(e){e.preventDefault();drop.classList.remove('hot');});});
+    drop.addEventListener('drop',function(e){
+      var fs=e.dataTransfer.files;
+      for(var i=0;i<fs.length;i++){
+        var n=fs[i].name.toLowerCase();
+        if(/enrich/.test(n))$('#f-enrich').files=mkList(fs[i]);
+        else $('#f-trip').files=mkList(fs[i]);
+      }
+    });
+    $('#go').addEventListener('click',function(){
+      var tf=$('#f-trip').files[0];
+      if(!tf){ $('#err').textContent='Please choose the itinerary file.'; return; }
+      readFile(tf).then(function(txt){
+        TRIP=jsyaml.load(txt,{schema:jsyaml.CORE_SCHEMA}); renderTrip(TRIP);
+        var ef=$('#f-enrich').files[0];
+        if(ef){ readFile(ef).then(function(t2){ try{ENRICH=jsyaml.load(t2,{schema:jsyaml.CORE_SCHEMA});applyEnrichment();}catch(e){} }).catch(function(){}); }
+      }).catch(function(){ $('#err').textContent='Could not read that file. Is it valid YAML?'; });
+    });
+  }
+  function mkList(file){var dt=new DataTransfer();dt.items.add(file);return dt.files;}
+  function readFile(file){return new Promise(function(res,rej){var fr=new FileReader();fr.onload=function(){res(fr.result);};fr.onerror=rej;fr.readAsText(file);});}
+
+  // ============ MODEL → ITEMS ============
+  function matchCity(name){
+    if(!name||!ENRICH||!ENRICH.page_cards)return null;
+    var lo=name.toLowerCase();
+    for(var i=0;i<ENRICH.page_cards.length;i++){
+      var c=ENRICH.page_cards[i].city;
+      if(c&&lo.indexOf(c.toLowerCase())>=0)return c;
+    }
+    return null;
+  }
+  function cityFromAirport(code){return IATA[code]||code||null;}
+
+  function buildItems(trip){
+    var items=[]; // {date,key,kind,iconNode,...}
+    (trip.flights||[]).forEach(function(f,i){
+      var dep=dtParts(f.depart&&f.depart.datetime), arr=dtParts(f.arrive&&f.arrive.datetime);
+      if(!dep)return;
+      items.push({date:dep.date,key:dep.h*60+dep.min,kind:'flight',idx:i,data:f,dep:dep,arr:arr});
+    });
+    (trip.hotels||[]).forEach(function(h,i){
+      if(h.check_in&&h.check_in.date){
+        var t=parseHM(h.check_in.after_time)||15*60;
+        items.push({date:h.check_in.date,key:t,kind:'hotel-in',idx:i,data:h});
+      }
+      if(h.check_out&&h.check_out.date){
+        var t2=parseHM(h.check_out.before_time)||11*60;
+        items.push({date:h.check_out.date,key:t2,kind:'hotel-out',idx:i,data:h});
+      }
+    });
+    (trip.ground_transportation||[]).forEach(function(g,i){
+      var pk=dtParts(g.pickup&&g.pickup.datetime), dr=dtParts(g.dropoff&&g.dropoff.datetime);
+      var ref=pk||dr; if(!ref)return;
+      items.push({date:ref.date,key:ref.h*60+ref.min,kind:'ground',idx:i,data:g,pk:pk,dr:dr});
+    });
+    (trip.events||[]).forEach(function(ev,i){
+      var st=dtParts(ev.start&&ev.start.datetime); if(!st)return;
+      items.push({date:st.date,key:st.h*60+st.min,kind:'event',idx:i,data:ev,st:st});
+    });
+    // synthesize airport <-> hotel ground legs (skip airports a booked transfer already covers)
+    var coveredAir={};
+    (trip.ground_transportation||[]).forEach(function(g){
+      ['pickup','dropoff'].forEach(function(k){
+        var loc=g[k]&&g[k].location; if(!loc)return;
+        var mm=String(loc).match(/\(([A-Z]{3})\)/); if(mm)coveredAir[mm[1]]=1;
+      });
+    });
+    function hotelOn(field,date){var hs=trip.hotels||[];for(var i=0;i<hs.length;i++){var h=hs[i],ff=h[field];if(ff&&ff.date===date)return h;}return null;}
+    (trip.flights||[]).forEach(function(f){
+      var dep=dtParts(f.depart&&f.depart.datetime), arr=dtParts(f.arrive&&f.arrive.datetime);
+      if(arr){ var ac=f.destination&&f.destination.airport, h=hotelOn('check_in',arr.date);
+        if(ac&&h&&!coveredAir[ac]) items.push({date:arr.date,key:arr.h*60+arr.min+5,kind:'transfer',data:{dir:'in',airport:ac,hotel:h,city:cityFromAirport(ac)}}); }
+      if(dep){ var dc=f.origin&&f.origin.airport, h2=hotelOn('check_out',dep.date);
+        if(dc&&h2&&!coveredAir[dc]) items.push({date:dep.date,key:Math.max(0,dep.h*60+dep.min-5),kind:'transfer',data:{dir:'out',airport:dc,hotel:h2,city:cityFromAirport(dc)}}); }
+    });
+    return items;
+  }
+  function parseHM(s){if(!s)return null;var m=String(s).match(/(\d{1,2}):(\d{2})/);return m?(+m[1]*60+ +m[2]):null;}
+
+  // where do they sleep on the night of `date`?
+  function overnight(trip,date){
+    var hotels=trip.hotels||[];
+    for(var i=0;i<hotels.length;i++){
+      var h=hotels[i]; if(!h.check_in||!h.check_out)continue;
+      if(date>=h.check_in.date && date<h.check_out.date)
+        return {label:h.name, city:matchCity(h.name)};
+    }
+    // overnight flight departing this date?
+    var fl=trip.flights||[];
+    for(var j=0;j<fl.length;j++){
+      var f=fl[j],dp=dtParts(f.depart&&f.depart.datetime),ar=dtParts(f.arrive&&f.arrive.datetime);
+      if(dp&&ar&&dp.date===date&&ar.date>date){
+        var to=cityFromAirport(f.destination&&f.destination.airport);
+        return {label:'Overnight flight'+(to?' to '+to:''),transit:true};
+      }
+    }
+    return null;
+  }
+
+  // city in effect on a given day (for section headers)
+  function dayCity(trip,date){
+    var o=overnight(trip,date);
+    if(o&&o.city)return o.city;
+    if(o&&o.transit)return null;
+    // arrival city (most recent flight that arrived on/before date)
+    var best=null,bestKey='';
+    (trip.flights||[]).forEach(function(f){
+      var ar=dtParts(f.arrive&&f.arrive.datetime);
+      if(ar&&ar.date<=date){var k=ar.date; if(k>=bestKey){bestKey=k;best=f;}}
+    });
+    if(best){var c=cityFromAirport(best.destination&&best.destination.airport);return c;}
+    // before any flight → origin of first flight
+    var f0=(trip.flights||[])[0];
+    if(f0)return cityFromAirport(f0.origin&&f0.origin.airport);
+    return null;
+  }
+
+  // ============ RENDER ============
+  function renderTrip(trip){
+    app.innerHTML='';
+    var t=trip.trip||{};
+    // hero
+    var hero=el('div','hero');
+    hero.innerHTML=
+      '<div class="hero-img" id="hero-img"></div>'+
+      '<div class="hero-inner">'+
+        '<p class="kicker">Itinerary</p>'+
+        '<h1>'+esc(t.title||'Trip')+'</h1>'+
+        '<div class="hero-meta">'+
+          '<div class="avatar">'+esc(initials(t.traveler))+'</div>'+
+          '<div><div class="hero-dates">'+esc(t.start_date&&t.end_date?rangeLabel(t.start_date,t.end_date):'')+'</div>'+
+          (t.traveler?'<div style="font-size:13px;opacity:.82">'+esc(t.traveler)+'</div>':'')+'</div>'+
+        '</div>'+
+        (t.notes?'<div class="hero-note">'+esc(t.notes)+'</div>':'')+
+      '</div>';
+    app.appendChild(hero);
+
+    var items=buildItems(trip);
+    var days=dateKeyRange(t.start_date||(items[0]&&items[0].date),t.end_date||(items[items.length-1]&&items[items.length-1].date));
+    var lastCity=null;
+
+    days.forEach(function(date){
+      var dayItems=items.filter(function(it){return it.date===date;}).sort(function(a,b){return a.key-b.key;});
+      var oNight=overnight(trip,date);
+      if(!dayItems.length && !oNight) return; // skip empty days
+
+      // city section divider
+      var city=dayCity(trip,date);
+      if(city && city!==lastCity){
+        app.appendChild(cityBand(city));
+        lastCity=city;
+      }
+
+      var day=el('div','day');
+      day.appendChild(el('div','day-head',
+        '<span class="day-dow">'+esc(dowName(date))+'</span><span class="day-date">'+esc(prettyDate(date))+'</span>'));
+      var tl=el('div','tl');
+      dayItems.forEach(function(it){ tl.appendChild(renderItem(it)); });
+      day.appendChild(tl);
+      if(oNight){
+        day.appendChild(el('div','moon',svg('moon')+'<span><i>'+esc(oNight.label)+'</i></span>'));
+      }
+      app.appendChild(day);
+    });
+
+    var foot=el('footer',null,'High-end personal travel · primary itinerary loaded'+
+      ' &nbsp;·&nbsp; <button id="reload">load different files</button>');
+    app.appendChild(foot);
+    var rb=$('#reload',foot); if(rb)rb.addEventListener('click',showPicker);
+
+    applyEnrichment(); // if enrichment already present (e.g. file picker path)
+  }
+
+  function cityBand(city){
+    var b=el('div','city-band');
+    b.setAttribute('data-city',city);
+    b.innerHTML='<div class="hero-img"></div><div class="city-band-inner">'+
+      '<div class="eyebrow">Next stop</div><h2>'+esc(city)+'</h2></div>';
+    return b;
+  }
+
+  var uid=0;
+  function renderItem(it){
+    uid++;
+    var wrap=el('div','item');
+    var f=it.data, icon='compass', titleHtml='', sub='', times='', badge='', expandable=true, eKey='';
+    var status=f.status;
+
+    if(it.kind==='flight'){
+      icon='plane';
+      var dep=it.dep,arr=it.arr;
+      times='<span>'+fmtClock(dep.h,dep.min)+' '+esc(tzAbbr(dep.date,it.data.depart.timezone))+'</span>'+
+        '<span class="arrow">—</span>'+
+        '<span>'+(arr?fmtClock(arr.h,arr.min)+' '+esc(tzAbbr(arr.date,it.data.arrive.timezone)):'')+'</span>'+
+        (arr&&arr.date>dep.date?'<span class="plus1">+1 day</span>':'');
+      titleHtml='<span class="route">'+esc(f.origin&&f.origin.airport)+'</span> <span class="arrow">→</span> <span class="route">'+esc(f.destination&&f.destination.airport)+'</span>';
+      var bits=[];
+      if(f.airline_code||f.flight_number)bits.push(esc((f.airline_code||'')+' '+(f.flight_number||'')).trim());
+      if(f.airline)bits.push(esc(f.airline));
+      if(f.cabin)bits.push(esc(f.cabin));
+      if(f.seat)bits.push('Seat '+esc(f.seat));
+      sub=bits.join('  ·  ');
+      eKey=(f.airline_code||'')+(f.flight_number||'');
+    } else if(it.kind==='hotel-in'||it.kind==='hotel-out'){
+      var isIn=it.kind==='hotel-in';
+      icon=isIn?'bed':'bedout';
+      titleHtml=esc(f.name);
+      var ci=isIn?(f.check_in&&f.check_in.after_time):(f.check_out&&f.check_out.before_time);
+      times='<span>'+(isIn?'Check-in':'Check-out')+(ci?' '+(isIn?'after':'by')+' '+esc(hm(ci)):'')+'</span>';
+      sub=f.room_type?esc(f.room_type):(f.brand?esc(f.brand):'');
+      eKey=f.name;
+    } else if(it.kind==='ground'){
+      var isFerry=/ferry|boat/i.test((f.notes||'')+(f.type||''));
+      icon=isFerry?'boat':'car';
+      var from=f.pickup&&f.pickup.location, to=f.dropoff&&f.dropoff.location;
+      titleHtml=esc((f.type?cap(f.type):'Transfer'));
+      if(it.pk)times='<span>'+fmtClock(it.pk.h,it.pk.min)+' '+esc(tzAbbr(it.pk.date,f.pickup.timezone))+'</span>';
+      sub=[from,to].filter(Boolean).map(esc).join('  →  ');
+      expandable=!!(f.notes||f.provider);
+      eKey='';
+    } else if(it.kind==='transfer'){
+      icon='car';
+      var td=it.data, place=td.city||td.airport, ap=td.airport;
+      titleHtml=td.dir==='in'?'Arrival transfer':'Departure transfer';
+      sub=td.dir==='in'?(esc(ap)+'  →  '+esc(place)):(esc(place)+'  →  '+esc(ap));
+      expandable=true; eKey='';
+    } else if(it.kind==='event'){
+      icon=/meal|dinner|lunch|restaurant/i.test((f.category||'')+(f.title||''))?'fork':'compass';
+      titleHtml=esc(f.title);
+      if(it.st)times='<span>'+fmtClock(it.st.h,it.st.min)+' '+esc(tzAbbr(it.st.date,f.start.timezone))+'</span>';
+      sub=f.location?esc(f.location):'';
+      eKey=f.title;
+    }
+
+    if(status==='to_book')badge='<span class="badge book">To book</span>';
+
+    var card=el('div','card'+(status==='to_book'?' tobook':''));
+    var rowId='it'+uid;
+    card.innerHTML=
+      '<button class="row" '+(expandable?'':'disabled')+' aria-expanded="false">'+
+        '<span class="node">'+svg(icon)+'</span>'+
+        '<span class="row-main">'+
+          (times?'<span class="timeline-times">'+times+'</span>':'')+
+          '<span class="title">'+titleHtml+badge+'</span>'+
+          (sub?'<span class="sub">'+sub+'</span>':'')+
+        '</span>'+
+        (expandable?'<span class="chev">'+svg('chev')+'</span>':'')+
+      '</button>'+
+      '<div class="detail" id="d-'+rowId+'"></div>';
+    wrap.appendChild(card);
+
+    // primary detail content (always available, no enrichment needed)
+    var detail=$('#d-'+rowId,card);
+    detail.innerHTML=primaryDetail(it);
+    // enrichment anchor
+    var enrichDiv=el('div','enrich');
+    enrichDiv.setAttribute('data-kind',it.kind);
+    enrichDiv.setAttribute('data-ekey',eKey||'');
+    if(it.kind==='event'){
+      enrichDiv.setAttribute('data-ev-title',(it.data&&it.data.title)||'');
+      try{ enrichDiv.setAttribute('data-ev-city', dayCity(TRIP,(it.st&&it.st.date)||it.date)||''); }catch(e){}
+    }
+    detail.appendChild(enrichDiv);
+
+    if(expandable){
+      var btn=$('.row',card);
+      btn.addEventListener('click',function(){
+        var open=wrap.classList.toggle('open');
+        btn.setAttribute('aria-expanded',open?'true':'false');
+        if(open) lazyEnrich(enrichDiv); // pull wikipedia/extra on first open
+      });
+    }
+    return wrap;
+  }
+  function cap(s){s=String(s||'');return s.charAt(0).toUpperCase()+s.slice(1);}
+  function hm(s){var v=parseHM(s);if(v==null)return s;return fmtClock(Math.floor(v/60),v%60);}
+
+  function primaryDetail(it){
+    var f=it.data,facts=[],extra='';
+    if(it.kind==='flight'){
+      if(f.confirmation)facts.push(fact('Confirmation',f.confirmation));
+      if(f.origin&&f.origin.terminal)facts.push(fact('Departs',(f.origin.airport||'')+' T'+f.origin.terminal));
+      if(f.destination&&f.destination.terminal)facts.push(fact('Arrives',(f.destination.airport||'')+' T'+f.destination.terminal));
+      if(f.cabin)facts.push(fact('Cabin',f.cabin));
+      if(f.seat)facts.push(fact('Seat',f.seat));
+    } else if(it.kind==='hotel-in'||it.kind==='hotel-out'){
+      if(f.confirmation)facts.push(fact('Confirmation',f.confirmation));
+      if(f.check_in)facts.push(fact('Check-in',f.check_in.date+(f.check_in.after_time?' · '+hm(f.check_in.after_time):'')));
+      if(f.check_out)facts.push(fact('Check-out',f.check_out.date+(f.check_out.before_time?' · '+hm(f.check_out.before_time):'')));
+      if(f.room_type)facts.push(fact('Room',f.room_type));
+      if(f.notes)facts.push(fact('Note',f.notes));
+      if(f.status==='to_book'){
+        var ihg=ihgSearch(hotelCity(f.name),(f.check_in&&f.check_in.date),(f.check_out&&f.check_out.date));
+        extra+='<div class="links">'+linkBtn(ihg,'Find on IHG','bed')+'</div>';
+      }
+    } else if(it.kind==='ground'){
+      if(f.provider)facts.push(fact('Booked via',f.provider));
+      if(f.notes)facts.push(fact('Note',f.notes));
+    } else if(it.kind==='transfer'){
+      var td=it.data, ap=td.airport+' Airport', place=td.city||td.airport;
+      var o=td.dir==='in'?ap:place, d2=td.dir==='in'?place:ap;
+      extra+='<div class="links">'+linkBtn(mapsDir(o,d2,'driving'),'Car · Maps','car')+linkBtn(mapsDir(o,d2,'transit'),'Public transit','pin')+'</div>';
+      return '<div class="skel">Suggested transfer — not booked.</div>'+extra;
+    } else if(it.kind==='event'){
+      if(f.location)facts.push(fact('Location',f.location));
+      if(f.notes)facts.push(fact('Note',f.notes));
+      var bq=[String(f.title||'').replace(/\s*\(.*?\)/g,'').trim(),f.location,'book tickets'].filter(Boolean).join(' ');
+      extra+='<div class="links">'+linkBtn(braveSearch(bq),(f.status==='to_book'?'Search to book':'Search'),'ext')+'</div>';
+    }
+    var body=facts.length?'<div class="facts">'+facts.join('')+'</div>':'';
+    if(!body&&!extra) body='<div class="skel">No further booking detail.</div>';
+    return body+extra;
+  }
+  function fact(k,v){return '<div class="fact"><b>'+esc(k)+'</b><span>'+esc(v)+'</span></div>';}
+
+  // ============ ENRICHMENT (progressive, isolated) ============
+  function applyEnrichment(){
+    if(!ENRICH)return;
+    // city band images
+    try{ document.querySelectorAll('.city-band').forEach(function(b){ paintCity(b,b.getAttribute('data-city')); }); }catch(e){}
+    // hero image (first destination card that isn't the origin/home)
+    try{ paintHero(); }catch(e){}
+    // fill enrichment anchors that are already in the DOM (links/blurbs)
+    try{ document.querySelectorAll('.enrich').forEach(fillEnrich); }catch(e){}
+  }
+
+  function pageCard(city){
+    if(!ENRICH||!ENRICH.page_cards)return null;
+    for(var i=0;i<ENRICH.page_cards.length;i++)if(ENRICH.page_cards[i].city===city)return ENRICH.page_cards[i];
+    return null;
+  }
+  function paintHero(){
+    if(!TRIP||!ENRICH||!ENRICH.page_cards)return;
+    var f0=(TRIP.flights||[])[0];
+    var home=f0?cityFromAirport(f0.origin&&f0.origin.airport):null;
+    var pick=null;
+    ENRICH.page_cards.forEach(function(c){ if(!pick&&c.city!==home)pick=c; });
+    if(!pick)pick=ENRICH.page_cards[0];
+    if(!pick)return;
+    var api=summaryApi(pick.wikipedia);
+    fetchWiki(api).then(function(j){
+      var src=(j.originalimage&&j.originalimage.source)||(j.thumbnail&&j.thumbnail.source);
+      if(!src)return;
+      var img=document.getElementById('hero-img');
+      if(img){preload(src,function(){img.style.backgroundImage='url("'+src+'")';img.classList.add('in');});}
+    }).catch(function(){});
+  }
+  function paintCity(band,city){
+    var card=pageCard(city); if(!card)return;
+    var api=summaryApi(card.wikipedia); if(!api)return;
+    fetchWiki(api).then(function(j){
+      var src=(j.thumbnail&&j.thumbnail.source)||(j.originalimage&&j.originalimage.source);
+      if(!src)return;
+      var img=band.querySelector('.hero-img');
+      if(img){preload(src,function(){img.style.backgroundImage='url("'+src+'")';img.classList.add('in');});}
+    }).catch(function(){});
+  }
+  function preload(src,cb){var im=new Image();im.onload=cb;im.onerror=function(){};im.src=src;}
+
+  function fillEnrich(anchor){
+    if(anchor.getAttribute('data-filled'))return;
+    if(!ENRICH)return;
+    var kind=anchor.getAttribute('data-kind'), key=anchor.getAttribute('data-ekey');
+    var html='';
+    if(kind==='flight'){
+      var ef=findBy(ENRICH.flights,'flight',key);
+      if(ef){ var links='';
+        if(ef.airline_status_url)links+=linkBtn(ef.airline_status_url,'Flight status','ext');
+        if(ef.tracker_url)links+=linkBtn(ef.tracker_url,'Track live','ext');
+        if(links)html+='<div class="links">'+links+'</div>';
+      }
+    } else if(kind==='hotel-in'||kind==='hotel-out'){
+      var eh=findBy(ENRICH.hotels,'hotel',key);
+      if(eh){
+        if(eh.blurb)html+='<p class="blurb">'+esc(eh.blurb.trim())+'</p>';
+        var hl='';
+        if(eh.website)hl+=linkBtn(eh.website,'Hotel page','ext');
+        if(eh.map_url)hl+=linkBtn(eh.map_url,'Map','pin');
+        if(eh.phone)hl+=linkBtn('tel:'+eh.phone.replace(/\s/g,''),eh.phone,'phone');
+        if(hl)html+='<div class="links">'+hl+'</div>';
+      }
+    } else if(kind==='event'){
+      var ea=findBy(ENRICH.activities,'event',key);
+      if(ea){
+        if(ea.blurb)html+='<p class="blurb">'+esc(ea.blurb.trim())+'</p>';
+        var al='';
+        if(ea.official_url)al+=linkBtn(ea.official_url,'Details','ext');
+        if(al)html+='<div class="links">'+al+'</div>';
+        if(ea.tips)html+='<div class="tips">'+esc(ea.tips)+'</div>';
+      }
+    }
+    if(html){anchor.innerHTML=html;}
+    anchor.setAttribute('data-filled','1');
+  }
+  function linkBtn(href,label,icon){
+    var external=/^https?:/.test(href);
+    return '<a class="btn" href="'+esc(href)+'"'+(external?' target="_blank" rel="noopener"':'')+'>'+svg(icon)+esc(label)+'</a>';
+  }
+  function findBy(arr,k,v){if(!arr||!v)return null;for(var i=0;i<arr.length;i++)if(arr[i][k]===v)return arr[i];return null;}
+
+  // lazy: on first expand, fill enrichment links AND pull an inline Wikipedia summary (photo + first paragraph)
+  function lazyEnrich(anchor){
+    try{ fillEnrich(anchor); }catch(e){}
+    try{
+      if(anchor.getAttribute('data-wiki-done'))return;
+      if(anchor.getAttribute('data-kind')!=='event'||!ENRICH)return;
+      var api=null,fallbackUrl=null,label=null;
+      var ea=findBy(ENRICH.activities,'event',anchor.getAttribute('data-ev-title'));
+      if(ea&&ea.destination_ref&&ENRICH.destinations){
+        var d=findBy(ENRICH.destinations,'name',ea.destination_ref);
+        if(d){api=summaryApi(d.wikipedia);fallbackUrl=d.wikipedia&&d.wikipedia.url;label=ea.destination_ref;}
+      }
+      if(!api){
+        var city=anchor.getAttribute('data-ev-city');
+        var pc=city?pageCard(city):null;
+        if(pc){api=summaryApi(pc.wikipedia);fallbackUrl=pc.wikipedia&&pc.wikipedia.url;label=city;}
+      }
+      if(!api)return;
+      anchor.setAttribute('data-wiki-done','1');
+      fetchWiki(api).then(function(j){
+        var card=el('div','wiki');
+        var img=(j.thumbnail&&j.thumbnail.source)||(j.originalimage&&j.originalimage.source);
+        var page=(j.content_urls&&j.content_urls.desktop&&j.content_urls.desktop.page)||fallbackUrl;
+        card.innerHTML=
+          (img?'<div class="wiki-thumb" style="background-image:url(\''+esc(img)+'\')"></div>':'')+
+          '<div class="wiki-body"><h4>'+esc(j.title||label||'')+'</h4>'+
+          '<p>'+esc(j.extract||'')+'</p>'+
+          (page?'<a href="'+esc(page)+'" target="_blank" rel="noopener">Wikipedia →</a>':'')+
+          '</div>';
+        anchor.appendChild(card);
+      }).catch(function(){});
+    }catch(e){}
+  }
+
+  // go
+  if(window.jsyaml) boot();
+  else { var iv=setInterval(function(){ if(window.jsyaml){clearInterval(iv);boot();} },50);
+         setTimeout(function(){clearInterval(iv); if(!window.jsyaml){app.innerHTML='<div class="center"><div class="panel"><h1>Couldn\'t load parser</h1><p>The YAML parser failed to load. Check your connection and refresh.</p></div></div>';}},6000); }
+})();
+</script>
+</body>
+</html>

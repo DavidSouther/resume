@@ -1,0 +1,1 @@
+When using developer: or research: skills, use the folder `.agents/` instead of `docs`, as `docs` is used for the static deployment.
