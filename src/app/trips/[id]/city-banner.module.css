@@ -1,0 +1,56 @@
+.city-banner {
+	position: relative;
+	margin: 30px -18px 6px;
+	height: 128px;
+	border-radius: 16px;
+	overflow: hidden;
+	display: flex;
+	align-items: flex-end;
+	background: linear-gradient(135deg, #3a342a, #5c4e3a);
+}
+
+@media (min-width: 760px) {
+	.city-banner {
+		margin-left: 0;
+		margin-right: 0;
+	}
+}
+
+.city-banner .hero-img {
+	transform: scale(1.06);
+}
+
+.city-banner::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(
+		180deg,
+		rgba(20, 17, 13, 0.15),
+		rgba(20, 17, 13, 0.7)
+	);
+}
+
+.city-banner-inner {
+	position: relative;
+	z-index: 2;
+	padding: 14px 18px;
+	color: #f6efe2;
+}
+
+.eyebrow {
+	font-size: 10.5px;
+	letter-spacing: 0.28em;
+	text-transform: uppercase;
+	opacity: 0.85;
+	font-family: "Fraunces", Georgia, serif;
+	font-weight: 500;
+}
+
+.city-banner h2 {
+	font-family: "Fraunces", Georgia, serif;
+	font-weight: 500;
+	margin: 3px 0 0;
+	font-size: 27px;
+	letter-spacing: -0.01em;
+}

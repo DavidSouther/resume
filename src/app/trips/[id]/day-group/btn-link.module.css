@@ -1,0 +1,29 @@
+.btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 7px;
+	text-decoration: none;
+	font-family: "Fraunces", Georgia, serif;
+	font-weight: 500;
+	font-size: 13px;
+	letter-spacing: 0.02em;
+	padding: 8px 13px;
+	border-radius: 11px;
+	border: 1px solid var(--line-strong);
+	color: var(--ink);
+	background: var(--paper-2);
+	transition: 0.18s;
+}
+
+.btn:hover {
+	border-color: var(--accent);
+	color: var(--accent-deep);
+}
+
+.btn svg {
+	width: 14px;
+	height: 14px;
+	stroke: currentColor;
+	fill: none;
+	stroke-width: 1.7;
+}

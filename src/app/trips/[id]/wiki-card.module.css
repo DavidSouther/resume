@@ -1,0 +1,68 @@
+@keyframes fade {
+	from {
+		opacity: 0;
+		transform: translateY(-4px);
+	}
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+/* ---------- Wikipedia card ---------- */
+.wiki {
+	display: flex;
+	gap: 14px;
+	margin-top: 12px;
+	padding: 13px;
+	border: 1px solid var(--line);
+	border-radius: 13px;
+	background: var(--paper-2);
+	align-items: flex-start;
+	animation: fade 0.4s ease;
+}
+
+.wiki-thumb {
+	flex: none;
+	width: 104px;
+	height: 104px;
+	border-radius: 10px;
+	background: #e6ddcd center / cover no-repeat;
+	border: 1px solid var(--line);
+}
+
+.wiki-body {
+	min-width: 0;
+}
+
+.wiki-body h4 {
+	font-family: "Fraunces", Georgia, serif;
+	font-weight: 600;
+	margin: 0 0 4px;
+	font-size: 15px;
+}
+
+.wiki-body p {
+	margin: 0 0 6px;
+	font-size: 12.8px;
+	color: var(--ink-soft);
+	line-height: 1.55;
+}
+
+.wiki-body a {
+	font-size: 12px;
+	color: var(--accent-deep);
+	text-decoration: none;
+	border-bottom: 1px solid rgba(156, 107, 52, 0.4);
+}
+
+@media (max-width: 520px) {
+	.wiki {
+		flex-direction: column;
+	}
+
+	.wiki-thumb {
+		width: 100%;
+		height: 150px;
+	}
+}

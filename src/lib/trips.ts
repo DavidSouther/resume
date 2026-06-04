@@ -30,10 +30,9 @@ export function getTripPaths(): string[] {
 export async function getSortedTrips(): Promise<Trip[]> {
 	const trips = await Promise.all(
 		getTripPaths().map(async (id) => {
-			const raw = await readFile(
-				join(cwd(), "trips", id, "itinerary.yaml"),
-				{encoding: "utf-8"},
-			);
+			const raw = await readFile(join(cwd(), "trips", id, "itinerary.yaml"), {
+				encoding: "utf-8",
+			});
 			const itinerary = parseYaml(raw) as Itinerary;
 			return {
 				id,
@@ -51,30 +50,24 @@ export async function getSortedTrips(): Promise<Trip[]> {
 	return trips;
 }
 
-export async function getTrip(id: string): Promise<Trip> {
-	const [raw] = await Promise.all([
-		readFile(join(cwd(), "trips", id, "itinerary.yaml"), "utf-8"),
-		getTripEnrichment(id),
-	]);
+export async function getTripItinerary(id: string): Promise<{
+	itinerary: Itinerary;
+	enrichment: TripEnrichment | undefined;
+}> {
+	const raw = await readFile(
+		join(cwd(), "trips", id, "itinerary.yaml"),
+		"utf-8",
+	);
 	const itinerary = parseYaml(raw) as Itinerary;
-	return {
-		id,
-		title: itinerary.trip.title,
-		date: itinerary.trip.start_date,
-		image: itinerary.trip.cover_image,
-	} satisfies Trip;
-}
-
-export async function getTripEnrichment(
-	id: string,
-): Promise<TripEnrichment | null> {
+	let enrichment: TripEnrichment | undefined;
 	try {
-		const raw = readFileSync(
+		const enrichRaw = readFileSync(
 			join(cwd(), "trips", id, "enrichment.yaml"),
 			"utf-8",
 		);
-		return parseYaml(raw) as TripEnrichment;
+		enrichment = parseYaml(enrichRaw) as TripEnrichment;
 	} catch {
-		return null;
+		enrichment = undefined;
 	}
+	return { itinerary, enrichment };
 }

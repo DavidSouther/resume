@@ -1,4 +1,3 @@
-
 type WikipediaRef = {
 	title: string;
 	url: string;

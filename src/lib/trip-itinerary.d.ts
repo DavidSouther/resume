@@ -1,4 +1,3 @@
-
 type Airport = {
 	airport: string;
 	terminal?: string;
