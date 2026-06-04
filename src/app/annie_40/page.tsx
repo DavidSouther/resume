@@ -41,8 +41,15 @@ export default function Page() {
 
 				<div className="details">
 					<p>Photo Booooooth</p>
-					<p><a href="https://photos.app.goo.gl/ZJPPdbvcX15qyJSs8">Shared Google Album</a></p>
-					<p>Please upload and share your photos - of the party, or any memories you want to share!</p>
+					<p>
+						<a href="https://photos.app.goo.gl/ZJPPdbvcX15qyJSs8">
+							Shared Google Album
+						</a>
+					</p>
+					<p>
+						Please upload and share your photos - of the party, or any memories
+						you want to share!
+					</p>
 				</div>
 
 				<div className="divider"></div>

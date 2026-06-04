@@ -1,0 +1,9 @@
+{
+  "//": "Type-check config for `npm run check`. Extends the Next-managed tsconfig but narrows `include` to hand-written source. The base config pulls in Next's generated route validators under .next/types and docs/**/types; those are gitignored build output and currently fail under the TypeScript 6 beta (unused @ts-expect-error directives), so they are excluded here. `next build` still type-checks routes.",
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "incremental": false
+  },
+  "include": ["next-env.d.ts", "src", "vitest.config.ts"],
+  "exclude": ["node_modules", ".next", "docs"]
+}

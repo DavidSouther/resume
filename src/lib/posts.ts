@@ -1,8 +1,8 @@
+import { readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
+import { cwd } from "node:process";
 import { toHTML as jiffdown } from "@davidsouther/jiffdown";
-import { readdirSync, readFileSync } from "fs";
 import matter from "gray-matter";
-import { join } from "path";
-import { cwd } from "process";
 
 export interface Post {
 	id: string;
@@ -52,7 +52,7 @@ export function getSortedPosts(): Post[] {
 
 export async function getPost(id: string): Promise<Post> {
 	const filename = join(cwd(), "posts", id);
-	const postText = readFileSync(filename + ".md", "utf-8");
+	const postText = readFileSync(`${filename}.md`, "utf-8");
 	const front = matter(postText);
 	const date =
 		(front.data.date as Date | undefined)?.toISOString() ?? undefined;

@@ -41,7 +41,7 @@ const Role = ({ role }: { role: ResumeTypes.Role }) => (
 );
 
 export const COMPETENCES_LCL = new Map([
-  ["agentic-ai", "Agentic AI"],
+	["agentic-ai", "Agentic AI"],
 	["amazon-web-services", "Amazon Web Services (AWS)"],
 	["angular", "Angular"],
 	["angularjs", "AngularJS"],

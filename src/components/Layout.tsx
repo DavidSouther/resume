@@ -1,38 +1,36 @@
 "use client";
-import { PropsWithChildren } from "react";
 import Head from "next/head";
-import { AboutMe } from "./resume/AboutMe";
-import * as ResumeTypes from "~/lib/resume";
+import type { PropsWithChildren } from "react";
+import type * as ResumeTypes from "~/lib/resume";
 import resume from "../app/resume.json";
+import { AboutMe } from "./resume/AboutMe";
 
 export default function Layout({
-  children,
-  title,
+	children,
+	title,
 }: PropsWithChildren<{ title: string }>) {
-  return (
-    <>
-      <div id="root" className="root">
-        <Head>
-          <title>{title}</title>
-          <meta name="description" content={title} />
-          <meta name="viewport" content="width=device-width, initial-scale=1" />
-        </Head>
-        <header>
-          <AboutMe aboutMe={resume.aboutMe as ResumeTypes.AboutMe} />
-        </header>
-        <main>{children}</main>
-        <footer className="no-print">
-          <nav>
-            <p>
-              © David Souther 2008-
-              {new Date(resume.settings.lastUpdate).getFullYear()}
-            </p>
-            <cite>
-              <a href="https://github.com/davidsouther/resume">Page Source</a>
-            </cite>
-          </nav>
-        </footer>
-      </div>
-    </>
-  );
+	return (
+		<div id="root" className="root">
+			<Head>
+				<title>{title}</title>
+				<meta name="description" content={title} />
+				<meta name="viewport" content="width=device-width, initial-scale=1" />
+			</Head>
+			<header>
+				<AboutMe aboutMe={resume.aboutMe as ResumeTypes.AboutMe} />
+			</header>
+			<main>{children}</main>
+			<footer className="no-print">
+				<nav>
+					<p>
+						© David Souther 2008-
+						{new Date(resume.settings.lastUpdate).getFullYear()}
+					</p>
+					<cite>
+						<a href="https://github.com/davidsouther/resume">Page Source</a>
+					</cite>
+				</nav>
+			</footer>
+		</div>
+	);
 }

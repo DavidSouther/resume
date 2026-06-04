@@ -28,7 +28,6 @@ export function SvgIcon({
 		<svg
 			viewBox="0 0 24 24"
 			className={className}
-			// biome-ignore lint/security/noDangerouslySetInnerHtml: static, hardcoded SVG path data from the ICON table — no user input
 			dangerouslySetInnerHTML={{ __html: content }}
 		/>
 	);
