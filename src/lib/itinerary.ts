@@ -1,9 +1,68 @@
-import type {
-	FlightDoc,
-	HotelDoc,
-	ItineraryDoc,
-	TransferDoc,
-} from "~/lib/itinerary-doc";
+// Raw types are unexported — private implementation detail of parseItinerary.
+// Callers pass `unknown`; the parser owns the raw shape.
+
+type RawTripMeta = {
+	title: string;
+	traveler: string;
+	start_date: string;
+	end_date: string;
+	home_timezone?: string;
+	notes?: string;
+};
+
+type RawFlight = {
+	status?: string;
+	confirmation?: string;
+	airline: string;
+	airline_code: string;
+	flight_number: string;
+	cabin?: string;
+	seat?: string;
+	origin: { airport: string; terminal?: string; gate?: string };
+	destination: { airport: string; terminal?: string; gate?: string };
+	depart: { datetime: string; timezone: string };
+	arrive: { datetime: string; timezone: string };
+	notes?: string;
+};
+
+type RawHotel = {
+	status?: string;
+	confirmation?: string;
+	name: string;
+	brand?: string;
+	timezone: string;
+	room_type?: string;
+	check_in: { date: string; after_time?: string };
+	check_out: { date: string; before_time?: string };
+	notes?: string;
+};
+
+type RawTransfer = {
+	status?: string;
+	type: string;
+	provider?: string;
+	confirmation?: string;
+	pickup: { datetime?: string; timezone?: string; location: string };
+	dropoff?: { datetime?: string; timezone?: string; location: string };
+	notes?: string;
+};
+
+type RawEvent = {
+	status?: string;
+	title: string;
+	category?: string;
+	start?: { datetime: string; timezone: string };
+	location?: string;
+	notes?: string;
+};
+
+type RawItinerary = {
+	trip: RawTripMeta;
+	flights: RawFlight[];
+	hotels: RawHotel[];
+	transfers: RawTransfer[];
+	events: RawEvent[];
+};
 
 export type IataCode = string & { readonly _brand: "IataCode" };
 export type IanaTimeZone = string & { readonly _brand: "IanaTimeZone" };
@@ -98,7 +157,7 @@ function parseStatus(
 	return { kind: "to_book" };
 }
 
-function parseFlight(doc: FlightDoc): Flight {
+function parseFlight(doc: RawFlight): Flight {
 	return {
 		status: parseStatus(doc.status, doc.confirmation),
 		designator: `${doc.airline_code}${doc.flight_number}` as FlightDesignator,
@@ -126,7 +185,7 @@ function parseFlight(doc: FlightDoc): Flight {
 	};
 }
 
-function parseHotel(doc: HotelDoc): Hotel {
+function parseHotel(doc: RawHotel): Hotel {
 	return {
 		status: parseStatus(doc.status, doc.confirmation),
 		name: doc.name,
@@ -144,7 +203,7 @@ function parseHotel(doc: HotelDoc): Hotel {
 	};
 }
 
-function parseTransfer(doc: TransferDoc): Transfer {
+function parseTransfer(doc: RawTransfer): Transfer {
 	return {
 		status: parseStatus(doc.status, doc.confirmation),
 		type: doc.type,
@@ -165,7 +224,8 @@ function parseTransfer(doc: TransferDoc): Transfer {
 	};
 }
 
-export function parseItinerary(doc: ItineraryDoc): Itinerary {
+export function parseItinerary(raw: unknown): Itinerary {
+	const doc = raw as RawItinerary;
 	return {
 		trip: {
 			title: doc.trip.title,
@@ -174,10 +234,10 @@ export function parseItinerary(doc: ItineraryDoc): Itinerary {
 			end_date: String(doc.trip.end_date),
 			home_timezone: doc.trip.home_timezone as IanaTimeZone | undefined,
 		},
-		flights: doc.flights.map(parseFlight),
-		hotels: doc.hotels.map(parseHotel),
-		transfers: doc.transfers.map(parseTransfer),
-		events: doc.events.map((e) => ({
+		flights: (doc.flights ?? []).map(parseFlight),
+		hotels: (doc.hotels ?? []).map(parseHotel),
+		transfers: (doc.transfers ?? []).map(parseTransfer),
+		events: (doc.events ?? []).map((e) => ({
 			status: parseStatus(e.status, undefined),
 			title: e.title,
 			category: e.category,

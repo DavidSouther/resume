@@ -3,7 +3,6 @@ import { join } from "node:path";
 import { cwd } from "node:process";
 import { describe, expect, it } from "vitest";
 import { parse as parseYaml } from "yaml";
-import type { ItineraryDoc } from "~/lib/itinerary-doc";
 import { parseItinerary } from "~/lib/itinerary";
 import type { Move, Stay } from "~/lib/timeline";
 import { deriveTimeline } from "~/lib/timeline";
@@ -14,8 +13,7 @@ describe("deriveTimeline — hvar golden timeline", () => {
 			join(cwd(), "trips/hvar/itinerary.yaml"),
 			"utf-8",
 		);
-		const doc = parseYaml(raw) as ItineraryDoc;
-		const itinerary = parseItinerary(doc);
+		const itinerary = parseItinerary(parseYaml(raw));
 		const timeline = deriveTimeline(itinerary);
 
 		// 4 hotels → 4 stays; 5 inter-stay gaps (including home anchors) → 5 moves
@@ -60,7 +58,7 @@ describe("deriveTimeline — hvar golden timeline", () => {
 
 describe("parseItinerary", () => {
 	it("assigns absent booking status to to_book (D5 invariant)", () => {
-		const doc: ItineraryDoc = {
+		const itinerary = parseItinerary({
 			trip: {
 				title: "Minimal",
 				traveler: "T",
@@ -88,8 +86,7 @@ describe("parseItinerary", () => {
 			hotels: [],
 			transfers: [],
 			events: [],
-		};
-		const itinerary = parseItinerary(doc);
+		});
 		expect(itinerary.flights[0].status.kind).toBe("to_book");
 	});
 });
