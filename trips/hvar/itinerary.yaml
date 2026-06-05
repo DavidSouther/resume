@@ -67,8 +67,8 @@ flights:
     flight_number: "2"
     cabin: "Delta Main"
     seat: "33H"
-    origin: { airport: "LHR" }
-    destination: { airport: "JFK" }
+    origin: { airport: "LHR", terminal: "3" }
+    destination: { airport: "JFK", terminal: "4" }
     depart: { datetime: 2026-07-23T11:45:00, timezone: Europe/London }
     arrive: { datetime: 2026-07-23T14:54:00, timezone: America/New_York }
 
@@ -100,11 +100,11 @@ hotels:
     notes: "Booked via travel agent (Tzell). Rate ~$399/night."
 
   - status: confirmed
-    name: "Hotel Indigo London - Paddington"
+    name: "Holiday Inn London - Heathrow Bath Road"
     brand: "IHG"
-    confirmation: "89643736"
+    confirmation: "68029646"
     timezone: Europe/London
-    room_type: "Double Standard"
+    room_type: "Queen Standard"
     check_in:  { date: 2026-07-22, after_time: "15:00" }
     check_out: { date: 2026-07-23, before_time: "11:00" }
 
@@ -120,16 +120,22 @@ ground_transportation:
     type: transfer
     provider: "Tzell / The Trip Trotter"
     pickup:  { location: "Adriana, Hvar" }
-    dropoff: { datetime: 2026-07-22T18:10:00, timezone: Europe/Zagreb, location: "Split Airport (SPU)" }
+    dropoff: { datetime: 2026-07-22T14:10:00, timezone: Europe/Zagreb, location: "Split Airport (SPU)" }
     notes: "Ferry from Hvar + airport transfer for BA953, arranged by agent."
 
-events:
-  - status: to_book
-    title: "Stratford-upon-Avon"
-    category: activity
-    start: { datetime: 2026-07-13T10:00:00, timezone: Europe/London }
-    location: "Stratford-upon-Avon, UK"
+  - status: confirmed
+    type: transfer
+    provider: "Hotel Hoppa H5B"
+    pickup:  { location: "London Heathrow Terminal 5 (LHR)", datetime: 2026-07-22T21:45:00, timezone: Europe/London }
+    dropoff: { location: "Holiday Inn London - Heathrow Bath Road" }
 
+  - status: confirmed
+    type: transfer
+    provider: "Hotel Hoppa H3B"
+    pickup:  { location: "Holiday Inn London - Heathrow Bath Road" }
+    dropoff: { datetime: 2026-07-23T08:15:00, timezone: Europe/London, location: "London Heathrow Terminal 3 (LHR)" }
+
+events:
   - status: confirmed
     title: "Dinner by Heston Blumenthal"
     category: meal
@@ -156,7 +162,7 @@ events:
     location: "Stari Grad, Hvar"
 
   - status: to_book
-    title: "Scuba diving (tentative)"
+    title: "Scuba diving"
     category: activity
     start: { datetime: 2026-07-20T10:00:00, timezone: Europe/Zagreb }
     location: "Hvar"

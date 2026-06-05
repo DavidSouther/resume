@@ -178,20 +178,40 @@ export function buildItems(itinerary: Itinerary): ItineraryItem[] {
 
 	for (const h of itinerary.hotels ?? []) {
 		if (h.check_in?.date) {
-			const t = parseHM(h.check_in.after_time) ?? 15 * 60;
+			let sortKey = parseHM(h.check_in.after_time) ?? 15 * 60;
+			for (const g of itinerary.ground_transportation ?? []) {
+				const dropoffLoc = String(g.dropoff?.location ?? "").toLowerCase();
+				if (!dropoffLoc.includes(h.name.toLowerCase())) continue;
+				const pk = parseDateTime(g.pickup?.datetime);
+				const dr = parseDateTime(g.dropoff?.datetime);
+				const refTime = dr ?? pk;
+				if (refTime && refTime.date === String(h.check_in.date)) {
+					sortKey = Math.max(sortKey, refTime.h * 60 + refTime.min + 1);
+				}
+			}
 			items.push({
 				kind: "hotel-in",
 				date: String(h.check_in.date),
-				sortKey: t,
+				sortKey,
 				data: h,
 			});
 		}
 		if (h.check_out?.date) {
-			const t = parseHM(h.check_out.before_time) ?? 11 * 60;
+			let sortKey = parseHM(h.check_out.before_time) ?? 11 * 60;
+			for (const g of itinerary.ground_transportation ?? []) {
+				const pickupLoc = String(g.pickup?.location ?? "").toLowerCase();
+				if (!pickupLoc.includes(h.name.toLowerCase())) continue;
+				const pk = parseDateTime(g.pickup?.datetime);
+				const dr = parseDateTime(g.dropoff?.datetime);
+				const refTime = pk ?? dr;
+				if (refTime && refTime.date === String(h.check_out.date)) {
+					sortKey = Math.min(sortKey, refTime.h * 60 + refTime.min - 1);
+				}
+			}
 			items.push({
 				kind: "hotel-out",
 				date: String(h.check_out.date),
-				sortKey: t,
+				sortKey,
 				data: h,
 			});
 		}
@@ -234,7 +254,16 @@ export function synthesizeTransfers(
 			const loc = g[key]?.location;
 			if (!loc) continue;
 			const mm = String(loc).match(/\(([A-Z]{3})\)/);
-			if (mm) coveredAir.add(mm[1]);
+			if (!mm) continue;
+			const airport = mm[1];
+			const pk = parseDateTime(g.pickup?.datetime);
+			const dr = parseDateTime(g.dropoff?.datetime);
+			const dt = pk ?? dr;
+			if (dt) {
+				coveredAir.add(`${airport}-${dt.date}`);
+			} else {
+				coveredAir.add(airport);
+			}
 		}
 	}
 
@@ -256,11 +285,23 @@ export function synthesizeTransfers(
 		if (arr) {
 			const ac = f.destination?.airport;
 			const hotel = ac ? hotelOn("check_in", arr.date) : null;
-			if (ac && hotel && !coveredAir.has(ac)) {
+			if (
+				ac &&
+				hotel &&
+				!coveredAir.has(`${ac}-${arr.date}`) &&
+				!coveredAir.has(ac)
+			) {
+				// The transfer runs airport -> hotel, so it must sort after the
+				// flight and before check-in. A hotel's after_time is only a policy
+				// floor: a late flight can land past it, which would otherwise sort
+				// the transfer below the check-in. Clamp it to just before check-in
+				// (matching buildItems' hotel-in sortKey) so the order holds.
+				const arrivalKey = arr.h * 60 + arr.min + 5;
+				const checkInKey = parseHM(hotel.check_in?.after_time) ?? 15 * 60;
 				transfers.push({
 					kind: "transfer",
 					date: arr.date,
-					sortKey: arr.h * 60 + arr.min + 5,
+					sortKey: Math.min(arrivalKey, checkInKey - 1),
 					data: { dir: "in", airport: ac, hotel, city: IATA[ac] ?? null },
 				});
 			}
@@ -269,11 +310,22 @@ export function synthesizeTransfers(
 		if (dep) {
 			const dc = f.origin?.airport;
 			const hotel = dc ? hotelOn("check_out", dep.date) : null;
-			if (dc && hotel && !coveredAir.has(dc)) {
+			if (
+				dc &&
+				hotel &&
+				!coveredAir.has(`${dc}-${dep.date}`) &&
+				!coveredAir.has(dc)
+			) {
+				// Mirror of the arrival case: the transfer runs hotel -> airport, so
+				// it must sort after check-out and before the flight. before_time is a
+				// policy ceiling, so clamp the transfer to just after check-out
+				// (matching buildItems' hotel-out sortKey).
+				const departKey = Math.max(0, dep.h * 60 + dep.min - 5);
+				const checkOutKey = parseHM(hotel.check_out?.before_time) ?? 11 * 60;
 				transfers.push({
 					kind: "transfer",
 					date: dep.date,
-					sortKey: Math.max(0, dep.h * 60 + dep.min - 5),
+					sortKey: Math.max(departKey, checkOutKey + 1),
 					data: { dir: "out", airport: dc, hotel, city: IATA[dc] ?? null },
 				});
 			}
