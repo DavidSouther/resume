@@ -8,12 +8,12 @@ export function List<T extends { id: string }>({
 	item,
 }: {
 	items: T[];
-	item: (t: T) => ReactNode;
+	item: (element: T) => ReactNode;
 }) {
 	return (
 		<ul>
-			{items.map((t) => (
-				<li key={t.id}>{item(t)}</li>
+			{items.map((element) => (
+				<li key={element.id}>{item(element)}</li>
 			))}
 		</ul>
 	);
@@ -25,13 +25,13 @@ export function IDLinkList<T extends { id: string }>({
 	href,
 }: {
 	items: T[];
-	href: (t: T) => string;
-	link: (t: T) => string;
+	href: (element: T) => string;
+	link: (element: T) => string;
 }) {
 	return (
 		<List
 			items={items}
-			item={(t) => <Link href={`${href(t)}`}>{link(t)}</Link>}
+			item={(element) => <Link href={`${href(element)}`}>{link(element)}</Link>}
 		/>
 	);
 }

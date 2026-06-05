@@ -37,7 +37,7 @@ export const IATA: Record<string, string> = {
 	ZRH: "Zurich",
 };
 
-export const TZAB: Record<string, [string, string]> = {
+export const TIMEZONE_ABBREVIATIONS: Record<string, [string, string]> = {
 	"America/New_York": ["EST", "EDT"],
 	"America/Los_Angeles": ["PST", "PDT"],
 	"Europe/London": ["GMT", "BST"],
@@ -47,7 +47,7 @@ export const TZAB: Record<string, [string, string]> = {
 	"Europe/Zurich": ["CET", "CEST"],
 };
 
-const DOW = [
+const DAYS_OF_WEEK = [
 	"Sunday",
 	"Monday",
 	"Tuesday",
@@ -56,7 +56,7 @@ const DOW = [
 	"Friday",
 	"Saturday",
 ];
-const MON = [
+const MONTHS = [
 	"Jan",
 	"Feb",
 	"Mar",
@@ -71,50 +71,61 @@ const MON = [
 	"Dec",
 ];
 
-export function parseHM(s: string | undefined | null): number | null {
-	if (!s) return null;
-	const m = String(s).match(/(\d{1,2}):(\d{2})/);
-	return m ? +m[1] * 60 + +m[2] : null;
+export function parseHoursMinutes(
+	timeString: string | undefined | null,
+): number | null {
+	if (!timeString) return null;
+	const match = String(timeString).match(/(\d{1,2}):(\d{2})/);
+	return match ? +match[1] * 60 + +match[2] : null;
 }
 
 export function parseDateTime(
-	s: string | undefined | null,
-): { date: string; h: number; min: number } | null {
-	if (!s) return null;
-	const str = String(s);
-	const m = str.match(/(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
-	if (!m) return null;
-	return { date: `${m[1]}-${m[2]}-${m[3]}`, h: +m[4], min: +m[5] };
+	dateTimeString: string | undefined | null,
+): { date: string; hours: number; minutes: number } | null {
+	if (!dateTimeString) return null;
+	const value = String(dateTimeString);
+	const match = value.match(/(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+	if (!match) return null;
+	return {
+		date: `${match[1]}-${match[2]}-${match[3]}`,
+		hours: +match[4],
+		minutes: +match[5],
+	};
 }
 
-export function fmtClock(h: number, min: number): string {
-	const ap = h < 12 ? "AM" : "PM";
-	const hh = h % 12 || 12;
-	return `${hh}:${min < 10 ? "0" : ""}${min} ${ap}`;
+export function formatClock(hours: number, minutes: number): string {
+	const amPm = hours < 12 ? "AM" : "PM";
+	const displayHour = hours % 12 || 12;
+	return `${displayHour}:${minutes < 10 ? "0" : ""}${minutes} ${amPm}`;
 }
 
-export function fmtTimeStr(s: string | undefined | null): string {
-	const v = parseHM(s);
-	if (v === null) return String(s ?? "");
-	return fmtClock(Math.floor(v / 60), v % 60);
+export function formatTimeString(
+	timeString: string | undefined | null,
+): string {
+	const totalMinutes = parseHoursMinutes(timeString);
+	if (totalMinutes === null) return String(timeString ?? "");
+	return formatClock(Math.floor(totalMinutes / 60), totalMinutes % 60);
 }
 
-export function tzAbbr(dateStr: string, tz: string | undefined): string {
+export function timezoneAbbreviation(
+	dateStr: string,
+	tz: string | undefined,
+): string {
 	if (!tz) return "";
-	if (TZAB[tz]) {
-		const mo = +dateStr.split("-")[1];
-		const dst = mo >= 4 && mo <= 10;
-		return TZAB[tz][dst ? 1 : 0];
+	if (TIMEZONE_ABBREVIATIONS[tz]) {
+		const month = +dateStr.split("-")[1];
+		const dst = month >= 4 && month <= 10;
+		return TIMEZONE_ABBREVIATIONS[tz][dst ? 1 : 0];
 	}
 	try {
-		const f = new Intl.DateTimeFormat("en-US", {
+		const formatter = new Intl.DateTimeFormat("en-US", {
 			timeZone: tz,
 			timeZoneName: "short",
 			hour: "numeric",
 		});
-		const parts = f.formatToParts(new Date(`${dateStr}T12:00:00Z`));
-		for (const p of parts) {
-			if (p.type === "timeZoneName") return p.value;
+		const parts = formatter.formatToParts(new Date(`${dateStr}T12:00:00Z`));
+		for (const part of parts) {
+			if (part.type === "timeZoneName") return part.value;
 		}
 	} catch {
 		// fall through
@@ -124,18 +135,19 @@ export function tzAbbr(dateStr: string, tz: string | undefined): string {
 
 export function prettyDate(dateStr: string): string {
 	const parts = String(dateStr).split("-").map(Number);
-	return `${MON[parts[1] - 1]} ${parts[2]}`;
+	return `${MONTHS[parts[1] - 1]} ${parts[2]}`;
 }
 
-export function dowName(dateStr: string): string {
-	return DOW[new Date(`${dateStr}T12:00:00`).getDay()];
+export function dayOfWeekName(dateStr: string): string {
+	return DAYS_OF_WEEK[new Date(`${dateStr}T12:00:00`).getDay()];
 }
 
 export function rangeLabel(start: string, end: string): string {
-	const [, am, ad] = String(start).split("-").map(Number);
-	const [by, bm, bd] = String(end).split("-").map(Number);
-	if (am === bm) return `${MON[am - 1]} ${ad}–${bd}, ${by}`;
-	return `${MON[am - 1]} ${ad} – ${MON[bm - 1]} ${bd}, ${by}`;
+	const [, startMonth, startDay] = String(start).split("-").map(Number);
+	const [endYear, endMonth, endDay] = String(end).split("-").map(Number);
+	if (startMonth === endMonth)
+		return `${MONTHS[startMonth - 1]} ${startDay}–${endDay}, ${endYear}`;
+	return `${MONTHS[startMonth - 1]} ${startDay} – ${MONTHS[endMonth - 1]} ${endDay}, ${endYear}`;
 }
 
 export function initials(name: string | undefined | null): string {
@@ -143,101 +155,117 @@ export function initials(name: string | undefined | null): string {
 	return name
 		.trim()
 		.split(/\s+/)
-		.map((w) => w[0])
+		.map((word) => word[0])
 		.join("")
 		.slice(0, 2)
 		.toUpperCase();
 }
 
 export function dateKeyRange(start: string, end: string): string[] {
-	const out: string[] = [];
-	const a = new Date(`${String(start).slice(0, 10)}T12:00:00`);
-	const b = new Date(`${String(end).slice(0, 10)}T12:00:00`);
-	for (let t = a.getTime(); t <= b.getTime(); t += 864e5) {
-		const d = new Date(t);
-		out.push(
-			`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`,
+	const dates: string[] = [];
+	const startDate = new Date(`${String(start).slice(0, 10)}T12:00:00`);
+	const endDate = new Date(`${String(end).slice(0, 10)}T12:00:00`);
+	for (
+		let timestamp = startDate.getTime();
+		timestamp <= endDate.getTime();
+		timestamp += 864e5
+	) {
+		const currentDate = new Date(timestamp);
+		dates.push(
+			`${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, "0")}-${String(currentDate.getDate()).padStart(2, "0")}`,
 		);
 	}
-	return out;
+	return dates;
 }
 
 export function buildItems(itinerary: Itinerary): ItineraryItem[] {
 	const items: ItineraryItem[] = [];
 
-	for (const f of itinerary.flights ?? []) {
-		const dep = parseDateTime(f.depart?.datetime);
-		if (!dep) continue;
+	for (const flight of itinerary.flights ?? []) {
+		const departure = parseDateTime(flight.depart?.datetime);
+		if (!departure) continue;
 		items.push({
 			kind: "flight",
-			date: dep.date,
-			sortKey: dep.h * 60 + dep.min,
-			data: f,
+			date: departure.date,
+			sortKey: departure.hours * 60 + departure.minutes,
+			data: flight,
 		});
 	}
 
-	for (const h of itinerary.hotels ?? []) {
-		if (h.check_in?.date) {
-			let sortKey = parseHM(h.check_in.after_time) ?? 15 * 60;
-			for (const g of itinerary.ground_transportation ?? []) {
-				const dropoffLoc = String(g.dropoff?.location ?? "").toLowerCase();
-				if (!dropoffLoc.includes(h.name.toLowerCase())) continue;
-				const pk = parseDateTime(g.pickup?.datetime);
-				const dr = parseDateTime(g.dropoff?.datetime);
-				const refTime = dr ?? pk;
-				if (refTime && refTime.date === String(h.check_in.date)) {
-					sortKey = Math.max(sortKey, refTime.h * 60 + refTime.min + 1);
+	for (const hotel of itinerary.hotels ?? []) {
+		if (hotel.check_in?.date) {
+			let sortKey = parseHoursMinutes(hotel.check_in.after_time) ?? 15 * 60;
+			for (const ground of itinerary.ground_transportation ?? []) {
+				const dropoffLoc = String(ground.dropoff?.location ?? "").toLowerCase();
+				if (!dropoffLoc.includes(hotel.name.toLowerCase())) continue;
+				const pickupDateTime = parseDateTime(ground.pickup?.datetime);
+				const dropoffDateTime = parseDateTime(ground.dropoff?.datetime);
+				const referenceDateTime = dropoffDateTime ?? pickupDateTime;
+				if (
+					referenceDateTime &&
+					referenceDateTime.date === String(hotel.check_in.date)
+				) {
+					sortKey = Math.max(
+						sortKey,
+						referenceDateTime.hours * 60 + referenceDateTime.minutes + 1,
+					);
 				}
 			}
 			items.push({
 				kind: "hotel-in",
-				date: String(h.check_in.date),
+				date: String(hotel.check_in.date),
 				sortKey,
-				data: h,
+				data: hotel,
 			});
 		}
-		if (h.check_out?.date) {
-			let sortKey = parseHM(h.check_out.before_time) ?? 11 * 60;
-			for (const g of itinerary.ground_transportation ?? []) {
-				const pickupLoc = String(g.pickup?.location ?? "").toLowerCase();
-				if (!pickupLoc.includes(h.name.toLowerCase())) continue;
-				const pk = parseDateTime(g.pickup?.datetime);
-				const dr = parseDateTime(g.dropoff?.datetime);
-				const refTime = pk ?? dr;
-				if (refTime && refTime.date === String(h.check_out.date)) {
-					sortKey = Math.min(sortKey, refTime.h * 60 + refTime.min - 1);
+		if (hotel.check_out?.date) {
+			let sortKey = parseHoursMinutes(hotel.check_out.before_time) ?? 11 * 60;
+			for (const ground of itinerary.ground_transportation ?? []) {
+				const pickupLoc = String(ground.pickup?.location ?? "").toLowerCase();
+				if (!pickupLoc.includes(hotel.name.toLowerCase())) continue;
+				const pickupDateTime = parseDateTime(ground.pickup?.datetime);
+				const dropoffDateTime = parseDateTime(ground.dropoff?.datetime);
+				const referenceDateTime = pickupDateTime ?? dropoffDateTime;
+				if (
+					referenceDateTime &&
+					referenceDateTime.date === String(hotel.check_out.date)
+				) {
+					sortKey = Math.min(
+						sortKey,
+						referenceDateTime.hours * 60 + referenceDateTime.minutes - 1,
+					);
 				}
 			}
 			items.push({
 				kind: "hotel-out",
-				date: String(h.check_out.date),
+				date: String(hotel.check_out.date),
 				sortKey,
-				data: h,
+				data: hotel,
 			});
 		}
 	}
 
-	for (const g of itinerary.ground_transportation ?? []) {
-		const pk = parseDateTime(g.pickup?.datetime);
-		const dr = parseDateTime(g.dropoff?.datetime);
-		const ref = pk ?? dr;
-		if (!ref) continue;
+	for (const ground of itinerary.ground_transportation ?? []) {
+		const pickupDateTime = parseDateTime(ground.pickup?.datetime);
+		const dropoffDateTime = parseDateTime(ground.dropoff?.datetime);
+		const referenceDateTime = pickupDateTime ?? dropoffDateTime;
+		if (!referenceDateTime) continue;
 		items.push({
 			kind: "ground",
-			date: ref.date,
-			sortKey: ref.h * 60 + ref.min,
-			data: g,
+			date: referenceDateTime.date,
+			sortKey: referenceDateTime.hours * 60 + referenceDateTime.minutes,
+			data: ground,
 		});
 	}
 
-	for (const ev of itinerary.events ?? []) {
-		const st = parseDateTime(ev.start?.datetime);
-		if (!st) continue;
+	for (const tripEvent of itinerary.events ?? []) {
+		const startDateTime = parseDateTime(tripEvent.start?.datetime);
+		if (!startDateTime) continue;
 		items.push({
 			kind: "event",
-			date: st.date,
-			sortKey: st.h * 60 + st.min,
-			data: ev,
+			date: startDateTime.date,
+			sortKey: startDateTime.hours * 60 + startDateTime.minutes,
+			data: tripEvent,
 		});
 	}
 
@@ -249,18 +277,18 @@ export function synthesizeTransfers(
 	items: ItineraryItem[],
 ): ItineraryItem[] {
 	const coveredAir = new Set<string>();
-	for (const g of itinerary.ground_transportation ?? []) {
+	for (const ground of itinerary.ground_transportation ?? []) {
 		for (const key of ["pickup", "dropoff"] as const) {
-			const loc = g[key]?.location;
+			const loc = ground[key]?.location;
 			if (!loc) continue;
-			const mm = String(loc).match(/\(([A-Z]{3})\)/);
-			if (!mm) continue;
-			const airport = mm[1];
-			const pk = parseDateTime(g.pickup?.datetime);
-			const dr = parseDateTime(g.dropoff?.datetime);
-			const dt = pk ?? dr;
-			if (dt) {
-				coveredAir.add(`${airport}-${dt.date}`);
+			const airportMatch = String(loc).match(/\(([A-Z]{3})\)/);
+			if (!airportMatch) continue;
+			const airport = airportMatch[1];
+			const pickupDateTime = parseDateTime(ground.pickup?.datetime);
+			const dropoffDateTime = parseDateTime(ground.dropoff?.datetime);
+			const dateTime = pickupDateTime ?? dropoffDateTime;
+			if (dateTime) {
+				coveredAir.add(`${airport}-${dateTime.date}`);
 			} else {
 				coveredAir.add(airport);
 			}
@@ -271,62 +299,81 @@ export function synthesizeTransfers(
 		field: "check_in" | "check_out",
 		date: string,
 	): Hotel | null {
-		for (const h of itinerary.hotels ?? []) {
-			if (String(h[field]?.date) === date) return h;
+		for (const hotel of itinerary.hotels ?? []) {
+			if (String(hotel[field]?.date) === date) return hotel;
 		}
 		return null;
 	}
 
 	const transfers: ItineraryItem[] = [];
-	for (const f of itinerary.flights ?? []) {
-		const dep = parseDateTime(f.depart?.datetime);
-		const arr = parseDateTime(f.arrive?.datetime);
+	for (const flight of itinerary.flights ?? []) {
+		const departure = parseDateTime(flight.depart?.datetime);
+		const arrival = parseDateTime(flight.arrive?.datetime);
 
-		if (arr) {
-			const ac = f.destination?.airport;
-			const hotel = ac ? hotelOn("check_in", arr.date) : null;
+		if (arrival) {
+			const destinationAirportCode = flight.destination?.airport;
+			const hotel = destinationAirportCode
+				? hotelOn("check_in", arrival.date)
+				: null;
 			if (
-				ac &&
+				destinationAirportCode &&
 				hotel &&
-				!coveredAir.has(`${ac}-${arr.date}`) &&
-				!coveredAir.has(ac)
+				!coveredAir.has(`${destinationAirportCode}-${arrival.date}`) &&
+				!coveredAir.has(destinationAirportCode)
 			) {
 				// The transfer runs airport -> hotel, so it must sort after the
 				// flight and before check-in. A hotel's after_time is only a policy
 				// floor: a late flight can land past it, which would otherwise sort
 				// the transfer below the check-in. Clamp it to just before check-in
 				// (matching buildItems' hotel-in sortKey) so the order holds.
-				const arrivalKey = arr.h * 60 + arr.min + 5;
-				const checkInKey = parseHM(hotel.check_in?.after_time) ?? 15 * 60;
+				const arrivalKey = arrival.hours * 60 + arrival.minutes + 5;
+				const checkInKey =
+					parseHoursMinutes(hotel.check_in?.after_time) ?? 15 * 60;
 				transfers.push({
 					kind: "transfer",
-					date: arr.date,
+					date: arrival.date,
 					sortKey: Math.min(arrivalKey, checkInKey - 1),
-					data: { dir: "in", airport: ac, hotel, city: IATA[ac] ?? null },
+					data: {
+						dir: "in",
+						airport: destinationAirportCode,
+						hotel,
+						city: IATA[destinationAirportCode] ?? null,
+					},
 				});
 			}
 		}
 
-		if (dep) {
-			const dc = f.origin?.airport;
-			const hotel = dc ? hotelOn("check_out", dep.date) : null;
+		if (departure) {
+			const originAirportCode = flight.origin?.airport;
+			const hotel = originAirportCode
+				? hotelOn("check_out", departure.date)
+				: null;
 			if (
-				dc &&
+				originAirportCode &&
 				hotel &&
-				!coveredAir.has(`${dc}-${dep.date}`) &&
-				!coveredAir.has(dc)
+				!coveredAir.has(`${originAirportCode}-${departure.date}`) &&
+				!coveredAir.has(originAirportCode)
 			) {
 				// Mirror of the arrival case: the transfer runs hotel -> airport, so
 				// it must sort after check-out and before the flight. before_time is a
 				// policy ceiling, so clamp the transfer to just after check-out
 				// (matching buildItems' hotel-out sortKey).
-				const departKey = Math.max(0, dep.h * 60 + dep.min - 5);
-				const checkOutKey = parseHM(hotel.check_out?.before_time) ?? 11 * 60;
+				const departKey = Math.max(
+					0,
+					departure.hours * 60 + departure.minutes - 5,
+				);
+				const checkOutKey =
+					parseHoursMinutes(hotel.check_out?.before_time) ?? 11 * 60;
 				transfers.push({
 					kind: "transfer",
-					date: dep.date,
+					date: departure.date,
 					sortKey: Math.max(departKey, checkOutKey + 1),
-					data: { dir: "out", airport: dc, hotel, city: IATA[dc] ?? null },
+					data: {
+						dir: "out",
+						airport: originAirportCode,
+						hotel,
+						city: IATA[originAirportCode] ?? null,
+					},
 				});
 			}
 		}
@@ -340,9 +387,10 @@ function matchCity(
 	enrichment?: TripEnrichment | null,
 ): string | null {
 	if (!enrichment?.page_cards) return null;
-	const lo = name.toLowerCase();
-	for (const c of enrichment.page_cards) {
-		if (c.city && lo.includes(c.city.toLowerCase())) return c.city;
+	const lowercaseName = name.toLowerCase();
+	for (const card of enrichment.page_cards) {
+		if (card.city && lowercaseName.includes(card.city.toLowerCase()))
+			return card.city;
 	}
 	return null;
 }
@@ -351,16 +399,17 @@ export function overnight(
 	itinerary: Itinerary,
 	date: string,
 ): Hotel | Flight | null {
-	for (const h of itinerary.hotels ?? []) {
-		if (!h.check_in || !h.check_out) continue;
-		const ci = String(h.check_in.date);
-		const co = String(h.check_out.date);
-		if (date >= ci && date < co) return h;
+	for (const hotel of itinerary.hotels ?? []) {
+		if (!hotel.check_in || !hotel.check_out) continue;
+		const checkInDate = String(hotel.check_in.date);
+		const checkOutDate = String(hotel.check_out.date);
+		if (date >= checkInDate && date < checkOutDate) return hotel;
 	}
-	for (const f of itinerary.flights ?? []) {
-		const dep = parseDateTime(f.depart?.datetime);
-		const arr = parseDateTime(f.arrive?.datetime);
-		if (dep && arr && dep.date === date && arr.date > date) return f;
+	for (const flight of itinerary.flights ?? []) {
+		const departure = parseDateTime(flight.depart?.datetime);
+		const arrival = parseDateTime(flight.arrive?.datetime);
+		if (departure && arrival && departure.date === date && arrival.date > date)
+			return flight;
 	}
 	return null;
 }
@@ -383,17 +432,17 @@ export function dayCity(
 
 	let best: Flight | null = null;
 	let bestKey = "";
-	for (const f of itinerary.flights ?? []) {
-		const arr = parseDateTime(f.arrive?.datetime);
-		if (arr && arr.date <= date && arr.date >= bestKey) {
-			bestKey = arr.date;
-			best = f;
+	for (const flight of itinerary.flights ?? []) {
+		const arrival = parseDateTime(flight.arrive?.datetime);
+		if (arrival && arrival.date <= date && arrival.date >= bestKey) {
+			bestKey = arrival.date;
+			best = flight;
 		}
 	}
 	if (best) return IATA[best.destination?.airport ?? ""] ?? null;
 
-	const f0 = itinerary.flights?.[0];
-	if (f0) return IATA[f0.origin?.airport ?? ""] ?? null;
+	const firstFlight = itinerary.flights?.[0];
+	if (firstFlight) return IATA[firstFlight.origin?.airport ?? ""] ?? null;
 
 	return null;
 }
@@ -404,11 +453,11 @@ export function ihgSearch(
 	checkOut?: string,
 ): string {
 	const base = `https://www.ihg.com/hotels/us/en/find-hotels/select-roomrate?qDest=${encodeURIComponent(city)}&qRms=1&qAdlt=2&qChld=0`;
-	function part(d: string | undefined, pfx: string): string {
-		if (!d) return "";
-		const p = String(d).split("-");
-		if (p.length < 3) return "";
-		return `&${pfx}D=${+p[2]}&${pfx}My=${+p[1] - 1}${p[0]}`;
+	function part(dateString: string | undefined, prefix: string): string {
+		if (!dateString) return "";
+		const dateParts = String(dateString).split("-");
+		if (dateParts.length < 3) return "";
+		return `&${prefix}D=${+dateParts[2]}&${prefix}My=${+dateParts[1] - 1}${dateParts[0]}`;
 	}
 	return base + part(checkIn, "qCi") + part(checkOut, "qCo");
 }

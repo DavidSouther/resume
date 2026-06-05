@@ -1,9 +1,9 @@
 import type { ReactNode } from "react";
 import {
-	fmtClock,
+	formatClock,
 	type ItineraryItem,
 	parseDateTime,
-	tzAbbr,
+	timezoneAbbreviation,
 } from "~/lib/itinerary-helpers";
 import type { TripEnrichment } from "~/lib/trip-enrichment";
 import styles from "../day-group.module.css";
@@ -20,43 +20,45 @@ export function FlightItem({
 	item: FlightItemData;
 	enrichment: TripEnrichment | undefined;
 }) {
-	const f = item.data;
-	const dep = parseDateTime(f.depart?.datetime);
-	const arr = parseDateTime(f.arrive?.datetime);
-	const isNextDay = arr && dep && arr.date > dep.date;
+	const flight = item.data;
+	const departure = parseDateTime(flight.depart?.datetime);
+	const arrival = parseDateTime(flight.arrive?.datetime);
+	const isNextDay = arrival && departure && arrival.date > departure.date;
 
 	const row: ReactNode = (
 		<>
-			{dep && (
+			{departure && (
 				<span className={styles["timeline-times"]}>
 					<span>
-						{fmtClock(dep.h, dep.min)} {tzAbbr(dep.date, f.depart?.timezone)}
+						{formatClock(departure.hours, departure.minutes)}{" "}
+						{timezoneAbbreviation(departure.date, flight.depart?.timezone)}
 					</span>
 					<span className={styles.arrow}>—</span>
-					{arr && (
+					{arrival && (
 						<span>
-							{fmtClock(arr.h, arr.min)} {tzAbbr(arr.date, f.arrive?.timezone)}
+							{formatClock(arrival.hours, arrival.minutes)}{" "}
+							{timezoneAbbreviation(arrival.date, flight.arrive?.timezone)}
 						</span>
 					)}
 					{isNextDay && <span className={styles.plus1}>+1 day</span>}
 				</span>
 			)}
 			<span className={styles.title}>
-				<span className={styles.route}>{f.origin?.airport}</span>
+				<span className={styles.route}>{flight.origin?.airport}</span>
 				<span className={styles.arrow}>→</span>
-				<span className={styles.route}>{f.destination?.airport}</span>
-				{f.status === "to_book" && (
+				<span className={styles.route}>{flight.destination?.airport}</span>
+				{flight.status === "to_book" && (
 					<span className={`${styles.badge} ${styles.book}`}>To book</span>
 				)}
 			</span>
 			<span className={styles.sub}>
 				{[
-					f.airline_code && f.flight_number
-						? `${f.airline_code} ${f.flight_number}`
+					flight.airline_code && flight.flight_number
+						? `${flight.airline_code} ${flight.flight_number}`
 						: null,
-					f.airline,
-					f.cabin,
-					f.seat ? `Seat ${f.seat}` : null,
+					flight.airline,
+					flight.cabin,
+					flight.seat ? `Seat ${flight.seat}` : null,
 				]
 					.filter(Boolean)
 					.join("  ·  ")}
@@ -64,42 +66,48 @@ export function FlightItem({
 		</>
 	);
 
-	const flightKey = `${f.airline_code ?? ""}${f.flight_number ?? ""}`;
-	const ef = enrichment?.flights?.find((e) => e.flight === flightKey);
+	const flightKey = `${flight.airline_code ?? ""}${flight.flight_number ?? ""}`;
+	const flightEnrichment = enrichment?.flights?.find(
+		(enrichedFlight) => enrichedFlight.flight === flightKey,
+	);
 
 	const detail: ReactNode = (
 		<>
 			<Facts>
-				{f.confirmation && <Fact label="Confirmation" value={f.confirmation} />}
-				{f.origin?.terminal && (
+				{flight.confirmation && (
+					<Fact label="Confirmation" value={flight.confirmation} />
+				)}
+				{flight.origin?.terminal && (
 					<Fact
 						label="Departs"
-						value={`${f.origin.airport} T${f.origin.terminal}`}
+						value={`${flight.origin.airport} T${flight.origin.terminal}`}
 					/>
 				)}
-				{f.destination?.terminal && (
+				{flight.destination?.terminal && (
 					<Fact
 						label="Arrives"
-						value={`${f.destination.airport} T${f.destination.terminal}`}
+						value={`${flight.destination.airport} T${flight.destination.terminal}`}
 					/>
 				)}
-				{f.cabin && <Fact label="Cabin" value={f.cabin} />}
-				{f.seat && <Fact label="Seat" value={f.seat} />}
+				{flight.cabin && <Fact label="Cabin" value={flight.cabin} />}
+				{flight.seat && <Fact label="Seat" value={flight.seat} />}
 			</Facts>
-			{ef && (ef.airline_status_url || ef.tracker_url) && (
-				<div className={styles.links}>
-					{ef.airline_status_url && (
-						<BtnLink href={ef.airline_status_url} icon="ext">
-							Flight status
-						</BtnLink>
-					)}
-					{ef.tracker_url && (
-						<BtnLink href={ef.tracker_url} icon="ext">
-							Track live
-						</BtnLink>
-					)}
-				</div>
-			)}
+			{flightEnrichment &&
+				(flightEnrichment.airline_status_url ||
+					flightEnrichment.tracker_url) && (
+					<div className={styles.links}>
+						{flightEnrichment.airline_status_url && (
+							<BtnLink href={flightEnrichment.airline_status_url} icon="ext">
+								Flight status
+							</BtnLink>
+						)}
+						{flightEnrichment.tracker_url && (
+							<BtnLink href={flightEnrichment.tracker_url} icon="ext">
+								Track live
+							</BtnLink>
+						)}
+					</div>
+				)}
 		</>
 	);
 
@@ -107,7 +115,7 @@ export function FlightItem({
 		<TimelineItem
 			icon="plane"
 			expandable={true}
-			isToBook={f.status === "to_book"}
+			isToBook={flight.status === "to_book"}
 			row={row}
 		>
 			{detail}

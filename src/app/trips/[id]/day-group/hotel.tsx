@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import {
-	fmtTimeStr,
+	formatTimeString,
 	type ItineraryItem,
 	ihgSearch,
 } from "~/lib/itinerary-helpers";
@@ -19,78 +19,88 @@ export function HotelItem({
 	item: HotelItemData;
 	enrichment: TripEnrichment | undefined;
 }) {
-	const h = item.data;
+	const hotel = item.data;
 	const isIn = item.kind === "hotel-in";
-	const time = isIn ? h.check_in?.after_time : h.check_out?.before_time;
+	const time = isIn ? hotel.check_in?.after_time : hotel.check_out?.before_time;
 
 	const row: ReactNode = (
 		<>
 			<span className={styles["timeline-times"]}>
 				<span>
 					{isIn ? "Check-in" : "Check-out"}
-					{time ? ` ${isIn ? "after" : "by"} ${fmtTimeStr(time)}` : ""}
+					{time ? ` ${isIn ? "after" : "by"} ${formatTimeString(time)}` : ""}
 				</span>
 			</span>
 			<span className={styles.title}>
-				{h.name}
-				{h.status === "to_book" && (
+				{hotel.name}
+				{hotel.status === "to_book" && (
 					<span className={`${styles.badge} ${styles.book}`}>To book</span>
 				)}
 			</span>
-			{(h.room_type || h.brand) && (
-				<span className={styles.sub}>{h.room_type ?? h.brand}</span>
+			{(hotel.room_type || hotel.brand) && (
+				<span className={styles.sub}>{hotel.room_type ?? hotel.brand}</span>
 			)}
 		</>
 	);
 
-	const eh = enrichment?.hotels?.find((e) => e.hotel === h.name);
+	const hotelEnrichment = enrichment?.hotels?.find(
+		(enrichedHotel) => enrichedHotel.hotel === hotel.name,
+	);
 	const city =
 		enrichment?.page_cards?.find(
-			(c) => c.city && h.name.toLowerCase().includes(c.city.toLowerCase()),
-		)?.city ?? h.name.split(/\s+[— -]\s+|\s+hotel\s+/i)[0].trim();
+			(card) =>
+				card.city && hotel.name.toLowerCase().includes(card.city.toLowerCase()),
+		)?.city ?? hotel.name.split(/\s+[— -]\s+|\s+hotel\s+/i)[0].trim();
 
 	const detail: ReactNode = (
 		<>
 			<Facts>
-				{h.confirmation && <Fact label="Confirmation" value={h.confirmation} />}
-				{h.check_in && (
+				{hotel.confirmation && (
+					<Fact label="Confirmation" value={hotel.confirmation} />
+				)}
+				{hotel.check_in && (
 					<Fact
 						label="Check-in"
-						value={`${h.check_in.date}${h.check_in.after_time ? ` · ${fmtTimeStr(h.check_in.after_time)}` : ""}`}
+						value={`${hotel.check_in.date}${hotel.check_in.after_time ? ` · ${formatTimeString(hotel.check_in.after_time)}` : ""}`}
 					/>
 				)}
-				{h.check_out && (
+				{hotel.check_out && (
 					<Fact
 						label="Check-out"
-						value={`${h.check_out.date}${h.check_out.before_time ? ` · ${fmtTimeStr(h.check_out.before_time)}` : ""}`}
+						value={`${hotel.check_out.date}${hotel.check_out.before_time ? ` · ${formatTimeString(hotel.check_out.before_time)}` : ""}`}
 					/>
 				)}
-				{h.room_type && <Fact label="Room" value={h.room_type} />}
-				{h.notes && <Fact label="Note" value={h.notes} />}
+				{hotel.room_type && <Fact label="Room" value={hotel.room_type} />}
+				{hotel.notes && <Fact label="Note" value={hotel.notes} />}
 			</Facts>
-			{eh?.blurb && <p className={styles.blurb}>{eh.blurb.trim()}</p>}
+			{hotelEnrichment?.blurb && (
+				<p className={styles.blurb}>{hotelEnrichment.blurb.trim()}</p>
+			)}
 			<div className={styles.links}>
-				{eh?.website && (
-					<BtnLink href={eh.website} icon="ext">
+				{hotelEnrichment?.website && (
+					<BtnLink href={hotelEnrichment.website} icon="ext">
 						Hotel page
 					</BtnLink>
 				)}
-				{eh?.map_url && (
-					<BtnLink href={eh.map_url} icon="pin">
+				{hotelEnrichment?.map_url && (
+					<BtnLink href={hotelEnrichment.map_url} icon="pin">
 						Map
 					</BtnLink>
 				)}
-				{eh?.phone && (
-					<BtnLink href={`tel:${eh.phone.replace(/\s/g, "")}`} icon="phone">
-						{eh.phone}
+				{hotelEnrichment?.phone && (
+					<BtnLink
+						href={`tel:${hotelEnrichment.phone.replace(/\s/g, "")}`}
+						icon="phone"
+					>
+						{hotelEnrichment.phone}
 					</BtnLink>
 				)}
-				{h.status === "to_book" && (
+				{hotel.status === "to_book" && (
 					<BtnLink
 						href={ihgSearch(
 							city,
-							String(h.check_in?.date),
-							String(h.check_out?.date),
+							String(hotel.check_in?.date),
+							String(hotel.check_out?.date),
 						)}
 						icon="bed"
 					>
@@ -105,7 +115,7 @@ export function HotelItem({
 		<TimelineItem
 			icon={isIn ? "bed" : "bedout"}
 			expandable={true}
-			isToBook={h.status === "to_book"}
+			isToBook={hotel.status === "to_book"}
 			row={row}
 		>
 			{detail}

@@ -1,5 +1,5 @@
 import {
-	dowName,
+	dayOfWeekName,
 	IATA,
 	type ItineraryItem,
 	prettyDate,
@@ -55,7 +55,7 @@ export function DayGroup({
 	return (
 		<div className={styles.day}>
 			<div className={styles["day-head"]}>
-				<span className={styles["day-dow"]}>{dowName(date)}</span>
+				<span className={styles["day-dow"]}>{dayOfWeekName(date)}</span>
 				<span className={styles["day-date"]}>{prettyDate(date)}</span>
 			</div>
 			<div className={styles.tl}>

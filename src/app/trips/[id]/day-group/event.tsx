@@ -1,10 +1,10 @@
 import type { ReactNode } from "react";
 import {
 	braveSearch,
-	fmtClock,
+	formatClock,
 	type ItineraryItem,
 	parseDateTime,
-	tzAbbr,
+	timezoneAbbreviation,
 } from "~/lib/itinerary-helpers";
 import type { TripEnrichment } from "~/lib/trip-enrichment";
 import styles from "../day-group.module.css";
@@ -22,53 +22,62 @@ export function EventItem({
 	item: EventItemData;
 	enrichment: TripEnrichment | undefined;
 }) {
-	const ev = item.data;
-	const st = parseDateTime(ev.start?.datetime);
+	const tripEvent = item.data;
+	const startDateTime = parseDateTime(tripEvent.start?.datetime);
 	const isMeal = /meal|dinner|lunch|restaurant/i.test(
-		(ev.category ?? "") + (ev.title ?? ""),
+		(tripEvent.category ?? "") + (tripEvent.title ?? ""),
 	);
 
 	const row: ReactNode = (
 		<>
-			{st && (
+			{startDateTime && (
 				<span className={styles["timeline-times"]}>
 					<span>
-						{fmtClock(st.h, st.min)} {tzAbbr(st.date, ev.start?.timezone)}
+						{formatClock(startDateTime.hours, startDateTime.minutes)}{" "}
+						{timezoneAbbreviation(
+							startDateTime.date,
+							tripEvent.start?.timezone,
+						)}
 					</span>
 				</span>
 			)}
 			<span className={styles.title}>
-				{ev.title}
-				{ev.status === "to_book" && (
+				{tripEvent.title}
+				{tripEvent.status === "to_book" && (
 					<span className={`${styles.badge} ${styles.book}`}>To book</span>
 				)}
 			</span>
-			{ev.location && <span className={styles.sub}>{ev.location}</span>}
+			{tripEvent.location && (
+				<span className={styles.sub}>{tripEvent.location}</span>
+			)}
 		</>
 	);
 
-	const ea = enrichment?.activities?.find((a) => a.event === ev.title);
-	const destRef = ea?.destination_ref;
-	const dest = destRef
+	const activity = enrichment?.activities?.find(
+		(a) => a.event === tripEvent.title,
+	);
+	const destRef = activity?.destination_ref;
+	const destination = destRef
 		? enrichment?.destinations?.find((d) => d.name === destRef)
 		: null;
 	const wikiTitle =
-		dest?.wikipedia?.title ??
+		destination?.wikipedia?.title ??
 		(() => {
 			const city = enrichment?.page_cards?.find(
-				(c) =>
-					ev.location &&
-					c.city &&
-					ev.location.toLowerCase().includes(c.city.toLowerCase()),
+				(card) =>
+					tripEvent.location &&
+					card.city &&
+					tripEvent.location.toLowerCase().includes(card.city.toLowerCase()),
 			)?.city;
 			return city
-				? enrichment?.page_cards?.find((c) => c.city === city)?.wikipedia?.title
+				? enrichment?.page_cards?.find((card) => card.city === city)?.wikipedia
+						?.title
 				: undefined;
 		})();
 
 	const searchQuery = [
-		(ev.title ?? "").replace(/\s*\(.*?\)/g, "").trim(),
-		ev.location,
+		(tripEvent.title ?? "").replace(/\s*\(.*?\)/g, "").trim(),
+		tripEvent.location,
 		"book tickets",
 	]
 		.filter(Boolean)
@@ -77,21 +86,25 @@ export function EventItem({
 	const detail: ReactNode = (
 		<>
 			<Facts>
-				{ev.location && <Fact label="Location" value={ev.location} />}
-				{ev.notes && <Fact label="Note" value={ev.notes} />}
+				{tripEvent.location && (
+					<Fact label="Location" value={tripEvent.location} />
+				)}
+				{tripEvent.notes && <Fact label="Note" value={tripEvent.notes} />}
 			</Facts>
-			{ea?.blurb && <p className={styles.blurb}>{ea.blurb.trim()}</p>}
+			{activity?.blurb && (
+				<p className={styles.blurb}>{activity.blurb.trim()}</p>
+			)}
 			<div className={styles.links}>
-				{ea?.official_url && (
-					<BtnLink href={ea.official_url} icon="ext">
+				{activity?.official_url && (
+					<BtnLink href={activity.official_url} icon="ext">
 						Details
 					</BtnLink>
 				)}
 				<BtnLink href={braveSearch(searchQuery)} icon="ext">
-					{ev.status === "to_book" ? "Search to book" : "Search"}
+					{tripEvent.status === "to_book" ? "Search to book" : "Search"}
 				</BtnLink>
 			</div>
-			{ea?.tips && <div className={styles.tips}>{ea.tips}</div>}
+			{activity?.tips && <div className={styles.tips}>{activity.tips}</div>}
 			{wikiTitle && <WikiCard wikiTitle={wikiTitle} />}
 		</>
 	);
@@ -100,7 +113,7 @@ export function EventItem({
 		<TimelineItem
 			icon={isMeal ? "fork" : "compass"}
 			expandable={true}
-			isToBook={ev.status === "to_book"}
+			isToBook={tripEvent.status === "to_book"}
 			row={row}
 		>
 			{detail}

@@ -1,9 +1,9 @@
 import type { ReactNode } from "react";
 import {
-	fmtClock,
+	formatClock,
 	type ItineraryItem,
 	parseDateTime,
-	tzAbbr,
+	timezoneAbbreviation,
 } from "~/lib/itinerary-helpers";
 import styles from "../day-group.module.css";
 import { TimelineItem } from "../timeline-item";
@@ -11,29 +11,32 @@ import Fact, { Facts } from "./fact";
 
 type GroundItemData = Extract<ItineraryItem, { kind: "ground" }>;
 
-function capitalize(s: string): string {
-	return s.charAt(0).toUpperCase() + s.slice(1);
+function capitalize(input: string): string {
+	return input.charAt(0).toUpperCase() + input.slice(1);
 }
 
 export function GroundItem({ item }: { item: GroundItemData }) {
-	const g = item.data;
-	const pk = parseDateTime(g.pickup?.datetime);
-	const from = g.pickup?.location;
-	const to = g.dropoff?.location;
-	const isFerry = /ferry|boat/i.test((g.notes ?? "") + (g.type ?? ""));
+	const ground = item.data;
+	const pickupDateTime = parseDateTime(ground.pickup?.datetime);
+	const from = ground.pickup?.location;
+	const to = ground.dropoff?.location;
+	const isFerry = /ferry|boat/i.test(
+		(ground.notes ?? "") + (ground.type ?? ""),
+	);
 
 	const row: ReactNode = (
 		<>
-			{pk && (
+			{pickupDateTime && (
 				<span className={styles["timeline-times"]}>
 					<span>
-						{fmtClock(pk.h, pk.min)} {tzAbbr(pk.date, g.pickup?.timezone)}
+						{formatClock(pickupDateTime.hours, pickupDateTime.minutes)}{" "}
+						{timezoneAbbreviation(pickupDateTime.date, ground.pickup?.timezone)}
 					</span>
 				</span>
 			)}
 			<span className={styles.title}>
-				{capitalize(g.type ?? "Transfer")}
-				{g.status === "to_book" && (
+				{capitalize(ground.type ?? "Transfer")}
+				{ground.status === "to_book" && (
 					<span className={`${styles.badge} ${styles.book}`}>To book</span>
 				)}
 			</span>
@@ -47,16 +50,16 @@ export function GroundItem({ item }: { item: GroundItemData }) {
 
 	const detail: ReactNode = (
 		<Facts>
-			{g.provider && <Fact label="Booked via" value={g.provider} />}
-			{g.notes && <Fact label="Note" value={g.notes} />}
+			{ground.provider && <Fact label="Booked via" value={ground.provider} />}
+			{ground.notes && <Fact label="Note" value={ground.notes} />}
 		</Facts>
 	);
 
 	return (
 		<TimelineItem
 			icon={isFerry ? "boat" : "car"}
-			expandable={!!(g.notes || g.provider)}
-			isToBook={g.status === "to_book"}
+			expandable={!!(ground.notes || ground.provider)}
+			isToBook={ground.status === "to_book"}
 			row={row}
 		>
 			{detail}

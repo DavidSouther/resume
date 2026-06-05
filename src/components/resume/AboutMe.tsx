@@ -13,23 +13,23 @@ export const Contact = ({
 	const contactLinks: ResumeTypes.Link[] = [
 		...(contact.publicProfiles ?? []),
 		...(contact.contactMails?.map(
-			(p) =>
+			(email) =>
 				({
 					type: "email",
-					URL: `mailto:${p}`,
+					URL: `mailto:${email}`,
 				}) satisfies ResumeTypes.Link,
 		) ?? []),
 		...(contact.phoneNumbers?.map(
-			(p) =>
+			(phoneEntry) =>
 				({
 					type: "tel",
-					URL: `tel:+${p.countryCode} ${p.number}`,
+					URL: `tel:+${phoneEntry.countryCode} ${phoneEntry.number}`,
 				}) satisfies ResumeTypes.Link,
 		) ?? []),
 	];
-	const allLinks = [...links, ...contactLinks].map((p) => ({
-		type: p.URL,
-		URL: p.URL,
+	const allLinks = [...links, ...contactLinks].map((contactLink) => ({
+		type: contactLink.URL,
+		URL: contactLink.URL,
 	}));
 	return allLinks && <Links className="contact" links={allLinks} />;
 };
@@ -83,9 +83,9 @@ const Avatar = ({
 
 const Location = ({ location }: { location: ResumeTypes.Location }) => (
 	<p className="location">
-		{Object.entries(location).map(([k, v]) => (
-			<span key={k} className={`location ${k}`}>
-				{v}
+		{Object.entries(location).map(([locationKey, locationValue]) => (
+			<span key={locationKey} className={`location ${locationKey}`}>
+				{locationValue}
 			</span>
 		))}
 	</p>
