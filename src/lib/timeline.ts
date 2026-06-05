@@ -1,9 +1,12 @@
 import { IATA } from "~/lib/itinerary-helpers";
 import type {
 	City,
+	Flight,
+	Hotel,
 	IanaTimeZone,
 	IataCode,
 	Itinerary,
+	Transfer,
 	ZonedDateTime,
 } from "~/lib/itinerary";
 
@@ -57,6 +60,8 @@ export type Timeline = {
 	segments: Segment[];
 };
 
+// === city helpers ===
+
 const KNOWN_CITIES = new Set<string>([
 	...Object.values(IATA),
 	"Hvar",
@@ -67,11 +72,8 @@ const KNOWN_CITIES = new Set<string>([
 function resolveCity(name: string): City {
 	const lower = name.toLowerCase();
 	for (const city of KNOWN_CITIES) {
-		if (lower.includes(city.toLowerCase())) {
-			return city as City;
-		}
+		if (lower.includes(city.toLowerCase())) return city as City;
 	}
-	// fall back: substring after last comma or dash
 	const commaIdx = name.lastIndexOf(",");
 	if (commaIdx !== -1) return name.slice(commaIdx + 1).trim() as City;
 	const dashIdx = name.lastIndexOf(" - ");
@@ -83,8 +85,151 @@ function iataCity(code: string): City {
 	return (IATA[code] ?? code) as City;
 }
 
+// === date helpers ===
+
+function isoDate(v: string): string {
+	return v.slice(0, 10);
+}
+
+// === place resolution ===
+
+function resolvePlace(location: string, hotels: Hotel[]): Place {
+	const iataMatch = location.match(/\(([A-Z]{3})\)/);
+	if (iataMatch && IATA[iataMatch[1]]) {
+		return {
+			city: iataCity(iataMatch[1]),
+			spot: { kind: "airport", code: iataMatch[1] as IataCode },
+		};
+	}
+	const hotel = hotels.find((h) => h.name === location);
+	if (hotel) {
+		return {
+			city: resolveCity(hotel.name),
+			spot: { kind: "lodging", name: hotel.name },
+		};
+	}
+	return {
+		city: resolveCity(location),
+		spot: { kind: "named", label: location },
+	};
+}
+
+// === leg builders ===
+
+function buildFlightLeg(flight: Flight): Leg {
+	return {
+		mode: "flight",
+		from: {
+			city: iataCity(flight.origin.code),
+			spot: { kind: "airport", code: flight.origin.code },
+		},
+		to: {
+			city: iataCity(flight.destination.code),
+			spot: { kind: "airport", code: flight.destination.code },
+		},
+		depart: flight.depart,
+		arrive: flight.arrive,
+		status: flight.status,
+	};
+}
+
+function buildTransferLeg(transfer: Transfer, hotels: Hotel[]): Leg {
+	const from = resolvePlace(transfer.pickup.location, hotels);
+	const to = transfer.dropoff
+		? resolvePlace(transfer.dropoff.location, hotels)
+		: from;
+
+	const depart =
+		transfer.pickup.datetime && transfer.pickup.timezone
+			? {
+					datetime: transfer.pickup.datetime,
+					timezone: transfer.pickup.timezone,
+				}
+			: undefined;
+	const arrive =
+		transfer.dropoff?.datetime && transfer.dropoff?.timezone
+			? {
+					datetime: transfer.dropoff.datetime,
+					timezone: transfer.dropoff.timezone,
+				}
+			: undefined;
+
+	return {
+		mode: transfer.type,
+		from,
+		to,
+		...(depart ? { depart } : {}),
+		...(arrive ? { arrive } : {}),
+		status: transfer.status,
+	};
+}
+
+// === leg ordering ===
+
+function orderLegs(legs: Leg[], gapFromCity: City): Leg[] {
+	const timed = legs
+		.filter((l) => l.depart)
+		.sort((a, b) =>
+			(a.depart?.datetime ?? "") < (b.depart?.datetime ?? "") ? -1 : 1,
+		);
+	const untimed = legs.filter((l) => !l.depart);
+
+	const result: Leg[] = [];
+	const remainingTimed = [...timed];
+	const remainingUntimed = [...untimed];
+	let currentCity = gapFromCity;
+
+	while (remainingTimed.length > 0 || remainingUntimed.length > 0) {
+		const untimedIdx = remainingUntimed.findIndex(
+			(l) => l.from.city === currentCity,
+		);
+		if (untimedIdx !== -1) {
+			const leg = remainingUntimed.splice(untimedIdx, 1)[0];
+			result.push(leg);
+			currentCity = leg.to.city;
+			continue;
+		}
+		if (remainingTimed.length > 0) {
+			const timedIdx = remainingTimed.findIndex(
+				(l) => l.from.city === currentCity,
+			);
+			const leg =
+				timedIdx !== -1
+					? remainingTimed.splice(timedIdx, 1)[0]
+					: remainingTimed.shift();
+			if (!leg) break;
+			result.push(leg);
+			currentCity = leg.to.city;
+		} else {
+			const leg = remainingUntimed.shift();
+			if (!leg) break;
+			result.push(leg);
+			currentCity = leg.to.city;
+		}
+	}
+	return result;
+}
+
+function insertInferredLegs(legs: Leg[]): Leg[] {
+	const result: Leg[] = [];
+	for (let i = 0; i < legs.length; i++) {
+		result.push(legs[i]);
+		if (i < legs.length - 1 && legs[i].to.city !== legs[i + 1].from.city) {
+			result.push({
+				mode: "transfer",
+				from: legs[i].to,
+				to: legs[i + 1].from,
+				status: { kind: "to_book" },
+				inferred: true,
+			});
+		}
+	}
+	return result;
+}
+
+// === main export ===
+
 export function deriveTimeline(itinerary: Itinerary): Timeline {
-	// 1. Hotels → ordered stays
 	const sortedHotels = [...itinerary.hotels].sort((a, b) =>
 		a.check_in.date < b.check_in.date ? -1 : 1,
 	);
@@ -99,42 +244,75 @@ export function deriveTimeline(itinerary: Itinerary): Timeline {
 		events: [],
 	}));
 
-	// 2. Home anchor
 	const homeCity = iataCity(itinerary.flights[0]?.origin.code ?? "");
 	const homePlace: Place = { city: homeCity, spot: { kind: "home" } };
 
-	// 3. Placeholder timestamps from trip dates
-	const tz = (itinerary.trip.home_timezone ?? "UTC") as IanaTimeZone;
-	const tripStart: ZonedDateTime = {
-		datetime: `${itinerary.trip.start_date}T00:00:00`,
-		timezone: tz,
-	};
-	const tripEnd: ZonedDateTime = {
-		datetime: `${itinerary.trip.end_date}T00:00:00`,
-		timezone: tz,
-	};
-
-	// 4. Build anchor sequence: [home, s1, s2, …, home]
 	const anchorPlaces: Place[] = [
 		homePlace,
 		...stays.map((s) => s.place),
 		homePlace,
 	];
 
-	// 5. Gap moves between consecutive anchor pairs
-	const moves: ({ kind: "move" } & Move)[] = [];
-	for (let i = 0; i < anchorPlaces.length - 1; i++) {
-		moves.push({
+	// Gap date windows: gap i runs from startDates[i] to endDates[i]
+	const gapStartDates = [
+		itinerary.trip.start_date,
+		...sortedHotels.map((h) => h.check_out.date),
+	];
+	const gapEndDates = [
+		...sortedHotels.map((h) => h.check_in.date),
+		itinerary.trip.end_date,
+	];
+
+	const tz = (itinerary.trip.home_timezone ?? "UTC") as IanaTimeZone;
+	const placeholder: ZonedDateTime = {
+		datetime: `${itinerary.trip.start_date}T00:00:00`,
+		timezone: tz,
+	};
+
+	const moves: ({ kind: "move" } & Move)[] = anchorPlaces
+		.slice(0, -1)
+		.map((from, i) => ({
 			kind: "move" as const,
-			from: anchorPlaces[i],
+			from,
 			to: anchorPlaces[i + 1],
 			legs: [],
-			depart: tripStart,
-			arrive: tripEnd,
-		});
+			depart: placeholder,
+			arrive: placeholder,
+		}));
+
+	// Assign transports to gap indices
+	const legsByGap: Leg[][] = Array.from({ length: moves.length }, () => []);
+
+	for (const flight of itinerary.flights) {
+		const date = isoDate(flight.depart.datetime);
+		const idx = gapEndDates.findIndex(
+			(end, i) => date >= isoDate(gapStartDates[i]) && date <= isoDate(end),
+		);
+		if (idx !== -1) legsByGap[idx].push(buildFlightLeg(flight));
 	}
 
-	// 6. Interleave: move, stay, move, stay, …, move
+	for (const transfer of itinerary.transfers) {
+		const refDatetime = transfer.pickup.datetime ?? transfer.dropoff?.datetime;
+		if (!refDatetime) continue;
+		const date = isoDate(refDatetime);
+		const idx = gapEndDates.findIndex(
+			(end, i) => date >= isoDate(gapStartDates[i]) && date <= isoDate(end),
+		);
+		if (idx !== -1)
+			legsByGap[idx].push(buildTransferLeg(transfer, itinerary.hotels));
+	}
+
+	// Order legs, insert inferred, fix move depart/arrive
+	for (let i = 0; i < moves.length; i++) {
+		const ordered = orderLegs(legsByGap[i], moves[i].from.city);
+		const withInferred = insertInferredLegs(ordered);
+		moves[i].legs = withInferred;
+		const firstDepart = withInferred.find((l) => l.depart);
+		const lastArrive = [...withInferred].reverse().find((l) => l.arrive);
+		if (firstDepart?.depart) moves[i].depart = firstDepart.depart;
+		if (lastArrive?.arrive) moves[i].arrive = lastArrive.arrive;
+	}
+
 	const segments: Segment[] = [];
 	for (let i = 0; i < moves.length; i++) {
 		segments.push(moves[i]);
