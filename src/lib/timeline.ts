@@ -1,5 +1,6 @@
 import { IATA } from "~/lib/itinerary-helpers";
 import type {
+	BookingStatus,
 	City,
 	Flight,
 	Hotel,
@@ -41,7 +42,7 @@ export type Leg = {
 	to: Place;
 	depart?: ZonedDateTime;
 	arrive?: ZonedDateTime;
-	status: import("~/lib/itinerary").BookingStatus;
+	status: BookingStatus;
 	inferred?: boolean;
 };
 
@@ -280,24 +281,25 @@ export function deriveTimeline(itinerary: Itinerary): Timeline {
 			arrive: placeholder,
 		}));
 
+	const findGapIndex = (datetime: string): number =>
+		gapEndDates.findIndex(
+			(end, i) =>
+				isoDate(datetime) >= isoDate(gapStartDates[i]) &&
+				isoDate(datetime) <= isoDate(end),
+		);
+
 	// Assign transports to gap indices
 	const legsByGap: Leg[][] = Array.from({ length: moves.length }, () => []);
 
 	for (const flight of itinerary.flights) {
-		const date = isoDate(flight.depart.datetime);
-		const idx = gapEndDates.findIndex(
-			(end, i) => date >= isoDate(gapStartDates[i]) && date <= isoDate(end),
-		);
+		const idx = findGapIndex(flight.depart.datetime);
 		if (idx !== -1) legsByGap[idx].push(buildFlightLeg(flight));
 	}
 
 	for (const transfer of itinerary.transfers) {
 		const refDatetime = transfer.pickup.datetime ?? transfer.dropoff?.datetime;
 		if (!refDatetime) continue;
-		const date = isoDate(refDatetime);
-		const idx = gapEndDates.findIndex(
-			(end, i) => date >= isoDate(gapStartDates[i]) && date <= isoDate(end),
-		);
+		const idx = findGapIndex(refDatetime);
 		if (idx !== -1)
 			legsByGap[idx].push(buildTransferLeg(transfer, itinerary.hotels));
 	}

@@ -102,19 +102,15 @@ function parseFlight(doc: FlightDoc): Flight {
 	return {
 		status: parseStatus(doc.status, doc.confirmation),
 		designator: `${doc.airline_code}${doc.flight_number}` as FlightDesignator,
-		...(doc.confirmation
-			? { confirmation: doc.confirmation as ConfirmationCode }
-			: {}),
+		confirmation: doc.confirmation as ConfirmationCode | undefined,
 		airline: doc.airline,
 		origin: {
 			code: doc.origin.airport as IataCode,
-			...(doc.origin.terminal ? { terminal: doc.origin.terminal } : {}),
+			terminal: doc.origin.terminal,
 		},
 		destination: {
 			code: doc.destination.airport as IataCode,
-			...(doc.destination.terminal
-				? { terminal: doc.destination.terminal }
-				: {}),
+			terminal: doc.destination.terminal,
 		},
 		depart: {
 			datetime: String(doc.depart.datetime),
@@ -124,9 +120,9 @@ function parseFlight(doc: FlightDoc): Flight {
 			datetime: String(doc.arrive.datetime),
 			timezone: doc.arrive.timezone as IanaTimeZone,
 		},
-		...(doc.cabin ? { cabin: doc.cabin } : {}),
-		...(doc.seat ? { seat: doc.seat } : {}),
-		...(doc.notes ? { notes: doc.notes } : {}),
+		cabin: doc.cabin,
+		seat: doc.seat,
+		notes: doc.notes,
 	};
 }
 
@@ -134,9 +130,7 @@ function parseHotel(doc: HotelDoc): Hotel {
 	return {
 		status: parseStatus(doc.status, doc.confirmation),
 		name: doc.name,
-		...(doc.confirmation
-			? { confirmation: doc.confirmation as ConfirmationCode }
-			: {}),
+		confirmation: doc.confirmation as ConfirmationCode | undefined,
 		timezone: doc.timezone as IanaTimeZone,
 		check_in: {
 			date: String(doc.check_in.date),
@@ -146,7 +140,7 @@ function parseHotel(doc: HotelDoc): Hotel {
 			date: String(doc.check_out.date),
 			before_time: doc.check_out.before_time,
 		},
-		...(doc.notes ? { notes: doc.notes } : {}),
+		notes: doc.notes,
 	};
 }
 
@@ -154,28 +148,20 @@ function parseTransfer(doc: TransferDoc): Transfer {
 	return {
 		status: parseStatus(doc.status, doc.confirmation),
 		type: doc.type,
-		...(doc.provider ? { provider: doc.provider } : {}),
+		provider: doc.provider,
 		pickup: {
-			...(doc.pickup.datetime ? { datetime: String(doc.pickup.datetime) } : {}),
-			...(doc.pickup.timezone
-				? { timezone: doc.pickup.timezone as IanaTimeZone }
-				: {}),
+			datetime: doc.pickup.datetime,
+			timezone: doc.pickup.timezone as IanaTimeZone | undefined,
 			location: doc.pickup.location,
 		},
-		...(doc.dropoff
+		dropoff: doc.dropoff
 			? {
-					dropoff: {
-						...(doc.dropoff.datetime
-							? { datetime: String(doc.dropoff.datetime) }
-							: {}),
-						...(doc.dropoff.timezone
-							? { timezone: doc.dropoff.timezone as IanaTimeZone }
-							: {}),
-						location: doc.dropoff.location,
-					},
+					datetime: doc.dropoff.datetime,
+					timezone: doc.dropoff.timezone as IanaTimeZone | undefined,
+					location: doc.dropoff.location,
 				}
-			: {}),
-		...(doc.notes ? { notes: doc.notes } : {}),
+			: undefined,
+		notes: doc.notes,
 	};
 }
 
@@ -186,9 +172,7 @@ export function parseItinerary(doc: ItineraryDoc): Itinerary {
 			traveler: doc.trip.traveler,
 			start_date: String(doc.trip.start_date),
 			end_date: String(doc.trip.end_date),
-			...(doc.trip.home_timezone
-				? { home_timezone: doc.trip.home_timezone as IanaTimeZone }
-				: {}),
+			home_timezone: doc.trip.home_timezone as IanaTimeZone | undefined,
 		},
 		flights: doc.flights.map(parseFlight),
 		hotels: doc.hotels.map(parseHotel),
@@ -196,17 +180,15 @@ export function parseItinerary(doc: ItineraryDoc): Itinerary {
 		events: doc.events.map((e) => ({
 			status: parseStatus(e.status, undefined),
 			title: e.title,
-			...(e.category ? { category: e.category } : {}),
-			...(e.start
+			category: e.category,
+			start: e.start
 				? {
-						start: {
-							datetime: String(e.start.datetime),
-							timezone: e.start.timezone as IanaTimeZone,
-						},
+						datetime: String(e.start.datetime),
+						timezone: e.start.timezone as IanaTimeZone,
 					}
-				: {}),
-			...(e.location ? { location: e.location } : {}),
-			...(e.notes ? { notes: e.notes } : {}),
+				: undefined,
+			location: e.location,
+			notes: e.notes,
 		})),
 	};
 }
