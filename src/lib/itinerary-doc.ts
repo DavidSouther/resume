@@ -1,17 +1,56 @@
 export type TripMetaDoc = {
-	/* stub */
+	title: string;
+	traveler: string;
+	start_date: string;
+	end_date: string;
+	home_timezone?: string;
+	notes?: string;
 };
+
 export type FlightDoc = {
-	/* stub */
+	status?: string;
+	confirmation?: string;
+	airline: string;
+	airline_code: string;
+	flight_number: string;
+	cabin?: string;
+	seat?: string;
+	origin: { airport: string; terminal?: string; gate?: string };
+	destination: { airport: string; terminal?: string; gate?: string };
+	depart: { datetime: string; timezone: string };
+	arrive: { datetime: string; timezone: string };
+	notes?: string;
 };
+
 export type HotelDoc = {
-	/* stub */
+	status?: string;
+	confirmation?: string;
+	name: string;
+	brand?: string;
+	timezone: string;
+	room_type?: string;
+	check_in: { date: string; after_time?: string };
+	check_out: { date: string; before_time?: string };
+	notes?: string;
 };
+
 export type TransferDoc = {
-	/* stub */
+	status?: string;
+	type: string;
+	provider?: string;
+	confirmation?: string;
+	pickup: { datetime?: string; timezone?: string; location: string };
+	dropoff?: { datetime?: string; timezone?: string; location: string };
+	notes?: string;
 };
+
 export type EventDoc = {
-	/* stub */
+	status?: string;
+	title: string;
+	category?: string;
+	start?: { datetime: string; timezone: string };
+	location?: string;
+	notes?: string;
 };
 
 export type ItineraryDoc = {

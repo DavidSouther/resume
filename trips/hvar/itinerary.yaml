@@ -108,7 +108,7 @@ hotels:
     check_in:  { date: 2026-07-22, after_time: "15:00" }
     check_out: { date: 2026-07-23, before_time: "11:00" }
 
-ground_transportation:
+transfers:
   - status: confirmed
     type: transfer
     provider: "Tzell / The Trip Trotter"
