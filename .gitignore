@@ -8,3 +8,6 @@ jefri-jiffies-*.tgz
 .env.local
 .DS_Store
 *.tsbuildinfo
+
+.agents
+docs
