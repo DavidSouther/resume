@@ -28,7 +28,7 @@ export default function RootLayout({
 				{/* Pre-paint theme picker: sets data-theme before hydration so the brand color varies per load with no flash. */}
 				<script
 					dangerouslySetInnerHTML={{
-						__html: `const themes=["rust","teal","indigo","nominal"];document.documentElement.dataset.theme=themes[Date.now()%themes.length];`,
+						__html: `(()=>{const themes=["rust","teal","indigo","nominal"];document.documentElement.dataset.theme=themes[Date.now()%themes.length];})();`,
 					}}
 				/>
 			</head>
