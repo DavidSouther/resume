@@ -235,6 +235,19 @@ article > header > h3 {
   line-height: 1.5rem;
 }
 
+/*
+ * v2 fills #root > header as a brand "hero" and makes its text inherit the
+ * adaptive on-brand color (--color-page-end-brand-primary) -- but its inherit
+ * list omits <span>, and the connection links wrap their text in a <span>, so
+ * the link text falls back to --color-on-surface and loses contrast on the
+ * filled header. Re-apply the header's own text color to the links and spans;
+ * it adapts with the color scheme, so contrast holds in both light and dark.
+ */
+.root > header nav a,
+.root > header nav a span {
+  color: var(--color-page-end-brand-primary);
+}
+
 .root > header nav ul li {
   text-align: right;
 }
