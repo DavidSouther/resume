@@ -1,5 +1,36 @@
 @import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Poppins:ital,wght@0,400;0,700;1,400&display=swap');
 
+/*
+ * Brand intent tokens and named themes. Both the fallback :root and the
+ * per-theme :root[data-theme] rules live in @layer theme (the bundle's own
+ * convention) so that specificity selects the theme when data-theme is set,
+ * and our appended block wins over the bundle's default brand-color by source
+ * order. The theme picker in layout.tsx sets data-theme before first paint.
+ */
+@layer theme {
+  :root {
+    --brand-color: oklch(55% 0.16 195deg);          /* fallback: technical teal */
+    --brand-body-font-family: "Poppins", sans-serif;
+    --brand-header-font-family: "Libre Baskerville", Georgia, serif;
+  }
+
+  :root[data-theme="rust"] {
+    --brand-color: oklch(62% 0.18 52deg);   /* Rust language amber-orange */
+  }
+
+  :root[data-theme="teal"] {
+    --brand-color: oklch(55% 0.16 195deg);  /* Technical teal (prior scheme) */
+  }
+
+  :root[data-theme="indigo"] {
+    --brand-color: oklch(52% 0.17 265deg);  /* Apollo indigo */
+  }
+
+  :root[data-theme="nominal"] {
+    --brand-color: oklch(56% 0.19 155deg);  /* Nominal.io green */
+  }
+}
+
 @media print {
   :root {
     --spacing-block-vertical: 0.1rem;

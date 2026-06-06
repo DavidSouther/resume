@@ -22,9 +22,15 @@ export default function RootLayout({
 	children: React.ReactNode;
 }) {
 	return (
-		<html lang="en">
+		<html lang="en" suppressHydrationWarning>
 			<head>
 				<link rel="stylesheet" href="/jiffies-css-v2-bundle.min.css" />
+				{/* Pre-paint theme picker: sets data-theme before hydration so the brand color varies per load with no flash. */}
+				<script
+					dangerouslySetInnerHTML={{
+						__html: `const themes=["rust","teal","indigo","nominal"];document.documentElement.dataset.theme=themes[Date.now()%themes.length];`,
+					}}
+				/>
 			</head>
 			<body>
 				{children}
