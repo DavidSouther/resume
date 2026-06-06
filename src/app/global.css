@@ -15,7 +15,7 @@
   }
 
   :root[data-theme="rust"] {
-    --brand-color: oklch(62% 0.18 52deg);   /* Rust language amber-orange */
+    --brand-color: oklch(50% 0.14 42deg);   /* Deep iron-oxide rust */
   }
 
   :root[data-theme="teal"] {
@@ -27,7 +27,7 @@
   }
 
   :root[data-theme="nominal"] {
-    --brand-color: oklch(56% 0.19 155deg);  /* Nominal.io green */
+    --brand-color: #419b55;                 /* Nominal.io green */
   }
 }
 
