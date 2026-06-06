@@ -9,7 +9,7 @@ lastUpdate = "2024-04-04"
 [aboutMe.profile]
 name = "David"
 surnames = "Souther"
-title = "Sr Software Engineer"
+title = "Software Engineer"
 
 [aboutMe.profile.avatar]
 link = "https://avatars.githubusercontent.com/u/498712?v=4"
@@ -31,6 +31,37 @@ type = "github"
 URL = "https://github.com/davidsouther"
 
 [experience]
+[[experience.jobs]]
+[experience.jobs.organization]
+name = "nominal.io"
+
+[[experience.jobs.roles]]
+name = "[Staff Software Engineer](https://www.levels.fyi/companies/nominal/salaries/software-engineer?country=254&yoeChoice=senior)"
+startDate = "2025-12-02"
+
+[[experience.jobs.roles.challenges]]
+description = """
+Nominal Connect is a desktop application to assist test stand engineers get data from hardware.
+Connect apps allow test stand engineers to view and control hardware telemetry, automated test stand operations and procedures, and stream all this data to nominal core for shared offline processing.
+
+I joined Connect to add smart assistant features.
+This includes in-app help search, deep stateful project search, and application state. 
+In online modes, LLM-powered search allows freeform natural language querying.
+Engineers can also make natural languages edits to their connect applications, removing significant amounts of engineer workload and improving reliability across typically untrained software tasks.
+"""
+
+[[experience.jobs.roles.competences]]
+name = "rust"
+type = "technology"
+
+[[experience.jobs.roles.competences]]
+name = "bevy"
+type = "technology"
+
+[[experience.jobs.roles.competences]]
+name = "agentic-ai"
+type = "technology"
+
 [[experience.jobs]]
 [experience.jobs.organization]
 name = "Apollo GraphQL"
