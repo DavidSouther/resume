@@ -1,3 +1,13 @@
+/*
+ * Declare the bundle's cascade-layer order up front. Next can inject this file
+ * before the v2 bundle link, which would otherwise register `theme` as the
+ * first (lowest-priority) layer here and let bundle layers like `layout`
+ * outrank our theme overrides (e.g. the page-end hero tokens in dark mode).
+ * Re-declaring the canonical order pins `theme` last regardless of load order.
+ * @layer name-only statements are valid before @import per the CSS spec.
+ */
+@layer fns, reset, layout, content, component, utility, user, theme;
+
 @import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Poppins:ital,wght@0,400;0,700;1,400&display=swap');
 
 /*
@@ -16,6 +26,12 @@
 
   :root[data-theme="rust"] {
     --brand-color: oklch(50% 0.14 42deg);   /* Deep iron-oxide rust */
+    /* Pin the page-end (hero) band to the rich rust in BOTH light and dark
+       mode. By default M3 reassigns --color-primary to a light tone-80 in dark
+       mode, which washes the hero out to pale peach; these published bridge
+       tokens (layout.css) keep the band a dark rust fill with light label. */
+    --background-color-page-end-brand-primary: oklch(48% 0.13 42deg);
+    --color-page-end-brand-primary: oklch(100% 0.13 42deg);
   }
 
   :root[data-theme="teal"] {
@@ -27,7 +43,7 @@
   }
 
   :root[data-theme="nominal"] {
-    --brand-color: #419b55;                 /* Nominal.io green */
+    --brand-color: oklch(61.7% 0.135 148.4deg);  /* Nominal.io green (#419b55) */
   }
 }
 
@@ -251,17 +267,24 @@ article > header > h3 {
 /*
  * Rust theme only: give the hero the feel of weathered, textured metal -- a
  * soft depth gradient (light upper-left, darker corners) layered over fine
- * desaturated grain (inline SVG fractalNoise), blended into the brand fill
- * beneath. The grain is compressed toward mid-gray so it modulates the rust
- * subtly without shifting text or link contrast. Other themes keep a flat hero.
+ * desaturated grain (inline SVG fractalNoise), blended into the brand fill.
+ * The grain is compressed toward mid-gray so it modulates the rust subtly
+ * without shifting text or link contrast. Other themes keep a flat hero.
+ *
+ * jiffies has no published token for a hero background-image, so this lives in
+ * @layer user -- the documented escape hatch (THEMES.md "Zen Garden Test") for
+ * element-selector treatments that no Intent token covers yet. Candidate for an
+ * upstream --background-image-page-end-brand token; see the deferred PR task.
  */
-[data-theme="rust"] .root > header {
-  background-image:
-    radial-gradient(135% 135% at 28% -10%, rgba(255, 255, 255, 0.14), rgba(0, 0, 0, 0.22) 78%),
-    url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20width%3D'160'%20height%3D'160'%3E%3Cfilter%20id%3D'r'%3E%3CfeTurbulence%20type%3D'fractalNoise'%20baseFrequency%3D'0.85'%20numOctaves%3D'2'%20stitchTiles%3D'stitch'%2F%3E%3CfeColorMatrix%20type%3D'saturate'%20values%3D'0'%2F%3E%3CfeComponentTransfer%3E%3CfeFuncR%20type%3D'linear'%20slope%3D'0.3'%20intercept%3D'0.35'%2F%3E%3CfeFuncG%20type%3D'linear'%20slope%3D'0.3'%20intercept%3D'0.35'%2F%3E%3CfeFuncB%20type%3D'linear'%20slope%3D'0.3'%20intercept%3D'0.35'%2F%3E%3C%2FfeComponentTransfer%3E%3C%2Ffilter%3E%3Crect%20width%3D'100%25'%20height%3D'100%25'%20filter%3D'url(%2523r)'%2F%3E%3C%2Fsvg%3E");
-  background-blend-mode: overlay, soft-light;
-  background-size: cover, 170px 170px;
-  background-repeat: no-repeat, repeat;
+@layer user {
+  [data-theme="rust"] .root > header {
+    background-image:
+      radial-gradient(135% 135% at 28% -10%, rgba(255, 255, 255, 0.14), rgba(0, 0, 0, 0.22) 78%),
+      url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20width%3D'160'%20height%3D'160'%3E%3Cfilter%20id%3D'r'%3E%3CfeTurbulence%20type%3D'fractalNoise'%20baseFrequency%3D'0.85'%20numOctaves%3D'2'%20stitchTiles%3D'stitch'%2F%3E%3CfeColorMatrix%20type%3D'saturate'%20values%3D'0'%2F%3E%3CfeComponentTransfer%3E%3CfeFuncR%20type%3D'linear'%20slope%3D'0.3'%20intercept%3D'0.35'%2F%3E%3CfeFuncG%20type%3D'linear'%20slope%3D'0.3'%20intercept%3D'0.35'%2F%3E%3CfeFuncB%20type%3D'linear'%20slope%3D'0.3'%20intercept%3D'0.35'%2F%3E%3C%2FfeComponentTransfer%3E%3C%2Ffilter%3E%3Crect%20width%3D'100%25'%20height%3D'100%25'%20filter%3D'url(%2523r)'%2F%3E%3C%2Fsvg%3E");
+    background-blend-mode: overlay, soft-light;
+    background-size: cover, 170px 170px;
+    background-repeat: no-repeat, repeat;
+  }
 }
 
 .root > header nav ul li {
