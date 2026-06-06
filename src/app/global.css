@@ -248,6 +248,22 @@ article > header > h3 {
   color: var(--color-page-end-brand-primary);
 }
 
+/*
+ * Rust theme only: give the hero the feel of weathered, textured metal -- a
+ * soft depth gradient (light upper-left, darker corners) layered over fine
+ * desaturated grain (inline SVG fractalNoise), blended into the brand fill
+ * beneath. The grain is compressed toward mid-gray so it modulates the rust
+ * subtly without shifting text or link contrast. Other themes keep a flat hero.
+ */
+[data-theme="rust"] .root > header {
+  background-image:
+    radial-gradient(135% 135% at 28% -10%, rgba(255, 255, 255, 0.14), rgba(0, 0, 0, 0.22) 78%),
+    url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20width%3D'160'%20height%3D'160'%3E%3Cfilter%20id%3D'r'%3E%3CfeTurbulence%20type%3D'fractalNoise'%20baseFrequency%3D'0.85'%20numOctaves%3D'2'%20stitchTiles%3D'stitch'%2F%3E%3CfeColorMatrix%20type%3D'saturate'%20values%3D'0'%2F%3E%3CfeComponentTransfer%3E%3CfeFuncR%20type%3D'linear'%20slope%3D'0.3'%20intercept%3D'0.35'%2F%3E%3CfeFuncG%20type%3D'linear'%20slope%3D'0.3'%20intercept%3D'0.35'%2F%3E%3CfeFuncB%20type%3D'linear'%20slope%3D'0.3'%20intercept%3D'0.35'%2F%3E%3C%2FfeComponentTransfer%3E%3C%2Ffilter%3E%3Crect%20width%3D'100%25'%20height%3D'100%25'%20filter%3D'url(%2523r)'%2F%3E%3C%2Fsvg%3E");
+  background-blend-mode: overlay, soft-light;
+  background-size: cover, 170px 170px;
+  background-repeat: no-repeat, repeat;
+}
+
 .root > header nav ul li {
   text-align: right;
 }
