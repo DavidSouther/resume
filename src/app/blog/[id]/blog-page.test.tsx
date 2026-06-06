@@ -34,7 +34,17 @@ describe("BlogPage", () => {
 	it("injects the post body as HTML", async () => {
 		const { container } = render(await BlogPage({ post }));
 
-		expect(container.querySelector("main strong")?.textContent).toBe("world");
+		expect(container.querySelector("article main strong")?.textContent).toBe(
+			"world",
+		);
+	});
+
+	it("wraps the post card in a main content region", async () => {
+		// The framework clamps a page-spine <main> to --base-viewport-width, so
+		// the card must sit inside one rather than rely on a hand-rolled width.
+		const { container } = render(await BlogPage({ post }));
+
+		expect(container.querySelector("main > article")).not.toBeNull();
 	});
 
 	it("renders a Back link to the parent path", async () => {
@@ -50,6 +60,6 @@ describe("BlogPage", () => {
 			await BlogPage({ post: { id: "x", show: true, title: "X" } }),
 		);
 
-		expect(container.querySelector("main")?.textContent).toBe("");
+		expect(container.querySelector("article main")?.textContent).toBe("");
 	});
 });
