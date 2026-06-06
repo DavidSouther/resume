@@ -54,10 +54,6 @@
     --font-size: 10pt;
   }
 
-  body.container {
-    max-width: 99% !important;
-  }
-
   a {
     --color: hsl(205, 20%, 32%);
     color: var(--color);

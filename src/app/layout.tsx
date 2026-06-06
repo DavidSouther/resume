@@ -26,7 +26,7 @@ export default function RootLayout({
 			<head>
 				<link rel="stylesheet" href="/jiffies-css-v2-bundle.min.css" />
 			</head>
-			<body className="container">
+			<body>
 				{children}
 				<Analytics />
 			</body>
