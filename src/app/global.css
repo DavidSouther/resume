@@ -47,6 +47,18 @@
   }
 }
 
+/*
+ * Single-column card bodies. jiffies-css flows every `article > main` into
+ * --content-columns, whose default ladder climbs to 2 (>=1024px) then 4. That
+ * newspapers the Posts list and long-form blog prose into columns that overflow
+ * the card's `overflow: hidden` and clip on the right. This site reads better
+ * single-column, so pin the token to 1. Unlayered so it beats the bundle's
+ * @layer theme media-query ladder regardless of Next's CSS injection order.
+ */
+:root {
+  --content-columns: 1;
+}
+
 @media print {
   :root {
     --spacing-block-vertical: 0.1rem;
@@ -243,6 +255,12 @@ article > header > h3 {
   grid-area: links;
 }
 .root > header nav ul {
+  /* jiffies-css v2 only resets markers on `nav > ol`; this contact list is a
+     `nav > ul` (opting out of the page-end bar's horizontal auto-layout), so
+     restore the marker/indent reset the v1 bundle used to supply. */
+  list-style: none;
+  margin: 0;
+  padding: 0;
   flex-direction: row;
 }
 

@@ -26,6 +26,20 @@ describe("Contact", () => {
 		]);
 	});
 
+	it("labels each link with its type, not its raw URL", () => {
+		render(
+			<Contact
+				contact={{
+					publicProfiles: [{ type: "github", URL: "https://github.com/d" }],
+				}}
+			/>,
+		);
+
+		const link = screen.getByRole("link");
+		expect(link.textContent).toBe("github");
+		expect(link.getAttribute("href")).toBe("https://github.com/d");
+	});
+
 	it("renders the explicitly passed links ahead of contact-derived ones", () => {
 		render(
 			<Contact

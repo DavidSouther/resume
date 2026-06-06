@@ -27,10 +27,10 @@ export const Contact = ({
 				}) satisfies ResumeTypes.Link,
 		) ?? []),
 	];
-	const allLinks = [...links, ...contactLinks].map((contactLink) => ({
-		type: contactLink.URL,
-		URL: contactLink.URL,
-	}));
+	// Keep each link's semantic `type` ("github", "email", "tel") as the on-screen
+	// label; the print-only span already shows the full URL. (A prior map clobbered
+	// `type` with `URL`, so the hero rendered raw, overflowing hrefs as labels.)
+	const allLinks = [...links, ...contactLinks];
 	return allLinks && <Links className="contact" links={allLinks} />;
 };
 
