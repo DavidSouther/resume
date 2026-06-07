@@ -10,7 +10,6 @@ jefri-jiffies-*.tgz
 *.tsbuildinfo
 
 .agents
-docs
 
 # Build artifacts generated into public/ by `npm run build`
 public/global.css

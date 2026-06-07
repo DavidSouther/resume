@@ -1,0 +1,316 @@
+@layer fns, reset, layout, content, component, utility, user, theme;
+@import "https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Poppins:ital,wght@0,400;0,700;1,400&display=swap";
+
+@layer theme {
+  :root {
+    --brand-color: oklch(55% .16 195);
+    --brand-body-font-family: "Poppins", sans-serif;
+    --brand-header-font-family: "Libre Baskerville", Georgia, serif;
+  }
+
+  :root[data-theme="rust"] {
+    --brand-color: oklch(50% .14 42);
+    --background-color-page-end-brand-primary: oklch(48% .13 42);
+    --color-page-end-brand-primary: oklch(100% .13 42);
+  }
+
+  :root[data-theme="teal"] {
+    --brand-color: oklch(55% .16 195);
+  }
+
+  :root[data-theme="indigo"] {
+    --brand-color: oklch(52% .17 265);
+  }
+
+  :root[data-theme="nominal"] {
+    --brand-color: oklch(61.7% .135 148.4);
+  }
+}
+
+:root {
+  --content-columns: 1;
+}
+
+@media print {
+  :root {
+    --spacing-block-vertical: .1rem;
+    --card-shadow: none;
+    --color-surface: white;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-only {
+    display: inherit;
+  }
+
+  html {
+    font-size: 10pt;
+  }
+
+  body {
+    --font-size: 10pt;
+  }
+
+  a {
+    --color: #415462;
+    color: var(--color);
+  }
+
+  a:after {
+    content: " (" attr(href) ")";
+    font-size: smaller;
+    text-decoration: underline;
+  }
+
+  .no-print-href a:after {
+    content: "";
+  }
+}
+
+@media not print {
+  .print-only {
+    display: none;
+  }
+}
+
+article > header > h3 {
+  margin-bottom: 0;
+}
+
+.organization {
+  border-bottom: thin solid var(--card-border-color);
+  grid-area: org;
+  margin-bottom: 0;
+}
+
+.role, .education, .project {
+  display: contents;
+}
+
+.job, .education {
+  gap: calc(var(--size-base) / 2)
+    calc(var(--size-medium) / 2);
+  grid: "org"
+        "about"
+        "details"
+        "competences"
+        / 1fr;
+  display: grid;
+}
+
+@media (width >= 768px) {
+  .job, .education {
+    grid: "_a org"
+          "about details"
+          "competences details"
+          / 2fr 5fr;
+  }
+}
+
+.about {
+  flex-direction: row;
+  grid-area: about;
+  align-items: baseline;
+  margin-bottom: 0;
+  display: flex;
+}
+
+.competences ul li {
+  flex-flow: column wrap;
+  justify-content: space-between;
+  display: flex;
+}
+
+@media (width >= 768px) {
+  .about {
+    flex-direction: column;
+  }
+
+  .competences ul li {
+    flex-direction: row;
+  }
+}
+
+.details {
+  grid-area: details;
+}
+
+.competences {
+  grid-area: competences;
+}
+
+.competences ul {
+  flex-flow: wrap;
+  justify-content: space-between;
+  display: flex;
+}
+
+.competences li {
+  list-style: none;
+}
+
+@media (width >= 768px) {
+  .competences ul {
+    flex-direction: column;
+  }
+}
+
+@media print {
+  .publications section {
+    columns: 1;
+  }
+
+  .publications section p span.print-only {
+    order: 1;
+  }
+}
+
+.root > header {
+  gap: 0 var(--size-medium);
+  grid: "avatar name"
+        "avatar title"
+        "avatar location"
+        "links links"
+        / 150px auto;
+  display: grid;
+}
+
+@media (width >= 1024px) {
+  .root > header {
+    grid: "avatar name links"
+          "avatar title links"
+          "avatar location links"
+          / 150px auto;
+  }
+}
+
+.root > header hgroup {
+  display: contents;
+}
+
+.root > header h1 {
+  grid-area: name;
+}
+
+.root > header h2 {
+  grid-area: title;
+}
+
+.root > header figure {
+  grid-area: avatar;
+  margin: 0;
+}
+
+.root > header figure img {
+  border-radius: 10%;
+}
+
+.root > header p.location {
+  flex-direction: row-reverse;
+  grid-area: location;
+  justify-content: flex-end;
+  gap: .25em;
+  display: flex;
+}
+
+.root > header p.location span:not(:first-child):after {
+  content: ",";
+}
+
+.root > header nav {
+  grid-area: links;
+}
+
+.root > header nav ul {
+  flex-direction: row;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.root > header nav a {
+  font-size: .8rem;
+  line-height: 1.5rem;
+}
+
+.root > header nav a, .root > header nav a span {
+  color: var(--color-page-end-brand-primary);
+}
+
+@layer user {
+  [data-theme="rust"] .root > header {
+    background-blend-mode: overlay, soft-light;
+    background-image: radial-gradient(135% 135% at 28% -10%, #ffffff24, #00000038 78%), url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20width%3D'160'%20height%3D'160'%3E%3Cfilter%20id%3D'r'%3E%3CfeTurbulence%20type%3D'fractalNoise'%20baseFrequency%3D'0.85'%20numOctaves%3D'2'%20stitchTiles%3D'stitch'%2F%3E%3CfeColorMatrix%20type%3D'saturate'%20values%3D'0'%2F%3E%3CfeComponentTransfer%3E%3CfeFuncR%20type%3D'linear'%20slope%3D'0.3'%20intercept%3D'0.35'%2F%3E%3CfeFuncG%20type%3D'linear'%20slope%3D'0.3'%20intercept%3D'0.35'%2F%3E%3CfeFuncB%20type%3D'linear'%20slope%3D'0.3'%20intercept%3D'0.35'%2F%3E%3C%2FfeComponentTransfer%3E%3C%2Ffilter%3E%3Crect%20width%3D'100%25'%20height%3D'100%25'%20filter%3D'url(%2523r)'%2F%3E%3C%2Fsvg%3E");
+    background-repeat: no-repeat, repeat;
+    background-size: cover, 170px 170px;
+  }
+}
+
+.root > header nav ul li {
+  text-align: right;
+}
+
+@media (width >= 425px) {
+  .root > header nav ul {
+    flex-direction: column;
+  }
+}
+
+.root > footer > nav {
+  place-content: baseline space-between;
+  display: flex;
+}
+
+.artifacts {
+  gap: calc(var(--size-base) / 2)
+    calc(var(--size-medium) / 2);
+  grid-template-columns: 1fr;
+  display: grid;
+}
+
+@media (width >= 768px) {
+  .artifacts {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media print {
+  .artifacts {
+    grid-template-columns: 1fr;
+  }
+}
+
+.posts {
+  gap: calc(var(--size-base) / 2)
+    calc(var(--size-medium) / 2);
+  grid: "title"
+        "summary"
+        / 1fr;
+  display: grid;
+}
+
+@media (width >= 768px) {
+  .posts {
+    grid: "_a title"
+          "_b summary"
+          / 2fr 5fr;
+    display: grid;
+  }
+}
+
+.float {
+  float: left;
+  margin-right: 1em;
+}
+
+.float.right {
+  float: right;
+  margin-left: 1em;
+}
+
+section:has(img.float) + section {
+  clear: both;
+}

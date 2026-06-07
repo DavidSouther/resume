@@ -1,3 +1,0 @@
-(globalThis.TURBOPACK||(globalThis.TURBOPACK=[])).push(["object"==typeof document?document.currentScript:void 0,34684,e=>{"use strict";var r=e.i(92338);e.s(["Card",0,({className:e="",header:s,children:c,footer:i})=>(0,r.jsx)("article",{className:e,children:(0,r.jsxs)(r.Fragment,{children:[s&&(0,r.jsx)("header",{children:(0,r.jsx)("h3",{children:s})}),(0,r.jsx)("main",{children:c}),i&&(0,r.jsx)("footer",{children:i})]})})])}]);
-
-//# sourceMappingURL=311ig0pslerlq.js.map
