@@ -16,6 +16,7 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
+    "allowImportingTsExtensions": true,
     "jsx": "react-jsx",
     "incremental": true,
     "paths": {
@@ -30,13 +31,9 @@
     ]
   },
   "include": [
-    "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts",
-    "docs/types/**/*.ts",
-    ".next/dev/types/**/*.ts",
-    "docs/dev/types/**/*.ts"
+    "src",
+    "pages",
+    "scripts"
   ],
   "exclude": [
     "node_modules"

@@ -22,7 +22,7 @@ export async function jsonLoader(): Promise<ResumeData> {
 
 export async function tomlLoader(): Promise<ResumeData> {
 	const { default: TOML } = await import("smol-toml");
-	const resumeData = await fs.readFile("src/app/resume.toml", {
+	const resumeData = await fs.readFile("src/resume.toml", {
 		encoding: "utf-8",
 	});
 	const resume = TOML.parse(resumeData);

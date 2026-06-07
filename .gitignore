@@ -11,3 +11,7 @@ jefri-jiffies-*.tgz
 
 .agents
 docs
+
+# Build artifacts generated into public/ by `npm run build`
+public/global.css
+public/sitemap.xml
