@@ -1,4 +1,4 @@
-import { link, script, title } from "@davidsouther/jiffies/dom/html.ts";
+import { link, meta, script, title } from "@davidsouther/jiffies/dom/html.ts";
 
 // GA4 measurement ID for davidsouther.com. Embedded inline in every page head.
 const GA_MEASUREMENT_ID = "G-6X1Z1L95D8";
@@ -17,7 +17,15 @@ const GA_INIT = `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer
  * GA4 analytics snippet. Returned as a Node[] for the SSG `head` hook.
  */
 export function pageHead(pageTitle: string): Node[] {
+	// `charset` is not a typed HTMLMetaElement property, so set it directly.
+	const charset = meta();
+	charset.setAttribute("charset", "utf-8");
 	return [
+		charset,
+		meta({
+			name: "viewport",
+			content: "width=device-width, initial-scale=1",
+		}),
 		title(pageTitle),
 		link({ rel: "stylesheet", href: "/jiffies-css-v2-bundle.min.css" }),
 		link({ rel: "stylesheet", href: "/global.css" }),
