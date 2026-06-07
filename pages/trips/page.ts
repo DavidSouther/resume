@@ -1,7 +1,9 @@
 import type { PageModule } from "@davidsouther/jiffies/ssg/ssg.ts";
+import { renderTripsList } from "../../src/components/trips-list.ts";
+import { pageHead } from "../../src/lib/page-head.ts";
+import { getSortedTrips } from "../../src/lib/trips.ts";
 
-// stub — replaced in Step 5
 export default {
-	head: () => [],
-	default: async () => window.document.createElement("div"),
+	head: () => pageHead("Trips — David Souther"),
+	default: async () => renderTripsList(await getSortedTrips()),
 } satisfies PageModule;

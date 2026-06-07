@@ -17,18 +17,13 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "allowImportingTsExtensions": true,
-    "jsx": "react-jsx",
+    "erasableSyntaxOnly": true,
     "incremental": true,
     "paths": {
       "~/*": [
         "./src/*"
       ]
-    },
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ]
+    }
   },
   "include": [
     "src",
