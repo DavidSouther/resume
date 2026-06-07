@@ -4,15 +4,15 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "npm run css:bundle && node --experimental-strip-types node_modules/@davidsouther/jiffies/src/ssg/main.ts --out docs --no-clean",
+    "dev": "npm run css:bundle && node node_modules/@davidsouther/jiffies/src/ssg/main.ts --out docs --no-clean",
     "css:bundle": "lightningcss src/global.css -o public/global.css",
     "typecheck": "tsc --noEmit",
     "check": "npm run typecheck && biome check src pages scripts vitest.config.ts",
     "format": "biome format --write src pages scripts vitest.config.ts",
     "lint": "biome lint --write src pages scripts vitest.config.ts",
     "prebuild": "npm run check",
-    "build": "npm run css:bundle && node --experimental-strip-types scripts/sitemap.ts && node --experimental-strip-types node_modules/@davidsouther/jiffies/src/ssg/main.ts --out docs",
-    "start": "node --experimental-strip-types scripts/serve.ts",
+    "build": "npm run css:bundle && node scripts/sitemap.ts && node node_modules/@davidsouther/jiffies/src/ssg/main.ts --out docs",
+    "start": "node scripts/serve.ts",
     "test": "vitest run",
     "posttest": "npm run check",
     "test:watch": "vitest"
