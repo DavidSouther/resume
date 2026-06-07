@@ -1,5 +1,5 @@
 import { Card } from "@davidsouther/jiffies/dom/components/index.ts";
-import { a, div } from "@davidsouther/jiffies/dom/html.ts";
+import { a, div, h3 } from "@davidsouther/jiffies/dom/html.ts";
 import {
 	buildItems,
 	dateKeyRange,
@@ -51,10 +51,10 @@ export function renderTripPage(
 		sections.push(DayGroup(date, dayItems, on, enrichment));
 	}
 
-	const header: (Node | string)[] = [
+	const header = h3(
 		a({ href: "/" }, "David Souther"),
 		` — ${itinerary.trip.title}`,
-	];
+	);
 
 	const grain = div({ class: "grain" });
 	grain.setAttribute("aria-hidden", "true");
