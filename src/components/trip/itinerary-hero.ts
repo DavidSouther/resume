@@ -1,7 +1,6 @@
 import { div, h1, p } from "@davidsouther/jiffies/dom/html.ts";
 import { initials, rangeLabel } from "../../lib/itinerary-helpers.ts";
 import type { Itinerary } from "../../lib/trip-itinerary";
-import { kids } from "../children.ts";
 import { WikiPhoto } from "./wiki-photo.ts";
 
 // (itinerary, wikiTitle) — positional from the original prop object.
@@ -15,7 +14,7 @@ export function ItineraryHero(
 
 	return div(
 		{ class: "hero" },
-		...kids(wikiTitle ? WikiPhoto(wikiTitle) : null),
+		wikiTitle ? WikiPhoto(wikiTitle) : null,
 		div(
 			{ class: "hero-inner" },
 			p({ class: "kicker" }, "Itinerary"),
@@ -28,14 +27,10 @@ export function ItineraryHero(
 						{ class: "hero-dates" },
 						start && end ? rangeLabel(start, end) : "",
 					),
-					...kids(
-						trip.traveler
-							? div({ class: "hero-traveler" }, trip.traveler)
-							: null,
-					),
+					trip.traveler ? div({ class: "hero-traveler" }, trip.traveler) : null,
 				),
 			),
-			...kids(trip.notes ? div({ class: "hero-note" }, trip.notes) : null),
+			trip.notes ? div({ class: "hero-note" }, trip.notes) : null,
 		),
 	);
 }

@@ -1,3 +1,4 @@
+import type { DenormChildren } from "@davidsouther/jiffies/dom/dom.ts";
 import {
 	a,
 	cite,
@@ -14,7 +15,10 @@ import { AboutMe } from "./resume/about-me.ts";
 // The home page shell: a #root container with the AboutMe header, a <main> for
 // page content, and a copyright/source footer. Only the home page uses this;
 // blog and trips pages render their content bare (the SSG owns <html>/<body>).
-export function Layout(resume: ResumeData, ...children: Node[]): HTMLElement {
+export function Layout(
+	resume: ResumeData,
+	...children: DenormChildren[]
+): HTMLElement {
 	const year = new Date(resume.settings.lastUpdate).getFullYear();
 	return div(
 		{ id: "root", class: "root" },

@@ -7,7 +7,6 @@ import {
 	timezoneAbbreviation,
 } from "../../../lib/itinerary-helpers.ts";
 import type { TripEnrichment } from "../../../lib/trip-enrichment";
-import { kids } from "../../children.ts";
 import { TimelineItem } from "../timeline-item.ts";
 import { WikiCard } from "../wiki-card.ts";
 import { BtnLink } from "./btn-link.ts";
@@ -26,7 +25,7 @@ export function EventItem(
 		(tripEvent.category ?? "") + (tripEvent.title ?? ""),
 	);
 
-	const row = kids(
+	const row = [
 		startDateTime
 			? span(
 					{ class: "timeline-times" },
@@ -38,14 +37,12 @@ export function EventItem(
 		span(
 			{ class: "title" },
 			tripEvent.title ?? "",
-			...kids(
-				tripEvent.status === "to_book"
-					? span({ class: "badge book" }, "To book")
-					: null,
-			),
+			tripEvent.status === "to_book"
+				? span({ class: "badge book" }, "To book")
+				: null,
 		),
 		tripEvent.location ? span({ class: "sub" }, tripEvent.location) : null,
-	);
+	];
 
 	const activity = enrichment?.activities?.find(
 		(a) => a.event === tripEvent.title,
@@ -77,30 +74,26 @@ export function EventItem(
 		.filter(Boolean)
 		.join(" ");
 
-	const detail = kids(
-		Facts(
-			kids(
-				tripEvent.location ? Fact("Location", tripEvent.location) : null,
-				tripEvent.notes ? Fact("Note", tripEvent.notes) : null,
-			),
-		),
+	const detail = [
+		Facts([
+			tripEvent.location ? Fact("Location", tripEvent.location) : null,
+			tripEvent.notes ? Fact("Note", tripEvent.notes) : null,
+		]),
 		activity?.blurb ? p({ class: "blurb" }, activity.blurb.trim()) : null,
 		div(
 			{ class: "links" },
-			...kids(
-				activity?.official_url
-					? BtnLink(activity.official_url, "ext", "Details")
-					: null,
-				BtnLink(
-					braveSearch(searchQuery),
-					"ext",
-					tripEvent.status === "to_book" ? "Search to book" : "Search",
-				),
+			activity?.official_url
+				? BtnLink(activity.official_url, "ext", "Details")
+				: null,
+			BtnLink(
+				braveSearch(searchQuery),
+				"ext",
+				tripEvent.status === "to_book" ? "Search to book" : "Search",
 			),
 		),
 		activity?.tips ? div({ class: "tips" }, activity.tips) : null,
 		wikiTitle ? WikiCard(wikiTitle) : null,
-	);
+	];
 
 	return TimelineItem(
 		isMeal ? "fork" : "compass",

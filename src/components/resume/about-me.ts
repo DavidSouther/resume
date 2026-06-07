@@ -1,3 +1,4 @@
+import type { DenormChildren } from "@davidsouther/jiffies/dom/dom.ts";
 import {
 	a,
 	figure,
@@ -12,12 +13,11 @@ import {
 	ul,
 } from "@davidsouther/jiffies/dom/html.ts";
 import type * as ResumeTypes from "../../lib/resume";
-import { kids } from "../children.ts";
 
 // The resume header block: name/title hgroup, avatar, location, and contacts.
 // Returns a Node[] so the caller can spread it directly into a <header>.
-export function AboutMe(aboutMe: ResumeTypes.AboutMe): Node[] {
-	return kids(
+export function AboutMe(aboutMe: ResumeTypes.AboutMe): DenormChildren[] {
+	return [
 		hgroup(
 			h1(
 				a(
@@ -32,7 +32,7 @@ export function AboutMe(aboutMe: ResumeTypes.AboutMe): Node[] {
 			: null,
 		aboutMe.profile.location ? Location(aboutMe.profile.location) : null,
 		Contact(aboutMe.relevantLinks, aboutMe.profile.contact),
-	);
+	];
 }
 
 // Combines explicit links with contact emails/phones into a single Links nav.

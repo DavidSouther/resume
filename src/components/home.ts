@@ -1,7 +1,7 @@
-import { a, div, h4, p } from "@davidsouther/jiffies/dom/html.ts";
+import { Card } from "@davidsouther/jiffies/components/card.ts";
+import { a, div, h3, h4, p } from "@davidsouther/jiffies/dom/html.ts";
 import type { Post } from "../lib/posts.ts";
 import type { ResumeData } from "../lib/resume";
-import { card } from "./card.ts";
 import { Layout } from "./layout.ts";
 import { Resume } from "./resume/resume.ts";
 
@@ -15,6 +15,10 @@ export function renderHome(resume: ResumeData, posts: Post[]): HTMLElement {
 		),
 		p({ style: { gridArea: "summary" } }, summary ?? ""),
 	]);
-	const postsCard = card("posts no-print", "Posts", ...postsBody);
-	return Layout(resume, postsCard, ...Resume(resume));
+
+	return Layout(
+		resume,
+		Card({ class: "posts no-print", header: h3("Posts") }, ...postsBody),
+		...Resume(resume),
+	);
 }

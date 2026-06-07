@@ -7,7 +7,6 @@ import {
 } from "../../lib/itinerary-helpers.ts";
 import type { TripEnrichment } from "../../lib/trip-enrichment";
 import type { Flight, Hotel } from "../../lib/trip-itinerary";
-import { kids } from "../children.ts";
 import { EventItem } from "./day-group/event.ts";
 import { FlightItem } from "./day-group/flight.ts";
 import { GroundItem } from "./day-group/ground.ts";
@@ -55,14 +54,9 @@ export function DayGroup(
 			span({ class: "day-dow" }, dayOfWeekName(date)),
 			span({ class: "day-date" }, prettyDate(date)),
 		),
-		div(
-			{ class: "tl" },
-			...kids(...items.map((item) => renderItem(item, enrichment))),
-		),
-		...kids(
-			overnightLabel
-				? div({ class: "moon" }, SvgIcon("moon"), span(i(overnightLabel)))
-				: null,
-		),
+		div({ class: "tl" }, ...items.map((item) => renderItem(item, enrichment))),
+		overnightLabel
+			? div({ class: "moon" }, SvgIcon("moon"), span(i(overnightLabel)))
+			: null,
 	);
 }

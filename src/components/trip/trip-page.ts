@@ -1,4 +1,4 @@
-import { Card } from "@davidsouther/jiffies/dom/components/index.ts";
+import { Card } from "@davidsouther/jiffies/components/index.ts";
 import { a, div, h3 } from "@davidsouther/jiffies/dom/html.ts";
 import {
 	buildItems,

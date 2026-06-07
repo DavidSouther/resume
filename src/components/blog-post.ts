@@ -1,4 +1,4 @@
-import { Card } from "@davidsouther/jiffies/dom/components/index.ts";
+import { Card } from "@davidsouther/jiffies/components/index.ts";
 import { a, div, h3, main } from "@davidsouther/jiffies/dom/html.ts";
 import type { Post } from "../lib/posts.ts";
 

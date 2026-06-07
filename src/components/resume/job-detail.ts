@@ -9,7 +9,6 @@ import {
 } from "@davidsouther/jiffies/dom/html.ts";
 import type * as ResumeTypes from "../../lib/resume";
 import { show } from "../../lib/util.ts";
-import { kids } from "../children.ts";
 import { A, MD } from "../p.ts";
 import { Organization } from "./organization.ts";
 
@@ -33,14 +32,12 @@ function Role(role: ResumeTypes.Role): HTMLElement {
 			small({ class: "start date" }, role.startDate),
 			small({ class: "finish date" }, role.finishDate ?? "Current"),
 		),
-		...kids(
-			role.challenges
-				? div(
-						{ class: "details" },
-						...role.challenges.map(({ description }) => MD(description)),
-					)
-				: null,
-		),
+		role.challenges
+			? div(
+					{ class: "details" },
+					...role.challenges.map(({ description }) => MD(description)),
+				)
+			: null,
 		div({ class: "competences" }, Competences(role.competences)),
 	);
 }

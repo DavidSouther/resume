@@ -5,7 +5,6 @@ import {
 	parseDateTime,
 	timezoneAbbreviation,
 } from "../../../lib/itinerary-helpers.ts";
-import { kids } from "../../children.ts";
 import { TimelineItem } from "../timeline-item.ts";
 import { Fact, Facts } from "./fact.ts";
 
@@ -25,7 +24,7 @@ export function GroundItem(item: GroundItemData): HTMLElement {
 		(ground.notes ?? "") + (ground.type ?? ""),
 	);
 
-	const row = kids(
+	const row = [
 		pickupDateTime
 			? span(
 					{ class: "timeline-times" },
@@ -37,23 +36,19 @@ export function GroundItem(item: GroundItemData): HTMLElement {
 		span(
 			{ class: "title" },
 			capitalize(ground.type ?? "Transfer"),
-			...kids(
-				ground.status === "to_book"
-					? span({ class: "badge book" }, "To book")
-					: null,
-			),
+			ground.status === "to_book"
+				? span({ class: "badge book" }, "To book")
+				: null,
 		),
 		from || to
 			? span({ class: "sub" }, [from, to].filter(Boolean).join("  →  "))
 			: null,
-	);
+	];
 
-	const detail = Facts(
-		kids(
-			ground.provider ? Fact("Booked via", ground.provider) : null,
-			ground.notes ? Fact("Note", ground.notes) : null,
-		),
-	);
+	const detail = Facts([
+		ground.provider ? Fact("Booked via", ground.provider) : null,
+		ground.notes ? Fact("Note", ground.notes) : null,
+	]);
 
 	return TimelineItem(
 		isFerry ? "boat" : "car",

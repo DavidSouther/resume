@@ -1,5 +1,5 @@
+import type { DenormChildren } from "@davidsouther/jiffies/dom/dom.ts";
 import { button, div, span } from "@davidsouther/jiffies/dom/html.ts";
-import { kids } from "../children.ts";
 import { SvgIcon } from "./icons.ts";
 
 // (icon, expandable, isToBook, row, children) — positional from the original
@@ -9,8 +9,8 @@ export function TimelineItem(
 	icon: string,
 	expandable: boolean,
 	isToBook: boolean | undefined,
-	row: Node | string | (Node | string)[],
-	children?: Node | string | (Node | string)[],
+	row: DenormChildren | DenormChildren[],
+	children?: DenormChildren | DenormChildren[],
 ): HTMLElement {
 	const cardClass = ["card", isToBook ? "tobook" : ""]
 		.filter(Boolean)
@@ -18,8 +18,8 @@ export function TimelineItem(
 	// `open` is always false in the server render, so the item class is just "item".
 	const itemClass = "item";
 
-	const rowChildren = Array.isArray(row) ? row : [row];
-	const detailChildren = Array.isArray(children)
+	const rowChildren: DenormChildren[] = Array.isArray(row) ? row : [row];
+	const detailChildren: DenormChildren[] = Array.isArray(children)
 		? children
 		: children
 			? [children]
@@ -33,7 +33,7 @@ export function TimelineItem(
 		},
 		span({ class: "node" }, SvgIcon(icon)),
 		span({ class: "row-main" }, ...rowChildren),
-		...kids(expandable ? span({ class: "chev" }, SvgIcon("chev")) : null),
+		expandable ? span({ class: "chev" }, SvgIcon("chev")) : null,
 	);
 	// React renders the initial `open=false` state as aria-expanded="false".
 	btn.setAttribute("aria-expanded", "false");
@@ -43,7 +43,7 @@ export function TimelineItem(
 		div(
 			{ class: cardClass },
 			btn,
-			...kids(expandable ? div({ class: "detail" }, ...detailChildren) : null),
+			expandable ? div({ class: "detail" }, ...detailChildren) : null,
 		),
 	);
 }
