@@ -1,10 +1,12 @@
+import { Accordion } from "@davidsouther/jiffies/components/index.ts";
 import type { DenormChildren } from "@davidsouther/jiffies/dom/dom.ts";
-import { button, div, span } from "@davidsouther/jiffies/dom/html.ts";
+import { div, li, span } from "@davidsouther/jiffies/dom/html.ts";
 import { SvgIcon } from "./icons.ts";
 
 // (icon, expandable, isToBook, row, children) — positional from the original
-// prop object. The original is a client component with an `open` toggle; server-
-// rendered it starts closed (`item` without `open`, `aria-expanded="false"`).
+// prop object. Expandable items render as a native <details>/<summary>
+// disclosure (the jiffies Accordion) so they open with no client JS;
+// non-expandable items are a plain, static row.
 export function TimelineItem(
 	icon: string,
 	expandable: boolean,
@@ -15,8 +17,6 @@ export function TimelineItem(
 	const cardClass = ["card", isToBook ? "tobook" : ""]
 		.filter(Boolean)
 		.join(" ");
-	// `open` is always false in the server render, so the item class is just "item".
-	const itemClass = "item";
 
 	const rowChildren: DenormChildren[] = Array.isArray(row) ? row : [row];
 	const detailChildren: DenormChildren[] = Array.isArray(children)
@@ -25,25 +25,26 @@ export function TimelineItem(
 			? [children]
 			: [];
 
-	const btn = button(
-		{
-			type: "button",
-			class: "row",
-			disabled: !expandable,
-		},
-		span({ class: "node" }, SvgIcon(icon)),
-		span({ class: "row-main" }, ...rowChildren),
-		expandable ? span({ class: "chev" }, SvgIcon("chev")) : null,
-	);
-	// React renders the initial `open=false` state as aria-expanded="false".
-	btn.setAttribute("aria-expanded", "false");
+	const node = span({ class: "node" }, SvgIcon(icon));
+	const rowMain = span({ class: "row-main" }, ...rowChildren);
 
-	return div(
-		{ class: itemClass },
-		div(
-			{ class: cardClass },
-			btn,
-			expandable ? div({ class: "detail" }, ...detailChildren) : null,
+	if (!expandable) {
+		return li(
+			{ class: "item" },
+			div({ class: cardClass }, div({ class: "row" }, node, rowMain)),
+		);
+	}
+
+	return li(
+		{ class: "item" },
+		Accordion(
+			{
+				class: cardClass,
+				// The jiffies accordion renders the disclosure chevron itself
+				// (summary::after); no chevron child is needed here.
+				summary: [node, rowMain],
+			},
+			div({ class: "detail" }, ...detailChildren),
 		),
 	);
 }

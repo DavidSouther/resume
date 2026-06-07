@@ -11,7 +11,6 @@ export const ICON: Record<string, string> = {
 	compass: '<circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/>',
 	fork: '<path d="M7 3v7a2 2 0 0 0 4 0V3M9 10v11M17 3c-1.5 0-2 2-2 5s.5 4 2 4m0 0v9"/>',
 	moon: '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
-	chev: '<path d="M9 6l6 6-6 6"/>',
 	ext: '<path d="M14 5h5v5M19 5l-8 8M19 13v6H5V5h6"/>',
 	pin: '<path d="M12 21s7-6.5 7-11a7 7 0 1 0-14 0c0 4.5 7 11 7 11z"/><circle cx="12" cy="10" r="2.4"/>',
 	phone:

@@ -1,5 +1,5 @@
 import { Card } from "@davidsouther/jiffies/components/index.ts";
-import { a, div, h3 } from "@davidsouther/jiffies/dom/html.ts";
+import { a, div } from "@davidsouther/jiffies/dom/html.ts";
 import {
 	buildItems,
 	dateKeyRange,
@@ -51,25 +51,17 @@ export function renderTripPage(
 		sections.push(DayGroup(date, dayItems, on, enrichment));
 	}
 
-	const header = h3(
-		a({ href: "/" }, "David Souther"),
-		` — ${itinerary.trip.title}`,
-	);
-
 	const grain = div({ class: "grain" });
 	grain.setAttribute("aria-hidden", "true");
 
+	// The hero is the page header: render it in the Card's <header> slot, still
+	// inside a .wrap so its 760px column and bleed match the day content below.
 	const card = Card(
 		{
-			header,
+			header: div({ class: "wrap" }, ItineraryHero(itinerary, heroWikiTitle)),
 			footer: a({ href: "../../" }, "Back"),
 		},
-		div(
-			{ class: "wrap" },
-			grain,
-			ItineraryHero(itinerary, heroWikiTitle),
-			...sections,
-		),
+		div({ class: "wrap" }, grain, ...sections),
 	);
 	card.className = "TripPage";
 	return card;

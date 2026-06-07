@@ -1,4 +1,4 @@
-import { div, i, span } from "@davidsouther/jiffies/dom/html.ts";
+import { div, i, ol, span } from "@davidsouther/jiffies/dom/html.ts";
 import {
 	dayOfWeekName,
 	IATA,
@@ -54,7 +54,7 @@ export function DayGroup(
 			span({ class: "day-dow" }, dayOfWeekName(date)),
 			span({ class: "day-date" }, prettyDate(date)),
 		),
-		div({ class: "tl" }, ...items.map((item) => renderItem(item, enrichment))),
+		ol({ class: "tl" }, ...items.map((item) => renderItem(item, enrichment))),
 		overnightLabel
 			? div({ class: "moon" }, SvgIcon("moon"), span(i(overnightLabel)))
 			: null,

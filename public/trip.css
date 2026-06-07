@@ -44,6 +44,27 @@
 	max-width: 100%;
 	overflow-x: hidden;
 	background: #f3ede2;
+	/* The hero now lives in the header; let the day content's own top margin
+	   set the leading gap instead of doubling it with the card's main padding. */
+	padding-top: 0;
+}
+
+/* The hero is the page header. Match main's bleed box (full width, same
+   horizontal padding, paper background) and drop the card's header rule so the
+   hero reads as one continuous cover, not a bordered card header. */
+.TripPage > header {
+	max-width: 100%;
+	padding: var(--size-medium) var(--size-large) 0;
+	border-bottom: 0;
+	background: #f3ede2;
+	overflow-x: hidden;
+}
+
+/* The header reuses .wrap for the hero's column and bleed, but .wrap's 90px
+   bottom padding (which clears the day column) would gap the hero off the
+   content; the header owns no trailing space. */
+.TripPage > header > .wrap {
+	padding-bottom: 0;
 }
 
 /* Warm paper grain overlay */
@@ -203,6 +224,14 @@
 	opacity: 0.82;
 }
 
+/* The traveler name is the home link; keep it visually identical to the
+   surrounding hero text (the hero sits outside .wrap, so its `a` color rule
+   does not reach here). */
+.hero a {
+	color: inherit;
+	text-decoration: none;
+}
+
 .hero-note {
 	margin-top: 10px;
 	font-size: 13.5px;
@@ -326,6 +355,8 @@
 .tl {
 	position: relative;
 	padding-left: 46px;
+	list-style: none;
+	margin: 0;
 }
 
 .tl::before {
@@ -386,22 +417,30 @@
 	border-color: var(--line-strong);
 }
 
-.row {
+.row,
+.card > summary {
 	width: 100%;
 	text-align: left;
 	background: none;
 	border: 0;
 	font: inherit;
 	color: inherit;
-	cursor: pointer;
 	display: flex;
 	gap: 14px;
 	align-items: flex-start;
 	padding: 15px 16px;
 }
 
-.row:disabled {
-	cursor: default;
+/* The expandable header is a <summary>; make it the click target. The jiffies
+   accordion supplies the disclosure chevron via summary::after and rotates it
+   when open, so this page renders no chevron of its own. */
+.card > summary {
+	cursor: pointer;
+	list-style: none;
+}
+
+.card > summary::-webkit-details-marker {
+	display: none;
 }
 
 .row-main {
@@ -461,25 +500,6 @@
 	margin-top: 3px;
 }
 
-.chev {
-	flex: none;
-	align-self: center;
-	color: var(--muted);
-	transition: transform 0.25s ease;
-}
-
-.chev svg {
-	width: 16px;
-	height: 16px;
-	stroke: currentColor;
-	fill: none;
-	stroke-width: 1.8;
-}
-
-.item.open .chev {
-	transform: rotate(90deg);
-}
-
 .badge {
 	font-size: 10px;
 	letter-spacing: 0.12em;
@@ -504,14 +524,10 @@
 }
 
 /* ---------- Detail (progressive) ---------- */
+/* The native <details> hides this body when closed; styling only the open
+   appearance keeps the disclosure working with no JS. */
 .detail {
-	display: none;
 	border-top: 1px solid var(--line);
-	padding: 0 16px;
-}
-
-.item.open .detail {
-	display: block;
 	padding: 14px 16px 16px;
 	animation: fade 0.35s ease;
 }

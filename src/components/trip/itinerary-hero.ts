@@ -1,4 +1,4 @@
-import { div, h1, p } from "@davidsouther/jiffies/dom/html.ts";
+import { a, div, h1, p } from "@davidsouther/jiffies/dom/html.ts";
 import { initials, rangeLabel } from "../../lib/itinerary-helpers.ts";
 import type { Itinerary } from "../../lib/trip-itinerary";
 import { WikiPhoto } from "./wiki-photo.ts";
@@ -27,7 +27,9 @@ export function ItineraryHero(
 						{ class: "hero-dates" },
 						start && end ? rangeLabel(start, end) : "",
 					),
-					trip.traveler ? div({ class: "hero-traveler" }, trip.traveler) : null,
+					trip.traveler
+						? div({ class: "hero-traveler" }, a({ href: "/" }, trip.traveler))
+						: null,
 				),
 			),
 			trip.notes ? div({ class: "hero-note" }, trip.notes) : null,
