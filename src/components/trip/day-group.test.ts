@@ -2,7 +2,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import type { ItineraryItem } from "../../lib/itinerary-helpers.ts";
 import type { Hotel } from "../../lib/trip-itinerary";
-import { mount, resetDom } from "../test-dom.ts";
+import { emptyWiki, mount, resetDom } from "../test-dom.ts";
 import { DayGroup } from "./day-group.ts";
 
 afterEach(resetDom);
@@ -21,18 +21,19 @@ function transferItem(): ItineraryItem {
 describe("DayGroup timeline list", () => {
 	it("renders the timeline as an ordered list, not a div", () => {
 		const container = mount(
-			DayGroup("2026-07-12", [transferItem()], null, undefined),
+			DayGroup("2026-07-12", [transferItem()], null, undefined, emptyWiki()),
 		);
 
-		expect(container.querySelector("div.tl")).toBeNull();
-		expect(container.querySelector("ol.tl")).not.toBeNull();
+		// The timeline is the Panel body's ordered list (section > main > ol),
+		// identified by shape — no `.tl` class.
+		expect(container.querySelector("section > main > ol")).not.toBeNull();
 	});
 
 	it("renders each timeline entry as a list item", () => {
 		const container = mount(
-			DayGroup("2026-07-12", [transferItem()], null, undefined),
+			DayGroup("2026-07-12", [transferItem()], null, undefined, emptyWiki()),
 		);
 
-		expect(container.querySelectorAll("ol.tl > li.item")).toHaveLength(1);
+		expect(container.querySelectorAll("ol > li")).toHaveLength(1);
 	});
 });

@@ -1,7 +1,7 @@
-import { div, span } from "@davidsouther/jiffies/dom/html.ts";
+import { small, strong } from "@davidsouther/jiffies/dom/html.ts";
 import { type ItineraryItem, mapsDir } from "../../../lib/itinerary-helpers.ts";
 import { TimelineItem } from "../timeline-item.ts";
-import { BtnLink } from "./btn-link.ts";
+import { Actions, BtnLink } from "./btn-link.ts";
 
 type TransferItemData = Extract<ItineraryItem, { kind: "transfer" }>;
 
@@ -11,12 +11,8 @@ export function TransferItem(item: TransferItemData): HTMLElement {
 	const place = td.city ?? td.airport;
 
 	const row = [
-		span(
-			{ class: "title" },
-			td.dir === "in" ? "Arrival transfer" : "Departure transfer",
-		),
-		span(
-			{ class: "sub" },
+		strong(td.dir === "in" ? "Arrival transfer" : "Departure transfer"),
+		small(
 			td.dir === "in"
 				? `${td.airport}  →  ${place}`
 				: `${place}  →  ${td.airport}`,
@@ -28,13 +24,12 @@ export function TransferItem(item: TransferItemData): HTMLElement {
 	const dest = td.dir === "in" ? place : ap;
 
 	const detail = [
-		div({ class: "skel" }, "Suggested transfer — not booked."),
-		div(
-			{ class: "links" },
+		small("Suggested transfer — not booked."),
+		Actions(
 			BtnLink(mapsDir(origin, dest, "driving"), "car", "Car · Maps"),
 			BtnLink(mapsDir(origin, dest, "transit"), "pin", "Public transit"),
 		),
 	];
 
-	return TimelineItem("car", true, undefined, row, detail);
+	return TimelineItem({ icon: "car", row }, ...detail);
 }

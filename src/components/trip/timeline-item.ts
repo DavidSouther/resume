@@ -1,50 +1,34 @@
-import { Accordion } from "@davidsouther/jiffies/components/index.ts";
+import { toChildren } from "@davidsouther/jiffies/components/children.ts";
+import { Accordion, Panel } from "@davidsouther/jiffies/components/index.ts";
 import type { DenormChildren } from "@davidsouther/jiffies/dom/dom.ts";
-import { div, li, span } from "@davidsouther/jiffies/dom/html.ts";
+import { li } from "@davidsouther/jiffies/dom/html.ts";
 import { SvgIcon } from "./icons.ts";
 
-// (icon, expandable, isToBook, row, children) — positional from the original
-// prop object. Expandable items render as a native <details>/<summary>
-// disclosure (the jiffies Accordion) so they open with no client JS;
-// non-expandable items are a plain, static row.
+// A timeline entry. The icon + `row` form the item's summary; `children` are the
+// disclosed detail. Expandable items are a native <details> disclosure (the
+// jiffies Accordion) that opens with no client JS; non-expandable items are a
+// flat panel (jiffies Panel) with no body. Status (e.g. "To book") is carried by
+// a <mark> inside the row, not by a card-level class.
+//
+// `row` is a singular slot in the attrs object (like Accordion's `summary`),
+// per the jiffies component API: attrs object with named slots, then a flat
+// list of body children.
 export function TimelineItem(
-	icon: string,
-	expandable: boolean,
-	isToBook: boolean | undefined,
-	row: DenormChildren | DenormChildren[],
-	children?: DenormChildren | DenormChildren[],
+	{
+		icon,
+		expandable = true,
+		row,
+	}: {
+		icon: string;
+		expandable?: boolean;
+		row: DenormChildren | DenormChildren[];
+	},
+	...children: DenormChildren[]
 ): HTMLElement {
-	const cardClass = ["card", isToBook ? "tobook" : ""]
-		.filter(Boolean)
-		.join(" ");
-
-	const rowChildren: DenormChildren[] = Array.isArray(row) ? row : [row];
-	const detailChildren: DenormChildren[] = Array.isArray(children)
-		? children
-		: children
-			? [children]
-			: [];
-
-	const node = span({ class: "node" }, SvgIcon(icon));
-	const rowMain = span({ class: "row-main" }, ...rowChildren);
+	const summary: DenormChildren[] = [SvgIcon(icon), ...toChildren(row)];
 
 	if (!expandable) {
-		return li(
-			{ class: "item" },
-			div({ class: cardClass }, div({ class: "row" }, node, rowMain)),
-		);
+		return li(Panel({}, ...summary));
 	}
-
-	return li(
-		{ class: "item" },
-		Accordion(
-			{
-				class: cardClass,
-				// The jiffies accordion renders the disclosure chevron itself
-				// (summary::after); no chevron child is needed here.
-				summary: [node, rowMain],
-			},
-			div({ class: "detail" }, ...detailChildren),
-		),
-	);
+	return li(Accordion({ summary }, ...children));
 }

@@ -5,12 +5,18 @@ import { cwd } from "node:process";
 import { parse as parseYaml } from "yaml";
 import type { TripEnrichment } from "./trip-enrichment";
 import type { Itinerary } from "./trip-itinerary";
+import {
+	buildWikiData,
+	emptyWikiData,
+	type WikiCache,
+	type WikiData,
+} from "./wiki-cache.ts";
 
 export type BookingStatus = "confirmed" | "to_book";
 
 export type DateTimeWithTz = {
-	datetime: string;
-	timezone: string;
+	datetime?: string;
+	timezone?: string;
 };
 
 export type Trip = {
@@ -53,6 +59,7 @@ export async function getSortedTrips(): Promise<Trip[]> {
 export async function getTripItinerary(id: string): Promise<{
 	itinerary: Itinerary;
 	enrichment: TripEnrichment | undefined;
+	wiki: WikiData;
 }> {
 	const raw = await readFile(
 		join(cwd(), "trips", id, "itinerary.yaml"),
@@ -69,5 +76,19 @@ export async function getTripItinerary(id: string): Promise<{
 	} catch {
 		enrichment = undefined;
 	}
-	return { itinerary, enrichment };
+	// The wiki cache is best-effort, mirroring enrichment: a missing or
+	// unparseable file yields an empty lookup so `wiki` is always present and
+	// callers never null-check the lookup itself.
+	let wiki: WikiData = emptyWikiData();
+	try {
+		const cacheRaw = readFileSync(
+			join(cwd(), "trips", id, "wiki-cache.json"),
+			"utf-8",
+		);
+		const cache = JSON.parse(cacheRaw) as WikiCache;
+		wiki = buildWikiData(cache.entries ?? {});
+	} catch {
+		wiki = emptyWikiData();
+	}
+	return { itinerary, enrichment, wiki };
 }

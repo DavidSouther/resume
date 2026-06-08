@@ -51,9 +51,7 @@ export type GroundTransportationType =
 	| "train"
 	| "shuttle";
 
-type TransportStop = {
-	datetime?: string;
-	timezone?: string;
+type TransportStop = DateTimeWithTz & {
 	location: string;
 };
 
@@ -79,7 +77,7 @@ export type TripEvent = {
 	title: string;
 	category?: EventCategory;
 	start: DateTimeWithTz;
-	end?: { datetime?: string; timezone?: string };
+	end?: DateTimeWithTz;
 	location?: string;
 	notes?: string;
 };

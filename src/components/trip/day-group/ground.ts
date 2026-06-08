@@ -1,11 +1,7 @@
-import { span } from "@davidsouther/jiffies/dom/html.ts";
-import {
-	formatClock,
-	type ItineraryItem,
-	parseDateTime,
-	timezoneAbbreviation,
-} from "../../../lib/itinerary-helpers.ts";
+import { mark, small, span, strong } from "@davidsouther/jiffies/dom/html.ts";
+import type { ItineraryItem } from "../../../lib/itinerary-helpers.ts";
 import { TimelineItem } from "../timeline-item.ts";
+import { Clock } from "./clock.ts";
 import { Fact, Facts } from "./fact.ts";
 
 type GroundItemData = Extract<ItineraryItem, { kind: "ground" }>;
@@ -17,7 +13,6 @@ function capitalize(input: string): string {
 // (item) — positional from the original prop object.
 export function GroundItem(item: GroundItemData): HTMLElement {
 	const ground = item.data;
-	const pickupDateTime = parseDateTime(ground.pickup?.datetime);
 	const from = ground.pickup?.location;
 	const to = ground.dropoff?.location;
 	const isFerry = /ferry|boat/i.test(
@@ -25,36 +20,25 @@ export function GroundItem(item: GroundItemData): HTMLElement {
 	);
 
 	const row = [
-		pickupDateTime
-			? span(
-					{ class: "timeline-times" },
-					span(
-						`${formatClock(pickupDateTime.hours, pickupDateTime.minutes)} ${timezoneAbbreviation(pickupDateTime.date, ground.pickup?.timezone)}`,
-					),
-				)
-			: null,
+		Clock(ground.pickup),
 		span(
-			{ class: "title" },
-			capitalize(ground.type ?? "Transfer"),
-			ground.status === "to_book"
-				? span({ class: "badge book" }, "To book")
-				: null,
+			strong(capitalize(ground.type ?? "Transfer")),
+			ground.status === "to_book" ? mark("To book") : null,
 		),
-		from || to
-			? span({ class: "sub" }, [from, to].filter(Boolean).join("  →  "))
-			: null,
+		from || to ? small([from, to].filter(Boolean).join("  →  ")) : null,
 	];
 
-	const detail = Facts([
+	const detail = Facts(
 		ground.provider ? Fact("Booked via", ground.provider) : null,
 		ground.notes ? Fact("Note", ground.notes) : null,
-	]);
+	);
 
 	return TimelineItem(
-		isFerry ? "boat" : "car",
-		!!(ground.notes || ground.provider),
-		ground.status === "to_book",
-		row,
+		{
+			icon: isFerry ? "boat" : "car",
+			expandable: !!(ground.notes || ground.provider),
+			row,
+		},
 		detail,
 	);
 }

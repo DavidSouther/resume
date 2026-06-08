@@ -17,14 +17,12 @@ export const ICON: Record<string, string> = {
 		'<path d="M5 4h3l1.5 4-2 1.5a11 11 0 0 0 5 5l1.5-2 4 1.5V19a2 2 0 0 1-2 2A16 16 0 0 1 4 6a2 2 0 0 1 1-2z"/>',
 };
 
-// (name, className?) — positional from the original prop object.
-export function SvgIcon(name: string, className?: string): Element {
+// An inline glyph. Icons carry their own intrinsic size (width/height) so a bare
+// <svg> in flow does not balloon to fill its flex parent — there is no longer a
+// `.node` wrapper rule to size it.
+export function SvgIcon(name: string): Element {
 	const content = ICON[name] ?? "";
-	const el = svg(
-		className
-			? { viewBox: "0 0 24 24", class: className }
-			: { viewBox: "0 0 24 24" },
-	);
+	const el = svg({ viewBox: "0 0 24 24", width: "24", height: "24" });
 	el.innerHTML = content;
 	return el;
 }

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from "vitest";
 import type { Itinerary } from "../../lib/trip-itinerary";
-import { mount, resetDom } from "../test-dom.ts";
+import { emptyWiki, mount, resetDom } from "../test-dom.ts";
 import { renderTripPage } from "./trip-page.ts";
 
 afterEach(resetDom);
@@ -23,23 +23,30 @@ function itinerary(): Itinerary {
 
 describe("renderTripPage hero", () => {
 	it("renders the hero in the page <header>, not in <main>", () => {
-		const container = mount(renderTripPage(itinerary(), undefined));
+		const container = mount(
+			renderTripPage(itinerary(), undefined, emptyWiki()),
+		);
 
+		// The hero is the trip title (h1); it lives in the Card header, not main.
 		expect(
-			container.querySelector("article.TripPage > header .hero"),
+			container.querySelector("article.TripPage > header h1"),
 		).not.toBeNull();
-		expect(container.querySelector("article.TripPage > main .hero")).toBeNull();
+		expect(container.querySelector("article.TripPage > main h1")).toBeNull();
 	});
 
 	it("keeps the trip title as the hero heading", () => {
-		const container = mount(renderTripPage(itinerary(), undefined));
+		const container = mount(
+			renderTripPage(itinerary(), undefined, emptyWiki()),
+		);
 
 		const header = container.querySelector("article.TripPage > header");
 		expect(header?.querySelector("h1")?.textContent).toBe("Test Trip");
 	});
 
 	it("preserves a home link to / in the header", () => {
-		const container = mount(renderTripPage(itinerary(), undefined));
+		const container = mount(
+			renderTripPage(itinerary(), undefined, emptyWiki()),
+		);
 
 		const header = container.querySelector("article.TripPage > header");
 		expect(header?.querySelector('a[href="/"]')).not.toBeNull();

@@ -1,47 +1,38 @@
-import { div, p, span } from "@davidsouther/jiffies/dom/html.ts";
+import { mark, p, span, strong } from "@davidsouther/jiffies/dom/html.ts";
 import {
 	braveSearch,
-	formatClock,
 	type ItineraryItem,
-	parseDateTime,
-	timezoneAbbreviation,
 } from "../../../lib/itinerary-helpers.ts";
 import type { TripEnrichment } from "../../../lib/trip-enrichment";
+import type { WikiData } from "../../../lib/wiki-cache.ts";
 import { TimelineItem } from "../timeline-item.ts";
 import { WikiCard } from "../wiki-card.ts";
-import { BtnLink } from "./btn-link.ts";
+import { Actions, BtnLink } from "./btn-link.ts";
+import { Clock } from "./clock.ts";
 import { Fact, Facts } from "./fact.ts";
 
 type EventItemData = Extract<ItineraryItem, { kind: "event" }>;
 
-// (item, enrichment) — positional from the original prop object.
+// (item, enrichment, wiki) — EventItem owns its destination/page-card title
+// fallback chain, so it takes the WikiData lookup (not a resolved summary) and
+// resolves its own title.
 export function EventItem(
 	item: EventItemData,
 	enrichment: TripEnrichment | undefined,
+	wiki: WikiData,
 ): HTMLElement {
 	const tripEvent = item.data;
-	const startDateTime = parseDateTime(tripEvent.start?.datetime);
 	const isMeal = /meal|dinner|lunch|restaurant/i.test(
 		(tripEvent.category ?? "") + (tripEvent.title ?? ""),
 	);
 
 	const row = [
-		startDateTime
-			? span(
-					{ class: "timeline-times" },
-					span(
-						`${formatClock(startDateTime.hours, startDateTime.minutes)} ${timezoneAbbreviation(startDateTime.date, tripEvent.start?.timezone)}`,
-					),
-				)
-			: null,
+		Clock(tripEvent.start),
 		span(
-			{ class: "title" },
-			tripEvent.title ?? "",
-			tripEvent.status === "to_book"
-				? span({ class: "badge book" }, "To book")
-				: null,
+			strong(tripEvent.title ?? ""),
+			tripEvent.status === "to_book" && mark("To book"),
 		),
-		tripEvent.location ? span({ class: "sub" }, tripEvent.location) : null,
+		tripEvent.location && span(tripEvent.location),
 	];
 
 	const activity = enrichment?.activities?.find(
@@ -75,13 +66,12 @@ export function EventItem(
 		.join(" ");
 
 	const detail = [
-		Facts([
+		Facts(
 			tripEvent.location ? Fact("Location", tripEvent.location) : null,
 			tripEvent.notes ? Fact("Note", tripEvent.notes) : null,
-		]),
-		activity?.blurb ? p({ class: "blurb" }, activity.blurb.trim()) : null,
-		div(
-			{ class: "links" },
+		),
+		activity?.blurb ? p(activity.blurb.trim()) : null,
+		Actions(
 			activity?.official_url
 				? BtnLink(activity.official_url, "ext", "Details")
 				: null,
@@ -91,15 +81,12 @@ export function EventItem(
 				tripEvent.status === "to_book" ? "Search to book" : "Search",
 			),
 		),
-		activity?.tips ? div({ class: "tips" }, activity.tips) : null,
-		wikiTitle ? WikiCard(wikiTitle) : null,
+		activity?.tips && p(activity.tips),
+		(() => {
+			const summary = wiki.get(wikiTitle);
+			return summary ? WikiCard({ summary }) : null;
+		})(),
 	];
 
-	return TimelineItem(
-		isMeal ? "fork" : "compass",
-		true,
-		tripEvent.status === "to_book",
-		row,
-		detail,
-	);
+	return TimelineItem({ icon: isMeal ? "fork" : "compass", row }, ...detail);
 }

@@ -1,38 +1,26 @@
-import { a, div, h1, p } from "@davidsouther/jiffies/dom/html.ts";
+import { a, aside, div, h1, p } from "@davidsouther/jiffies/dom/html.ts";
 import { initials, rangeLabel } from "../../lib/itinerary-helpers.ts";
 import type { Itinerary } from "../../lib/trip-itinerary";
+import type { WikiSummary } from "../../lib/wiki-cache.ts";
 import { WikiPhoto } from "./wiki-photo.ts";
 
-// (itinerary, wikiTitle) — positional from the original prop object.
+// (itinerary, wikiSummary) — the hero image is informative (a real photo of the
+// place), so it gets a meaningful alt: the trip title.
 export function ItineraryHero(
 	itinerary: Itinerary,
-	wikiTitle?: string,
+	wikiSummary?: WikiSummary,
 ): HTMLElement {
 	const { trip } = itinerary;
 	const start = String(trip.start_date);
 	const end = String(trip.end_date);
 
 	return div(
-		{ class: "hero" },
-		wikiTitle ? WikiPhoto(wikiTitle) : null,
-		div(
-			{ class: "hero-inner" },
-			p({ class: "kicker" }, "Itinerary"),
-			h1(trip.title),
-			div(
-				{ class: "hero-meta" },
-				div({ class: "avatar" }, initials(trip.traveler)),
-				div(
-					div(
-						{ class: "hero-dates" },
-						start && end ? rangeLabel(start, end) : "",
-					),
-					trip.traveler
-						? div({ class: "hero-traveler" }, a({ href: "/" }, trip.traveler))
-						: null,
-				),
-			),
-			trip.notes ? div({ class: "hero-note" }, trip.notes) : null,
-		),
+		WikiPhoto({ summary: wikiSummary, alt: trip.title }),
+		p("Itinerary"),
+		h1(trip.title),
+		aside(initials(trip.traveler)),
+		div(start && end ? rangeLabel(start, end) : ""),
+		trip.traveler ? a({ href: "/" }, trip.traveler) : null,
+		trip.notes ? div(trip.notes) : null,
 	);
 }

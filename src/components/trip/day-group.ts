@@ -1,4 +1,5 @@
-import { div, i, ol, span } from "@davidsouther/jiffies/dom/html.ts";
+import { Panel } from "@davidsouther/jiffies/components/card.ts";
+import { i, ol, p, time } from "@davidsouther/jiffies/dom/html.ts";
 import {
 	dayOfWeekName,
 	IATA,
@@ -7,6 +8,7 @@ import {
 } from "../../lib/itinerary-helpers.ts";
 import type { TripEnrichment } from "../../lib/trip-enrichment";
 import type { Flight, Hotel } from "../../lib/trip-itinerary";
+import type { WikiData } from "../../lib/wiki-cache.ts";
 import { EventItem } from "./day-group/event.ts";
 import { FlightItem } from "./day-group/flight.ts";
 import { GroundItem } from "./day-group/ground.ts";
@@ -17,6 +19,7 @@ import { SvgIcon } from "./icons.ts";
 function renderItem(
 	item: ItineraryItem,
 	enrichment: TripEnrichment | undefined,
+	wiki: WikiData,
 ): HTMLElement | undefined {
 	switch (item.kind) {
 		case "flight":
@@ -29,16 +32,18 @@ function renderItem(
 		case "transfer":
 			return TransferItem(item);
 		case "event":
-			return EventItem(item, enrichment);
+			return EventItem(item, enrichment, wiki);
 	}
 }
 
-// (date, items, on, enrichment) — positional from the original prop object.
+// (date, items, on, enrichment, wiki) — wiki threads to EventItem; other item
+// kinds ignore it.
 export function DayGroup(
 	date: string,
 	items: ItineraryItem[],
 	on: Hotel | Flight | null,
 	enrichment: TripEnrichment | undefined,
+	wiki: WikiData,
 ): HTMLElement {
 	const overnightLabel =
 		on == null
@@ -47,16 +52,14 @@ export function DayGroup(
 				? on.name
 				: `Overnight flight${on.destination?.airport && IATA[on.destination.airport] ? ` to ${IATA[on.destination.airport]}` : ""}`;
 
-	return div(
-		{ class: "day" },
-		div(
-			{ class: "day-head" },
-			span({ class: "day-dow" }, dayOfWeekName(date)),
-			span({ class: "day-date" }, prettyDate(date)),
-		),
-		ol({ class: "tl" }, ...items.map((item) => renderItem(item, enrichment))),
-		overnightLabel
-			? div({ class: "moon" }, SvgIcon("moon"), span(i(overnightLabel)))
-			: null,
+	return Panel(
+		{
+			header: time(
+				{ dateTime: date },
+				`${dayOfWeekName(date)} ${prettyDate(date)}`,
+			),
+			footer: overnightLabel && p(SvgIcon("moon"), i(overnightLabel)),
+		},
+		ol(...items.map((item) => renderItem(item, enrichment, wiki))),
 	);
 }

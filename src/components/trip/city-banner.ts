@@ -1,15 +1,15 @@
-import { div, h2 } from "@davidsouther/jiffies/dom/html.ts";
+import { div, h2, p, small } from "@davidsouther/jiffies/dom/html.ts";
+import type { WikiSummary } from "../../lib/wiki-cache.ts";
 import { WikiPhoto } from "./wiki-photo.ts";
 
-// (city, wikiTitle) — positional from the original prop object.
-export function CityBanner(city: string, wikiTitle?: string): HTMLElement {
+// (city, wikiSummary) — the banner background sits behind a heading, so it is
+// decorative: alt="".
+export function CityBanner(
+	city: string,
+	wikiSummary?: WikiSummary,
+): HTMLElement {
 	return div(
-		{ class: "city-banner" },
-		wikiTitle ? WikiPhoto(wikiTitle) : null,
-		div(
-			{ class: "city-banner-inner" },
-			div({ class: "eyebrow" }, "Next stop"),
-			h2(city),
-		),
+		WikiPhoto({ summary: wikiSummary, alt: "" }),
+		div(p(small("Next stop")), h2(city)),
 	);
 }

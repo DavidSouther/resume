@@ -1,4 +1,10 @@
-import { div, p, span } from "@davidsouther/jiffies/dom/html.ts";
+import {
+	mark,
+	p,
+	small,
+	span,
+	strong,
+} from "@davidsouther/jiffies/dom/html.ts";
 import {
 	formatTimeString,
 	type ItineraryItem,
@@ -6,7 +12,7 @@ import {
 } from "../../../lib/itinerary-helpers.ts";
 import type { TripEnrichment } from "../../../lib/trip-enrichment";
 import { TimelineItem } from "../timeline-item.ts";
-import { BtnLink } from "./btn-link.ts";
+import { Actions, BtnLink } from "./btn-link.ts";
 import { Fact, Facts } from "./fact.ts";
 
 type HotelItemData = Extract<ItineraryItem, { kind: "hotel-in" | "hotel-out" }>;
@@ -22,22 +28,16 @@ export function HotelItem(
 
 	const row = [
 		span(
-			{ class: "timeline-times" },
-			span(
-				`${isIn ? "Check-in" : "Check-out"}${
-					time ? ` ${isIn ? "after" : "by"} ${formatTimeString(time)}` : ""
-				}`,
-			),
+			`${isIn ? "Check-in" : "Check-out"}${
+				time ? ` ${isIn ? "after" : "by"} ${formatTimeString(time)}` : ""
+			}`,
 		),
 		span(
-			{ class: "title" },
-			hotel.name,
-			hotel.status === "to_book"
-				? span({ class: "badge book" }, "To book")
-				: null,
+			strong(hotel.name),
+			hotel.status === "to_book" ? mark("To book") : null,
 		),
 		hotel.room_type || hotel.brand
-			? span({ class: "sub" }, hotel.room_type ?? hotel.brand ?? "")
+			? small(hotel.room_type ?? hotel.brand ?? "")
 			: null,
 	];
 
@@ -51,7 +51,7 @@ export function HotelItem(
 		)?.city ?? hotel.name.split(/\s+[— -]\s+|\s+hotel\s+/i)[0].trim();
 
 	const detail = [
-		Facts([
+		Facts(
 			hotel.confirmation ? Fact("Confirmation", hotel.confirmation) : null,
 			hotel.check_in
 				? Fact(
@@ -67,12 +67,9 @@ export function HotelItem(
 				: null,
 			hotel.room_type ? Fact("Room", hotel.room_type) : null,
 			hotel.notes ? Fact("Note", hotel.notes) : null,
-		]),
-		hotelEnrichment?.blurb
-			? p({ class: "blurb" }, hotelEnrichment.blurb.trim())
-			: null,
-		div(
-			{ class: "links" },
+		),
+		hotelEnrichment?.blurb ? p(hotelEnrichment.blurb.trim()) : null,
+		Actions(
 			hotelEnrichment?.website
 				? BtnLink(hotelEnrichment.website, "ext", "Hotel page")
 				: null,
@@ -100,11 +97,5 @@ export function HotelItem(
 		),
 	];
 
-	return TimelineItem(
-		isIn ? "bed" : "bedout",
-		true,
-		hotel.status === "to_book",
-		row,
-		detail,
-	);
+	return TimelineItem({ icon: isIn ? "bed" : "bedout", row }, ...detail);
 }

@@ -10,6 +10,7 @@ import {
 } from "../../lib/itinerary-helpers.ts";
 import type { TripEnrichment } from "../../lib/trip-enrichment";
 import type { Itinerary } from "../../lib/trip-itinerary";
+import type { WikiData } from "../../lib/wiki-cache.ts";
 import { CityBanner } from "./city-banner.ts";
 import { DayGroup } from "./day-group.ts";
 import { ItineraryHero } from "./itinerary-hero.ts";
@@ -17,6 +18,7 @@ import { ItineraryHero } from "./itinerary-hero.ts";
 export function renderTripPage(
 	itinerary: Itinerary,
 	enrichment: TripEnrichment | undefined,
+	wiki: WikiData,
 ): HTMLElement {
 	const allItems = synthesizeTransfers(itinerary, buildItems(itinerary));
 	const start = String(itinerary.trip.start_date).slice(0, 10);
@@ -44,11 +46,11 @@ export function renderTripPage(
 		const city = dayCity(itinerary, date, enrichment);
 		if (city && city !== lastCity) {
 			const pageCard = enrichment?.page_cards?.find((c) => c.city === city);
-			sections.push(CityBanner(city, pageCard?.wikipedia?.title));
+			sections.push(CityBanner(city, wiki.get(pageCard?.wikipedia?.title)));
 			lastCity = city;
 		}
 
-		sections.push(DayGroup(date, dayItems, on, enrichment));
+		sections.push(DayGroup(date, dayItems, on, enrichment, wiki));
 	}
 
 	const grain = div({ class: "grain" });
@@ -58,11 +60,11 @@ export function renderTripPage(
 	// inside a .wrap so its 760px column and bleed match the day content below.
 	const card = Card(
 		{
-			header: div({ class: "wrap" }, ItineraryHero(itinerary, heroWikiTitle)),
+			class: "TripPage",
+			header: ItineraryHero(itinerary, wiki.get(heroWikiTitle)),
 			footer: a({ href: "../../" }, "Back"),
 		},
 		div({ class: "wrap" }, grain, ...sections),
 	);
-	card.className = "TripPage";
 	return card;
 }
