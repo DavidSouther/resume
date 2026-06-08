@@ -9,20 +9,19 @@ import {
 	nav,
 	p,
 } from "@davidsouther/jiffies/dom/html.ts";
-import type { ResumeData } from "../lib/resume";
-import { AboutMe } from "./resume/about-me.ts";
 
-// The home page shell: a #root container with the AboutMe header, a <main> for
-// page content, and a copyright/source footer. Only the home page uses this;
-// blog and trips pages render their content bare (the SSG owns <html>/<body>).
 export function Layout(
-	resume: ResumeData,
+	{
+		lastUpdate,
+		header: headerChildren,
+		class: clazz,
+	}: { lastUpdate: string; header: DenormChildren[]; class?: string },
 	...children: DenormChildren[]
 ): HTMLElement {
-	const year = new Date(resume.settings.lastUpdate).getFullYear();
+	const year = new Date(lastUpdate).getFullYear();
 	return div(
-		{ id: "root", class: "root" },
-		header(...AboutMe(resume.aboutMe)),
+		{ id: "root", class: clazz ? `root ${clazz}` : "root" },
+		header(...headerChildren),
 		main(...children),
 		footer(
 			{ class: "no-print" },

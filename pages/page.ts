@@ -1,2 +1,14 @@
-// SSG sentinel for the / route; the page module lives in ./home.ts.
-export { default } from "./home.ts";
+import type { PageModule } from "@davidsouther/jiffies/ssg/ssg.ts";
+import { Home } from "../src/components/home.ts";
+import { tomlLoader } from "../src/lib/loader.ts";
+import { pageHead } from "../src/lib/page-head.ts";
+import { getSortedPosts } from "../src/lib/posts.ts";
+
+export default {
+	head: () => pageHead("David Souther — Resume"),
+	default: async () => {
+		const resume = await tomlLoader();
+		const posts = getSortedPosts();
+		return Home(resume, posts);
+	},
+} satisfies PageModule;

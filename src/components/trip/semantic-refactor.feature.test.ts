@@ -22,7 +22,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { getTripItinerary } from "../../lib/trips.ts";
 import { mount, resetDom } from "../test-dom.ts";
-import { renderTripPage } from "./trip-page.ts";
+import { TripPage } from "./trip-page.ts";
 
 afterEach(resetDom);
 
@@ -30,7 +30,7 @@ describe("trip itinerary markup is semantic", () => {
 	it("renders the whole story as semantic markup", async () => {
 		// Arrange + Act: render the golden `hvar` itinerary (real, shipped data).
 		const { itinerary, enrichment, wiki } = await getTripItinerary("hvar");
-		const container = mount(renderTripPage(itinerary, enrichment, wiki));
+		const container = mount(TripPage({ itinerary, enrichment, wiki }));
 
 		// 1. Facts are a description list: dl > dt + dd, equal non-zero counts.
 		// Assert across ALL dt/dd (not the first dl) so the check does not depend

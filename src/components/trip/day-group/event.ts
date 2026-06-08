@@ -1,4 +1,4 @@
-import { mark, p, span, strong } from "@davidsouther/jiffies/dom/html.ts";
+import { p } from "@davidsouther/jiffies/dom/html.ts";
 import {
 	braveSearch,
 	type ItineraryItem,
@@ -10,6 +10,7 @@ import { WikiCard } from "../wiki-card.ts";
 import { Actions, BtnLink } from "./btn-link.ts";
 import { Clock } from "./clock.ts";
 import { Fact, Facts } from "./fact.ts";
+import { SummaryRow } from "./summary-row.ts";
 
 type EventItemData = Extract<ItineraryItem, { kind: "event" }>;
 
@@ -26,14 +27,12 @@ export function EventItem(
 		(tripEvent.category ?? "") + (tripEvent.title ?? ""),
 	);
 
-	const row = [
-		Clock(tripEvent.start),
-		span(
-			strong(tripEvent.title ?? ""),
-			tripEvent.status === "to_book" && mark("To book"),
-		),
-		tripEvent.location && span(tripEvent.location),
-	];
+	const row = SummaryRow({
+		time: Clock(tripEvent.start),
+		title: tripEvent.title ?? "",
+		toBook: tripEvent.status === "to_book",
+		subtitle: tripEvent.location,
+	});
 
 	const activity = enrichment?.activities?.find(
 		(a) => a.event === tripEvent.title,

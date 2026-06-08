@@ -1,8 +1,8 @@
-import { mark, small, span, strong } from "@davidsouther/jiffies/dom/html.ts";
 import type { ItineraryItem } from "../../../lib/itinerary-helpers.ts";
 import { TimelineItem } from "../timeline-item.ts";
 import { Clock } from "./clock.ts";
 import { Fact, Facts } from "./fact.ts";
+import { SummaryRow } from "./summary-row.ts";
 
 type GroundItemData = Extract<ItineraryItem, { kind: "ground" }>;
 
@@ -19,14 +19,12 @@ export function GroundItem(item: GroundItemData): HTMLElement {
 		(ground.notes ?? "") + (ground.type ?? ""),
 	);
 
-	const row = [
-		Clock(ground.pickup),
-		span(
-			strong(capitalize(ground.type ?? "Transfer")),
-			ground.status === "to_book" ? mark("To book") : null,
-		),
-		from || to ? small([from, to].filter(Boolean).join("  →  ")) : null,
-	];
+	const row = SummaryRow({
+		time: Clock(ground.pickup),
+		title: capitalize(ground.type ?? "Transfer"),
+		toBook: ground.status === "to_book",
+		subtitle: from || to ? [from, to].filter(Boolean).join("  →  ") : null,
+	});
 
 	const detail = Facts(
 		ground.provider ? Fact("Booked via", ground.provider) : null,

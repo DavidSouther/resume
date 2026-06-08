@@ -10,7 +10,9 @@ jefri-jiffies-*.tgz
 *.tsbuildinfo
 
 .agents
+.superpowers/
 
 # Build artifacts generated into public/ by `npm run build`
 public/global.css
 public/sitemap.xml
+.playwright-cli/

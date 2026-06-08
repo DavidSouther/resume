@@ -5,8 +5,11 @@ const GA_MEASUREMENT_ID = "G-6X1Z1L95D8";
 
 // Picks one of the four named themes by the current millisecond, before first
 // paint, so there is no flash of the fallback theme. textContent (not src)
-// because it must run synchronously inline.
-const THEME_PICKER = `(()=>{const t=["rust","teal","indigo","nominal"];document.documentElement.dataset.theme=t[Date.now()%t.length];})()`;
+// because it must run synchronously inline. Guarded: a page that pre-declares a
+// theme on <html> (the SSG htmlAttributes hook, e.g. the trips itinerary's
+// data-theme="itinerary") keeps it — the random rotation only fills in when no
+// theme is already set, so a pinned identity is never clobbered at first paint.
+const THEME_PICKER = `(()=>{const r=document.documentElement;if(r.dataset.theme)return;const t=["rust","teal","indigo","nominal"];r.dataset.theme=t[Date.now()%t.length];})()`;
 
 // Standard GA4 gtag bootstrap, paired with the async loader script below.
 const GA_INIT = `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_MEASUREMENT_ID}');`;

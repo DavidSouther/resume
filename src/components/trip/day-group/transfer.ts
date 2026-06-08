@@ -1,7 +1,8 @@
-import { small, strong } from "@davidsouther/jiffies/dom/html.ts";
+import { small } from "@davidsouther/jiffies/dom/html.ts";
 import { type ItineraryItem, mapsDir } from "../../../lib/itinerary-helpers.ts";
 import { TimelineItem } from "../timeline-item.ts";
 import { Actions, BtnLink } from "./btn-link.ts";
+import { SummaryRow } from "./summary-row.ts";
 
 type TransferItemData = Extract<ItineraryItem, { kind: "transfer" }>;
 
@@ -10,14 +11,13 @@ export function TransferItem(item: TransferItemData): HTMLElement {
 	const td = item.data;
 	const place = td.city ?? td.airport;
 
-	const row = [
-		strong(td.dir === "in" ? "Arrival transfer" : "Departure transfer"),
-		small(
+	const row = SummaryRow({
+		title: td.dir === "in" ? "Arrival transfer" : "Departure transfer",
+		subtitle:
 			td.dir === "in"
 				? `${td.airport}  →  ${place}`
 				: `${place}  →  ${td.airport}`,
-		),
-	];
+	});
 
 	const ap = `${td.airport} Airport`;
 	const origin = td.dir === "in" ? ap : place;

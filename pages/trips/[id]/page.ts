@@ -1,9 +1,13 @@
 import type { PageModule } from "@davidsouther/jiffies/ssg/ssg.ts";
-import { renderTripPage } from "../../../src/components/trip/trip-page.ts";
+import { TripPage } from "../../../src/components/trip/trip-page.ts";
 import { pageHead } from "../../../src/lib/page-head.ts";
 import { getTripItinerary, getTripPaths } from "../../../src/lib/trips.ts";
 
 export default {
+	// The trips detail root is uncontested (no site theme, no theme picker), so
+	// declaring the theme on <html> is safe and is the mechanism that lets the M3
+	// roles re-derive from the bronze seed on :root (jiffies ssg htmlAttributes hook).
+	htmlAttributes: { "data-theme": "itinerary" },
 	generateStaticParams: async () => getTripPaths().map((id) => ({ id })),
 	head: async (params) => {
 		const { itinerary } = await getTripItinerary(params?.id ?? "");
@@ -13,6 +17,6 @@ export default {
 		const { itinerary, enrichment, wiki } = await getTripItinerary(
 			params?.id ?? "",
 		);
-		return renderTripPage(itinerary, enrichment, wiki);
+		return TripPage({ itinerary, enrichment, wiki });
 	},
 } satisfies PageModule;

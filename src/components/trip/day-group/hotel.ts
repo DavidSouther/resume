@@ -1,10 +1,4 @@
-import {
-	mark,
-	p,
-	small,
-	span,
-	strong,
-} from "@davidsouther/jiffies/dom/html.ts";
+import { p, time } from "@davidsouther/jiffies/dom/html.ts";
 import {
 	formatTimeString,
 	type ItineraryItem,
@@ -14,6 +8,7 @@ import type { TripEnrichment } from "../../../lib/trip-enrichment";
 import { TimelineItem } from "../timeline-item.ts";
 import { Actions, BtnLink } from "./btn-link.ts";
 import { Fact, Facts } from "./fact.ts";
+import { SummaryRow } from "./summary-row.ts";
 
 type HotelItemData = Extract<ItineraryItem, { kind: "hotel-in" | "hotel-out" }>;
 
@@ -24,22 +19,19 @@ export function HotelItem(
 ): HTMLElement {
 	const hotel = item.data;
 	const isIn = item.kind === "hotel-in";
-	const time = isIn ? hotel.check_in?.after_time : hotel.check_out?.before_time;
+	const checkTime = isIn
+		? hotel.check_in?.after_time
+		: hotel.check_out?.before_time;
+	const checkLabel = isIn ? "Check-in" : "Check-out";
 
-	const row = [
-		span(
-			`${isIn ? "Check-in" : "Check-out"}${
-				time ? ` ${isIn ? "after" : "by"} ${formatTimeString(time)}` : ""
-			}`,
-		),
-		span(
-			strong(hotel.name),
-			hotel.status === "to_book" ? mark("To book") : null,
-		),
-		hotel.room_type || hotel.brand
-			? small(hotel.room_type ?? hotel.brand ?? "")
-			: null,
-	];
+	const row = SummaryRow({
+		time: checkTime ? time(formatTimeString(checkTime)) : null,
+		title: hotel.name,
+		toBook: hotel.status === "to_book",
+		subtitle: [checkLabel, hotel.room_type ?? hotel.brand]
+			.filter(Boolean)
+			.join("  ·  "),
+	});
 
 	const hotelEnrichment = enrichment?.hotels?.find(
 		(enrichedHotel) => enrichedHotel.hotel === hotel.name,

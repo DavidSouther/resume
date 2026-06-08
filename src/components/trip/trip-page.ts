@@ -1,5 +1,3 @@
-import { Card } from "@davidsouther/jiffies/components/index.ts";
-import { a } from "@davidsouther/jiffies/dom/html.ts";
 import {
 	buildItems,
 	dateKeyRange,
@@ -11,15 +9,20 @@ import {
 import type { TripEnrichment } from "../../lib/trip-enrichment";
 import type { Itinerary } from "../../lib/trip-itinerary";
 import type { WikiData } from "../../lib/wiki-cache.ts";
+import { Layout } from "../layout.ts";
 import { CityBanner } from "./city-banner.ts";
 import { DayGroup } from "./day-group.ts";
 import { ItineraryHero } from "./itinerary-hero.ts";
 
-export function renderTripPage(
-	itinerary: Itinerary,
-	enrichment: TripEnrichment | undefined,
-	wiki: WikiData,
-): HTMLElement {
+export function TripPage({
+	itinerary,
+	enrichment,
+	wiki,
+}: {
+	itinerary: Itinerary;
+	enrichment?: TripEnrichment;
+	wiki: WikiData;
+}): HTMLElement {
 	const allItems = synthesizeTransfers(itinerary, buildItems(itinerary));
 	const start = String(itinerary.trip.start_date).slice(0, 10);
 	const end = String(itinerary.trip.end_date).slice(0, 10);
@@ -53,15 +56,12 @@ export function renderTripPage(
 		sections.push(DayGroup(date, dayItems, on, enrichment, wiki));
 	}
 
-	// The hero is the page header: render it in the Card's <header> slot, still
-	// inside a .wrap so its 760px column and bleed match the day content below.
-	const card = Card(
+	return Layout(
 		{
 			class: "TripPage",
-			header: ItineraryHero(itinerary, wiki.get(heroWikiTitle)),
-			footer: a({ href: "../../" }, "Back"),
+			header: [ItineraryHero(itinerary, wiki.get(heroWikiTitle))],
+			lastUpdate: Date.now().toString(),
 		},
 		...sections,
 	);
-	return card;
 }

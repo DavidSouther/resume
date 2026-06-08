@@ -25,7 +25,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { getTripItinerary } from "../../lib/trips.ts";
 import { mount, resetDom } from "../test-dom.ts";
-import { renderTripPage } from "./trip-page.ts";
+import { TripPage } from "./trip-page.ts";
 
 afterEach(resetDom);
 
@@ -36,7 +36,7 @@ describe("trip itinerary scheduled times are semantic <time>", () => {
 	it("renders every scheduled clock time as a <time>, never a <span>", async () => {
 		// Arrange + Act: render the golden `hvar` itinerary (real, shipped data).
 		const { itinerary, enrichment, wiki } = await getTripItinerary("hvar");
-		const container = mount(renderTripPage(itinerary, enrichment, wiki));
+		const container = mount(TripPage({ itinerary, enrichment, wiki }));
 
 		// 1. At least one <time> carries a clock string — Clock renders scheduled
 		// times (flight depart/arrive, ground pickup, event start) as semantic

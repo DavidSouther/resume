@@ -45,6 +45,32 @@
   :root[data-theme="nominal"] {
     --brand-color: oklch(61.7% 0.135 148.4deg);  /* Nominal.io green (#419b55) */
   }
+
+  /* Trips itinerary identity. Declared at the trips document root via the SSG
+     htmlAttributes hook (pages/trips/[id]/page.ts), so M3 roles re-derive on
+     :root from the bronze seed. Dark-mode policy (b): author only the seed, the
+     non-color Tier-2 tokens, and the genuinely role-less treatment tokens — every
+     surface and accent role derives in both light and dark mode. (--content-columns
+     is already pinned to 1 on the unlayered :root above, which trips inherits.) */
+  :root[data-theme="itinerary"] {
+    /* Tier 1 — warm bronze seed; every M3 surface + accent role derives from this. */
+    --brand-color: oklch(58% 0.085 67deg);
+
+    /* Tier 2 — serif headers, softer radii (non-color; safe to pin). */
+    --brand-header-font-family: "Libre Baskerville", Georgia, serif;
+    --brand-body-font-family: "Poppins", system-ui, sans-serif;
+    --border-radius-container: 0.85rem;
+    --border-radius-item: 0.7rem;
+    --border-radius-inline: 0.3rem;
+
+    /* Treatment-only tokens — no M3 role fits (on-photo ink, gradient scrim, hatch
+       tint). Consumed by Steps 3-4; each is an upstream-token candidate. */
+    --itinerary-band-ink: oklch(97% 0.012 85deg);
+    --itinerary-band-eyebrow: oklch(86% 0.06 75deg);
+    --itinerary-band-scrim: linear-gradient(180deg,
+        oklch(15% 0.02 50deg / 0.30), oklch(12% 0.02 50deg / 0.68));
+    --itinerary-hatch: oklch(72% 0.045 74deg / 0.16);
+  }
 }
 
 /*
@@ -204,7 +230,11 @@ article > header > h3 {
   }
 }
 
-.root > header {
+/* The AboutMe header is a 150px-avatar grid. Both the resume (home) and the
+   trips page now share the Layout `#root` shell, so this resume-specific grid
+   must NOT capture the trips hero (a single .hero-img band div) — exclude
+   .TripPage, which owns its own header treatment below. */
+.root:not(.TripPage) > header {
   display: grid;
   grid:
     "avatar name" auto
@@ -216,7 +246,7 @@ article > header > h3 {
 }
 
 @media (min-width: 1024px) {
-  .root > header {
+  .root:not(.TripPage) > header {
     grid:
       "avatar name links" auto
       "avatar title links" auto
@@ -445,5 +475,310 @@ section:has(img.float) + section {
   .wiki .wiki-thumb {
     width: 100%;
     height: 150px;
+  }
+}
+
+/*
+ * Trips itinerary treatments (design 2026-06-08-C). Classless element rules in
+ * @layer user -- the documented Zen-Garden escape hatch (THEMES.md) for looks no
+ * Intent token covers yet. The warm tokens arrive from the root :root[data-theme=
+ * "itinerary"] block (@layer theme); these rules only shape structure. Anchored on
+ * the pre-existing .TripPage article identity hook (the theme lives on <html>, so
+ * the descendant .TripPage scope keeps the treatments off every other page). The
+ * structure follows the v4 mockup, re-anchored from its [data-theme="itinerary"]
+ * preview selector to .TripPage; all spacing/size/type values consume jiffies'
+ * derived scale (--size-*, --font-size-*, --line-height-*, --grid-gap, --border-
+ * radius-*) at the default rhythm rather than raw rem/px, per the Zen-Garden test.
+ * The only literals left are the genuinely role-less treatment tokens (band
+ * ink/eyebrow/scrim/hatch), em-relative pill/typographic details, and the one
+ * decorative text-shadow -- each an upstream-token candidate (design follow-ups).
+ */
+@layer user {
+  /* Trip glyphs are wrapped in a .trip-svg carrier (SvgIcon) so the line-icon
+     stroke/fill treatment scopes to them and never touches another page's SVG.
+     The carrier is display:contents, so the <svg> still lays out as a bare glyph
+     in its parent (gutter grid, footer flex, button row). */
+  .trip-svg {
+    display: contents;
+  }
+  .trip-svg svg {
+    stroke: black;
+    fill: none;
+  }
+
+  /* Day group is a bare region on the parchment canvas, not a flat panel: drop
+     the default section surface/outline/clip so the event cards float free
+     (prototype). The section > main keeps its card inset, so cards still align
+     to the day label. */
+  .TripPage > main > section {
+    background: none;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    overflow: visible;
+    margin: var(--size-large) 0;
+  }
+
+  /* Day label: neutralize the default rail, inset to the card column, keep the
+     body's default whitespace (do NOT zero section > main). Serif, on-surface. */
+  .TripPage > main > section > header {
+    background: none;
+    border: 0;
+    padding: 0 var(--size-large);
+    margin: var(--size-medium) 0 var(--size-small);
+  }
+  .TripPage > main > section > header time {
+    font-family: var(--brand-header-font-family);
+    font-size: var(--font-size-h6);
+    color: var(--color-on-surface);
+  }
+
+  /* Overnight footer: a whisper-light note on the canvas, not a paneled rail.
+     Drop the default footer divider + surface, mute the text, and lighten the
+     moon glyph (overriding the global black stroke). */
+  .TripPage > main > section > footer {
+    background: none;
+    border: 0;
+    padding: var(--size-xsmall) var(--size-large) 0;
+  }
+  .TripPage > main > section > footer p {
+    display: flex;
+    align-items: center;
+    gap: var(--size-small);
+    margin: 0;
+    font-size: var(--small-font-size);
+    color: var(--color-on-surface-variant);
+    opacity: 0.8;
+  }
+  .TripPage > main > section > footer svg {
+    width: var(--size-medium);
+    height: var(--size-medium);
+    stroke: var(--color-on-surface-variant);
+  }
+
+  /* City band: dark rounded photographic band. The .hero-img photo sits at
+     z-index -2; a ::after scrim (--itinerary-band-scrim) at z-index -1 guarantees
+     light text over any photo, bright or dark. */
+  .TripPage > main > div:has(h2) {
+    position: relative;
+    overflow: clip;
+    isolation: isolate;
+    border-radius: var(--border-radius-container);
+    margin: var(--size-medium) 0 var(--size-base);
+    padding: var(--size-medium);
+    color: var(--itinerary-band-ink);
+    box-shadow: var(--card-shadow);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+  }
+  .TripPage > main > div:has(h2) .hero-img {
+    z-index: -2;
+  }
+  .TripPage > main > div:has(h2)::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: var(--itinerary-band-scrim);
+  }
+  .TripPage > main > div:has(h2) small {
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-size: var(--font-size-small);
+    color: var(--itinerary-band-eyebrow);
+  }
+  .TripPage > main > div:has(h2) h2 {
+    font-family: var(--brand-header-font-family);
+    color: var(--itinerary-band-ink);
+    margin: var(--size-xsmall) 0 0;
+    font-size: var(--font-size-h4);
+    text-shadow: 0 1px 8px oklch(10% 0.02 50deg / 0.5);
+  }
+
+  /* Page-header hero: the .hero-img is position:absolute/inset:0, so without a
+     positioned, clipped container it covers the whole page. Contain it to the
+     header band and give it the same scrim treatment as the city bands. */
+  .TripPage > header > div:has(> .hero-img) {
+    position: relative;
+    isolation: isolate;
+    overflow: clip;
+    border-radius: var(--border-radius-container);
+    padding: var(--size-large);
+    color: var(--itinerary-band-ink);
+  }
+  .TripPage > header > div:has(> .hero-img) .hero-img {
+    z-index: -2;
+  }
+  .TripPage > header > div:has(> .hero-img)::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: var(--itinerary-band-scrim);
+  }
+  .TripPage > header h1 {
+    font-family: var(--brand-header-font-family);
+    color: var(--itinerary-band-ink);
+  }
+  .TripPage > header a {
+    color: var(--itinerary-band-ink);
+  }
+
+  /* Event list + rail: a gapped flex column of cream cards (the bundle supplies
+     --card-border / --card-shadow). Each day is its own <ol>, so the vertical
+     timeline line is day-scoped — it breaks at every day label with no extra
+     markup. The line threads down a left gutter behind the icon discs; each
+     opaque disc masks the line where it sits. --tl-gutter/--tl-line inherit down
+     to the <li> grid and the disc. */
+  .TripPage section > main > ol {
+    --tl-gutter: var(--size-xlarge);
+    --tl-line: var(--base-border-size);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--size-small);
+  }
+  .TripPage section > main > ol::before {
+    content: "";
+    position: absolute;
+    top: var(--spacing-block-horizontal);
+    bottom: var(--size-large);
+    left: calc(var(--tl-gutter) / 2);
+    width: var(--tl-line);
+    transform: translateX(-50%);
+    background: var(--color-primary);
+  }
+  /* Each entry is a [gutter | card] grid: the icon disc sits in the gutter, the
+     card to its right with a --spacing-block-horizontal gap between them.
+     position:relative keeps the card + disc painting above the rail line. */
+  .TripPage section > main > ol > li {
+    display: grid;
+    grid-template-columns: var(--tl-gutter) 1fr;
+    column-gap: var(--spacing-block-horizontal);
+    align-items: start;
+    position: relative;
+  }
+  .TripPage li > :is(details, section) {
+    grid-column: 2;
+    background: var(--color-surface-variant);
+    border: var(--card-border);
+    border-radius: var(--border-radius-container);
+    box-shadow: var(--card-shadow);
+    overflow: clip;
+  }
+
+  /* Gutter disc: an opaque cream disc with a thin ring + muted glyph (overriding
+     the global black stroke). Centered in the gutter so the rail line threads
+     behind it — the fill masks the line. align-self:start + margin-top centers
+     it on the card's summary, not the whole expanded card. */
+  .TripPage section > main > ol > li > .trip-svg > svg {
+    grid-column: 1;
+    align-self: start;
+    justify-self: center;
+    margin-top: var(--spacing-block-horizontal);
+    box-sizing: border-box;
+    width: var(--size-xlarge);
+    height: var(--size-xlarge);
+    padding: var(--size-xsmall);
+    background: var(--color-surface-variant);
+    border: var(--base-border-size) solid var(--color-outline);
+    border-radius: 50%;
+    stroke: var(--color-on-surface-variant);
+    stroke-width: 2;
+  }
+
+  /* Event row grid (prototype shape): a content stack of time-eyebrow -> serif
+     title -> subtitle, and a trailing chevron. The leading icon now lives in the
+     day's timeline gutter (a sibling of the card), so the card itself is just
+     [content | chevron]. Two rows let the time sit as a single-line eyebrow
+     above the title; the chevron spans both rows and centers. Untimed rows
+     (transfers) collapse the empty time row to zero. Placement is by explicit
+     grid lines, so DOM order (TimelineItem emits time then hgroup) is
+     irrelevant. */
+  .TripPage li > details > summary,
+  .TripPage li > section > main {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto;
+    align-items: center;
+    column-gap: var(--size-base);
+    row-gap: var(--size-xsmall);
+    padding: var(--size-base) var(--size-medium);
+  }
+  /* Time eyebrow: small, muted, single line above the title. */
+  .TripPage summary > time,
+  .TripPage li > section main > time {
+    grid-column: 1;
+    grid-row: 1;
+    justify-self: start;
+    white-space: nowrap;
+    font-size: var(--small-font-size);
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    line-height: 1.2;
+    color: var(--color-on-surface-variant);
+  }
+  .TripPage summary > hgroup,
+  .TripPage li > section main > hgroup {
+    grid-column: 1;
+    grid-row: 2;
+    display: flex;
+    flex-direction: column;
+    gap: var(--size-xsmall);
+    min-width: 0;
+  }
+  /* Serif editorial title; muted subtitle. */
+  .TripPage hgroup > strong {
+    font-family: var(--brand-header-font-family);
+    font-size: var(--base-font-size);
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--color-on-surface);
+  }
+  .TripPage hgroup > small {
+    font-size: var(--small-font-size);
+    color: var(--color-on-surface-variant);
+  }
+  /* Chevron (Accordion summary::after) pinned to the right edge, centered. */
+  .TripPage summary::after {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    align-self: center;
+  }
+
+  /* To-book: M3 amber pill + soft equal-width diagonal hatch (stripe widths from
+     the --size-* scale). The hover reset keeps jiffies' summary hover tint from
+     wiping the hatch. The pill's em-relative padding/tracking scale with its own
+     font-size, so they stay literal. */
+  .TripPage mark {
+    background: var(--color-primary);
+    color: var(--color-on-primary);
+    border-radius: 999px;
+    padding: 0.05em 0.55em;
+    /* --small-font-size (global, resolves to one step below --base-font-size),
+       NOT --font-size-small (a `small`-scoped token that does not resolve inside
+       this <strong>, so it inherited the 18px title size). */
+    font-size: var(--small-font-size);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-inline-start: var(--size-small);
+    vertical-align: 0.1em;
+  }
+  .TripPage li:has(mark) > :is(details, section) {
+    background-color: var(--color-surface-variant);
+    background-image: repeating-linear-gradient(
+      -45deg,
+      transparent 0 var(--size-small),
+      var(--itinerary-hatch) var(--size-small) var(--size-base)
+    );
+    border-color: var(--color-outline);
+  }
+  .TripPage li:has(mark) > details > summary:hover {
+    background-color: transparent;
   }
 }

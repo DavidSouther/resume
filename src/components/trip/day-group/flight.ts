@@ -1,14 +1,17 @@
-import { abbr, mark, p, small, span } from "@davidsouther/jiffies/dom/html.ts";
+import { abbr } from "@davidsouther/jiffies/dom/html.ts";
 import {
+	formatClock,
 	IATA,
 	type ItineraryItem,
 	parseDateTime,
+	timezoneAbbreviation,
 } from "../../../lib/itinerary-helpers.ts";
 import type { TripEnrichment } from "../../../lib/trip-enrichment";
 import { TimelineItem } from "../timeline-item.ts";
 import { Actions, BtnLink } from "./btn-link.ts";
 import { Clock } from "./clock.ts";
 import { Fact, Facts } from "./fact.ts";
+import { SummaryRow } from "./summary-row.ts";
 
 type FlightItemData = Extract<ItineraryItem, { kind: "flight" }>;
 
@@ -24,33 +27,42 @@ export function FlightItem(
 	const origin = flight.origin?.airport ?? "";
 	const dest = flight.destination?.airport ?? "";
 
-	const row = [
-		departure &&
-			p(
-				Clock(flight.depart),
-				span("→"),
-				Clock(flight.arrive),
-				isNextDay ? small("+1 day") : null,
-			),
-		p(
+	// Subtitle: airline · flight number · cabin · seat (the per-leg richer detail
+	// stays in the disclosed Facts).
+	const subtitle = [
+		flight.airline_code && flight.flight_number
+			? `${flight.airline_code} ${flight.flight_number}`
+			: null,
+		flight.airline,
+		flight.cabin,
+		flight.seat ? `Seat ${flight.seat}` : null,
+	]
+		.filter(Boolean)
+		.join("  ·  ");
+
+	const row = SummaryRow({
+		time: Clock(flight.depart),
+		title: [
 			abbr({ title: IATA[origin] ?? origin }, origin),
-			span("→"),
+			" → ",
 			abbr({ title: IATA[dest] ?? dest }, dest),
-			flight.status === "to_book" ? mark("To book") : null,
-		),
-		p(
-			[
-				flight.airline_code && flight.flight_number
-					? `${flight.airline_code} ${flight.flight_number}`
-					: null,
-				flight.airline,
-				flight.cabin,
-				flight.seat ? `Seat ${flight.seat}` : null,
-			]
-				.filter(Boolean)
-				.join("  ·  "),
-		),
-	];
+		],
+		toBook: flight.status === "to_book",
+		subtitle: subtitle || null,
+	});
+
+	// The arrival clock + next-day flag move out of the summary row into Facts.
+	const arrivalClock = arrival
+		? `${formatClock(arrival.hours, arrival.minutes)} ${timezoneAbbreviation(arrival.date, flight.arrive?.timezone)}`.trim()
+		: null;
+	const arrivesValue = [
+		flight.destination?.terminal
+			? `${flight.destination.airport} T${flight.destination.terminal}`
+			: null,
+		arrivalClock ? `${arrivalClock}${isNextDay ? " (+1 day)" : ""}` : null,
+	]
+		.filter(Boolean)
+		.join("  ·  ");
 
 	const flightKey = `${flight.airline_code ?? ""}${flight.flight_number ?? ""}`;
 	const flightEnrichment = enrichment?.flights?.find(
@@ -63,12 +75,7 @@ export function FlightItem(
 			flight.origin?.terminal
 				? Fact("Departs", `${flight.origin.airport} T${flight.origin.terminal}`)
 				: null,
-			flight.destination?.terminal
-				? Fact(
-						"Arrives",
-						`${flight.destination.airport} T${flight.destination.terminal}`,
-					)
-				: null,
+			arrivesValue ? Fact("Arrives", arrivesValue) : null,
 			flight.cabin ? Fact("Cabin", flight.cabin) : null,
 			flight.seat ? Fact("Seat", flight.seat) : null,
 		),

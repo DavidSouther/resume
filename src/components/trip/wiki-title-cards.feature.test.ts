@@ -28,7 +28,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { getTripItinerary } from "../../lib/trips.ts";
 import { mount, resetDom } from "../test-dom.ts";
-import { renderTripPage } from "./trip-page.ts";
+import { TripPage } from "./trip-page.ts";
 
 afterEach(resetDom);
 
@@ -40,7 +40,7 @@ describe("trip page renders Wikipedia title cards", () => {
 		// Arrange + Act: render the golden `hvar` itinerary with its committed
 		// Wikipedia cache. The new 3-arg renderTripPage consumes the `wiki` lookup.
 		const { itinerary, enrichment, wiki } = await getTripItinerary("hvar");
-		const container = mount(renderTripPage(itinerary, enrichment, wiki));
+		const container = mount(TripPage({ itinerary, enrichment, wiki }));
 
 		// 1. Hero photo: the ItineraryHero region renders into the Card's <header>
 		// slot (article > header). It contains a real <img> served from the

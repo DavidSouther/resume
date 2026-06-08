@@ -1,3 +1,4 @@
+import type { DenormChildren } from "@davidsouther/jiffies/dom/dom.ts";
 import { a, aside, div, h1, p } from "@davidsouther/jiffies/dom/html.ts";
 import { initials, rangeLabel } from "../../lib/itinerary-helpers.ts";
 import type { Itinerary } from "../../lib/trip-itinerary";
@@ -9,7 +10,7 @@ import { WikiPhoto } from "./wiki-photo.ts";
 export function ItineraryHero(
 	itinerary: Itinerary,
 	wikiSummary?: WikiSummary,
-): HTMLElement {
+): DenormChildren {
 	const { trip } = itinerary;
 	const start = String(trip.start_date);
 	const end = String(trip.end_date);
