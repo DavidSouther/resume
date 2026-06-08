@@ -12,7 +12,7 @@
     "lint": "biome lint --write src pages scripts vitest.config.ts",
     "prebuild": "npm run check",
     "build": "npm run css:bundle && node scripts/sitemap.ts && node node_modules/@davidsouther/jiffies/src/ssg/main.ts --out docs",
-    "start": "node scripts/serve.ts",
+    "start": "node scripts/serve.ts --watch",
     "test": "vitest run",
     "posttest": "npm run check",
     "test:watch": "vitest"

@@ -1,0 +1,35 @@
+[tools]
+node = "24"
+
+# Thin wrappers over the package.json scripts so `mise run <name>` (and the
+# `mise <name>` shorthand) work. Each delegates to npm, so the script bodies
+# stay single-sourced and npm lifecycle hooks (prebuild, posttest) still fire.
+[tasks.dev]
+run = "npm run dev"
+
+[tasks.build]
+run = "npm run build"
+
+[tasks.start]
+run = "npm start"
+
+[tasks.check]
+run = "npm run check"
+
+[tasks.typecheck]
+run = "npm run typecheck"
+
+[tasks.format]
+run = "npm run format"
+
+[tasks.lint]
+run = "npm run lint"
+
+[tasks.test]
+run = "npm test"
+
+[tasks."test:watch"]
+run = "npm run test:watch"
+
+[tasks."css:bundle"]
+run = "npm run css:bundle"

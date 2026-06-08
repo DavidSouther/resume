@@ -1,5 +1,5 @@
 import { Card } from "@davidsouther/jiffies/components/index.ts";
-import { a, div } from "@davidsouther/jiffies/dom/html.ts";
+import { a } from "@davidsouther/jiffies/dom/html.ts";
 import {
 	buildItems,
 	dateKeyRange,
@@ -53,9 +53,6 @@ export function renderTripPage(
 		sections.push(DayGroup(date, dayItems, on, enrichment, wiki));
 	}
 
-	const grain = div({ class: "grain" });
-	grain.setAttribute("aria-hidden", "true");
-
 	// The hero is the page header: render it in the Card's <header> slot, still
 	// inside a .wrap so its 760px column and bleed match the day content below.
 	const card = Card(
@@ -64,7 +61,7 @@ export function renderTripPage(
 			header: ItineraryHero(itinerary, wiki.get(heroWikiTitle)),
 			footer: a({ href: "../../" }, "Back"),
 		},
-		div({ class: "wrap" }, grain, ...sections),
+		...sections,
 	);
 	return card;
 }
