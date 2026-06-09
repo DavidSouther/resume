@@ -33,3 +33,12 @@ Rules:
   whenever you add or change a wikipedia.title, then commit the cache. Render
   reads ONLY that cache, so the build stays offline and deterministic; a title
   with no entry simply renders no image.
+- Trip prep (optional, advisory): meta.travelers records each traveler's
+  passport_country and document STATUS only (type/status/valid_until). NEVER put
+  raw passport, visa, or ETA reference numbers here - this file is deployed.
+  trip_prep is a failure-silent "before you go" checklist: each item that states a
+  rule must link (url) to the AUTHORITATIVE government source and must not restate
+  the rule as settled fact. Stamp trip_prep.checked_on with the verification date.
+  Do NOT hand-author entry/customs specifics in this prompt - run the `trip-prep`
+  skill, which researches current requirements for the trip's countries and the
+  travelers' nationalities, then writes meta.travelers + trip_prep.

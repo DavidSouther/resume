@@ -16,3 +16,6 @@ jefri-jiffies-*.tgz
 public/global.css
 public/sitemap.xml
 .playwright-cli/
+
+# Raw traveler document numbers sidecar — never committed, never imported by render
+trips/*/documents.local.yaml

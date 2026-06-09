@@ -7,6 +7,19 @@ meta:
   trip_ref: "trip-annie-david-europe.yaml"
   wikipedia_summary_api_pattern: "https://en.wikipedia.org/api/rest_v1/page/summary/{TITLE}"
   flightaware_pattern: "https://flightaware.com/live/flight/{ICAO_CALLSIGN}{NUMBER}"
+  # Central traveler-document registry — STATUS/METADATA ONLY. Never raw passport,
+  # visa, or ETA reference numbers (this file deploys publicly); valid_until is
+  # coarse "YYYY-MM" by rule, never an exact day. Authored by the trip-prep skill.
+  travelers:
+    - name: "David Souther"
+      passport_country: "US"
+      documents:
+        - { type: passport, status: in_progress, note: "confirm valid through >=2026-10; set valid_until once known" }
+        - { type: uk_eta, status: action_needed }
+    - name: "Anne Levine"
+      passport_country: "US"
+      documents:
+        - { type: uk_eta, status: action_needed }
 
 page_cards:
   - city: "New York"
@@ -169,3 +182,32 @@ activities:
     destination_ref: "Split"
     image_query: "Split Croatia restaurant Diocletian's Palace dining"
     blurb: "Final-night dinner in Split before the flight back to London."
+
+# Advisory "before you go" layer. Failure-silent: deleting this block leaves the
+# page unchanged. Each rule-bearing item links its AUTHORITATIVE government source
+# and does not restate the rule as settled fact. Stamped by the trip-prep skill.
+trip_prep:
+  checked_on: "2026-06-07"
+  summary: "Two US passports: one UK ETA each; no ETIAS yet; EES enrolment at Vienna."
+  checklist:
+    - label: "UK ETA — apply for each traveler (£20)"
+      status: action_needed
+      url: "https://www.gov.uk/eta"
+      detail: "Multi-entry, valid 2 years; one ETA covers both UK entries."
+      applies_to: ["David Souther", "Anne Levine"]
+      lead_time_days: 7
+    - label: "Confirm passports valid through ~2026-10-22"
+      status: in_progress
+      url: "https://europa.eu/youreurope/citizens/travel/entry-exit/non-eu-nationals/index_en.htm"
+      detail: "Schengen needs >=3 months past departure (22 Jul) and issued within 10 years."
+    - label: "ETIAS — no action (launches Q4 2026)"
+      status: no_action
+      url: "https://travel-europe.europa.eu/en/etias"
+  notes:
+    - "EES biometric enrolment at first Schengen entry (Vienna) unless already enrolled on an entry after 10 Apr 2026; allow extra time. Exit recorded at Split."
+    - "Vienna→Split is an internal Schengen flight: no passport control, security only."
+    - "Schengen 90/180: add this trip's ~8 days to any Schengen days in the prior 180 (e.g. a February Switzerland stay); confirm the running total stays under 90. EES now tallies it automatically."
+    - "Customs: UK £390 / EU €430 / US $800 + 1 L alcohol per person."
+  sources:
+    - { title: "gov.uk — UK ETA", url: "https://www.gov.uk/eta" }
+    - { title: "European Commission — EES", url: "https://home-affairs.ec.europa.eu/news/entryexit-system-will-become-fully-operational-10-april-2026-2026-03-30_en" }

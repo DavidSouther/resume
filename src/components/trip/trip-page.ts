@@ -13,6 +13,7 @@ import { Layout } from "../layout.ts";
 import { CityBanner } from "./city-banner.ts";
 import { DayGroup } from "./day-group.ts";
 import { ItineraryHero } from "./itinerary-hero.ts";
+import { TripPrep } from "./trip-prep.ts";
 
 export function TripPage({
 	itinerary,
@@ -55,6 +56,11 @@ export function TripPage({
 
 		sections.push(DayGroup(date, dayItems, on, enrichment, wiki));
 	}
+
+	// Failure-silent "Before you go" prep panel: omitted entirely when
+	// enrichment.trip_prep is absent.
+	const prep = TripPrep({ itinerary, enrichment });
+	if (prep) sections.push(prep);
 
 	return Layout(
 		{
