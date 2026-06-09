@@ -8,6 +8,10 @@ import {
 	makeServer,
 } from "@davidsouther/jiffies/server/http/index.ts";
 import { contentResponse } from "@davidsouther/jiffies/server/http/response.ts";
+import {
+	attachWebSocketServer,
+	type WebSocketHub,
+} from "@davidsouther/jiffies/server/ws/index.ts";
 
 // Live-reload pieces for `npm start -- --watch`. Deliberately shaped as stock
 // jiffies middlewares + a generic watcher so the whole feature can later move
@@ -16,32 +20,15 @@ import { contentResponse } from "@davidsouther/jiffies/server/http/response.ts";
 
 export const RELOAD_PATH = "/__livereload";
 
-// The injected client snippet polls the build id and reloads when it changes.
-// On the first response it only records the id (no reload), so a freshly loaded
-// page does not bounce. RELOAD_PATH is JSON-encoded here (not at the constant)
-// because buildIdServer compares it raw against an unquoted request pathname.
-export function reloadClientSnippet(intervalMs: number): string {
-	return `<script>(function(){let last=null;async function poll(){try{const r=await fetch(${JSON.stringify(
+// The injected client snippet opens a WebSocket to RELOAD_PATH and reloads the
+// page on any pushed message. On close it reconnects with a short fixed backoff,
+// which recovers from a server restart or a socket dropped during a rebuild.
+// Errors are swallowed; the close handler drives the reconnect.
+export function reloadClientSnippet(): string {
+	return `<script>(function(){function connect(){var ws=new WebSocket((location.protocol==="https:"?"wss://":"ws://")+location.host+${JSON.stringify(
 		RELOAD_PATH,
-	)},{cache:"no-store"});const id=await r.text();if(last!==null&&id!==last){location.reload();return;}last=id;}catch(e){}setTimeout(poll,${intervalMs});}poll();})();</script>`;
+	)});ws.onmessage=function(){location.reload();};ws.onerror=function(){};ws.onclose=function(){setTimeout(connect,1000);};}connect();})();</script>`;
 }
-
-// Serves the current build id at RELOAD_PATH; passes everything else through.
-export const buildIdServer =
-	(getId: () => string): MiddlewareFactory =>
-	async () =>
-	async (req) => {
-		const { pathname } = new URL(req.url ?? "/", "http://localhost");
-		if (pathname === RELOAD_PATH) {
-			return contentResponse(
-				getId(),
-				"text/plain",
-				200,
-				new Map([["cache-control", "no-store"]]),
-			);
-		}
-		return undefined;
-	};
 
 // Injects the reload snippet into HTML navigations. Mirrors jiffies findIndex
 // (walk up for index.html) for extensionless paths; serves .html directly.
@@ -133,14 +120,17 @@ export function runDevBuild(cwd: string): Promise<boolean> {
 	});
 }
 
-// Holds the build id and serializes rebuilds: a change during a build sets a
-// dirty flag that triggers exactly one more rebuild afterward.
-export function createRebuilder(rebuild: () => Promise<boolean>): {
-	id: () => string;
+// Serializes rebuilds: a change during a build sets a dirty flag that triggers
+// exactly one more rebuild afterward. `onBuilt` runs once per successful rebuild
+// (each time the inner rebuild resolves true), letting the caller broadcast a
+// reload without the client needing a queryable build id.
+export function createRebuilder(
+	rebuild: () => Promise<boolean>,
+	onBuilt?: () => void,
+): {
 	run: () => Promise<void>;
 	trigger: () => void;
 } {
-	let id = 0;
 	let building = false;
 	let dirty = false;
 	const run = async (): Promise<void> => {
@@ -152,20 +142,19 @@ export function createRebuilder(rebuild: () => Promise<boolean>): {
 		try {
 			do {
 				dirty = false;
-				if (await rebuild()) id += 1;
+				if (await rebuild()) onBuilt?.();
 			} while (dirty);
 		} finally {
 			building = false;
 		}
 	};
-	return { id: () => String(id), run, trigger: () => void run() };
+	return { run, trigger: () => void run() };
 }
 
 export interface WatchServerOptions {
 	root: string;
 	watchDirs: string[];
 	rebuild: () => Promise<boolean>;
-	reloadIntervalMs?: number;
 	debounceMs?: number;
 	// Resolved paths to exclude from watching (e.g. build outputs written back
 	// into a watched dir). Defaults to ignoreDefault when omitted.
@@ -174,18 +163,21 @@ export interface WatchServerOptions {
 	host?: string;
 }
 
-// Initial build, then serve `root` with the build-id + injector middlewares and
-// watch `watchDirs`. Returns the bound port and a close() for clean shutdown.
+// Initial build, then serve `root` with the injector middleware, attach a
+// WebSocket hub at RELOAD_PATH, and watch `watchDirs`. Each successful rebuild
+// broadcasts "reload" to connected clients. Returns the bound port and a
+// close() for clean shutdown. The hub is late-bound: the initial build runs
+// before it exists, so its onBuilt broadcast is a no-op (no clients yet).
 export async function startWatchServer(
 	opts: WatchServerOptions,
 ): Promise<{ port: number; close: () => Promise<void> }> {
-	const rebuilder = createRebuilder(opts.rebuild);
+	let hub: WebSocketHub | undefined;
+	const rebuilder = createRebuilder(opts.rebuild, () =>
+		hub?.broadcast("reload"),
+	);
 	await rebuilder.run();
-	const snippet = reloadClientSnippet(opts.reloadIntervalMs ?? 500);
-	const server = await makeServer({ root: opts.root }, [
-		buildIdServer(rebuilder.id),
-		htmlInjector(snippet),
-	]);
+	const snippet = reloadClientSnippet();
+	const server = await makeServer({ root: opts.root }, [htmlInjector(snippet)]);
 	const watcher = watchTree(opts.watchDirs, rebuilder.trigger, {
 		debounceMs: opts.debounceMs,
 		ignore: opts.ignore,
@@ -193,11 +185,13 @@ export async function startWatchServer(
 	await new Promise<void>((resolve) =>
 		server.listen(opts.port ?? 8080, opts.host ?? "127.0.0.1", resolve),
 	);
+	hub = attachWebSocketServer(server, { path: RELOAD_PATH });
 	const address = server.address() as AddressInfo;
 	return {
 		port: address.port,
 		close: () =>
 			new Promise<void>((resolve) => {
+				hub?.close();
 				watcher.close();
 				server.close(() => resolve());
 			}),
