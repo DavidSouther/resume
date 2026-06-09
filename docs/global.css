@@ -25,6 +25,20 @@
   :root[data-theme="nominal"] {
     --brand-color: oklch(61.7% .135 148.4);
   }
+
+  :root[data-theme="itinerary"] {
+    --brand-color: oklch(58% .085 67);
+    --brand-header-font-family: "Libre Baskerville", Georgia, serif;
+    --brand-body-font-family: "Poppins", system-ui, sans-serif;
+    --border-radius-container: .85rem;
+    --border-radius-item: .7rem;
+    --border-radius-inline: .3rem;
+    --itinerary-band-ink: oklch(97% .012 85);
+    --itinerary-band-eyebrow: oklch(86% .06 75);
+    --itinerary-band-scrim: linear-gradient(180deg,
+        oklch(15% .02 50 / .3), oklch(12% .02 50 / .68));
+    --itinerary-hatch: oklch(72% .045 74 / .16);
+  }
 }
 
 :root {
@@ -168,7 +182,7 @@ article > header > h3 {
   }
 }
 
-.root > header {
+.root:not(.TripPage) > header {
   gap: 0 var(--size-medium);
   grid: "avatar name"
         "avatar title"
@@ -179,7 +193,7 @@ article > header > h3 {
 }
 
 @media (width >= 1024px) {
-  .root > header {
+  .root:not(.TripPage) > header {
     grid: "avatar name links"
           "avatar title links"
           "avatar location links"
@@ -247,6 +261,257 @@ article > header > h3 {
     background-repeat: no-repeat, repeat;
     background-size: cover, 170px 170px;
   }
+
+  .trip-svg {
+    display: contents;
+  }
+
+  .trip-svg svg {
+    stroke: #000;
+    fill: none;
+  }
+
+  .TripPage > main > section {
+    box-shadow: none;
+    margin: var(--size-large) 0;
+    background: none;
+    border: 0;
+    border-radius: 0;
+    overflow: visible;
+  }
+
+  .TripPage > main > section > header {
+    padding: 0 var(--size-large);
+    margin: var(--size-medium) 0 var(--size-small);
+    background: none;
+    border: 0;
+  }
+
+  .TripPage > main > section > header time {
+    font-family: var(--brand-header-font-family);
+    font-size: var(--font-size-h6);
+    color: var(--color-on-surface);
+  }
+
+  .TripPage > main > section > footer {
+    padding: var(--size-xsmall) var(--size-large) 0;
+    background: none;
+    border: 0;
+  }
+
+  .TripPage > main > section > footer p {
+    align-items: center;
+    gap: var(--size-small);
+    font-size: var(--small-font-size);
+    color: var(--color-on-surface-variant);
+    opacity: .8;
+    margin: 0;
+    display: flex;
+  }
+
+  .TripPage > main > section > footer svg {
+    width: var(--size-medium);
+    height: var(--size-medium);
+    stroke: var(--color-on-surface-variant);
+  }
+
+  .TripPage > main > div:has(h2) {
+    isolation: isolate;
+    border-radius: var(--border-radius-container);
+    margin: var(--size-medium) 0 var(--size-base);
+    padding: var(--size-medium);
+    color: var(--itinerary-band-ink);
+    box-shadow: var(--card-shadow);
+    flex-direction: column;
+    justify-content: flex-end;
+    display: flex;
+    position: relative;
+    overflow: clip;
+  }
+
+  .TripPage > main > div:has(h2) .hero-img {
+    z-index: -2;
+  }
+
+  .TripPage > main > div:has(h2):after {
+    content: "";
+    z-index: -1;
+    background: var(--itinerary-band-scrim);
+    position: absolute;
+    inset: 0;
+  }
+
+  .TripPage > main > div:has(h2) small {
+    text-transform: uppercase;
+    letter-spacing: .14em;
+    font-size: var(--font-size-small);
+    color: var(--itinerary-band-eyebrow);
+  }
+
+  .TripPage > main > div:has(h2) h2 {
+    font-family: var(--brand-header-font-family);
+    color: var(--itinerary-band-ink);
+    margin: var(--size-xsmall) 0 0;
+    font-size: var(--font-size-h4);
+    text-shadow: 0 1px 8px oklch(10% .02 50 / .5);
+  }
+
+  .TripPage > header > div:has( > .hero-img) {
+    isolation: isolate;
+    border-radius: var(--border-radius-container);
+    padding: var(--size-large);
+    color: var(--itinerary-band-ink);
+    position: relative;
+    overflow: clip;
+  }
+
+  .TripPage > header > div:has( > .hero-img) .hero-img {
+    z-index: -2;
+  }
+
+  .TripPage > header > div:has( > .hero-img):after {
+    content: "";
+    z-index: -1;
+    background: var(--itinerary-band-scrim);
+    position: absolute;
+    inset: 0;
+  }
+
+  .TripPage > header h1 {
+    font-family: var(--brand-header-font-family);
+    color: var(--itinerary-band-ink);
+  }
+
+  .TripPage > header a {
+    color: var(--itinerary-band-ink);
+  }
+
+  .TripPage section > main > ol {
+    --tl-gutter: var(--size-xlarge);
+    --tl-line: var(--base-border-size);
+    gap: var(--size-small);
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    position: relative;
+  }
+
+  .TripPage section > main > ol:before {
+    content: "";
+    top: var(--spacing-block-horizontal);
+    bottom: var(--size-large);
+    left: calc(var(--tl-gutter) / 2);
+    width: var(--tl-line);
+    background: var(--color-primary);
+    position: absolute;
+    transform: translateX(-50%);
+  }
+
+  .TripPage section > main > ol > li {
+    grid-template-columns: var(--tl-gutter) 1fr;
+    column-gap: var(--spacing-block-horizontal);
+    align-items: start;
+    display: grid;
+    position: relative;
+  }
+
+  .TripPage li > :is(details, section) {
+    background: var(--color-surface-variant);
+    border: var(--card-border);
+    border-radius: var(--border-radius-container);
+    box-shadow: var(--card-shadow);
+    grid-column: 2;
+    overflow: clip;
+  }
+
+  .TripPage section > main > ol > li > .trip-svg > svg {
+    margin-top: var(--spacing-block-horizontal);
+    box-sizing: border-box;
+    width: var(--size-xlarge);
+    height: var(--size-xlarge);
+    padding: var(--size-xsmall);
+    background: var(--color-surface-variant);
+    border: var(--base-border-size) solid var(--color-outline);
+    stroke: var(--color-on-surface-variant);
+    stroke-width: 2px;
+    border-radius: 50%;
+    grid-column: 1;
+    place-self: start center;
+  }
+
+  .TripPage li > details > summary, .TripPage li > section > main {
+    align-items: center;
+    column-gap: var(--size-base);
+    row-gap: var(--size-xsmall);
+    padding: var(--size-base) var(--size-medium);
+    grid-template-rows: auto auto;
+    grid-template-columns: 1fr auto;
+    display: grid;
+  }
+
+  .TripPage summary > time, .TripPage li > section main > time {
+    white-space: nowrap;
+    font-size: var(--small-font-size);
+    letter-spacing: .04em;
+    color: var(--color-on-surface-variant);
+    grid-area: 1 / 1;
+    justify-self: start;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+
+  .TripPage summary > hgroup, .TripPage li > section main > hgroup {
+    gap: var(--size-xsmall);
+    flex-direction: column;
+    grid-area: 2 / 1;
+    min-width: 0;
+    display: flex;
+  }
+
+  .TripPage hgroup > strong {
+    font-family: var(--brand-header-font-family);
+    font-size: var(--base-font-size);
+    color: var(--color-on-surface);
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  .TripPage hgroup > small {
+    font-size: var(--small-font-size);
+    color: var(--color-on-surface-variant);
+  }
+
+  .TripPage summary:after {
+    grid-area: 1 / 2 / span 2;
+    align-self: center;
+  }
+
+  .TripPage mark {
+    background: var(--color-primary);
+    color: var(--color-on-primary);
+    font-size: var(--small-font-size);
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    vertical-align: .1em;
+    border-radius: 999px;
+    margin-inline-start: var(--size-small);
+    padding: .05em .55em;
+    font-weight: 700;
+  }
+
+  .TripPage li:has(mark) > :is(details, section) {
+    background-color: var(--color-surface-variant);
+    background-image: repeating-linear-gradient(-45deg,
+      transparent 0 var(--size-small),
+      var(--itinerary-hatch) var(--size-small) var(--size-base));
+    border-color: var(--color-outline);
+  }
+
+  .TripPage li:has(mark) > details > summary:hover {
+    background-color: #0000;
+  }
 }
 
 .root > header nav ul li {
@@ -313,4 +578,73 @@ article > header > h3 {
 
 section:has(img.float) + section {
   clear: both;
+}
+
+.hero-img {
+  position: absolute;
+  inset: 0;
+  transform: scale(1.04);
+}
+
+.hero-img img {
+  object-fit: cover;
+  object-position: center;
+  width: 100%;
+  height: 100%;
+}
+
+.city-banner .hero-img {
+  transform: scale(1.06);
+}
+
+.wiki {
+  gap: var(--size-base);
+  margin: var(--size-base) 0 0;
+  padding: calc(var(--size-base) * .8);
+  border: 1px solid var(--card-border-color);
+  border-radius: var(--border-radius);
+  background: var(--color-surface-variant);
+  align-items: flex-start;
+  display: flex;
+}
+
+.wiki .wiki-thumb {
+  border-radius: calc(var(--border-radius) * .75);
+  object-fit: cover;
+  border: 1px solid var(--card-border-color);
+  flex: none;
+  width: 104px;
+  height: 104px;
+}
+
+.wiki figcaption {
+  min-width: 0;
+}
+
+.wiki figcaption h3 {
+  margin: 0 0 4px;
+  font-size: 1rem;
+}
+
+.wiki figcaption p {
+  color: var(--color-on-surface-variant);
+  margin: 0 0 6px;
+  font-size: .85rem;
+  line-height: 1.55;
+}
+
+.wiki figcaption a {
+  color: var(--color-primary);
+  font-size: .8rem;
+}
+
+@media (width <= 520px) {
+  .wiki {
+    flex-direction: column;
+  }
+
+  .wiki .wiki-thumb {
+    width: 100%;
+    height: 150px;
+  }
 }
