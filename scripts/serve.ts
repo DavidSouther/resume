@@ -1,8 +1,13 @@
+import { spawn } from "node:child_process";
 import { join } from "node:path";
 import { cwd } from "node:process";
 import { parseArgs } from "node:util";
 import { makeServer } from "@davidsouther/jiffies/server/http/index.ts";
-import { ignoreDefault, runDevBuild, startWatchServer } from "./live-reload.ts";
+import {
+	ignoreDefault,
+	jiffiesArgs,
+	startWatchServer,
+} from "@davidsouther/jiffies/server/live-reload.ts";
 
 // Serves the built static site in docs/ over HTTP using the jiffies server's
 // static-file + directory-index middleware, so clean URLs like /blog/ resolve
@@ -10,15 +15,24 @@ import { ignoreDefault, runDevBuild, startWatchServer } from "./live-reload.ts";
 // `npm start -- --port 3000 --host 0.0.0.0`.
 //
 // With `--watch`, builds first, then rebuilds (`npm run dev`) on edits to
-// pages/, src/, public/ and live-reloads connected browsers. See
-// .agents/developer/2026-06-07-B-start-watch-livereload/design.md.
-const { values } = parseArgs({
-	options: {
-		port: { type: "string", default: "8080" },
-		host: { type: "string", default: "127.0.0.1" },
-		watch: { type: "boolean", default: false },
-	},
-});
+// pages/, src/, public/ and live-reloads connected browsers. The watch loop,
+// WS hub, and client snippet live in @davidsouther/jiffies; this entrypoint
+// owns only the resume-specific build command and generated-output ignores.
+// See .agents/developer/2026-06-10-A-upstream-livereload-client/design.md.
+
+const RELOAD_PATH = "/__livereload";
+
+// Runs the content build in a fresh node process (avoids the stale ESM module
+// cache that would otherwise re-serve old page modules). Resolves true on exit 0.
+function runDevBuild(dir: string): Promise<boolean> {
+	return new Promise((resolve) => {
+		const child = spawn("npm", ["run", "dev"], { cwd: dir, stdio: "inherit" });
+		child.on("exit", (code) => resolve(code === 0));
+		child.on("error", () => resolve(false));
+	});
+}
+
+const { values } = parseArgs({ options: jiffiesArgs({ host: "127.0.0.1" }) });
 
 const port = Number.parseInt(values.port, 10);
 const root = join(cwd(), "docs");
@@ -40,6 +54,7 @@ if (values.watch) {
 		],
 		rebuild: () => runDevBuild(cwd()),
 		ignore: (file) => generated.has(file) || ignoreDefault(file),
+		reloadPath: RELOAD_PATH,
 		port,
 		host: values.host,
 	});
