@@ -17,5 +17,10 @@ public/global.css
 public/sitemap.xml
 .playwright-cli/
 
+# Static site build output. Deployed by .github/workflows/deploy.yml as a Pages
+# artifact (Pages source = "GitHub Actions"), no longer committed. Local `npm run
+# build` still writes it.
+docs/
+
 # Raw traveler document numbers sidecar — never committed, never imported by render
 trips/*/documents.local.yaml

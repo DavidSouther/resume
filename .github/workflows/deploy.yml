@@ -1,0 +1,57 @@
+name: Deploy to GitHub Pages
+
+# Builds the static site and deploys it as a Pages artifact. Replaces the old
+# "deploy from branch main /docs" model so docs/ no longer needs to be committed.
+# REQUIRES the repo's Pages source to be set to "GitHub Actions" (Settings →
+# Pages → Build and deployment → Source). The custom domain (davidsouther.com)
+# ships via public/CNAME → docs/CNAME at build and is preserved across deploys.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Least privilege for the Pages deployment: read the repo, write the Pages
+# artifact, and mint the OIDC token deploy-pages exchanges with Pages.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One in-flight Pages deployment at a time; let a running deploy finish rather
+# than cancelling it (a half-applied Pages deploy is worse than a slightly stale
+# one).
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # Provision Node from mise.toml (node 24), matching local dev — not
+      # actions/setup-node, per the mise-node decision.
+      - uses: jdx/mise-action@v2
+
+      - name: Install dependencies
+        run: npm ci
+
+      # prebuild (npm run check: tsc + biome) runs first via the npm lifecycle,
+      # then css:bundle + sitemap + the jiffies SSG write the site into docs/.
+      - name: Build site
+        run: npm run build
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
