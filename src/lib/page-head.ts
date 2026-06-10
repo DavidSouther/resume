@@ -14,9 +14,15 @@ const THEME_PICKER = `(()=>{const r=document.documentElement;if(r.dataset.theme)
 // Standard GA4 gtag bootstrap, paired with the async loader script below.
 const GA_INIT = `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_MEASUREMENT_ID}');`;
 
+// The jiffies-css v2 bundle, linked from unpkg pinned at the published version
+// (the package's `unpkg` field resolves to this filename). Pinning the full path
+// avoids a redirect per load and locks the exact bundle.
+const JIFFIES_CSS_BUNDLE =
+	"https://unpkg.com/@davidsouther/jiffies-css@2.0.0/jiffies-css-v2-bundle.min.css";
+
 /**
- * Shared <head> content for every page: title, the jiffies-css v2 bundle and
- * built global.css stylesheets, the millisecond-modulo theme picker, and the
+ * Shared <head> content for every page: title, the unpkg jiffies-css v2 bundle
+ * and built global.css stylesheets, the millisecond-modulo theme picker, and the
  * GA4 analytics snippet. Returned as a Node[] for the SSG `head` hook.
  */
 export function pageHead(pageTitle: string): Node[] {
@@ -30,7 +36,7 @@ export function pageHead(pageTitle: string): Node[] {
 			content: "width=device-width, initial-scale=1",
 		}),
 		title(pageTitle),
-		link({ rel: "stylesheet", href: "/jiffies-css-v2-bundle.min.css" }),
+		link({ rel: "stylesheet", href: JIFFIES_CSS_BUNDLE }),
 		link({ rel: "stylesheet", href: "/global.css" }),
 		script(THEME_PICKER),
 		script({
