@@ -21,7 +21,7 @@
     "node": ">=24"
   },
   "devDependencies": {
-    "@davidsouther/jiffdown": "file:../../jefri/jiffdown",
+    "@davidsouther/jiffdown": "^2026.24.0",
     "@davidsouther/jiffies": "^2026.24.4",
     "@testing-library/dom": "^10.4.1",
     "@types/node": "^24.12.4",
