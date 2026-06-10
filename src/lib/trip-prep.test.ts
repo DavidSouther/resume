@@ -1,82 +1,108 @@
 // @vitest-environment node
 //
-// Unit tests for the pure trip-prep derivations (design Metrics 3 & 6).
-// Arrange-Act-Assert, table-driven across the fixed boundaries. `today` is
-// always injected so the tests are deterministic (no Date.now() inside).
+// Unit tests for the pure trip-prep derivations (design §3). All absolute-date:
+// the render path is clock-independent, so no `today` is injected. Arrange-Act-
+// Assert, table-driven across the boundaries that matter.
 import { describe, expect, it } from "vitest";
 import type { PrepItem } from "./trip-enrichment";
-import { deadlineState, stalenessBand } from "./trip-prep.ts";
+import { anyActionNeeded, deadlineDate, formatPrepDate } from "./trip-prep.ts";
 
-// Hvar departure used as the reference throughout.
-const DEPARTURE = "2026-07-11";
-
-describe("stalenessBand — age of checked_on tightens as departure nears (Metric 3)", () => {
-	// [name, checkedOn, today, expected]
-	const cases: [string, string, string, "fresh" | "stale"][] = [
-		// >90 days from departure: a 90-day-old check is still fresh.
-		[">90d out, 90d old → fresh", "2026-01-02", "2026-04-02", "fresh"],
-		[">90d out, 91d old → stale", "2026-01-01", "2026-04-02", "stale"],
-		// Within 1 month of departure (<=30d out): require age < 1 month.
-		["1mo out, 29d old → fresh", "2026-05-19", "2026-06-17", "fresh"],
-		["1mo out, 31d old → stale", "2026-05-17", "2026-06-17", "stale"],
-		// Within 2 weeks (<=14d out): require age < 2 weeks.
-		["2wk out, 13d old → fresh", "2026-06-15", "2026-06-28", "fresh"],
-		["2wk out, 15d old → stale", "2026-06-13", "2026-06-28", "stale"],
-		// Within 1 week (<=7d out): require age < 1 week.
-		["1wk out, 6d old → fresh", "2026-07-01", "2026-07-07", "fresh"],
-		["1wk out, 8d old → stale", "2026-06-29", "2026-07-07", "stale"],
-		// Within 1 day (<=1d out): always stale.
-		["1d out, 0d old → stale", "2026-07-10", "2026-07-10", "stale"],
+describe("formatPrepDate — YYYY-MM-DD key → absolute 'D MMMM YYYY'", () => {
+	// [name, iso, expected]
+	const cases: [string, string, string][] = [
+		["passport validity date", "2026-10-22", "22 October 2026"],
+		["single-digit day", "2026-07-04", "4 July 2026"],
+		["start of year", "2026-01-01", "1 January 2026"],
+		["end of year", "2026-12-31", "31 December 2026"],
+		// Timezone-drift guard: at UTC midnight this date is the 1st; under a
+		// behind-UTC host clock a naive local parse would slip to the prior day.
+		// The fixed UTC formatter must keep it on the 1st regardless.
+		["tz-drift guard (midnight UTC)", "2026-03-01", "1 March 2026"],
 	];
 
-	for (const [name, checkedOn, today, expected] of cases) {
+	for (const [name, iso, expected] of cases) {
 		it(name, () => {
-			// Arrange: a checked_on date, a departure, and an injected clock.
-			// Act: derive the band.
-			const band = stalenessBand(checkedOn, DEPARTURE, new Date(today));
+			// Arrange + Act: format the ISO key.
+			const out = formatPrepDate(iso);
 			// Assert.
-			expect(band).toBe(expected);
+			expect(out).toBe(expected);
+		});
+	}
+
+	it("does not drift under a non-UTC host timezone", () => {
+		// Arrange: pin a behind-UTC timezone for the duration of the assertion.
+		const original = process.env.TZ;
+		process.env.TZ = "America/Los_Angeles";
+		try {
+			// Act + Assert: the UTC formatter keeps the date on its own day.
+			expect(formatPrepDate("2026-03-01")).toBe("1 March 2026");
+			expect(formatPrepDate("2026-10-22")).toBe("22 October 2026");
+		} finally {
+			process.env.TZ = original;
+		}
+	});
+});
+
+describe("deadlineDate — departure − leadTimeDays → absolute deadline string", () => {
+	// Hvar departure used as the reference.
+	const DEPARTURE = "2026-07-11";
+
+	// [name, departure, leadTimeDays, expected]
+	const cases: [string, string, number, string][] = [
+		// UK ETA fixture: depart 2026-07-11, lead 7 → 2026-07-04.
+		["UK ETA: depart 11 Jul − 7d", DEPARTURE, 7, "4 July 2026"],
+		// Zero lead time is the departure itself.
+		["zero lead is departure", DEPARTURE, 0, "11 July 2026"],
+		// Month-boundary case: crossing back across the month edge.
+		["month boundary (Jul → Jun)", "2026-07-03", 7, "26 June 2026"],
+		// Year-boundary case.
+		["year boundary (Jan → Dec)", "2026-01-05", 10, "26 December 2025"],
+	];
+
+	for (const [name, departure, leadTimeDays, expected] of cases) {
+		it(name, () => {
+			// Arrange + Act: derive the absolute deadline.
+			const out = deadlineDate(departure, leadTimeDays);
+			// Assert.
+			expect(out).toBe(expected);
 		});
 	}
 });
 
-describe("deadlineState — lead_time_days deadline + warn window (Metric 6)", () => {
-	// Worked example: lead_time_days 14 → deadline 2026-06-27; warn begins
-	// 21 days before departure (7 ahead of the deadline) = 2026-06-20.
-	const item: PrepItem = {
-		label: "UK ETA",
-		status: "action_needed",
-		lead_time_days: 14,
-	};
-
-	// [name, item, today, expected]
-	const cases: [string, PrepItem, string, "ok" | "warn" | "overdue"][] = [
-		["before warn window → ok", item, "2026-06-19", "ok"],
-		["start of warn window (21d out) → warn", item, "2026-06-20", "warn"],
-		["inside warn window → warn", item, "2026-06-25", "warn"],
-		["on the deadline → warn", item, "2026-06-27", "warn"],
-		["past the deadline → overdue", item, "2026-06-28", "overdue"],
-		["done suppresses warn", { ...item, status: "done" }, "2026-06-25", "ok"],
+describe("anyActionNeeded — aggregate badge driver over the checklist", () => {
+	// [name, checklist, expected]
+	const cases: [string, PrepItem[], boolean][] = [
+		["empty checklist → false", [], false],
 		[
-			"done suppresses overdue",
-			{ ...item, status: "done" },
-			"2026-06-28",
-			"ok",
+			"all no_action → false",
+			[
+				{ label: "a", status: "no_action" },
+				{ label: "b", status: "no_action" },
+			],
+			false,
 		],
 		[
-			"no lead_time_days → ok",
-			{ label: "no deadline", status: "action_needed" },
-			"2026-07-10",
-			"ok",
+			"one action_needed among others → true",
+			[
+				{ label: "a", status: "no_action" },
+				{ label: "b", status: "action_needed" },
+				{ label: "c", status: "no_action" },
+			],
+			true,
+		],
+		[
+			"missing status → false",
+			[{ label: "a" }, { label: "b", status: "no_action" }],
+			false,
 		],
 	];
 
-	for (const [name, testItem, today, expected] of cases) {
+	for (const [name, checklist, expected] of cases) {
 		it(name, () => {
-			// Arrange + Act: derive the deadline state against the injected clock.
-			const state = deadlineState(testItem, DEPARTURE, new Date(today));
+			// Arrange + Act: derive the aggregate.
+			const out = anyActionNeeded(checklist);
 			// Assert.
-			expect(state).toBe(expected);
+			expect(out).toBe(expected);
 		});
 	}
 });

@@ -45,8 +45,10 @@ export type ActivityEnrichment = {
 	tips?: string;
 };
 
-// Lifecycle of a prep concern. Surfaced (raw or humanized) by the render layer.
-export type PrepStatus = "action_needed" | "in_progress" | "done" | "no_action";
+// Binary lifecycle of a prep concern. Surfaced (raw or humanized) by the render
+// layer. Invariant: exactly two members — an item either needs action or it does
+// not; the rejected `in_progress`/`done` middle states are gone (design §2).
+export type PrepStatus = "action_needed" | "no_action";
 
 // A traveler's document STATUS/METADATA only. Invariant (design §Privacy):
 // never holds a passport/visa/ETA reference number, never an exact DOB;
@@ -77,20 +79,20 @@ export type Traveler = {
 
 // One advisory "before you go" line. Invariant: a rule-bearing item must carry
 // a gov/europa `url` and must NOT restate the rule as settled fact.
-// `lead_time_days`/`warn_lead_days` feed the pure deadline derivation.
 export type PrepItem = {
 	label: string;
 	status?: PrepStatus;
 	url?: string; // authoritative government source
 	detail?: string; // advisory text; never the rule-as-fact
 	applies_to?: string[]; // traveler names and/or city labels
-	lead_time_days?: number; // must reach `done` this many days before departure
-	warn_lead_days?: number; // begin warning this many days before that deadline (default 7)
+	// The apply-by deadline is `lead_time_days` before departure, rendered
+	// absolutely (see deadlineDate in trip-prep.ts) — never as a relative window.
+	lead_time_days?: number;
 };
 
 // The advisory layer. `checked_on` (YYYY-MM-DD) is the verification date the
-// skill stamps; the render layer derives a departure-relative staleness band
-// from it. Invariant: entirely optional; absence renders nothing.
+// skill stamps; the render layer shows it as an absolute checked date.
+// Invariant: entirely optional; absence renders nothing.
 export type TripPrep = {
 	checked_on?: string; // YYYY-MM-DD
 	summary?: string;

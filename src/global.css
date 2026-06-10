@@ -781,4 +781,72 @@ section:has(img.float) + section {
   .TripPage li:has(mark) > details > summary:hover {
     background-color: transparent;
   }
+
+  /* Before-you-go prep Card: a full-width trip-level advisory, banded like the
+     city bands (own surface + elevation), NOT inset to the event-card column
+     like a day group. A direct child of .TripPage > main, sibling of the
+     day-group <section> and the city-band <div>. */
+  .TripPage > main > article.TripPrep {
+    background: var(--color-surface);
+    border: var(--card-border);
+    border-radius: var(--border-radius-container);
+    box-shadow: var(--card-shadow);
+    overflow: clip;
+    margin: var(--size-medium) 0 var(--size-base);
+  }
+  /* Keep the jiffies-css `article > main` body padding; tune with the scale. */
+  .TripPage > main > article.TripPrep > main {
+    padding: var(--size-medium);
+  }
+  /* The body's lone <details> carries no card chrome of its own — the Card is
+     the surface. Drop the accordion border/radius so it reads as one panel. */
+  .TripPage > main > article.TripPrep details {
+    border: 0;
+    border-radius: 0;
+  }
+  /* Summary is a single header row: heading at the start; the "Action needed"
+     badge and the checked date trail it; the disclosure chevron sits at the far
+     edge (the base accordion summ::after chevron applies; .TripPage summary::after
+     positioning below pins it). */
+  .TripPage > main > article.TripPrep summary {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: var(--size-small);
+    padding: var(--size-base) var(--size-medium);
+  }
+  .TripPage > main > article.TripPrep summary > h2 {
+    margin: 0;
+    font-family: var(--brand-header-font-family);
+    font-size: var(--font-size-h5);
+    color: var(--color-on-surface);
+  }
+  /* The checked date is pushed to the far end, leaving the chevron beyond it. */
+  .TripPage > main > article.TripPrep summary > small[data-checked-on] {
+    margin-inline-start: auto;
+    font-size: var(--font-size-small);
+    color: var(--color-on-surface-variant);
+  }
+  /* The summary::after chevron is laid out by .TripPage summary::after for the
+     day-group grid; this flex summary needs no grid placement, so reset it to
+     flow inline at the row's end. */
+  .TripPage > main > article.TripPrep summary::after {
+    grid-area: auto;
+  }
+  /* Revealed body: stack the summary prose, checklist, and notes with rhythm. */
+  .TripPage > main > article.TripPrep details > :not(summary) {
+    margin-block: var(--size-small) 0;
+  }
+  .TripPage > main > article.TripPrep details > ul {
+    padding-inline-start: var(--size-large);
+  }
+  .TripPage > main > article.TripPrep details > ul > li {
+    margin-block: var(--size-xsmall);
+  }
+  /* Per-item small detail/deadline lines: muted, block, below the label. */
+  .TripPage > main > article.TripPrep details > ul > li > small {
+    display: block;
+    font-size: var(--font-size-small);
+    color: var(--color-on-surface-variant);
+  }
 }

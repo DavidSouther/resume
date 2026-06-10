@@ -14,7 +14,7 @@ meta:
     - name: "David Souther"
       passport_country: "US"
       documents:
-        - { type: passport, status: in_progress, note: "confirm valid through >=2026-10; set valid_until once known" }
+        - { type: passport, status: action_needed, note: "confirm valid through 22 October 2026; set valid_until once known" }
         - { type: uk_eta, status: action_needed }
     - name: "Anne Levine"
       passport_country: "US"
@@ -196,17 +196,17 @@ trip_prep:
       detail: "Multi-entry, valid 2 years; one ETA covers both UK entries."
       applies_to: ["David Souther", "Anne Levine"]
       lead_time_days: 7
-    - label: "Confirm passports valid through ~2026-10-22"
-      status: in_progress
+    - label: "Passport must be valid through 22 October 2026"
+      status: action_needed
       url: "https://europa.eu/youreurope/citizens/travel/entry-exit/non-eu-nationals/index_en.htm"
-      detail: "Schengen needs >=3 months past departure (22 Jul) and issued within 10 years."
+      detail: "Schengen requires a passport issued within the last 10 years and valid until at least 22 October 2026."
     - label: "ETIAS — no action (launches Q4 2026)"
       status: no_action
       url: "https://travel-europe.europa.eu/en/etias"
   notes:
     - "EES biometric enrolment at first Schengen entry (Vienna) unless already enrolled on an entry after 10 Apr 2026; allow extra time. Exit recorded at Split."
     - "Vienna→Split is an internal Schengen flight: no passport control, security only."
-    - "Schengen 90/180: add this trip's ~8 days to any Schengen days in the prior 180 (e.g. a February Switzerland stay); confirm the running total stays under 90. EES now tallies it automatically."
+    - "Schengen 90/180: this trip spends 9 days in the Schengen area (Vienna entry 14 July 2026 through Split exit 22 July 2026); add those to any Schengen days within the 180 days before, and confirm the running total stays under 90. EES now tallies it automatically."
     - "Customs: UK £390 / EU €430 / US $800 + 1 L alcohol per person."
   sources:
     - { title: "gov.uk — UK ETA", url: "https://www.gov.uk/eta" }
