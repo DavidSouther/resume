@@ -1,0 +1,1340 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aristotle Platform Architecture</title>
+<style>
+/* ════════════════════════════════════════════════════════════════════════
+   DESIGN TOKENS — semantic, variable-first (CSS Zen Garden model).
+   A theme is variable overrides only; structural rules never change.
+   Color tokens are RGB channel triplets so one token drives every alpha:
+   rgb(var(--c-network) / .12).  Override --brand-* / neutrals to re-theme.
+   ════════════════════════════════════════════════════════════════════════ */
+:root {
+  /* — Intent: constants (public API) — */
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  --radius:      10px;
+  --radius-sm:    8px;
+  --radius-xs:    4px;
+  --radius-pill: 999px;
+  --content-max: 960px;
+  --line-soft: .08;   /* hairline alpha */
+  --line-med:  .14;   /* border alpha   */
+
+  /* — Intent: neutrals (DARK is the default theme) — */
+  --bg:      18 19 24;     /* page            */
+  --bg-bar:  24 26 33;     /* deck chrome bar  */
+  --ink:    232 234 240;   /* primary text     */
+  --line:   255 255 255;   /* borders/surfaces via alpha */
+
+  /* — Intent: semantic role colors (bright triplets; fills/borders via alpha) — */
+  --c-network:    138 180 248;  /* edge · ingress · core · prod · traffic */
+  --c-app:        122 222 152;  /* workloads · public · parity · success  */
+  --c-platform:   205 160 250;  /* platform · identity · argocd · tier-2 · dev */
+  --c-telemetry:  255 196 112;  /* observability · paths · staging · analytics */
+  --c-forge:      250 180 120;  /* git hosting (forgejo)                  */
+  --c-storage:    222 168  96;  /* longhorn · block storage               */
+  --c-stream:     124 218 222;  /* flags · valkey · logs · mesh · mTLS     */
+  --c-guard:      255 162 162;  /* CF Access tier-1 · deny · danger        */
+  --c-compute:    236 160 216;  /* GPU                                     */
+  --c-muted:      190 200 215;  /* future · internal · deferred            */
+  --c-lang-rust:  232 154 104;
+  --c-lang-ts:    124 176 250;
+  --c-lang-py:    242 208  96;
+
+  /* — Application bridge: classic vars the slides reference — */
+  --text-primary:   rgb(var(--ink) / 1);
+  --text-secondary: rgb(var(--ink) / .62);
+}
+
+/* — Theme: LIGHT (variable overrides only) — */
+:root[data-theme="light"] {
+  --bg:      248 249 251;
+  --bg-bar:  255 255 255;
+  --ink:      28  30  38;
+  --line:     20  22  30;
+  --line-soft: .07;
+  --line-med:  .16;
+
+  --c-network:    36  98 205;
+  --c-app:        28 150  84;
+  --c-telemetry: 176 116  18;
+  --c-forge:     196 108  40;
+  --c-storage:   158 104  30;
+  --c-platform:  138  78 212;
+  --c-stream:     26 148 156;
+  --c-guard:     206  68  68;
+  --c-compute:   184  78 164;
+  --c-muted:      92 104 124;
+  --c-lang-rust: 188 100  52;
+  --c-lang-ts:    36  98 205;
+  --c-lang-py:   168 130  18;
+}
+/* auto light when the OS prefers it and the user hasn't forced dark */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]):not([data-theme="light"]) {
+    --bg: 248 249 251; --bg-bar: 255 255 255; --ink: 28 30 38; --line: 20 22 30;
+    --line-soft: .07; --line-med: .16;
+    --c-network: 36 98 205; --c-app: 28 150 84; --c-telemetry: 176 116 18;
+    --c-forge: 196 108 40; --c-storage: 158 104 30; --c-platform: 138 78 212;
+    --c-stream: 26 148 156; --c-guard: 206 68 68; --c-compute: 184 78 164;
+    --c-muted: 92 104 124; --c-lang-rust: 188 100 52; --c-lang-ts: 36 98 205; --c-lang-py: 168 130 18;
+  }
+}
+
+/* ════════════════════════ DECK CHROME ════════════════════════ */
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: rgb(var(--bg));
+  color: rgb(var(--ink));
+  font-family: var(--font-sans);
+  display: flex; flex-direction: column;
+  -webkit-font-smoothing: antialiased;
+}
+.deck-bar {
+  flex: 0 0 auto; display: flex; align-items: center; gap: 14px;
+  padding: 10px 18px; background: rgb(var(--bg-bar));
+  border-bottom: 1px solid rgb(var(--line) / var(--line-med));
+  position: sticky; top: 0; z-index: 20;
+}
+.deck-bar .brand { font-weight: 700; font-size: .92em; letter-spacing: .01em; }
+.deck-bar .brand small { font-weight: 400; opacity: .55; margin-left: 8px; font-size: .82em; }
+.deck-bar .spacer { flex: 1; }
+.deck-bar .counter { font-variant-numeric: tabular-nums; font-size: .8em; opacity: .7; min-width: 88px; text-align: right; }
+.btn {
+  font: inherit; font-size: .8em; color: rgb(var(--ink));
+  background: rgb(var(--line) / .06); border: 1px solid rgb(var(--line) / var(--line-med));
+  border-radius: var(--radius-sm); padding: 5px 11px; cursor: pointer; line-height: 1;
+}
+.btn:hover { background: rgb(var(--c-network) / .16); border-color: rgb(var(--c-network) / .5); }
+
+.stage { flex: 1 1 auto; overflow: auto; padding: 26px 20px 60px; }
+.slide { display: none; }
+.slide.active { display: block; animation: fade .25s ease; }
+@keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+/* prev/next click zones */
+.edge-nav { position: fixed; top: 52px; bottom: 0; width: 9%; z-index: 5; cursor: pointer; border: 0; background: transparent; opacity: 0; }
+.edge-nav:hover { opacity: 1; background: linear-gradient(var(--dir, 90deg), rgb(var(--c-network) / .10), transparent); }
+.edge-prev { left: 0; --dir: 90deg; }
+.edge-next { right: 0; --dir: 270deg; }
+
+/* menu overlay */
+.menu { position: fixed; inset: 0; z-index: 30; background: rgb(var(--bg) / .82); backdrop-filter: blur(4px); display: none; }
+.menu[open] { display: grid; place-items: center; }
+.menu ol { list-style: none; margin: 0; padding: 0; width: min(520px, 86vw); }
+.menu li { margin: 5px 0; }
+.menu button.jump {
+  width: 100%; text-align: left; display: flex; gap: 12px; align-items: baseline;
+  font: inherit; color: rgb(var(--ink)); cursor: pointer;
+  background: rgb(var(--line) / .04); border: 1px solid rgb(var(--line) / var(--line-med));
+  border-radius: var(--radius-sm); padding: 11px 14px;
+}
+.menu button.jump:hover { background: rgb(var(--c-network) / .14); border-color: rgb(var(--c-network) / .5); }
+.menu button.jump.current { border-color: rgb(var(--c-app) / .6); background: rgb(var(--c-app) / .1); }
+.menu .n { font-variant-numeric: tabular-nums; opacity: .5; min-width: 18px; }
+.menu .t { font-weight: 600; }
+.menu .d { opacity: .6; font-size: .82em; }
+.menu h3 { text-align: center; margin: 0 0 16px; font-size: .8em; text-transform: uppercase; letter-spacing: .1em; opacity: .55; }
+
+/* ════════════════════════ SHARED SLIDE PRIMITIVES (tokenized) ════════════════════════ */
+.slide .page { max-width: var(--content-max); margin: 0 auto; }
+.slide h2 { text-align: center; margin-bottom: 2px; }
+.slide .crumb { text-align: center; font-size: .72em; letter-spacing: .08em; text-transform: uppercase; opacity: .5; margin-bottom: 6px; }
+.slide .subtitle { text-align: center; color: var(--text-secondary); margin-bottom: 20px; font-size: .9em; }
+.slide .section-label { font-size: .66em; text-transform: uppercase; letter-spacing: .1em; opacity: .55; font-weight: 600; margin-bottom: 10px; }
+.slide .panel { border: 1px solid rgb(var(--line) / var(--line-med)); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 15px; background: rgb(var(--line) / .015); }
+.slide code { font-family: var(--font-mono); }
+.slide .dim { opacity: .45; }
+.slide .chip { display: inline-block; border-radius: var(--radius-xs); padding: 3px 9px; font-size: .8em; border: 1px solid rgb(var(--line) / var(--line-med)); background: rgb(var(--line) / .06); white-space: nowrap; }
+.slide .chip.blue   { border-color: rgb(var(--c-network)  / .5); background: rgb(var(--c-network)  / .12); }
+.slide .chip.green  { border-color: rgb(var(--c-app)      / .5); background: rgb(var(--c-app)      / .10); }
+.slide .chip.orange { border-color: rgb(var(--c-telemetry)/ .5); background: rgb(var(--c-telemetry)/ .10); }
+.slide .chip.purple { border-color: rgb(var(--c-platform) / .5); background: rgb(var(--c-platform) / .10); }
+.slide .chip.brown  { border-color: rgb(var(--c-storage)  / .5); background: rgb(var(--c-storage)  / .10); }
+.slide .tag { display:inline-block; font-size: .66em; border: 1px solid rgb(var(--line) / var(--line-med)); background: rgb(var(--line) / .06); border-radius: var(--radius-xs); padding: 1px 7px; white-space: nowrap; }
+
+/* ── Crosslinks — [data-goto] jumps to another slide (hover only); [data-docs] opens external docs in a new tab (hover + ↗). Inset ring is clip-safe inside overflow:hidden panels. ── */
+[data-docs], [data-goto] { cursor: pointer; border-radius: var(--radius-xs); transition: background .12s ease, box-shadow .12s ease, opacity .12s ease; }
+[data-docs]:hover, [data-goto]:hover, [data-docs]:focus-visible, [data-goto]:focus-visible {
+  background: rgb(var(--ink) / .10); box-shadow: inset 0 0 0 1.5px rgb(var(--ink) / .35); outline: none;
+}
+[data-docs]::after { content: "↗"; font-size: .78em; margin-left: 3px; opacity: .5; vertical-align: super; line-height: 0; font-weight: 400; }
+[data-docs]:hover::after, [data-docs]:focus-visible::after { opacity: .95; }
+
+/* ───────────────── S1 · OVERVIEW ───────────────── */
+@scope (#s1) {
+  .legend { display: flex; justify-content: center; flex-wrap: wrap; gap: 14px; margin-bottom: 22px; font-size: .72em; }
+  .legend-item { display: flex; align-items: center; gap: 6px; opacity: .8; }
+  .swatch { width: 11px; height: 11px; border-radius: 3px; border: 1px solid rgb(var(--line) / .2); }
+  .swatch.sw-edge { background: rgb(var(--c-network) / .6); }
+  .swatch.sw-work { background: rgb(var(--c-app) / .6); }
+  .swatch.sw-plat { background: rgb(var(--c-platform) / .6); }
+  .swatch.sw-obs  { background: rgb(var(--c-telemetry) / .6); }
+  .swatch.sw-stor { background: rgb(var(--c-storage) / .6); }
+  .lock { font-size: .9em; }
+
+  .hybrid { display: grid; grid-template-columns: 210px 1fr; gap: 16px; align-items: stretch; }
+  .traffic-lane { display: flex; flex-direction: column; background: linear-gradient(180deg, rgb(var(--c-network) / .07), rgb(var(--c-network) / .02)); border: 1px solid rgb(var(--c-network) / .22); border-radius: var(--radius); padding: 14px 11px; }
+  .lane-title { font-size: .68em; text-transform: uppercase; letter-spacing: .1em; color: rgb(var(--c-network) / .95); text-align: center; margin-bottom: 12px; font-weight: 600; }
+  .t-box { border-radius: 7px; padding: 9px; text-align: center; font-size: .82em; border: 1px solid rgb(var(--c-network) / .4); background: rgb(var(--c-network) / .12); line-height: 1.3; }
+  .t-box.workloads { border-color: rgb(var(--c-app) / .45); background: rgb(var(--c-app) / .12); }
+  .t-name { font-weight: 600; }
+  .t-detail { font-size: .82em; opacity: .7; margin-top: 2px; }
+  .t-arrow { text-align: center; color: rgb(var(--ink) / .4); font-size: .95em; padding: 3px 0; line-height: 1.5; }
+  .t-arrow small { display: block; font-size: .62em; opacity: .65; letter-spacing: .02em; }
+  .gate { margin: 4px 2px; border-radius: 6px; padding: 5px 7px; font-size: .7em; text-align: center; border: 1px dashed rgb(var(--c-guard) / .5); background: rgb(var(--c-guard) / .08); color: rgb(var(--c-guard) / 1); }
+
+  .swim-panel { border: 1px solid rgb(var(--line) / var(--line-med)); border-radius: var(--radius); overflow: hidden; display: flex; flex-direction: column; }
+  .swim-panel-title { font-size: .68em; text-transform: uppercase; letter-spacing: .1em; opacity: .55; padding: 9px 14px 7px; border-bottom: 1px solid rgb(var(--line) / var(--line-soft)); background: rgb(var(--line) / .03); font-weight: 600; }
+  .swim-row { display: grid; grid-template-columns: 116px 1fr; border-bottom: 1px solid rgb(var(--line) / var(--line-soft)); flex: 1; }
+  .swim-row:last-child { border-bottom: none; }
+  .swim-name { padding: 11px 12px; font-size: .74em; text-transform: uppercase; letter-spacing: .05em; border-right: 1px solid rgb(var(--line) / var(--line-soft)); background: rgb(var(--line) / .025); display: flex; align-items: center; font-weight: 600; }
+  .swim-content { padding: 9px 12px; display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+  .sw-workloads .swim-name { color: rgb(var(--c-app) / .95); }
+  .sw-platform  .swim-name { color: rgb(var(--c-platform) / .95); }
+  .sw-storage   .swim-name { color: rgb(var(--c-storage) / .95); }
+  .sw-obs       .swim-name { color: rgb(var(--c-telemetry) / .95); }
+  .sw-infra     .swim-name { opacity: .55; }
+  .chip.green  { border-color: rgb(var(--c-app) / .5);       background: rgb(var(--c-app) / .1); }
+  .chip.purple { border-color: rgb(var(--c-platform) / .5);  background: rgb(var(--c-platform) / .1); }
+  .chip.orange { border-color: rgb(var(--c-telemetry) / .5); background: rgb(var(--c-telemetry) / .1); }
+  .chip.brown  { border-color: rgb(var(--c-storage) / .5);   background: rgb(var(--c-storage) / .1); }
+
+  .footer { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
+  .note { font-size: .78em; color: var(--text-secondary); border: 1px solid rgb(var(--line) / var(--line-soft)); border-radius: 7px; padding: 10px 13px; background: rgb(var(--line) / .02); }
+  .note strong { color: var(--text-primary); }
+  .note-label { font-size: .85em; text-transform: uppercase; letter-spacing: .06em; opacity: .6; display: block; margin-bottom: 4px; }
+}
+
+/* ───────────────── S2 · CLUSTER CORE ───────────────── */
+@scope (#s2) {
+  .prov-flow { display: flex; align-items: stretch; gap: 10px; }
+  .prov-step { flex: 1; border-radius: var(--radius-sm); padding: 10px 12px; text-align: center; font-size: .84em; border: 1px solid rgb(var(--c-network) / .35); background: rgb(var(--c-network) / .08); display: flex; flex-direction: column; justify-content: center; gap: 3px; }
+  .prov-step .ps-name { font-weight: 600; }
+  .prov-step .ps-detail { font-size: .8em; opacity: .65; }
+  .prov-arrow { display: flex; align-items: center; color: rgb(var(--ink) / .4); font-size: 1.1em; }
+
+  .pool { border-radius: var(--radius-sm); padding: 11px 13px; margin-bottom: 9px; border: 1px solid rgb(var(--line) / var(--line-med)); }
+  .pool:last-child { margin-bottom: 0; }
+  .pool-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; gap: 8px; }
+  .pool-name { font-weight: 600; font-size: .86em; }
+  .pool-policy { font-size: .73em; opacity: .7; text-align: right; }
+  .nodes { display: flex; gap: 7px; flex-wrap: wrap; align-items: center; }
+  .node { border-radius: 6px; padding: 8px 13px; font-size: .76em; text-align: center; border: 1px solid rgb(var(--line) / .18); background: rgb(var(--line) / .05); line-height: 1.25; }
+  .node small { display: block; font-size: .82em; opacity: .6; }
+  .node.ghost { border-style: dashed; opacity: .45; }
+  .pool.combined { border-color: rgb(var(--c-network) / .4); background: rgb(var(--c-network) / .06); }
+  .pool.combined .pool-name { color: rgb(var(--c-network) / .95); }
+  .node.server { border-color: rgb(var(--c-network) / .45); background: rgb(var(--c-network) / .12); }
+  .pool.gpu { border-color: rgb(var(--c-compute) / .4); background: rgb(var(--c-compute) / .06); }
+  .pool.gpu .pool-name { color: rgb(var(--c-compute) / .95); }
+  .node.gpu { border-color: rgb(var(--c-compute) / .45); background: rgb(var(--c-compute) / .12); }
+  .split-note { margin-top: 9px; font-size: .76em; opacity: .6; border-top: 1px dashed rgb(var(--line) / var(--line-med)); padding-top: 8px; }
+  .split-note code { font-family: var(--font-mono); font-size: .92em; color: rgb(var(--c-network) / .9); }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .ministrip { border: 1px solid rgb(var(--line) / var(--line-med)); border-radius: var(--radius-sm); padding: 11px 13px; }
+  .ministrip h4 { margin: 0 0 7px; font-size: .74em; text-transform: uppercase; letter-spacing: .06em; opacity: .6; }
+  .kv { display: flex; justify-content: space-between; gap: 10px; font-size: .79em; padding: 3px 0; border-bottom: 1px solid rgb(var(--line) / var(--line-soft)); }
+  .kv:last-child { border-bottom: none; }
+  .kv .k { opacity: .78; }
+  .kv .v { font-family: var(--font-mono); font-size: .9em; color: rgb(var(--c-network) / .95); white-space: nowrap; }
+  .kv .v.cost { color: rgb(var(--c-app) / .95); }
+}
+
+/* ───────────────── S3 · OBSERVABILITY ───────────────── */
+@scope (#s3) {
+  .flow { display: flex; flex-direction: column; align-items: center; }
+  .sources { border: 1px dashed rgb(var(--line) / .2); border-radius: var(--radius-sm); padding: 9px 16px; font-size: .82em; text-align: center; background: rgb(var(--line) / .03); }
+  .sources .src-detail { font-size: .82em; opacity: .6; margin-top: 2px; }
+  .top-row { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 14px; width: 100%; }
+  .top-row .sources { justify-self: center; }
+  .sdk-box { justify-self: start; border: 1px solid rgb(var(--line) / var(--line-med)); border-radius: var(--radius-sm); padding: 8px 10px; background: rgb(var(--line) / .02); max-width: 300px; }
+  .sdk-title { font-size: .6em; text-transform: uppercase; letter-spacing: .07em; opacity: .55; font-weight: 600; margin-bottom: 6px; }
+  .sdk-row { display: grid; grid-template-columns: 62px 1fr; gap: 7px; align-items: baseline; padding: 3px 0; border-bottom: 1px solid rgb(var(--line) / var(--line-soft)); }
+  .sdk-row:last-child { border-bottom: none; }
+  .sdk-row .lang { font-size: .72em; font-weight: 600; }
+  .sdk-row.rust .lang { color: rgb(var(--c-lang-rust) / .95); }
+  .sdk-row.ts   .lang { color: rgb(var(--c-lang-ts) / .95); }
+  .sdk-row.py   .lang { color: rgb(var(--c-lang-py) / .95); }
+  .sdk-row .pkg { font-size: .66em; line-height: 1.5; opacity: .85; }
+  .sdk-row .pkg code { font-family: var(--font-mono); background: rgb(var(--line) / .07); border-radius: 3px; padding: 0 4px; }
+
+  .signal-arrows { display: flex; gap: 30px; justify-content: center; margin: 7px 0 8px; }
+  .sig { font-size: .7em; text-align: center; opacity: .85; }
+  .sig .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
+  .sig.logs   .dot { background: rgb(var(--c-stream) / .9); }
+  .sig.metric .dot { background: rgb(var(--c-telemetry) / .9); }
+  .sig.trace  .dot { background: rgb(var(--c-platform) / .9); }
+  .collector { border: 1px solid rgb(var(--c-telemetry) / .5); background: rgb(var(--c-telemetry) / .1); border-radius: var(--radius-sm); padding: 11px 22px; text-align: center; min-width: 280px; }
+  .collector .c-name { font-weight: 600; font-size: .95em; color: rgb(var(--c-telemetry) / .95); }
+  .collector .c-detail { font-size: .78em; opacity: .7; margin-top: 2px; }
+  .fan { font-size: 1.2em; color: rgb(var(--ink) / .4); margin: 5px 0; }
+  .stores { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; width: 100%; max-width: 560px; }
+  .store { border-radius: var(--radius-sm); padding: 12px 10px; text-align: center; border: 1px solid rgb(var(--line) / var(--line-med)); }
+  .store .st-name { font-weight: 600; font-size: .9em; }
+  .store .st-role { font-size: .74em; opacity: .7; margin-top: 3px; }
+  .store .st-sig { font-size: .66em; text-transform: uppercase; letter-spacing: .06em; margin-top: 6px; opacity: .8; }
+  .store.loki  { border-color: rgb(var(--c-stream) / .45);    background: rgb(var(--c-stream) / .08); }
+  .store.loki  .st-name { color: rgb(var(--c-stream) / .95); }
+  .store.mimir { border-color: rgb(var(--c-telemetry) / .45); background: rgb(var(--c-telemetry) / .08); }
+  .store.mimir .st-name { color: rgb(var(--c-telemetry) / .95); }
+  .store.tempo { border-color: rgb(var(--c-platform) / .45);  background: rgb(var(--c-platform) / .08); }
+  .store.tempo .st-name { color: rgb(var(--c-platform) / .95); }
+  .converge { font-size: 1.2em; color: rgb(var(--ink) / .4); margin: 6px 0; }
+  .grafana { border: 1px solid rgb(var(--c-telemetry) / .55); background: linear-gradient(180deg, rgb(var(--c-telemetry) / .14), rgb(var(--c-telemetry) / .05)); border-radius: var(--radius-sm); padding: 12px 24px; text-align: center; min-width: 320px; }
+  .grafana .g-name { font-weight: 700; font-size: 1em; color: rgb(var(--c-telemetry) / 1); }
+  .grafana .g-detail { font-size: .8em; opacity: .78; margin-top: 3px; }
+  .grafana .g-access { display: inline-block; margin-top: 7px; font-size: .72em; border: 1px dashed rgb(var(--c-guard) / .5); background: rgb(var(--c-guard) / .08); color: rgb(var(--c-guard) / 1); border-radius: 6px; padding: 2px 9px; }
+  .foot { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
+  .fnote { border: 1px solid rgb(var(--line) / var(--line-med)); border-radius: var(--radius-sm); padding: 10px 13px; font-size: .78em; color: var(--text-secondary); }
+  .fnote .fn-label { font-size: .78em; text-transform: uppercase; letter-spacing: .06em; opacity: .55; display: block; margin-bottom: 4px; }
+  .fnote strong { color: var(--text-primary); }
+  .fnote code { font-family: var(--font-mono); font-size: .9em; color: rgb(var(--c-network) / .9); }
+  .fnote .defer { color: rgb(var(--c-telemetry) / .9); }
+}
+
+/* ───────────────── S4 · STORAGE ───────────────── */
+@scope (#s4) {
+  .consumers { display: grid; grid-template-columns: 2fr 1fr; gap: 10px; margin-bottom: 8px; }
+  .cbox { border-radius: var(--radius-sm); padding: 10px 13px; border: 1px solid rgb(var(--line) / var(--line-med)); }
+  .cbox .cb-name { font-weight: 600; font-size: .88em; }
+  .cbox .cb-role { font-size: .76em; opacity: .7; margin-top: 2px; }
+  .cbox .cb-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 7px; }
+  .cbox.pg { border-color: rgb(var(--c-network) / .45); background: rgb(var(--c-network) / .08); }
+  .cbox.pg .cb-name { color: rgb(var(--c-network) / .95); }
+  .cbox.valkey { border-color: rgb(var(--c-stream) / .45); background: rgb(var(--c-stream) / .08); }
+  .cbox.valkey .cb-name { color: rgb(var(--c-stream) / .95); }
+  .down { text-align: center; color: rgb(var(--ink) / .4); font-size: .85em; margin: 3px 0; }
+  .down small { opacity: .6; }
+  .stack-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: stretch; }
+  .longhorn { border-radius: var(--radius-sm); padding: 12px 14px; border: 1px solid rgb(var(--c-storage) / .45); background: rgb(var(--c-storage) / .1); display: flex; justify-content: space-between; align-items: center; }
+  .longhorn .lh-name { font-weight: 600; font-size: .9em; color: rgb(var(--c-storage) / .95); }
+  .longhorn .lh-detail { font-size: .76em; opacity: .7; }
+  .longhorn .lh-repl { font-size: .74em; font-family: var(--font-mono); opacity: .85; }
+  .rook { border-radius: var(--radius-sm); padding: 12px 14px; border: 1px dashed rgb(var(--line) / .2); background: rgb(var(--line) / .02); display: flex; flex-direction: column; justify-content: center; text-align: center; min-width: 200px; opacity: .7; }
+  .rook .rk-name { font-weight: 600; font-size: .84em; }
+  .rook .rk-detail { font-size: .72em; opacity: .7; margin-top: 2px; }
+  .dr-wrap { display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: center; }
+  .tiers { display: flex; flex-direction: column; gap: 7px; }
+  .tier { display: grid; grid-template-columns: 46px 1fr auto; gap: 11px; align-items: center; border-radius: var(--radius-sm); padding: 9px 12px; border: 1px solid rgb(var(--line) / var(--line-med)); }
+  .tier .t-num { font-weight: 700; font-size: 1.05em; text-align: center; opacity: .85; }
+  .tier .t-body .t-scope { font-weight: 600; font-size: .83em; }
+  .tier .t-body .t-mech { font-size: .74em; opacity: .68; margin-top: 1px; }
+  .tier .t-rpo { font-size: .72em; font-family: var(--font-mono); border-radius: 12px; padding: 2px 10px; white-space: nowrap; }
+  .tier.t1 { border-color: rgb(var(--c-app) / .4); background: rgb(var(--c-app) / .07); }
+  .tier.t1 .t-rpo { color: rgb(var(--c-app) / .95); border: 1px solid rgb(var(--c-app) / .5); }
+  .tier.t2 { border-color: rgb(var(--c-telemetry) / .4); background: rgb(var(--c-telemetry) / .06); }
+  .tier.t2 .t-rpo { color: rgb(var(--c-telemetry) / .95); border: 1px solid rgb(var(--c-telemetry) / .5); }
+  .tier.t3 { border-color: rgb(var(--c-telemetry) / .4); background: rgb(var(--c-telemetry) / .06); }
+  .tier.t3 .t-rpo { color: rgb(var(--c-telemetry) / .95); border: 1px solid rgb(var(--c-telemetry) / .5); }
+  .backup-arrow { font-size: .74em; text-align: center; color: rgb(var(--ink) / .4); }
+  .objstore { border-radius: var(--radius-sm); padding: 13px 14px; text-align: center; min-width: 170px; border: 1px solid rgb(var(--c-app) / .45); background: rgb(var(--c-app) / .08); }
+  .objstore .os-name { font-weight: 600; font-size: .84em; color: rgb(var(--c-app) / .95); }
+  .objstore .os-detail { font-size: .72em; opacity: .72; margin-top: 3px; }
+  .objstore .os-providers { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; margin-top: 8px; }
+  .objstore .os-providers .tag { font-size: .64em; }
+}
+
+/* ───────────────── S5 · PLATFORM ───────────────── */
+@scope (#s5) {
+  .gitops-head { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 4px; }
+  .gbox { border-radius: var(--radius-sm); padding: 8px 15px; text-align: center; font-size: .82em; }
+  .gbox.git { border: 1px solid rgb(var(--line) / .2); background: rgb(var(--line) / .04); }
+  .gbox.git .g-detail { font-size: .8em; opacity: .6; margin-top: 1px; }
+  .gbox.argocd { border: 1px solid rgb(var(--c-platform) / .5); background: rgb(var(--c-platform) / .12); }
+  .gbox.argocd .g-name { font-weight: 700; color: rgb(var(--c-platform) / .97); }
+  .gbox.argocd .g-detail { font-size: .78em; opacity: .72; margin-top: 1px; }
+  .harrow { color: rgb(var(--ink) / .45); font-size: 1.1em; }
+  .sync-label { text-align: center; font-size: .72em; opacity: .55; margin: 7px 0 9px; }
+  .layers { display: grid; grid-template-columns: repeat(5,1fr); gap: 9px; }
+  .layer { border-radius: var(--radius-sm); overflow: hidden; border: 1px solid rgb(var(--line) / var(--line-med)); }
+  .layer-head { padding: 6px 8px; font-size: .74em; font-weight: 600; text-align: center; border-bottom: 1px solid rgb(var(--line) / var(--line-med)); }
+  .layer-apps { padding: 7px; display: flex; flex-direction: column; gap: 4px; }
+  .app { font-size: .69em; border-radius: 3px; padding: 3px 6px; background: rgb(var(--line) / .05); border: 1px solid rgb(var(--line) / var(--line-soft)); text-align: center; }
+  .app.hi { background: rgb(var(--c-forge) / .12); border-color: rgb(var(--c-forge) / .4); }
+  .app.future { border-style: dashed; opacity: .4; }
+  .layer.core     { border-color: rgb(var(--c-network) / .4); }   .layer.core .layer-head     { background: rgb(var(--c-network) / .14);   color: rgb(var(--c-network) / .97); }
+  .layer.storage  { border-color: rgb(var(--c-storage) / .4); }   .layer.storage .layer-head  { background: rgb(var(--c-storage) / .14);   color: rgb(var(--c-storage) / .97); }
+  .layer.platform { border-color: rgb(var(--c-platform) / .45); } .layer.platform .layer-head { background: rgb(var(--c-platform) / .16);  color: rgb(var(--c-platform) / .97); }
+  .layer.obs      { border-color: rgb(var(--c-telemetry) / .4); } .layer.obs .layer-head      { background: rgb(var(--c-telemetry) / .14); color: rgb(var(--c-telemetry) / .97); }
+  .layer.workloads{ border-color: rgb(var(--c-app) / .4); }       .layer.workloads .layer-head{ background: rgb(var(--c-app) / .14);       color: rgb(var(--c-app) / .97); }
+  .gitops-foot { display: flex; gap: 18px; justify-content: center; margin-top: 11px; font-size: .72em; opacity: .7; flex-wrap: wrap; }
+  .gitops-foot code { font-family: var(--font-mono); color: rgb(var(--c-network) / .9); }
+
+  .svc-top { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; margin-bottom: 11px; }
+  .svc { border-radius: var(--radius-sm); padding: 11px 13px; border: 1px solid rgb(var(--line) / var(--line-med)); }
+  .svc .svc-name { font-weight: 600; font-size: .85em; }
+  .svc .svc-detail { font-size: .74em; opacity: .72; margin-top: 3px; line-height: 1.45; }
+  .svc.identity { border-color: rgb(var(--c-platform) / .4); background: rgb(var(--c-platform) / .06); } .svc.identity .svc-name { color: rgb(var(--c-platform) / .95); }
+  .svc.flags { border-color: rgb(var(--c-stream) / .4); background: rgb(var(--c-stream) / .06); } .svc.flags .svc-name { color: rgb(var(--c-stream) / .95); }
+  .svc.git { border-color: rgb(var(--c-forge) / .45); background: rgb(var(--c-forge) / .07); margin-bottom: 11px; } .svc.git .svc-name { color: rgb(var(--c-forge) / .97); }
+  .sdks { margin-top: 9px; border-top: 1px dashed rgb(var(--line) / var(--line-med)); padding-top: 8px; display: flex; flex-direction: column; gap: 5px; }
+  .sdks-label { font-size: .6em; text-transform: uppercase; letter-spacing: .07em; opacity: .5; font-weight: 600; margin-bottom: 1px; }
+  .sdk { display: grid; grid-template-columns: 62px 1fr; gap: 8px; font-size: .7em; align-items: baseline; }
+  .sdk .l { font-weight: 600; font-size: .95em; }
+  .sdk .l.rust { color: rgb(var(--c-lang-rust) / .95); }
+  .sdk .l.ts   { color: rgb(var(--c-lang-ts) / .95); }
+  .sdk .l.py   { color: rgb(var(--c-lang-py) / .95); }
+  .sdk .p { line-height: 1.5; opacity: .9; }
+  .sdk .p code { font-family: var(--font-mono); background: rgb(var(--line) / .07); border-radius: 3px; padding: 0 4px; }
+  .sdk .p .note { opacity: .55; }
+  .git-body { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: center; }
+  .resp { display: flex; gap: 7px; align-items: baseline; font-size: .76em; margin-top: 5px; }
+  .resp .rn { font-weight: 700; color: rgb(var(--c-forge) / .9); }
+  .resp code { font-family: var(--font-mono); background: rgb(var(--line) / .07); border-radius: 3px; padding: 0 4px; }
+  .runner-box { border: 1px dashed rgb(var(--c-forge) / .4); border-radius: 7px; padding: 9px 11px; background: rgb(var(--c-forge) / .05); min-width: 210px; }
+  .runner-box .rl { color: rgb(var(--c-forge) / .95); font-weight: 600; font-size: .78em; }
+  .runner-box .rd { font-size: .71em; opacity: .72; margin: 3px 0 6px; }
+  .svc.llm { border: 1px dashed rgb(var(--c-muted) / .35); background: rgb(var(--c-muted) / .03); opacity: .82; }
+  .svc.llm .svc-name { color: rgb(var(--c-muted) / .9); }
+  .future-badge { font-size: .6em; text-transform: uppercase; letter-spacing: .07em; border: 1px solid rgb(var(--c-muted) / .5); border-radius: 8px; padding: 1px 7px; margin-left: 8px; opacity: .8; vertical-align: middle; }
+  .llm-body { display: flex; gap: 9px; margin-top: 9px; flex-wrap: wrap; }
+  .llm-item { border: 1px dashed rgb(var(--c-muted) / .35); border-radius: 6px; padding: 7px 11px; font-size: .74em; background: rgb(var(--line) / .02); }
+  .llm-item strong { display: block; font-size: .95em; }
+  .llm-item span { font-size: .85em; opacity: .6; }
+}
+
+/* ───────────────── S6 · WORKLOADS ───────────────── */
+@scope (#s6) {
+  .routing-rule { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .rr { border-radius: var(--radius-sm); padding: 8px 14px; font-size: .78em; border: 1px solid rgb(var(--line) / var(--line-med)); display: flex; align-items: center; gap: 8px; }
+  .rr strong { font-weight: 600; }
+  .rr.app { border-color: rgb(var(--c-telemetry) / .4); background: rgb(var(--c-telemetry) / .07); } .rr.app strong { color: rgb(var(--c-telemetry) / .95); }
+  .rr.env { border-color: rgb(var(--c-network) / .4); background: rgb(var(--c-network) / .07); } .rr.env strong { color: rgb(var(--c-network) / .95); }
+  .rr code { font-family: var(--font-mono); background: rgb(var(--line) / .08); border-radius: 3px; padding: 0 5px; font-size: .92em; }
+  .groups { display: grid; grid-template-columns: 1.3fr 1fr 1.1fr; gap: 10px; align-items: start; }
+  .grp { border-radius: var(--radius-sm); border: 1px solid rgb(var(--line) / var(--line-med)); overflow: hidden; }
+  .grp-head { padding: 7px 10px; font-size: .72em; font-weight: 600; text-align: center; border-bottom: 1px solid rgb(var(--line) / var(--line-med)); }
+  .grp-body { padding: 8px; display: flex; flex-direction: column; gap: 7px; }
+  .wapp { border-radius: 6px; padding: 8px 10px; border: 1px solid rgb(var(--line) / var(--line-med)); background: rgb(var(--line) / .04); }
+  .wapp.future { border-style: dashed; opacity: .5; }
+  .wapp .wn { font-weight: 600; font-size: .84em; }
+  .wapp .wr { font-size: .72em; opacity: .68; margin-top: 2px; font-family: var(--font-mono); }
+  .wapp .wnote { font-size: .69em; opacity: .62; margin-top: 3px; }
+  .wapp .wnote.analytics { color: rgb(var(--c-telemetry) / .85); }
+  .pill { font-size: .58em; border-radius: 8px; padding: 1px 6px; margin-left: 5px; vertical-align: middle; text-transform: uppercase; letter-spacing: .03em; }
+  .pill.path { background: rgb(var(--c-telemetry) / .18); color: rgb(var(--c-telemetry) / .95); border: 1px solid rgb(var(--c-telemetry) / .4); }
+  .pill.dom  { background: rgb(var(--c-network) / .18); color: rgb(var(--c-network) / .95); border: 1px solid rgb(var(--c-network) / .4); }
+  .pill.future { background: rgb(var(--c-muted) / .16); color: rgb(var(--c-muted) / .9); border: 1px solid rgb(var(--c-muted) / .45); }
+  .grp.public { border-color: rgb(var(--c-app) / .4); } .grp.public .grp-head { background: rgb(var(--c-app) / .13); color: rgb(var(--c-app) / .97); }
+  .grp.edge { border-color: rgb(var(--c-guard) / .45); } .grp.edge .grp-head { background: rgb(var(--c-guard) / .13); color: rgb(var(--c-guard) / .97); }
+  .grp.oidc { border-color: rgb(var(--c-platform) / .45); } .grp.oidc .grp-head { background: rgb(var(--c-platform) / .14); color: rgb(var(--c-platform) / .97); }
+  .pipeline { display: flex; align-items: center; gap: 10px; justify-content: center; flex-wrap: wrap; opacity: .55; }
+  .pp { border-radius: 7px; padding: 8px 13px; text-align: center; font-size: .8em; border: 1px dashed rgb(var(--line) / .25); background: rgb(var(--line) / .03); }
+  .pp .pp-n { font-weight: 600; }
+  .pp-d { font-size: .8em; opacity: .65; margin-top: 1px; }
+  .parrow { color: rgb(var(--ink) / .4); font-size: 1.05em; }
+  .foot { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 6px; }
+  .fnote { border: 1px solid rgb(var(--line) / var(--line-med)); border-radius: var(--radius-sm); padding: 10px 13px; font-size: .77em; color: var(--text-secondary); }
+  .fnote .fl { font-size: .82em; text-transform: uppercase; letter-spacing: .06em; opacity: .55; display: block; margin-bottom: 4px; }
+  .fnote strong { color: var(--text-primary); }
+  .fnote code { font-family: var(--font-mono); color: rgb(var(--c-network) / .9); }
+  .fnote .ga { color: rgb(var(--c-telemetry) / .9); }
+}
+
+/* ───────────────── S7 · PROD vs DEV ───────────────── */
+@scope (#s7) {
+  .parity-banner { text-align: center; font-size: .82em; border: 1px solid rgb(var(--c-app) / .35); background: rgb(var(--c-app) / .07); border-radius: var(--radius-sm); padding: 9px 14px; margin-bottom: 18px; }
+  .parity-banner strong { color: rgb(var(--c-app) / .97); }
+  .cols { display: grid; grid-template-columns: 1fr .85fr 1fr; gap: 11px; align-items: stretch; }
+  .col { border-radius: var(--radius); border: 1px solid rgb(var(--line) / var(--line-med)); overflow: hidden; display: flex; flex-direction: column; }
+  .col-head { padding: 10px 12px; text-align: center; border-bottom: 1px solid rgb(var(--line) / var(--line-med)); }
+  .col-head .ch-name { font-weight: 700; font-size: .92em; }
+  .col-head .ch-sub { font-size: .74em; opacity: .7; margin-top: 2px; }
+  .col-body { padding: 9px 11px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+  .li { font-size: .77em; padding: 2px 0; opacity: .9; }
+  .li::before { content: "– "; opacity: .4; }
+  .col.prod { border-color: rgb(var(--c-network) / .4); } .col.prod .col-head { background: rgb(var(--c-network) / .13); } .col.prod .ch-name { color: rgb(var(--c-network) / .97); }
+  .col.shared { border-color: rgb(var(--c-app) / .45); background: rgb(var(--c-app) / .04); } .col.shared .col-head { background: rgb(var(--c-app) / .14); } .col.shared .ch-name { color: rgb(var(--c-app) / .97); }
+  .col.shared .sh-item { font-size: .77em; border-radius: 5px; padding: 5px 9px; background: rgb(var(--c-app) / .08); border: 1px solid rgb(var(--c-app) / .2); text-align: center; }
+  .col.dev { border-color: rgb(var(--c-platform) / .42); } .col.dev .col-head { background: rgb(var(--c-platform) / .13); } .col.dev .ch-name { color: rgb(var(--c-platform) / .97); }
+  .delta-label { font-size: .62em; text-transform: uppercase; letter-spacing: .07em; opacity: .5; font-weight: 600; margin-bottom: 2px; }
+  .env-foot { margin-top: 14px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; font-size: .76em; }
+  .envc { border-radius: 7px; padding: 7px 12px; border: 1px solid rgb(var(--line) / var(--line-med)); }
+  .envc .en { font-weight: 600; }
+  .envc code { font-family: var(--font-mono); color: rgb(var(--c-network) / .9); }
+  .envc.prod { border-color: rgb(var(--c-network) / .35); } .envc.prod .en { color: rgb(var(--c-network) / .95); }
+  .envc.stg { border-color: rgb(var(--c-telemetry) / .35); } .envc.stg .en { color: rgb(var(--c-telemetry) / .95); }
+  .envc.dev { border-color: rgb(var(--c-platform) / .35); } .envc.dev .en { color: rgb(var(--c-platform) / .95); }
+}
+
+/* ───────────────── S8 · REQUEST PATH ───────────────── */
+@scope (#s8) {
+  .legend { display: flex; gap: 9px; justify-content: center; margin-bottom: 18px; flex-wrap: wrap; }
+  .lg { font-size: .74em; border-radius: 7px; padding: 6px 11px; border: 1px solid rgb(var(--line) / var(--line-med)); }
+  .lg .ln { font-weight: 600; }
+  .lg.pub { border-color: rgb(var(--c-app) / .4); background: rgb(var(--c-app) / .07); } .lg.pub .ln { color: rgb(var(--c-app) / .95); }
+  .lg.t1 { border-color: rgb(var(--c-guard) / .45); background: rgb(var(--c-guard) / .07); } .lg.t1 .ln { color: rgb(var(--c-guard) / .95); }
+  .lg.t2 { border-color: rgb(var(--c-platform) / .45); background: rgb(var(--c-platform) / .07); } .lg.t2 .ln { color: rgb(var(--c-platform) / .95); }
+  .layout { display: grid; grid-template-columns: 1fr 200px; gap: 16px; align-items: start; }
+  .flow { display: flex; flex-direction: column; align-items: stretch; }
+  .hop { border-radius: var(--radius-sm); padding: 10px 13px; border: 1px solid rgb(var(--c-network) / .4); background: rgb(var(--c-network) / .09); }
+  .hop .hn { font-weight: 600; font-size: .86em; }
+  .hop .hd { font-size: .76em; opacity: .68; margin-top: 2px; }
+  .hop.mesh { border-color: rgb(var(--c-stream) / .45); background: rgb(var(--c-stream) / .08); } .hop.mesh .hn { color: rgb(var(--c-stream) / .95); }
+  .hop.pod { border-color: rgb(var(--c-app) / .45); background: rgb(var(--c-app) / .08); } .hop.pod .hn { color: rgb(var(--c-app) / .95); }
+  .arrow { text-align: center; color: rgb(var(--ink) / .4); font-size: .95em; padding: 3px 0; }
+  .gate { border-radius: var(--radius-sm); padding: 9px 12px; margin: 4px 0; border: 1.5px dashed; }
+  .gate .gh { font-weight: 600; font-size: .8em; }
+  .gate .gd { font-size: .73em; opacity: .75; margin-top: 2px; }
+  .gate.t1 { border-color: rgb(var(--c-guard) / .55); background: rgb(var(--c-guard) / .08); } .gate.t1 .gh { color: rgb(var(--c-guard) / .97); }
+  .gate.t2 { border-color: rgb(var(--c-platform) / .55); background: rgb(var(--c-platform) / .08); } .gate.t2 .gh { color: rgb(var(--c-platform) / .97); }
+  .gate .deny { font-size: .69em; color: rgb(var(--c-guard) / .85); margin-top: 3px; }
+  .rail { display: flex; flex-direction: column; gap: 10px; }
+  .rail-label { font-size: .62em; text-transform: uppercase; letter-spacing: .07em; opacity: .5; font-weight: 600; }
+  .helper { border-radius: var(--radius-sm); padding: 10px 12px; border: 1px solid rgb(var(--line) / var(--line-med)); background: rgb(var(--line) / .02); font-size: .76em; }
+  .helper .hpn { font-weight: 600; }
+  .helper .hpd { opacity: .68; margin-top: 3px; font-size: .95em; }
+  .helper code { font-family: var(--font-mono); color: rgb(var(--c-network) / .9); }
+}
+
+/* ───────────────── S9 · CLOUD PROVIDER ALTERNATIVES ───────────────── */
+@scope (#s9) {
+  .calc { --do: var(--c-network); --gcp: var(--c-app); --aws: var(--c-forge); }
+
+  .grid { display: grid; grid-template-columns: minmax(232px, 1.5fr) repeat(3, 1fr);
+    border: 1px solid rgb(var(--line) / var(--line-med)); border-radius: var(--radius); overflow: hidden; }
+  .cell { padding: 9px 12px; border-bottom: 1px solid rgb(var(--line) / var(--line-soft));
+    border-right: 1px solid rgb(var(--line) / var(--line-soft)); }
+  .lastcol { border-right: none; }
+
+  /* header row */
+  .hcell { background: rgb(var(--line) / .035); padding: 10px 12px; }
+  .hcell .pv { font-weight: 700; font-size: .92em; }
+  .hcell .pv-sub { font-size: .67em; opacity: .6; margin-top: 2px; }
+  .hcell.do  .pv { color: rgb(var(--do)  / .97); }
+  .hcell.gcp .pv { color: rgb(var(--gcp) / .97); }
+  .hcell.aws .pv { color: rgb(var(--aws) / .97); }
+  .hcorner { display: flex; flex-direction: column; justify-content: center; }
+  .hcorner .ht { font-weight: 600; font-size: .82em; }
+  .hcorner .hh { font-size: .68em; opacity: .55; margin-top: 3px; }
+
+  /* concern (label + slider) cell */
+  .concern .cn-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+  .concern .cn-name { font-weight: 600; font-size: .82em; }
+  .concern .cn-name small { font-weight: 400; opacity: .55; font-size: .85em; }
+  .concern .cn-ico { margin-right: 5px; }
+  .concern .cn-read { font-family: var(--font-mono); font-size: .77em; color: rgb(var(--ink) / .92); white-space: nowrap; }
+  .concern .cn-read output { font-weight: 600; }
+  .c-compute .cn-name { color: rgb(var(--c-network)  / .95); }
+  .c-gpu     .cn-name { color: rgb(var(--c-compute)  / .95); }
+  .c-block   .cn-name { color: rgb(var(--c-storage)  / .95); }
+  .c-object  .cn-name { color: rgb(var(--c-storage)  / .95); }
+  .c-egress  .cn-name { color: rgb(var(--c-stream)   / .95); }
+
+  /* value cells */
+  .val { display: flex; flex-direction: column; gap: 3px; justify-content: center; }
+  .val .sku { font-family: var(--font-mono); font-size: .69em; opacity: .68; }
+  .val .px  { font-family: var(--font-mono); font-size: .95em; font-weight: 600; }
+  .val.win { background: rgb(var(--c-app) / .09); }
+  .val.win .px { color: rgb(var(--c-app) / .98); }
+  .val.win .px::after { content: " ◂ best"; font-size: .6em; font-weight: 600; opacity: .7; letter-spacing: .03em; }
+
+  /* total row */
+  .tcell { border-bottom: none; background: rgb(var(--line) / .05); }
+  .tlabel { font-weight: 700; font-size: .85em; display: flex; align-items: center; }
+  .total { font-family: var(--font-mono); font-weight: 700; font-size: 1.12em; }
+  .total + .per { font-size: .62em; opacity: .55; margin-left: 3px; }
+  .total.do  { color: rgb(var(--do)  / .98); }
+  .total.gcp { color: rgb(var(--gcp) / .98); }
+  .total.aws { color: rgb(var(--aws) / .98); }
+
+  /* range input theming (token-driven, light+dark) */
+  input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; margin: 9px 0 1px;
+    height: 4px; border-radius: var(--radius-pill); background: rgb(var(--line) / .2); outline: none; cursor: pointer; }
+  input[type=range]:focus-visible { box-shadow: 0 0 0 3px rgb(var(--c-network) / .3); }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 15px; height: 15px; border-radius: 50%;
+    background: rgb(var(--c-network) / .95); border: 2px solid rgb(var(--bg-bar)); cursor: pointer; }
+  input[type=range]::-moz-range-thumb { width: 13px; height: 13px; border-radius: 50%;
+    background: rgb(var(--c-network) / .95); border: 2px solid rgb(var(--bg-bar)); cursor: pointer; }
+
+  /* node-tier dropdowns + Minimum/Recommended/All-Out segmented toggle */
+  .nodesel { font-family: var(--font-mono); font-size: .72em; width: 100%; max-width: 100%; color-scheme: light dark;
+    color: rgb(var(--ink) / .92); background: rgb(var(--line) / .05);
+    border: 1px solid rgb(var(--line) / var(--line-med)); border-radius: var(--radius-xs); padding: 3px 5px; cursor: pointer; }
+  .nodesel:hover { border-color: rgb(var(--c-network) / .5); }
+  .nodesel:focus-visible { outline: none; box-shadow: 0 0 0 2px rgb(var(--c-network) / .4); }
+  .tierseg { display: inline-flex; margin-top: 8px; border: 1px solid rgb(var(--line) / var(--line-med));
+    border-radius: var(--radius-sm); overflow: hidden; }
+  .tierbtn { font: inherit; font-size: .66em; line-height: 1; padding: 4px 7px; border: 0; cursor: pointer;
+    background: transparent; color: rgb(var(--ink) / .72); border-right: 1px solid rgb(var(--line) / var(--line-soft)); }
+  .tierbtn:last-child { border-right: 0; }
+  .tierbtn:hover { background: rgb(var(--line) / .08); }
+  .tierbtn[aria-pressed="true"] { background: rgb(var(--c-network) / .2); color: rgb(var(--c-network) / .98); font-weight: 700; }
+
+  /* autoscaler capability band */
+  .caps { display: grid; grid-template-columns: minmax(232px, 1.5fr) repeat(3, 1fr); margin-top: 11px;
+    border: 1px solid rgb(var(--line) / var(--line-med)); border-radius: var(--radius); overflow: hidden; }
+  .ccell { padding: 9px 12px; border-right: 1px solid rgb(var(--line) / var(--line-soft)); font-size: .76em; line-height: 1.35; }
+  .ccell:last-child { border-right: none; }
+  .cap-label { font-weight: 600; }
+  .cap-label small { display: block; opacity: .55; font-weight: 400; font-size: .92em; margin-top: 2px; }
+  .ccell .v { font-weight: 700; margin-right: 5px; }
+  .ccell.yes { background: rgb(var(--c-app)      / .06); } .ccell.yes .v { color: rgb(var(--c-app)      / .98); }
+  .ccell.mid { background: rgb(var(--c-telemetry)/ .06); } .ccell.mid .v { color: rgb(var(--c-telemetry)/ .98); }
+  .ccell.no  { background: rgb(var(--c-guard)    / .06); } .ccell.no  .v { color: rgb(var(--c-guard)    / .98); }
+
+  .foot { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+  .fnote { font-size: .74em; color: var(--text-secondary); border: 1px solid rgb(var(--line) / var(--line-soft));
+    border-radius: 7px; padding: 9px 12px; background: rgb(var(--line) / .02); }
+  .fnote strong { color: var(--text-primary); }
+  .fnote .fl { display: block; font-size: .86em; text-transform: uppercase; letter-spacing: .06em; opacity: .55; margin-bottom: 3px; }
+}
+</style>
+</head>
+<body>
+<header class="deck-bar">
+  <span class="brand">Aristotle <small>Platform Architecture</small></span>
+  <span class="spacer"></span>
+  <span class="counter" id="counter">1 / 8</span>
+  <button class="btn" id="menuBtn" title="Slide menu (m)">☰ Menu</button>
+  <button class="btn" id="themeBtn" title="Toggle light/dark (t)">◐ Theme</button>
+</header>
+
+<button class="edge-nav edge-prev" id="edgePrev" aria-label="Previous slide"></button>
+<button class="edge-nav edge-next" id="edgeNext" aria-label="Next slide"></button>
+
+<main class="stage">
+
+  <!-- ═══ S1 · OVERVIEW ═══ -->
+  <section class="slide active" id="s1" data-title="Overview" data-sub="Platform at a glance">
+    <div class="page">
+      <h2>Aristotle Platform Architecture</h2>
+      <p class="subtitle">Self-managed k3s · zero open inbound ports · GitOps-managed · cloud-portable</p>
+      <div class="legend">
+        <div class="legend-item"><span class="swatch sw-edge"></span> Edge / traffic</div>
+        <div class="legend-item"><span class="swatch sw-work"></span> Workloads</div>
+        <div class="legend-item"><span class="swatch sw-plat"></span> Platform</div>
+        <div class="legend-item"><span class="swatch sw-obs"></span> Observability</div>
+        <div class="legend-item"><span class="swatch sw-stor"></span> Storage</div>
+        <div class="legend-item"><span class="lock">🔒</span> auth checkpoint</div>
+        <div class="legend-item"><span class="dim">dimmed</span> = deferred</div>
+      </div>
+      <div class="hybrid">
+        <div class="traffic-lane">
+          <div class="lane-title">Request Path</div>
+          <div class="t-box" data-goto="s8"><div class="t-name">🌍 Internet</div></div>
+          <div class="t-arrow">↓</div>
+          <div class="t-box" data-goto="s8"><div class="t-name">☁️ Cloudflare Edge</div><div class="t-detail">WAF · DDoS · TLS</div></div>
+          <div class="gate" data-goto="s8">🔒 Tier 1 — CF Access<br><span style="opacity:.7">/trips · ArgoCD · Grafana</span></div>
+          <div class="t-arrow">↓<small>ENCRYPTED TUNNEL · NO OPEN PORTS</small></div>
+          <div class="t-box" data-goto="s8"><div class="t-name">⚡ cloudflared</div><div class="t-detail">Deployment</div></div>
+          <div class="t-arrow">↓</div>
+          <div class="t-box" data-goto="s8"><div class="t-name">🔀 Istio Gateway</div><div class="t-detail">Gateway API · HTTPRoutes</div></div>
+          <div class="t-arrow">↓<small>mTLS · AMBIENT MESH (ztunnel)</small></div>
+          <div class="t-box workloads" data-goto="s6"><div class="t-name">🌐 Workloads</div>
+            <div class="gate" style="margin-top:6px;border-color:rgb(var(--c-platform)/.5);background:rgb(var(--c-platform)/.08);color:rgb(var(--c-platform)/1)" data-goto="s8">🔒 Tier 2 — Keycloak OIDC<br><span style="opacity:.7">ailly · Agathon</span></div>
+          </div>
+        </div>
+        <div class="swim-panel">
+          <div class="swim-panel-title">Cluster Infrastructure · ArgoCD app-of-apps</div>
+          <div class="swim-row sw-workloads"><div class="swim-name" data-goto="s6">Workloads</div><div class="swim-content">
+            <span class="chip green">davidsouther.com</span><span class="chip green">ailly.dev</span><span class="chip green">/trips</span><span class="chip green">/agathon</span><span class="chip green">/blog</span><span class="chip dim green">DavidBot (future)</span>
+          </div></div>
+          <div class="swim-row sw-platform"><div class="swim-name" data-goto="s5">Platform</div><div class="swim-content">
+            <span class="chip purple" data-docs="argocd">ArgoCD</span><span class="chip purple" data-docs="keycloak">Keycloak</span><span class="chip purple" data-docs="flagsmith">Flagsmith</span><span class="chip purple" data-docs="forgejo">Forgejo</span><span class="chip dim purple">Platform LLM (future)</span>
+          </div></div>
+          <div class="swim-row sw-obs"><div class="swim-name" data-goto="s3">Observability</div><div class="swim-content">
+            <span class="chip orange" data-docs="loki">Loki</span><span class="chip orange" data-docs="grafana">Grafana</span><span class="chip orange" data-docs="tempo">Tempo</span><span class="chip orange" data-docs="mimir">Mimir</span><span class="chip orange" data-docs="alloy">Alloy</span>
+          </div></div>
+          <div class="swim-row sw-storage"><div class="swim-name" data-goto="s4">Storage</div><div class="swim-content">
+            <span class="chip brown" data-docs="longhorn">Longhorn</span><span class="chip brown" data-docs="postgres">Postgres</span><span class="chip brown" data-docs="valkey">Valkey</span><span class="chip dim brown" data-docs="rook">Rook-Ceph (deferred)</span>
+          </div></div>
+          <div class="swim-row sw-infra"><div class="swim-name" data-goto="s2">Cluster Core</div><div class="swim-content">
+            <span class="chip" data-docs="k3s">k3s</span><span class="chip">3× server · HA</span><span class="chip">combined pool</span><span class="chip">GPU pool → scale-to-zero</span><span class="chip dim" data-docs="cloud-init">cloud-init</span>
+          </div></div>
+        </div>
+      </div>
+      <div class="footer">
+        <div class="note"><span class="note-label">Production</span><strong>k3s on cloud VMs</strong> · Terraform-provisioned · 3 HA servers · Core + GPU pools · public TLS terminated at Cloudflare edge.</div>
+        <div class="note"><span class="note-label">Development (K3d)</span>Same charts &amp; manifests. <strong>metallb</strong> replaces cloudflared for local LoadBalancer IPs · no GPU pool · reduced-replica overlay.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ S2 · CLUSTER CORE ═══ -->
+  <section class="slide" id="s2" data-title="Cluster Core" data-sub="Nodes · k3s · autoscaling">
+    <div class="page">
+      <div class="crumb">Drill-in 1 / 7 · Cluster Core</div>
+      <h2>Cluster Core</h2>
+      <p class="subtitle">cloud-init + k3s · one combined pool · scale-to-zero GPU</p>
+      <div class="panel">
+        <div class="section-label">Provisioning Pipeline</div>
+        <div class="prov-flow">
+          <div class="prov-step"><div class="ps-name" data-docs="terraform">Terraform</div><div class="ps-detail">nodes · DNS · tunnel config</div></div>
+          <div class="prov-arrow">→</div>
+          <div class="prov-step"><div class="ps-name">Ubuntu/Debian + <span data-docs="k3s">k3s</span></div><div class="ps-detail"><span data-docs="cloud-init">cloud-init</span> user-data</div></div>
+          <div class="prov-arrow">→</div>
+          <div class="prov-step"><div class="ps-name">Cloud VMs</div><div class="ps-detail">running <strong>k3s</strong> · provider-portable</div></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="section-label">Node Topology — single combined pool</div>
+        <div class="pool combined">
+          <div class="pool-head"><span class="pool-name">k3s Server Pool — control-plane + workloads</span><span class="pool-policy">HA · 3 servers · schedulable by default</span></div>
+          <div class="nodes">
+            <div class="node server">server-1<small>etcd · API · pods</small></div>
+            <div class="node server">server-2<small>etcd · API · pods</small></div>
+            <div class="node server">server-3<small>etcd · API · pods</small></div>
+            <div class="node server ghost">+N<small>autoscale ↑</small></div>
+          </div>
+        </div>
+        <div class="pool gpu">
+          <div class="pool-head"><span class="pool-name">GPU Node Pool</span><span class="pool-policy">scale-to-zero · <span data-docs="ollama">Ollama</span> · <span data-docs="zenml">ZenML</span></span></div>
+          <div class="nodes">
+            <div class="node gpu ghost">0</div><div class="node gpu ghost">…</div><div class="node gpu ghost">N</div>
+            <span style="font-size:.73em;opacity:.6;margin-left:4px">up only on GPU scheduling</span>
+          </div>
+        </div>
+        <div class="split-note">Split into a dedicated worker pool on measured control-plane contention — taint <code>CriticalAddonsOnly=true:NoExecute</code>, add agents.</div>
+      </div>
+      <div class="two-col">
+        <div class="ministrip"><h4>GPU Cost Controls (Terraform)</h4>
+          <div class="kv"><span class="k">scale-down-unneeded-time</span><span class="v">5m</span></div>
+          <div class="kv"><span class="k">scale-down-delay-after-add</span><span class="v">10m</span></div>
+          <div class="kv"><span class="k">idle GPU pool</span><span class="v cost">$0 · scaled to zero</span></div>
+        </div>
+        <div class="ministrip"><h4>Budgets &amp; SLOs</h4>
+          <div class="kv"><span class="k">Combined pool baseline</span><span class="v cost">&lt; $200/mo</span></div>
+          <div class="kv"><span class="k">GPU active (7-day avg)</span><span class="v cost">&lt; 4h/day</span></div>
+          <div class="kv"><span class="k">Grafana alert at</span><span class="v">80% of ceiling</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ S3 · OBSERVABILITY ═══ -->
+  <section class="slide" id="s3" data-title="Observability" data-sub="LGTM · one collector, three signals">
+    <div class="page">
+      <div class="crumb">Drill-in 2 / 7 · Observability</div>
+      <h2>Observability — LGTM</h2>
+      <p class="subtitle">one collector · three signals · one pane of glass</p>
+      <div class="flow">
+        <div class="top-row">
+          <div></div>
+          <div class="sources">🧩 Every Pod &amp; Node<div class="src-detail">emits logs · metrics · traces (OTLP)</div></div>
+          <div class="sdk-box">
+            <div class="sdk-title">Instrument with — <span data-docs="opentelemetry">OTel</span> SDKs</div>
+            <div class="sdk-row rust"><span class="lang">Rust</span><span class="pkg"><code data-docs="https://crates.io/crates/opentelemetry">opentelemetry</code> + <code data-docs="https://crates.io/crates/opentelemetry-sdk">-sdk</code> + <code data-docs="https://crates.io/crates/opentelemetry-otlp">-otlp</code>, bridged by <code data-docs="https://crates.io/crates/tracing-opentelemetry">tracing-opentelemetry</code></span></div>
+            <div class="sdk-row ts"><span class="lang">TypeScript</span><span class="pkg"><code data-docs="https://www.npmjs.com/package/@opentelemetry/sdk-node">@opentelemetry/sdk-node</code> + <code data-docs="https://www.npmjs.com/package/@opentelemetry/auto-instrumentations-node">auto-instrumentations-node</code></span></div>
+            <div class="sdk-row py"><span class="lang">Python</span><span class="pkg"><code data-docs="https://pypi.org/project/opentelemetry-distro/">opentelemetry-distro</code> + <code data-docs="https://pypi.org/project/opentelemetry-exporter-otlp/">-exporter-otlp</code> (<code>opentelemetry-instrument</code>)</span></div>
+          </div>
+        </div>
+        <div class="signal-arrows">
+          <div class="sig logs"><span class="dot"></span>logs ↓</div>
+          <div class="sig metric"><span class="dot"></span>metrics ↓</div>
+          <div class="sig trace"><span class="dot"></span>traces ↓</div>
+        </div>
+        <div class="collector"><div class="c-name" data-docs="alloy">Alloy</div><div class="c-detail">Grafana OTel collector · DaemonSet on every node</div></div>
+        <div class="fan">┌──────────┼──────────┐</div>
+        <div class="stores">
+          <div class="store loki"><div class="st-name" data-docs="loki">Loki</div><div class="st-role">log aggregation</div><div class="st-sig">● logs</div></div>
+          <div class="store mimir"><div class="st-name" data-docs="mimir">Mimir</div><div class="st-role">long-term Prometheus metrics</div><div class="st-sig">● metrics</div></div>
+          <div class="store tempo"><div class="st-name" data-docs="tempo">Tempo</div><div class="st-role">distributed tracing</div><div class="st-sig">● traces</div></div>
+        </div>
+        <div class="converge">└──────────┼──────────┘</div>
+        <div class="grafana"><div class="g-name" data-docs="grafana">📊 Grafana</div><div class="g-detail">dashboards · alerting · unified query — where every component's SLO alerts live</div><div class="g-access">🔒 Cloudflare Access · internal only</div></div>
+      </div>
+      <div class="foot">
+        <div class="fnote"><span class="fn-label">Storage backend</span><strong><span data-docs="longhorn">Longhorn</span> block</strong> now → <span class="defer" data-docs="rook">Rook-Ceph (S3 object)</span> when Loki chunks / Mimir blocks / Tempo traces outgrow block volumes.</div>
+        <div class="fnote"><span class="fn-label">Deployment</span>Helm: <code>grafana/loki-stack</code> · <code>grafana/mimir-distributed</code>. Alloy ships all three signals from every pod.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ S4 · STORAGE ═══ -->
+  <section class="slide" id="s4" data-title="Storage &amp; DR" data-sub="Block storage · 3-tier recovery">
+    <div class="page">
+      <div class="crumb">Drill-in 3 / 7 · Storage</div>
+      <h2>Storage &amp; Disaster Recovery</h2>
+      <p class="subtitle">block storage now · object storage when earned · backups off-cluster</p>
+      <div class="panel">
+        <div class="section-label">Storage Stack</div>
+        <div class="consumers">
+          <div class="cbox pg"><div class="cb-name" data-docs="postgres">Postgres</div><div class="cb-role">single instance · per-app DBs isolated by name + role</div>
+            <div class="cb-tags"><span class="tag" data-docs="keycloak">Keycloak</span><span class="tag" data-docs="forgejo">Forgejo</span><span class="tag">app DBs</span><span class="tag" data-docs="flagsmith">Flagsmith</span></div></div>
+          <div class="cbox valkey"><div class="cb-name" data-docs="valkey">Valkey</div><div class="cb-role">Redis-compatible · BSL-free</div>
+            <div class="cb-tags"><span class="tag">sessions</span><span class="tag">pub/sub</span></div></div>
+        </div>
+        <div class="down">↓ <small>PVCs</small></div>
+        <div class="stack-row">
+          <div class="longhorn"><div><div class="lh-name" data-docs="longhorn">🗄 Longhorn</div><div class="lh-detail">distributed block storage · all stateful PVCs</div></div><div class="lh-repl">replica ×2 prod · ×1 dev</div></div>
+          <div class="rook"><div class="rk-name dim" data-docs="rook">Rook-Ceph (object / S3)</div><div class="rk-detail">deferred → added when LGTM needs object storage</div></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="section-label">Disaster Recovery — tiers by recovery speed</div>
+        <div class="dr-wrap">
+          <div class="tiers">
+            <div class="tier t1"><div class="t-num">1</div><div class="t-body"><div class="t-scope">Config · manifests · charts</div><div class="t-mech">GitOps — everything is in git, declarative</div></div><div class="t-rpo">RPO 0</div></div>
+            <div class="tier t2"><div class="t-num">2</div><div class="t-body"><div class="t-scope">Postgres data</div><div class="t-mech">pg_dump → off-cluster object store · every 2h</div></div><div class="t-rpo">RPO 2h</div></div>
+            <div class="tier t3"><div class="t-num">3</div><div class="t-body"><div class="t-scope">Longhorn volumes</div><div class="t-mech">block-level incremental backup · every 2h</div></div><div class="t-rpo">RPO 2h</div></div>
+          </div>
+          <div>
+            <div class="backup-arrow">tiers 2–3 →</div>
+            <div class="objstore"><div class="os-name">☁ Off-cluster S3</div><div class="os-detail">one Terraform var · AWS SDK (S3-compat)</div>
+              <div class="os-providers"><span class="tag">R2</span><span class="tag">B2</span><span class="tag">Wasabi</span><span class="tag">MinIO</span><span class="tag">S3</span></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ S5 · PLATFORM ═══ -->
+  <section class="slide" id="s5" data-title="Platform" data-sub="GitOps · Forge · Identity · Flags">
+    <div class="page">
+      <div class="crumb">Drill-in 4 / 7 · Platform</div>
+      <h2>Platform — GitOps, Git Hosting, Identity &amp; Flags</h2>
+      <p class="subtitle">one repo · ArgoCD app-of-apps · Forgejo forge · everything declarative</p>
+      <div class="panel">
+        <div class="section-label">GitOps — ArgoCD app-of-apps</div>
+        <div class="gitops-head">
+          <div class="gbox git">📦 Git — <em>aristotle</em> repo<div class="g-detail">apps/ = ArgoCD Application CRDs</div></div>
+          <div class="harrow">→</div>
+          <div class="gbox argocd"><div class="g-name" data-docs="argocd">🚀 ArgoCD</div><div class="g-detail">root app-of-apps · manages itself</div></div>
+        </div>
+        <div class="sync-label">▼ syncs each layer to the cluster</div>
+        <div class="layers">
+          <div class="layer core"><div class="layer-head" data-goto="s2">core</div><div class="layer-apps"><div class="app" data-docs="cert-manager">cert-manager</div><div class="app" data-docs="external-dns">external-dns</div><div class="app" data-docs="cloudflared">cloudflared</div><div class="app" data-docs="istio">istio</div></div></div>
+          <div class="layer storage"><div class="layer-head" data-goto="s4">storage</div><div class="layer-apps"><div class="app" data-docs="longhorn">longhorn</div><div class="app" data-docs="postgres">postgres</div><div class="app" data-docs="valkey">valkey</div></div></div>
+          <div class="layer platform"><div class="layer-head">platform</div><div class="layer-apps"><div class="app" data-docs="keycloak">keycloak</div><div class="app" data-docs="flagsmith">flagsmith</div><div class="app" data-docs="forgejo">forgejo</div><div class="app" data-docs="forgejo-runner">forgejo-runner</div><div class="app" data-docs="argocd">argocd</div><div class="app future" data-docs="ollama">ollama</div><div class="app future" data-docs="zenml">zenml</div><div class="app future" data-docs="langfuse">langfuse</div></div></div>
+          <div class="layer obs"><div class="layer-head" data-goto="s3">observability</div><div class="layer-apps"><div class="app" data-docs="loki">loki</div><div class="app" data-docs="grafana">grafana</div><div class="app" data-docs="tempo">tempo</div><div class="app" data-docs="mimir">mimir</div></div></div>
+          <div class="layer workloads"><div class="layer-head" data-goto="s6">workloads</div><div class="layer-apps"><div class="app">davidsouther.com</div><div class="app">ailly.dev</div><div class="app">agathon</div><div class="app future">davidbot</div></div></div>
+        </div>
+        <div class="gitops-foot"><span>🥾 <strong>core</strong> applied manually once — then ArgoCD reconciles all</span><span>overlays: <code>dev</code> (metallb, reduced replicas) · <code>prod</code></span></div>
+      </div>
+      <div class="panel">
+        <div class="section-label">Platform Services</div>
+        <div class="svc-top">
+          <div class="svc identity">
+            <div class="svc-name">🔑 <span data-docs="keycloak">Keycloak</span> — Identity</div>
+            <div class="svc-detail">in-cluster OIDC · Tier-2 auth · Postgres-backed · SpiceDB deferred</div>
+            <div class="sdks"><div class="sdks-label">Client SDKs</div>
+              <div class="sdk"><span class="l rust">Rust</span><span class="p"><code data-docs="https://crates.io/crates/openidconnect">openidconnect</code></span></div>
+              <div class="sdk"><span class="l ts">TypeScript</span><span class="p"><code data-docs="https://www.npmjs.com/package/keycloak-js">keycloak-js</code> <span class="note">browser</span> · <code data-docs="https://www.npmjs.com/package/openid-client">openid-client</code> <span class="note">Node</span></span></div>
+              <div class="sdk"><span class="l py">Python</span><span class="p"><code data-docs="https://pypi.org/project/python-keycloak/">python-keycloak</code></span></div>
+            </div>
+          </div>
+          <div class="svc flags">
+            <div class="svc-name">🚩 <span data-docs="openfeature">OpenFeature</span> → <span data-docs="flagsmith">Flagsmith</span></div>
+            <div class="svc-detail">self-hosted Flagsmith · Postgres-backed · progressive rollout / A·B, no redeploy</div>
+            <div class="sdks"><div class="sdks-label">Client SDKs</div>
+              <div class="sdk"><span class="l rust">Rust</span><span class="p"><code data-docs="https://crates.io/crates/open-feature">open-feature</code> + <code data-docs="https://crates.io/crates/flagsmith">flagsmith</code> <span class="note">provider</span></span></div>
+              <div class="sdk"><span class="l ts">TypeScript</span><span class="p"><code data-docs="https://www.npmjs.com/package/@openfeature/web-sdk">@openfeature/web-sdk</code> + <code data-docs="https://www.npmjs.com/package/@openfeature/flagsmith-client-provider">flagsmith-client-provider</code></span></div>
+              <div class="sdk"><span class="l py">Python</span><span class="p"><code data-docs="https://pypi.org/project/openfeature-sdk/">openfeature-sdk</code> + <code data-docs="https://pypi.org/project/openfeature-provider-flagsmith/">openfeature-provider-flagsmith</code></span></div>
+            </div>
+          </div>
+        </div>
+        <div class="svc git">
+          <div class="svc-name">🔨 <span data-docs="forgejo">Forgejo</span> — Git Hosting</div>
+          <div class="git-body">
+            <div>
+              <div class="resp"><span class="rn">1</span><span>code hosting · <code>git.davidsouther.com</code></span></div>
+              <div class="resp"><span class="rn">2</span><span>Push Mirror → GitHub (transparent offsite backup)</span></div>
+              <div class="resp"><span class="rn">3</span><span>Forgejo Actions CI</span></div>
+            </div>
+            <div class="runner-box"><div class="rl" data-docs="forgejo-runner">⚙ forgejo-runner</div><div class="rd">Docker · GitHub-Actions compatible</div><span class="tag">Rust</span> <span class="tag">Python</span> <span class="tag">Node</span></div>
+          </div>
+        </div>
+        <div class="svc llm">
+          <div class="svc-name">🧠 Platform LLM <span class="future-badge">future · not yet designed</span></div>
+          <div class="svc-detail">GPU node pool (scale-to-zero) · awaits a first real consumer before it gets its own design</div>
+          <div class="llm-body">
+            <div class="llm-item"><strong data-docs="ollama">Ollama</strong><span>local inference</span></div>
+            <div class="llm-item"><strong data-docs="zenml">ZenML</strong><span>ML pipelines</span></div>
+            <div class="llm-item"><strong data-docs="langfuse">LangFuse</strong><span>LLM observability · tracing · prompts</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ S6 · WORKLOADS ═══ -->
+  <section class="slide" id="s6" data-title="Workloads" data-sub="Apps by auth · routing rule">
+    <div class="page">
+      <div class="crumb">Drill-in 5 / 7 · Workloads</div>
+      <h2>Workloads</h2>
+      <p class="subtitle">David's deployed services — grouped by how they authenticate</p>
+      <div class="routing-rule">
+        <div class="rr app">📁 <strong>Apps → paths</strong> <code>davidsouther.com/trips</code></div>
+        <div class="rr env">🌐 <strong>Environments → domains</strong> <code>staging.davidsouther.com</code></div>
+      </div>
+      <div class="panel">
+        <div class="section-label">Apps by Auth Model</div>
+        <div class="groups">
+          <div class="grp public"><div class="grp-head">🌐 Public</div><div class="grp-body">
+            <div class="wapp"><div class="wn">davidsouther.com</div><div class="wr">davidsouther.com/</div><div class="wnote">personal site · liveness-monitored</div></div>
+            <div class="wapp"><div class="wn">Blog <span class="pill path">path</span></div><div class="wr">davidsouther.com/blog</div><div class="wnote analytics">📈 analytics: GA → homegrown (Grafana)</div></div>
+            <div class="wapp future"><div class="wn">DavidBot <span class="pill path">path</span> <span class="pill future">future</span></div><div class="wr">davidsouther.com/davidbot</div><div class="wnote">public · idea only, no design yet</div></div>
+          </div></div>
+          <div class="grp edge"><div class="grp-head">🔒 <span data-docs="cloudflare-access">CF Access</span> · Tier-1</div><div class="grp-body">
+            <div class="wapp"><div class="wn">Trips <span class="pill path">path</span></div><div class="wr">davidsouther.com/trips</div><div class="wnote">CF Access path app · email allowlist, David-managed</div></div>
+          </div></div>
+          <div class="grp oidc"><div class="grp-head">🔑 <span data-docs="keycloak">Keycloak</span> OIDC · Tier-2</div><div class="grp-body">
+            <div class="wapp"><div class="wn">Agathon <span class="pill path">path</span></div><div class="wr">davidsouther.com/agathon</div></div>
+            <div class="wapp"><div class="wn">Ailly <span class="pill dom">product domain</span></div><div class="wr">ailly.dev</div><div class="wnote">distinct top-level product</div></div>
+          </div></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="section-label">Future — DavidBot pipeline (no design yet)</div>
+        <div class="pipeline">
+          <div class="pp"><div class="pp-n">🤖 DavidBot</div><div class="pp-d">davidsouther.com/davidbot</div></div>
+          <div class="parrow">→</div>
+          <div class="pp"><div class="pp-n">🧠 Platform LLM</div><div class="pp-d"><span data-docs="ollama">Ollama</span> · <span data-docs="zenml">ZenML</span> · <span data-docs="langfuse">LangFuse</span></div></div>
+        </div>
+        <div style="text-align:center;font-size:.72em;opacity:.45;margin-top:9px;">consumes the platform-layer LLM services · GPU node pool · scale-to-zero</div>
+      </div>
+      <div class="foot">
+        <div class="fnote"><span class="fl">Blog analytics</span><span class="ga">Google Analytics</span> today → homegrown dashboard on the existing <strong>LGTM / <span data-docs="grafana">Grafana</span></strong> stack (planned migration off GA).</div>
+        <div class="fnote"><span class="fl">Staging</span>Per-environment subdomain (<code>staging.davidsouther.com</code>) · shares Postgres + Keycloak · isolated by namespace.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ S7 · PROD vs DEV ═══ -->
+  <section class="slide" id="s7" data-title="Prod vs Dev" data-sub="One toolchain, two substrates">
+    <div class="page">
+      <div class="crumb">Drill-in 6 / 7 · Prod vs Dev</div>
+      <h2>Production vs Development</h2>
+      <p class="subtitle">one toolchain, two substrates</p>
+      <div class="parity-banner"><strong>Parity guarantee:</strong> the same <span data-docs="helm">Helm</span> charts &amp; manifests run on <strong><span data-docs="k3d">K3d</span></strong> locally and <strong><span data-docs="k3s">k3s</span></strong> in production. Only overlay <em>values</em> diverge.</div>
+      <div class="cols">
+        <div class="col prod">
+          <div class="col-head"><div class="ch-name">☁ Production</div><div class="ch-sub">k3s on cloud VMs · <span data-docs="terraform">Terraform</span> + <span data-docs="cloud-init">cloud-init</span></div></div>
+          <div class="col-body">
+            <div class="delta-label">substrate &amp; overlay</div>
+            <div class="li">3 HA servers (combined pool)</div>
+            <div class="li">Core + GPU pools (GPU → 0)</div>
+            <div class="li"><span data-docs="cloudflared">cloudflared</span> tunnel · no open ports</div>
+            <div class="li"><span data-docs="longhorn">Longhorn</span> replica ×2</div>
+            <div class="li">public TLS @ Cloudflare edge</div>
+            <div class="li"><code>overlays/prod</code></div>
+          </div>
+        </div>
+        <div class="col shared">
+          <div class="col-head"><div class="ch-name">≡ Shared</div><div class="ch-sub">identical both sides</div></div>
+          <div class="col-body">
+            <div class="sh-item">k3s distribution</div>
+            <div class="sh-item">Helm charts</div>
+            <div class="sh-item">Kubernetes manifests</div>
+            <div class="sh-item"><span data-docs="argocd">ArgoCD</span> app-of-apps</div>
+            <div class="sh-item">full app set</div>
+            <div class="sh-item"><span data-docs="keycloak">Keycloak</span> · <span data-docs="openfeature">OpenFeature</span></div>
+          </div>
+        </div>
+        <div class="col dev">
+          <div class="col-head"><div class="ch-name">💻 Development</div><div class="ch-sub">K3d (k3s in Docker) · local</div></div>
+          <div class="col-body">
+            <div class="delta-label">substrate &amp; overlay</div>
+            <div class="li">single host · 1 node</div>
+            <div class="li">no GPU pool</div>
+            <div class="li"><span data-docs="metallb">metallb</span> · local LoadBalancer IPs</div>
+            <div class="li">NodePort / port-forward (no tunnel)</div>
+            <div class="li">Longhorn replica ×1 · reduced replicas</div>
+            <div class="li"><code>overlays/dev</code></div>
+          </div>
+        </div>
+      </div>
+      <div class="env-foot">
+        <div class="envc prod"><span class="en">prod</span> · <code>davidsouther.com</code></div>
+        <div class="envc stg"><span class="en">staging</span> · <code>staging.davidsouther.com</code> · in-cluster ns</div>
+        <div class="envc dev"><span class="en">dev</span> · <code>localhost</code> / k3d</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ S8 · REQUEST PATH ═══ -->
+  <section class="slide" id="s8" data-title="Request Path" data-sub="Internet → pod · two auth tiers">
+    <div class="page">
+      <div class="crumb">Drill-in 7 / 7 · Request Path</div>
+      <h2>Request Path</h2>
+      <p class="subtitle">internet to pod · two auth tiers · mTLS everywhere</p>
+      <div class="legend">
+        <div class="lg pub"><span class="ln">● Public</span> — davidsouther.com · /blog</div>
+        <div class="lg t1"><span class="ln">🔒 Tier-1 CF Access</span> — /trips · ArgoCD · Grafana</div>
+        <div class="lg t2"><span class="ln">🔑 Tier-2 Keycloak</span> — ailly.dev · /agathon</div>
+      </div>
+      <div class="layout">
+        <div class="flow">
+          <div class="hop"><div class="hn">🌍 Internet</div><div class="hd">user request</div></div>
+          <div class="arrow">↓</div>
+          <div class="hop"><div class="hn">☁ Cloudflare Edge</div><div class="hd">WAF · DDoS · TLS terminate</div></div>
+          <div class="gate t1" data-goto="s6"><div class="gh">🔒 Tier-1 — CF Access (edge, pre-cluster)</div><div class="gd">/trips · ArgoCD UI · Grafana → identity check (email allowlist / OTP)</div><div class="deny">✗ unauthenticated → blocked at edge, never enters cluster</div></div>
+          <div class="arrow">↓ <span style="font-size:.7em;opacity:.6">public + authorized traffic</span></div>
+          <div class="hop" data-goto="s5"><div class="hn">⚡ cloudflared tunnel</div><div class="hd">encrypted · no open inbound ports</div></div>
+          <div class="arrow">↓</div>
+          <div class="hop" data-goto="s5"><div class="hn">🔀 Istio Gateway</div><div class="hd">Gateway API · HTTPRoute match (host + path)</div></div>
+          <div class="arrow">↓</div>
+          <div class="hop mesh"><div class="hn">🔐 <span data-docs="https://istio.io/latest/docs/ambient/architecture/data-plane/">ztunnel</span> — L4 mTLS</div><div class="hd">ambient mesh · all pod-to-pod · Waypoint for L7 when needed</div></div>
+          <div class="arrow">↓</div>
+          <div class="hop pod" data-goto="s6"><div class="hn">📦 Service / Pod</div><div class="hd">the workload</div></div>
+          <div class="gate t2" data-goto="s5"><div class="gh">🔑 Tier-2 — Keycloak OIDC (in-cluster)</div><div class="gd">ailly.dev · /agathon → app redirects to Keycloak for login / session</div></div>
+          <div class="arrow">↓</div>
+          <div class="hop pod"><div class="hn">✅ Response</div></div>
+        </div>
+        <div class="rail">
+          <div class="rail-label">Control-plane helpers</div>
+          <div class="helper"><div class="hpn" data-docs="external-dns">🧭 ExternalDNS</div><div class="hpd">reconciles DNS from <code>HTTPRoute</code> annotations → Cloudflare DNS</div></div>
+          <div class="helper"><div class="hpn" data-docs="cert-manager">📜 CertManager</div><div class="hpd">internal + mTLS certs. Public TLS terminates at the Cloudflare edge.</div></div>
+          <div class="helper"><div class="hpn" data-docs="istio">🕸 Istio Ambient</div><div class="hpd">every namespace enrolled from day one · sidecar-less</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ S9 · CLOUD PROVIDER ALTERNATIVES ═══ -->
+  <section class="slide" id="s9" data-title="Cloud Alternatives" data-sub="DO · GCP · AWS — live monthly estimate">
+    <div class="page">
+      <div class="crumb">Alternatives · Cloud Providers</div>
+      <h2>Cloud Provider Alternatives</h2>
+      <p class="subtitle">self-managed k3s on three substrates · drag the sliders for a live monthly estimate</p>
+
+      <div class="calc">
+        <div class="grid">
+          <!-- header -->
+          <div class="cell hcell hcorner">
+            <div class="ht">Item of concern</div>
+            <div class="tierseg" role="group" aria-label="Set every node pool to a size tier">
+              <button type="button" class="tierbtn" data-tier="min">Minimum</button>
+              <button type="button" class="tierbtn" data-tier="rec" aria-pressed="true">Recommended</button>
+              <button type="button" class="tierbtn" data-tier="max">All Out</button>
+            </div>
+          </div>
+          <div class="cell hcell do"><div class="pv" data-docs="https://www.digitalocean.com/pricing">DigitalOcean</div><div class="pv-sub">current default · region-flat</div></div>
+          <div class="cell hcell gcp"><div class="pv" data-docs="https://cloud.google.com/compute/all-pricing">GCP</div><div class="pv-sub">us-central1 · on-demand</div></div>
+          <div class="cell hcell aws lastcol"><div class="pv" data-docs="https://aws.amazon.com/ec2/pricing/on-demand/">AWS</div><div class="pv-sub">us-east-1 · on-demand</div></div>
+
+          <!-- compute · pool -->
+          <div class="cell concern c-compute">
+            <div class="cn-top"><span class="cn-name"><span class="cn-ico">🖥</span>Compute · pool <small>4 vCPU / 16 GB</small></span><span class="cn-read"><output id="rd-nodes">3</output> nodes</span></div>
+            <input type="range" autocomplete="off" id="sl-nodes" min="3" max="9" step="1" value="3" aria-label="combined pool node count">
+          </div>
+          <div class="cell val do">
+            <select class="nodesel" id="ns-do-pool" aria-label="DigitalOcean combined-pool instance">
+              <option value="48" data-tier="min">s-4vcpu-8gb · 4/8</option>
+              <option value="126" data-tier="rec" selected>g-4vcpu-16gb · 4/16</option>
+              <option value="252" data-tier="max">g-8vcpu-32gb · 8/32</option>
+            </select>
+            <span class="px" id="px-do-pool">$378.00</span>
+          </div>
+          <div class="cell val gcp win">
+            <select class="nodesel" id="ns-gcp-pool" aria-label="GCP combined-pool instance">
+              <option value="48.92" data-tier="min">e2-standard-2 · 2/8</option>
+              <option value="97.84" data-tier="rec" selected>e2-standard-4 · 4/16</option>
+              <option value="195.67" data-tier="max">e2-standard-8 · 8/32</option>
+            </select>
+            <span class="px" id="px-gcp-pool">$293.52</span>
+          </div>
+          <div class="cell val aws lastcol">
+            <select class="nodesel" id="ns-aws-pool" aria-label="AWS combined-pool instance">
+              <option value="59.57" data-tier="min">m7g.large · 2/8 · ARM</option>
+              <option value="119.14" data-tier="rec" selected>m7g.xlarge · 4/16 · ARM</option>
+              <option value="238.27" data-tier="max">m7g.2xlarge · 8/32 · ARM</option>
+            </select>
+            <span class="px" id="px-aws-pool">$357.42</span>
+          </div>
+
+          <!-- compute · GPU -->
+          <div class="cell concern c-gpu">
+            <div class="cn-top"><span class="cn-name"><span class="cn-ico">⚡</span>Compute · GPU <small>Ollama · scale-to-zero</small></span><span class="cn-read"><output id="rd-gpu">120</output> h/mo</span></div>
+            <input type="range" autocomplete="off" id="sl-gpu" min="0" max="300" step="10" value="120" aria-label="GPU hours per month">
+          </div>
+          <div class="cell val do">
+            <select class="nodesel" id="ns-do-gpu" aria-label="DigitalOcean GPU instance">
+              <option value="0.76" data-tier="min rec" selected>RTX 4000 Ada · 20GB</option>
+              <option value="1.57" data-tier="">RTX 6000 Ada · 48GB</option>
+              <option value="3.39" data-tier="max">H100 · 80GB</option>
+            </select>
+            <span class="px" id="px-do-gpu">$91.20</span>
+          </div>
+          <div class="cell val gcp win">
+            <select class="nodesel" id="ns-gcp-gpu" aria-label="GCP GPU instance">
+              <option value="0.54" data-tier="min">n1-std-4 + T4 · 16GB</option>
+              <option value="0.706832276" data-tier="rec" selected>g2-standard-4 L4 · 24GB</option>
+              <option value="4.49993" data-tier="max">g4-standard-48 · RTX PRO 6000</option>
+            </select>
+            <span class="px" id="px-gcp-gpu">$84.82</span>
+          </div>
+          <div class="cell val aws lastcol">
+            <select class="nodesel" id="ns-aws-gpu" aria-label="AWS GPU instance">
+              <option value="0.526" data-tier="min">g4dn.xlarge T4 · 16GB</option>
+              <option value="0.8048" data-tier="rec" selected>g6.xlarge L4 · 24GB</option>
+              <option value="1.006" data-tier="max">g5.xlarge A10G · 24GB</option>
+            </select>
+            <span class="px" id="px-aws-gpu">$96.58</span>
+          </div>
+
+          <!-- storage · block -->
+          <div class="cell concern c-block">
+            <div class="cn-top"><span class="cn-name"><span class="cn-ico">🗄</span>Storage · block <small>Longhorn ×2 replica</small></span><span class="cn-read"><output id="rd-block">100</output> GB</span></div>
+            <input type="range" autocomplete="off" id="sl-block" min="0" max="1000" step="10" value="100" aria-label="block storage GB (logical)">
+          </div>
+          <div class="cell val do"><span class="sku">Volumes · $0.10/GB</span><span class="px" id="px-do-block">$20.00</span></div>
+          <div class="cell val gcp"><span class="sku">pd-balanced · $0.10/GB</span><span class="px" id="px-gcp-block">$20.00</span></div>
+          <div class="cell val aws lastcol win"><span class="sku">EBS gp3 · $0.08/GB</span><span class="px" id="px-aws-block">$16.00</span></div>
+
+          <!-- storage · object -->
+          <div class="cell concern c-object">
+            <div class="cn-top"><span class="cn-name"><span class="cn-ico">☁</span>Storage · object <small>off-cluster backups</small></span><span class="cn-read"><output id="rd-object">100</output> GB</span></div>
+            <input type="range" autocomplete="off" id="sl-object" min="0" max="1000" step="10" value="100" aria-label="object storage GB">
+          </div>
+          <div class="cell val do"><span class="sku">Spaces · $5 + $0.02</span><span class="px" id="px-do-object">$5.00</span></div>
+          <div class="cell val gcp win"><span class="sku">GCS · $0.020/GB</span><span class="px" id="px-gcp-object">$2.00</span></div>
+          <div class="cell val aws lastcol"><span class="sku">S3 · $0.023/GB</span><span class="px" id="px-aws-object">$2.30</span></div>
+
+          <!-- network · egress -->
+          <div class="cell concern c-egress">
+            <div class="cn-top"><span class="cn-name"><span class="cn-ico">🌐</span>Network · egress <small>via Cloudflare Tunnel</small></span><span class="cn-read"><output id="rd-egress">500</output> GB/mo</span></div>
+            <input type="range" autocomplete="off" id="sl-egress" min="0" max="5000" step="50" value="500" aria-label="egress GB per month">
+          </div>
+          <div class="cell val do win"><span class="sku">15 TB incl · $0.01</span><span class="px" id="px-do-egress">$0.00</span></div>
+          <div class="cell val gcp"><span class="sku">200 GB free · $0.085</span><span class="px" id="px-gcp-egress">$25.50</span></div>
+          <div class="cell val aws lastcol"><span class="sku">100 GB free · $0.09</span><span class="px" id="px-aws-egress">$36.00</span></div>
+
+          <!-- total -->
+          <div class="cell tcell tlabel">Estimated monthly total</div>
+          <div class="cell tcell"><span class="total do" id="tt-do">$494</span><span class="per">/mo</span></div>
+          <div class="cell tcell"><span class="total gcp" id="tt-gcp">$426</span><span class="per">/mo</span></div>
+          <div class="cell tcell lastcol"><span class="total aws" id="tt-aws">$508</span><span class="per">/mo</span></div>
+        </div>
+
+        <!-- vendor concern: node autoscaling -->
+        <div class="caps">
+          <div class="ccell cap-label">Node autoscaling<small>self-managed k3s · Karpenter preferred</small></div>
+          <div class="ccell no"><span class="v">✗</span>DOKS-only CA · no raw-Droplet autoscaler · no Karpenter provider</div>
+          <div class="ccell mid"><span class="v">~</span>CA on GCE MIG (no GKE needed) · Karpenter is GKE-only</div>
+          <div class="ccell yes lastcol"><span class="v">✓</span>CA on EC2 ASG (GPU 0↔N) · Karpenter via EKS Auto Mode</div>
+        </div>
+
+        <div class="foot">
+          <div class="fnote"><span class="fl">Karpenter, 2026</span>Now a <strong>multi-cloud</strong> project (AWS, Azure, GCP, Cluster API…) — but <strong>no production-ready path for self-managed k3s</strong> on these clouds, so it is <strong>cluster-autoscaler</strong> per provider. AWS is cleanest; DO needs DOKS. GPU scale-to-zero on DO means <em>destroy/recreate</em> (a powered-off GPU Droplet still bills).</div>
+          <div class="fnote"><span class="fl">Reading the estimate</span>On-demand list prices, June 2026 — <strong>illustrative, verify before committing</strong>. Block storage counts ×2 (Longhorn replica). DO bundles ~15 TB egress; GCP &amp; AWS meter it — so the cheapest column <strong>flips as egress grows</strong>. The combined pool is fixed (never autoscale the etcd quorum); the slider models adding workers.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<nav class="menu" id="menu" aria-label="Slides">
+  <div>
+    <h3>Jump to slide</h3>
+    <ol id="menuList"></ol>
+  </div>
+</nav>
+
+<script>
+(function () {
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var counter = document.getElementById('counter');
+  var menu = document.getElementById('menu');
+  var menuList = document.getElementById('menuList');
+  var root = document.documentElement;
+  var i = 0;
+
+  function clamp(n) { return Math.max(0, Math.min(slides.length - 1, n)); }
+  function show(n) {
+    i = clamp(n);
+    slides.forEach(function (s, k) { s.classList.toggle('active', k === i); });
+    counter.textContent = (i + 1) + ' / ' + slides.length;
+    if (location.hash !== '#' + slides[i].id) history.replaceState(null, '', '#' + slides[i].id);
+    Array.prototype.forEach.call(menuList.children, function (li, k) {
+      li.querySelector('button').classList.toggle('current', k === i);
+    });
+    document.querySelector('.stage').scrollTop = 0;
+  }
+  function next() { show(i + 1); }
+  function prev() { show(i - 1); }
+
+  // build menu
+  slides.forEach(function (s, k) {
+    var li = document.createElement('li');
+    var b = document.createElement('button');
+    b.className = 'jump';
+    b.innerHTML = '<span class="n">' + (k + 1) + '</span><span><span class="t">' +
+      s.dataset.title + '</span> <span class="d">' + (s.dataset.sub || '') + '</span></span>';
+    b.addEventListener('click', function () { show(k); closeMenu(); });
+    li.appendChild(b);
+    menuList.appendChild(li);
+  });
+
+  function openMenu() { menu.setAttribute('open', ''); }
+  function closeMenu() { menu.removeAttribute('open'); }
+  function toggleMenu() { menu.hasAttribute('open') ? closeMenu() : openMenu(); }
+
+  function setTheme(t) {
+    if (t) { root.setAttribute('data-theme', t); try { localStorage.setItem('arch-theme', t); } catch (e) {} }
+  }
+  function toggleTheme() {
+    var cur = root.getAttribute('data-theme');
+    if (!cur) { cur = matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'; }
+    setTheme(cur === 'light' ? 'dark' : 'light');
+  }
+  try { var saved = localStorage.getItem('arch-theme'); if (saved) root.setAttribute('data-theme', saved); } catch (e) {}
+
+  document.getElementById('menuBtn').addEventListener('click', toggleMenu);
+  document.getElementById('themeBtn').addEventListener('click', toggleTheme);
+  document.getElementById('edgePrev').addEventListener('click', prev);
+  document.getElementById('edgeNext').addEventListener('click', next);
+  menu.addEventListener('click', function (e) { if (e.target === menu) closeMenu(); });
+
+  document.addEventListener('keydown', function (e) {
+    var _t = e.target;
+    if (_t && (_t.tagName === 'INPUT' || _t.tagName === 'SELECT' || _t.tagName === 'TEXTAREA' || _t.isContentEditable)) { return; }
+    if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') { e.preventDefault(); next(); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); prev(); }
+    else if (e.key === 'Home') { show(0); }
+    else if (e.key === 'End') { show(slides.length - 1); }
+    else if (e.key === 'm' || e.key === 'M') { toggleMenu(); }
+    else if (e.key === 't' || e.key === 'T') { toggleTheme(); }
+    else if (e.key === 'Escape') { closeMenu(); }
+    else if (e.key >= '1' && e.key <= '9') { var n = parseInt(e.key, 10) - 1; if (n < slides.length) show(n); }
+  });
+
+  // ── Crosslinks: external doc links (data-docs → new tab, ↗) + internal slide jumps (data-goto) ──
+  var DOCS = {
+    'argocd': 'https://argo-cd.readthedocs.io/',
+    'keycloak': 'https://www.keycloak.org/documentation',
+    'flagsmith': 'https://docs.flagsmith.com/',
+    'openfeature': 'https://openfeature.dev/docs/reference/intro/',
+    'forgejo': 'https://forgejo.org/docs/latest/',
+    'forgejo-runner': 'https://forgejo.org/docs/latest/admin/actions/',
+    'loki': 'https://grafana.com/docs/loki/latest/',
+    'grafana': 'https://grafana.com/docs/grafana/latest/',
+    'tempo': 'https://grafana.com/docs/tempo/latest/',
+    'mimir': 'https://grafana.com/docs/mimir/latest/',
+    'alloy': 'https://grafana.com/docs/alloy/latest/',
+    'opentelemetry': 'https://opentelemetry.io/docs/',
+    'longhorn': 'https://longhorn.io/docs/',
+    'postgres': 'https://www.postgresql.org/docs/',
+    'valkey': 'https://valkey.io/topics/',
+    'rook': 'https://rook.io/docs/rook/latest-release/',
+    'k3s': 'https://docs.k3s.io/',
+    'k3d': 'https://k3d.io/',
+    'terraform': 'https://developer.hashicorp.com/terraform/docs',
+    'cloud-init': 'https://docs.cloud-init.io/',
+    'helm': 'https://helm.sh/docs/',
+    'metallb': 'https://metallb.io/',
+    'cloudflared': 'https://developers.cloudflare.com/tunnel/',
+    'cloudflare-access': 'https://developers.cloudflare.com/cloudflare-one/access-controls/',
+    'istio': 'https://istio.io/latest/docs/',
+    'gateway-api': 'https://gateway-api.sigs.k8s.io/',
+    'cert-manager': 'https://cert-manager.io/docs/',
+    'external-dns': 'https://kubernetes-sigs.github.io/external-dns/',
+    'ollama': 'https://docs.ollama.com/',
+    'zenml': 'https://docs.zenml.io/',
+    'langfuse': 'https://langfuse.com/docs'
+  };
+  Array.prototype.forEach.call(document.querySelectorAll('[data-docs]'), function (el) {
+    var key = el.getAttribute('data-docs');
+    var url = DOCS[key] || (/^https?:\/\//.test(key) ? key : null);
+    if (!url) { console.warn('[crosslink] no docs URL for', key); return; }
+    el.setAttribute('role', 'link');
+    el.setAttribute('tabindex', '0');
+    el.setAttribute('title', url);
+    var open = function () { window.open(url, '_blank', 'noopener'); };
+    el.addEventListener('click', function (e) { e.stopPropagation(); open(); });
+    el.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } });
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-goto]'), function (el) {
+    var idx = slides.findIndex(function (s) { return s.id === el.getAttribute('data-goto'); });
+    if (idx < 0) { console.warn('[crosslink] no slide', el.getAttribute('data-goto')); return; }
+    el.setAttribute('role', 'link');
+    el.setAttribute('tabindex', '0');
+    el.setAttribute('title', 'Go to ' + slides[idx].dataset.title);
+    el.addEventListener('click', function (e) { e.stopPropagation(); show(idx); });
+    el.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); show(idx); } });
+  });
+
+  var h = location.hash.replace('#', '');
+  var start = slides.findIndex(function (s) { return s.id === h; });
+  show(start >= 0 ? start : 0);
+})();
+</script>
+<script>
+// ── S9 · Cloud Provider Alternatives — live pricing calculator ──
+(function () {
+  if (!document.getElementById('s9')) return;
+  // Per-GB / per-month constants for the non-node rows. The node rows (pool, GPU) read
+  // their unit cost from the per-cell <select> (minimum / recommended / all-out tiers).
+  // region: DO flat · GCP us-central1 · AWS us-east-1 · on-demand list, USD, June 2026.
+  // obj = objBase + max(0, GB-objIncl)*obj ; egr = max(0, GB-egrFree)*egr.
+  var P = {
+    do:  { blk: 0.10, objBase: 5, objIncl: 250, obj: 0.02,  egrFree: 15000, egr: 0.01  },
+    gcp: { blk: 0.10, objBase: 0, objIncl: 0,   obj: 0.020, egrFree: 200,   egr: 0.085 },
+    aws: { blk: 0.08, objBase: 0, objIncl: 0,   obj: 0.023, egrFree: 100,   egr: 0.09  }
+  };
+  var PROV = ['do', 'gcp', 'aws'];
+  function money(n) { return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+  function moneyT(n) { return '$' + Math.round(n).toLocaleString('en-US'); }
+  function val(id) { return +document.getElementById(id).value; }
+  function unit(pv, row) { var s = document.getElementById('ns-' + pv + '-' + row); return s ? parseFloat(s.value) : 0; }
+
+  function calc() {
+    var nodes = val('sl-nodes'), gpu = val('sl-gpu'), blk = val('sl-block'),
+        obj = val('sl-object'), egr = val('sl-egress');
+    document.getElementById('rd-nodes').textContent = nodes;
+    document.getElementById('rd-gpu').textContent = gpu;
+    document.getElementById('rd-block').textContent = blk;
+    document.getElementById('rd-object').textContent = obj;
+    document.getElementById('rd-egress').textContent = egr;
+
+    var rows = {
+      pool:   function (pv) { return unit(pv, 'pool') * nodes; },     // selected $/node-month × nodes
+      gpu:    function (pv) { return unit(pv, 'gpu') * gpu; },        // selected $/hr × hours
+      block:  function (pv) { return P[pv].blk * blk * 2; },          // ×2 Longhorn replica
+      object: function (pv) { return P[pv].objBase + Math.max(0, obj - P[pv].objIncl) * P[pv].obj; },
+      egress: function (pv) { return Math.max(0, egr - P[pv].egrFree) * P[pv].egr; }
+    };
+    var totals = { do: 0, gcp: 0, aws: 0 };
+    Object.keys(rows).forEach(function (row) {
+      var vals = {}, min = Infinity;
+      PROV.forEach(function (pv) { var v = rows[row](pv); vals[pv] = v; totals[pv] += v; if (v < min) min = v; });
+      PROV.forEach(function (pv) {
+        var el = document.getElementById('px-' + pv + '-' + row);
+        el.textContent = money(vals[pv]);
+        el.closest('.val').classList.toggle('win', Math.abs(vals[pv] - min) < 1e-9);
+      });
+    });
+    PROV.forEach(function (pv) { document.getElementById('tt-' + pv).textContent = moneyT(totals[pv]); });
+  }
+
+  // Node-tier <select> dropdowns + the Minimum / Recommended / All-Out quick toggle.
+  var selects = Array.prototype.slice.call(document.querySelectorAll('#s9 .nodesel'));
+  var tierBtns = Array.prototype.slice.call(document.querySelectorAll('#s9 .tierbtn'));
+  function optTiers(opt) { return (opt.getAttribute('data-tier') || '').split(/\s+/); }
+  function setTier(tier) {
+    selects.forEach(function (sel) {
+      var match = Array.prototype.find.call(sel.options, function (o) { return optTiers(o).indexOf(tier) !== -1; });
+      if (match) sel.value = match.value;
+    });
+    calc(); syncSeg();
+  }
+  function syncSeg() {
+    // press a tier button only if every node select currently sits on that tier
+    var pressed = null;
+    ['min', 'rec', 'max'].forEach(function (tier) {
+      if (selects.every(function (sel) { return optTiers(sel.options[sel.selectedIndex]).indexOf(tier) !== -1; })) pressed = tier;
+    });
+    tierBtns.forEach(function (b) {
+      if (b.getAttribute('data-tier') === pressed) b.setAttribute('aria-pressed', 'true');
+      else b.removeAttribute('aria-pressed');
+    });
+  }
+  tierBtns.forEach(function (b) { b.addEventListener('click', function () { setTier(b.getAttribute('data-tier')); }); });
+  selects.forEach(function (sel) { sel.addEventListener('change', function () { calc(); syncSeg(); }); });
+
+  ['sl-nodes', 'sl-gpu', 'sl-block', 'sl-object', 'sl-egress'].forEach(function (id) {
+    document.getElementById(id).addEventListener('input', calc);
+  });
+  calc(); syncSeg();
+})();
+</script>
+</body>
+</html>
