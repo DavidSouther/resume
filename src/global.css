@@ -22,6 +22,8 @@
     --brand-color: oklch(55% 0.16 195deg);          /* fallback: technical teal */
     --brand-body-font-family: "Poppins", sans-serif;
     --brand-header-font-family: "Libre Baskerville", Georgia, serif;
+
+    --base-line-height: calc(1.6 * var(--base-font-size));
   }
 
   :root[data-theme="rust"] {
