@@ -12,6 +12,7 @@ export type TransferData = {
 	airport: string;
 	hotel: Hotel;
 	city: string | null;
+	flight?: Flight; // the flight this transfer feeds (out) or follows (in)
 };
 
 export type ItineraryItem =
@@ -338,6 +339,7 @@ export function synthesizeTransfers(
 						airport: destinationAirportCode,
 						hotel,
 						city: IATA[destinationAirportCode] ?? null,
+						flight,
 					},
 				});
 			}
@@ -373,6 +375,7 @@ export function synthesizeTransfers(
 						airport: originAirportCode,
 						hotel,
 						city: IATA[originAirportCode] ?? null,
+						flight,
 					},
 				});
 			}

@@ -1,7 +1,17 @@
 {
   "version": 1,
-  "fetchedAt": "2026-06-08T17:46:01.002Z",
+  "fetchedAt": "2026-06-13T17:02:15.055Z",
   "entries": {
+    "Bond Street": {
+      "title": "Bond Street",
+      "extract": "Bond Street in the West End of London links Piccadilly in the south to Oxford Street in the north. Since the 18th century the street has housed many prestigious and upmarket fashion retailers. The southern section is Old Bond Street and the longer northern section New Bond Street, a distinction not generally made in everyday usage.",
+      "pageUrl": "https://en.wikipedia.org/wiki/Bond_Street",
+      "thumbnail": {
+        "source": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/33/Old_Bond_Street_2_db.jpg/330px-Old_Bond_Street_2_db.jpg",
+        "width": 330,
+        "height": 440
+      }
+    },
     "Hvar": {
       "title": "Hvar",
       "extract": "Hvar is a Croatian island in the Adriatic Sea, located off the Dalmatian coast, lying between the islands of Brač, Vis and Korčula. Approximately 68 kilometres (42.25 mi) long, with a high east–west ridge of Mesozoic limestone and dolomite, the island of Hvar is unusual in the area for having a large fertile coastal plain, and fresh water springs. Its hillsides are covered in pine forests, with vineyards, olive groves, fruit orchards and lavender fields in the agricultural areas. The climate is characterized by mild winters, and warm summers with many hours of sunshine. The island has 10,678 residents according to the 2021 census, making it the fourth most populated of the Croatian islands.",
@@ -24,7 +34,7 @@
     },
     "New_York_City": {
       "title": "New York City",
-      "extract": "New York, often called New York City (NYC), is the most populous city in the United States. It is located at the southern tip of New York State on New York Harbor, one of the world's largest natural harbors. The city comprises five boroughs—Manhattan, Brooklyn, Queens, The Bronx, and Staten Island; each is coextensive with its respective county. It is the geographical and demographic center of both the Northeast megalopolis and the New York metropolitan area, the largest metropolitan area in the United States by both population and urban area. New York is a global center of finance and commerce, culture, technology, entertainment and media, academics and scientific output, the arts and fashion, and, as home to the headquarters of the United Nations, international diplomacy. New York City is known for its fast pace and continuous urban energy.",
+      "extract": "New York, often called New York City (NYC), is the most populous city in the United States. It is located at the southern tip of New York State on New York Harbor, one of the world's largest natural harbors. The city comprises five boroughs—Manhattan, Brooklyn, Queens, the Bronx, and Staten Island; each is coextensive with its respective county. It is the geographical and demographic center of both the Northeast megalopolis and the New York metropolitan area, the largest metropolitan area in the United States by both population and urban area. New York is a global center of finance and commerce, culture, technology, entertainment and media, academics and scientific output, the arts and fashion, and, as home to the headquarters of the United Nations, international diplomacy. New York City is known for its fast pace and continuous urban energy.",
       "pageUrl": "https://en.wikipedia.org/wiki/New_York_City",
       "thumbnail": {
         "source": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/View_of_Empire_State_Building_from_Rockefeller_Center_New_York_City_dllu_%28cropped%29.jpg/330px-View_of_Empire_State_Building_from_Rockefeller_Center_New_York_City_dllu_%28cropped%29.jpg",

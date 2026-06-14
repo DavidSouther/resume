@@ -23,6 +23,15 @@ Rules:
 - Activities: add a blurb, an official_url when one exists, and a
   destination_ref linking to a destinations[] entry with a Wikipedia card.
   (The renderer adds a Brave search booking link automatically.)
+- Transfers: for each SUGGESTED departure transfer (a flight where the
+  itinerary has no booked ground_transportation to the origin airport), add a
+  transfers[] entry { flight: "<airline_code><flight_number>", minutes: N }.
+  `minutes` is your door-to-airport estimate from a Google Maps "arrive by"
+  drive-time lookup, hotel -> airport. The renderer works back from the flight:
+  leave_by = departure - airport buffer (3h international / 2h domestic, derived
+  from the airports' countries) - minutes, and renders a leave-by line plus an
+  add-to-calendar alarm (.ics). Booked airport transfers derive their own alarm
+  from the itinerary times, so they need no transfers[] entry.
 - Wikipedia cache: wikipedia.title feeds a BUILD-TIME fetch, not a runtime
   call. Use the EXACT article title from the page URL (underscores for spaces,
   URL-encoded: "Schönbrunn_Palace" -> "Sch%C3%B6nbrunn_Palace"); the cache keys

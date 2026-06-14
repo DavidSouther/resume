@@ -9,11 +9,14 @@ export function Actions(...children: DenormChildren[]): HTMLElement {
 	return div({ class: "flex row" }, ...children);
 }
 
-// (href, icon, children) — positional from the original prop object.
+// (href, icon, children, opts) — positional from the original prop object.
+// `opts.download` names the file for non-http hrefs (e.g. a data: .ics link),
+// so the browser saves/opens it instead of navigating.
 export function BtnLink(
 	href: string,
 	icon: string,
 	children: Node | string | (Node | string)[],
+	opts: { download?: string } = {},
 ): HTMLElement {
 	const external = /^https?:/.test(href);
 	const childNodes = Array.isArray(children) ? children : [children];
@@ -22,6 +25,7 @@ export function BtnLink(
 			href,
 			role: "button",
 			...(external ? { target: "_blank", rel: "noopener noreferrer" } : {}),
+			...(opts.download ? { download: opts.download } : {}),
 		},
 		SvgIcon(icon),
 		...childNodes,

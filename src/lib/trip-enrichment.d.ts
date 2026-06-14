@@ -45,6 +45,15 @@ export type ActivityEnrichment = {
 	tips?: string;
 };
 
+// Door-to-airport travel estimate for a synthesized departure transfer, joined
+// to the itinerary by flight key ("<airline_code><flight_number>", e.g. "OS334").
+// Authored during enrichment from a Maps "arrive by" estimate; absence just means
+// no leave-by/alarm is shown (display layer, failure-silent).
+export type TransferEnrichment = {
+	flight: string;
+	minutes: number;
+};
+
 // Binary lifecycle of a prep concern. Surfaced (raw or humanized) by the render
 // layer. Invariant: exactly two members — an item either needs action or it does
 // not; the rejected `in_progress`/`done` middle states are gone (design §2).
@@ -113,5 +122,6 @@ export type TripEnrichment = {
 	hotels?: HotelEnrichment[];
 	destinations?: Destination[];
 	activities?: ActivityEnrichment[];
+	transfers?: TransferEnrichment[]; // door-to-airport estimates for departure alarms
 	trip_prep?: TripPrep; // advisory "before you go" layer
 };

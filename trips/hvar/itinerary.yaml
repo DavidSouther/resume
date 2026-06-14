@@ -137,6 +137,16 @@ ground_transportation:
 
 events:
   - status: confirmed
+    title: "Bond & High Street Shopping"
+    category: activity
+    start: { datetime: 2026-07-13T11:00:00, timezone: Europe/London }
+    location: "Mayfair & West End, London"
+    notes: >
+      Bond Street and Mayfair boutiques plus the Oxford/Regent Street high-street
+      flagships. Wrap up by ~16:30 to get back to the hotel and freshen up before
+      the 19:30 dinner.
+
+  - status: confirmed
     title: "Dinner by Heston Blumenthal"
     category: meal
     start: { datetime: 2026-07-13T19:30:00, timezone: Europe/London }

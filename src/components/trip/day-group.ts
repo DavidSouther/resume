@@ -30,7 +30,7 @@ function renderItem(
 		case "ground":
 			return GroundItem(item);
 		case "transfer":
-			return TransferItem(item);
+			return TransferItem(item, enrichment);
 		case "event":
 			return EventItem(item, enrichment, wiki);
 	}

@@ -14,12 +14,13 @@ meta:
     - name: "David Souther"
       passport_country: "US"
       documents:
-        - { type: passport, status: action_needed, note: "confirm valid through 22 October 2026; set valid_until once known" }
-        - { type: uk_eta, status: action_needed }
+        - { type: passport, valid_until: "2028-12", status: confirmed }
+        - { type: uk_eta, status: confirmed }
     - name: "Anne Levine"
       passport_country: "US"
       documents:
-        - { type: uk_eta, status: action_needed }
+        - { type: passport, status: confirmed, valid_until: "2035-09" }
+        - { type: uk_eta, status: confirmed }
 
 page_cards:
   - city: "New York"
@@ -98,13 +99,13 @@ hotels:
       the Kärntner Strasse shopping district.
 
 destinations:
-  - name: "Stratford-upon-Avon"
+  - name: "Bond & High Street Shopping"
     wikipedia:
-      title: "Stratford-upon-Avon"
-      url: "https://en.wikipedia.org/wiki/Stratford-upon-Avon"
-      summary_api: "https://en.wikipedia.org/api/rest_v1/page/summary/Stratford-upon-Avon"
-    image_query: "Stratford-upon-Avon Shakespeare birthplace"
-    blurb: "Warwickshire market town, Shakespeare's birthplace, about two hours from London."
+      title: "Bond Street"
+      url: "https://en.wikipedia.org/wiki/Bond_Street"
+      summary_api: "https://en.wikipedia.org/api/rest_v1/page/summary/Bond_Street"
+    image_query: "New Bond Street Mayfair London luxury shopfronts"
+    blurb: "Bond Street runs through Mayfair from Piccadilly to Oxford Street, lined with the flagship luxury houses; Oxford and Regent Street alongside carry London's flagship high-street chains."
 
   - name: "Wachau Valley"
     wikipedia:
@@ -139,6 +140,19 @@ destinations:
     blurb: "Dalmatian coastal city built around Diocletian's Palace; the ferry/air gateway to Hvar."
 
 activities:
+  - event: "Bond & High Street Shopping"
+    destination_ref: "Bond & High Street Shopping"
+    official_url: "https://www.bondstreet.co.uk/"
+    image_query: "Bond Street London luxury shopping"
+    blurb: >
+      An afternoon across the West End: the luxury houses of Old and New Bond
+      Street and the Mayfair side streets, then the high-street flagships along
+      Oxford and Regent Street.
+    tips: >
+      Mayfair boutiques open around 10:00 and the Oxford Street flagships run
+      late; start by late morning and break by ~16:30 to drop bags at the hotel
+      and refresh before the 19:30 Mandarin Oriental reservation.
+
   - event: "Dinner by Heston Blumenthal"
     official_url: "https://www.mandarinoriental.com/en/london/hyde-park/dine"
     image_query: "Dinner by Heston Blumenthal Mandarin Oriental London"
@@ -182,6 +196,17 @@ activities:
     destination_ref: "Split"
     image_query: "Split Croatia restaurant Diocletian's Palace dining"
     blurb: "Final-night dinner in Split before the flight back to London."
+
+# Door-to-airport drive estimates for the suggested departure transfers, joined
+# by flight key. Feeds the leave-by/alarm: leave_by = departure − airport buffer
+# (3h international / 2h domestic) − minutes. Estimates from Google Maps typical
+# drive time; refine per traffic. Booked transfers (BA953, DL2) derive their own
+# alarm from the itinerary times and need no entry here.
+transfers:
+  - flight: "OS334"   # Hotel Indigo Paddington → LHR
+    minutes: 45
+  - flight: "OS611"   # InterContinental Vienna → VIE
+    minutes: 30
 
 # Advisory "before you go" layer. Failure-silent: deleting this block leaves the
 # page unchanged. Each rule-bearing item links its AUTHORITATIVE government source
