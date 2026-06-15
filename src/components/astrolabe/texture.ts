@@ -1,3 +1,4 @@
+import { assertExists } from "@davidsouther/jiffies/assert.ts";
 import { pt } from "../../lib/astrolabe/math.ts";
 
 const SVGNS = "http://www.w3.org/2000/svg";
@@ -14,9 +15,7 @@ function svgEl<K extends keyof SVGElementTagNameMap>(
 }
 
 export function initTexture(svg: SVGSVGElement): void {
-	const defs =
-		svg.querySelector("defs") ??
-		svg.insertBefore(svgEl("defs", {}), svg.firstChild);
+	const defs = assertExists(svg.querySelector("defs"), "#dial defs missing");
 
 	const sheen = svgEl("radialGradient", {
 		id: "dialSheen",
@@ -39,11 +38,11 @@ export function initTexture(svg: SVGSVGElement): void {
 	sheen.appendChild(stop2);
 	defs.appendChild(sheen);
 
-	// Ground element anchor — insert texture/sparkles just after .ground
-	const ground = svg.querySelector(".ground");
-	const anchor = ground?.nextSibling ?? null;
-
-	const tex = svgEl("g", { id: "texture" });
+	// Populate the pre-existing #texture group created by buildDial()
+	const tex = assertExists(
+		svg.querySelector<SVGGElement>("#texture"),
+		"#texture missing",
+	);
 	tex.appendChild(
 		svgEl("circle", { cx: CX, cy: CY, r: 468, fill: "url(#dialSheen)" }),
 	);
@@ -51,21 +50,25 @@ export function initTexture(svg: SVGSVGElement): void {
 		const ang = (i / 120) * 360;
 		const a = pt(ang, 40);
 		const b = pt(ang, 468);
-		const line = svgEl("line", {
-			class: "tline",
-			x1: a.x,
-			y1: a.y,
-			x2: b.x,
-			y2: b.y,
-			"stroke-width": 0.7,
-			"stroke-opacity": (0.07).toFixed(3),
-		});
-		tex.appendChild(line);
+		tex.appendChild(
+			svgEl("line", {
+				class: "tline",
+				x1: a.x,
+				y1: a.y,
+				x2: b.x,
+				y2: b.y,
+				"stroke-width": 0.7,
+				"stroke-opacity": (0.07).toFixed(3),
+			}),
+		);
 	}
-	svg.insertBefore(tex, anchor);
 
+	// Populate the pre-existing #sparkles group
 	const palette = ["#EAF0FF", "#EAF0FF", "#EAF0FF", "#F3DFA6", "#BFD2F2"];
-	const sp = svgEl("g", { id: "sparkles" });
+	const sp = assertExists(
+		svg.querySelector<SVGGElement>("#sparkles"),
+		"#sparkles missing",
+	);
 	for (let k = 0; k < 160; k++) {
 		const th = (k / 160) * Math.PI * 2;
 		const rr = Math.sqrt((k + 0.5) / 160) * 456;
@@ -82,5 +85,4 @@ export function initTexture(svg: SVGSVGElement): void {
 		c.style.setProperty("--dl", `${((k * 13) % 50) / 10}s`);
 		sp.appendChild(c);
 	}
-	svg.insertBefore(sp, anchor);
 }

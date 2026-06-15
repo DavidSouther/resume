@@ -11,9 +11,9 @@ import {
 	style,
 	summary,
 } from "@davidsouther/jiffies/dom/html.ts";
-import { g, svg } from "@davidsouther/jiffies/dom/svg.ts";
 import type { PageModule } from "@davidsouther/jiffies/ssg/ssg.ts";
 import { ASTROLABE_CSS } from "../../src/lib/astrolabe/css.ts";
+import { buildDial } from "../../src/lib/astrolabe/dial.ts";
 import { pageHead } from "../../src/lib/page-head.ts";
 
 const ASTRONOMY_CDN =
@@ -38,7 +38,7 @@ function buildControlsPanel(): HTMLDivElement {
 	return div(
 		{ id: "controls", ariaLabel: "Controls" },
 		details(
-			{ open: "" },
+			{ open: true },
 			summary({}, "Motion"),
 			row(
 				"Earth",
@@ -63,7 +63,7 @@ function buildControlsPanel(): HTMLDivElement {
 			div({ class: "note", id: "simClock" }),
 			row(
 				"Parallax",
-				input({ id: "parallaxOn", type: "checkbox", checked: "" }),
+				input({ id: "parallaxOn", type: "checkbox", checked: true }),
 			),
 			row(
 				"Parallax strength",
@@ -97,29 +97,29 @@ function buildControlsPanel(): HTMLDivElement {
 			),
 			row(
 				"Orbit discs",
-				input({ id: "t_orbits", type: "checkbox", checked: "" }),
+				input({ id: "t_orbits", type: "checkbox", checked: true }),
 			),
 			row("Disc arms", input({ id: "t_spokes", type: "checkbox" })),
 			row(
 				"Zodiac signs",
-				input({ id: "t_zlabels", type: "checkbox", checked: "" }),
+				input({ id: "t_zlabels", type: "checkbox", checked: true }),
 			),
 			row(
 				"Sign dividers",
-				input({ id: "t_dividers", type: "checkbox", checked: "" }),
+				input({ id: "t_dividers", type: "checkbox", checked: true }),
 			),
 			row(
 				"Sign highlight",
-				input({ id: "t_glow", type: "checkbox", checked: "" }),
+				input({ id: "t_glow", type: "checkbox", checked: true }),
 			),
-			row("Sign info", input({ id: "t_occ", type: "checkbox", checked: "" })),
+			row("Sign info", input({ id: "t_occ", type: "checkbox", checked: true })),
 			row(
 				"Twilight zone",
-				input({ id: "t_twilight", type: "checkbox", checked: "" }),
+				input({ id: "t_twilight", type: "checkbox", checked: true }),
 			),
 			row(
 				"Conjunction lines",
-				input({ id: "t_conj", type: "checkbox", checked: "" }),
+				input({ id: "t_conj", type: "checkbox", checked: true }),
 			),
 			row(
 				"Conjunction within",
@@ -135,9 +135,9 @@ function buildControlsPanel(): HTMLDivElement {
 			),
 			row(
 				"Watch hands",
-				input({ id: "t_hands", type: "checkbox", checked: "" }),
+				input({ id: "t_hands", type: "checkbox", checked: true }),
 			),
-			row("Moon", input({ id: "t_moon", type: "checkbox", checked: "" })),
+			row("Moon", input({ id: "t_moon", type: "checkbox", checked: true })),
 		),
 		details(
 			{},
@@ -182,17 +182,7 @@ export default {
 			buildControlsPanel(),
 			div({ id: "tip" }),
 			div({ id: "signcard" }),
-			svg(
-				{
-					id: "dial",
-					viewBox: "0 0 1000 1000",
-					preserveAspectRatio: "xMidYMid meet",
-				},
-				g({ id: "zodiac" }),
-				g({ id: "discs" }),
-				g({ id: "conj" }),
-				g({ id: "dial-g" }),
-			),
+			buildDial(),
 		),
 	clientModules: ["/src/components/astrolabe/client.ts"],
 } satisfies PageModule;

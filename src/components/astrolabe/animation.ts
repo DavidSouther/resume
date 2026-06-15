@@ -97,34 +97,22 @@ export function startAnimation(
 	const tip = document.getElementById("tip") as HTMLDivElement;
 	const signcard = document.getElementById("signcard") as HTMLDivElement;
 
-	// Create watch-hand elements in #dial-g
-	const dialG = document.getElementById("dial-g") as unknown as SVGGElement;
-	const handHour = svgEl("path", {
-		id: "handHour",
-		class: "hand-hour",
-		d: "M500 500 L492 340 L500 320 L508 340 Z",
-	});
-	const handMin = svgEl("path", {
-		id: "handMin",
-		class: "hand-min",
-		d: "M500 500 L496 280 L500 260 L504 280 Z",
-	});
-	const hub = svgEl("circle", { class: "hub", cx: CX, cy: CY, r: 10 });
-	const hubDot = svgEl("circle", { class: "hub-dot", cx: CX, cy: CY, r: 4 });
-	dialG.appendChild(handHour);
-	dialG.appendChild(handMin);
-	dialG.appendChild(hub);
-	dialG.appendChild(hubDot);
+	// All static dial elements (hands, bezel, gradients, cone) are pre-rendered
+	// by buildDial() in the page module. Grab existing references.
+	const handHour = assertExists(
+		svg.querySelector<SVGPathElement>("#handHour"),
+		"#handHour missing",
+	);
+	const handMin = assertExists(
+		svg.querySelector<SVGPathElement>("#handMin"),
+		"#handMin missing",
+	);
+	const cone = assertExists(
+		svg.querySelector<SVGPathElement>("#twilightCone"),
+		"#twilightCone missing",
+	);
 
-	// Twilight cone path
-	const cone = svgEl("path", {
-		id: "twilightCone",
-		fill: "url(#twilightGrad)",
-		opacity: "0.25",
-	});
-	dialG.appendChild(cone);
-
-	// Date complication text
+	// Date complication text (created here — not pre-rendered)
 	const dateMonth = svgEl("text", { class: "date-month" });
 	svg.appendChild(dateMonth);
 	const dateDay = svgEl("text", { class: "date-day" });
