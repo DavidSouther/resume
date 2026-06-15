@@ -21,6 +21,7 @@ export interface ZodiacRefs {
 	arcs: SVGElement[];
 	glyphs: SVGElement[];
 	hits: SVGElement[];
+	grads: SVGLinearGradientElement[];
 }
 
 export function buildZodiac(g: SVGGElement): ZodiacRefs {
@@ -35,6 +36,7 @@ export function buildZodiac(g: SVGGElement): ZodiacRefs {
 	const arcs: SVGElement[] = [];
 	const glyphs: SVGElement[] = [];
 	const hits: SVGElement[] = [];
+	const grads: SVGLinearGradientElement[] = [];
 
 	const zwheel = svgEl("g", { id: "zwheel" });
 	g.appendChild(zwheel);
@@ -56,6 +58,7 @@ export function buildZodiac(g: SVGGElement): ZodiacRefs {
 			y2: iB.y,
 		});
 		defs.appendChild(grad);
+		grads.push(grad);
 
 		const wd =
 			`M${oA.x} ${oA.y} A${ZOUT} ${ZOUT} 0 0 1 ${oB.x} ${oB.y}` +
@@ -117,5 +120,5 @@ export function buildZodiac(g: SVGGElement): ZodiacRefs {
 	}
 	svg?.appendChild(zhits);
 
-	return { wedges, arcs, glyphs, hits };
+	return { wedges, arcs, glyphs, hits, grads };
 }
