@@ -104,6 +104,9 @@ export function buildDial(): SVGSVGElement {
 	// ---- background layers ----
 	svg.appendChild(svgEl("circle", { class: "ground", cx: CX, cy: CY, r: 470 }));
 
+	// guilloche (populated by buildGuilloche / updateGuilloche)
+	svg.appendChild(svgEl("g", { id: "guilloche" }));
+
 	// texture and sparkles (populated by initTexture)
 	svg.appendChild(svgEl("g", { id: "texture" }));
 	svg.appendChild(svgEl("g", { id: "sparkles" }));

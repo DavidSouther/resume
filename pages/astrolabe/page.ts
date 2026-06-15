@@ -122,6 +122,10 @@ function buildControlsPanel(): HTMLDivElement {
 				input({ id: "t_conj", type: "checkbox", checked: true }),
 			),
 			row(
+				"Curved conjunctions",
+				input({ id: "t_conj_curved", type: "checkbox", checked: true }),
+			),
+			row(
 				"Conjunction within",
 				input({
 					id: "conjDeg",
@@ -132,6 +136,22 @@ function buildControlsPanel(): HTMLDivElement {
 					value: "3",
 				}),
 				span({ class: "val", id: "conjDegVal" }, "3°"),
+			),
+			row(
+				"Guilloche",
+				input({ id: "t_guilloche", type: "checkbox", checked: true }),
+			),
+			row(
+				"Guilloche lines",
+				input({
+					id: "guillocheN",
+					type: "range",
+					min: "12",
+					max: "360",
+					step: "12",
+					value: "120",
+				}),
+				span({ class: "val", id: "guillocheNVal" }, "120"),
 			),
 			row(
 				"Watch hands",

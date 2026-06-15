@@ -21,6 +21,9 @@ export interface Config {
 	twilight: boolean;
 	conj: boolean;
 	conjDeg: number;
+	conjCurved: boolean;
+	guilloche: boolean;
+	guillocheN: number;
 	hands: boolean;
 	bgMode: "flat" | "textured" | "sparkle";
 }

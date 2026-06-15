@@ -9,6 +9,7 @@ import {
 } from "../../lib/astrolabe/bodies.ts";
 import { helioA, pt } from "../../lib/astrolabe/math.ts";
 import type { Config } from "../../lib/astrolabe/types.ts";
+import { guillochePathD, updateGuilloche } from "./guilloche.ts";
 import type { PlanetRefs } from "./planets.ts";
 import type { ZodiacRefs } from "./zodiac.ts";
 
@@ -391,10 +392,21 @@ export function startAnimation(
 			);
 		}
 
+		// Guilloche background
+		updateGuilloche(
+			svg,
+			world.earth?.x ?? CX,
+			world.earth?.y ?? CY,
+			cfg.guillocheN,
+			cfg.guilloche,
+		);
+
 		// Conjunction lines
 		while (conjHost.firstChild) conjHost.removeChild(conjHost.firstChild);
 		if (cfg.conj) {
 			const E = world.earth;
+			const Ex = E?.x ?? CX;
+			const Ey = E?.y ?? CY;
 			const TWILIGHT = 12.5;
 			const items = BODIES.filter((b) => b.key !== "earth").map((b) => ({
 				moon: !!b.moon,
@@ -446,18 +458,26 @@ export function startAnimation(
 				if (sep < TWILIGHT) continue;
 
 				const score = nPlanets + (hasMoon ? 0.5 : 0);
-				const t = Math.max(0, Math.min(1, (score - 1.5) / 2.5));
-				const ep = pt((((meanG + 90 + rot) % 360) + 360) % 360, 422);
-				const line = svgEl("line", {
+				const conjT = Math.max(0, Math.min(1, (score - 1.5) / 2.5));
+				const sw = (0.5 + conjT * 1.9).toFixed(2);
+				const so = (0.07 + conjT * 0.53).toFixed(3);
+
+				let conjD: string;
+				if (cfg.conjCurved) {
+					const phi = ((meanG + rot) * Math.PI) / 180;
+					conjD = guillochePathD(Ex, Ey, phi, 168.4, 422, 30);
+				} else {
+					const ep = pt((((meanG + 90 + rot) % 360) + 360) % 360, 422);
+					conjD = `M${Ex.toFixed(1)},${Ey.toFixed(1)} L${ep.x.toFixed(1)},${ep.y.toFixed(1)}`;
+				}
+
+				const path = svgEl("path", {
 					class: "conj-line",
-					x1: E?.x ?? CX,
-					y1: E?.y ?? CY,
-					x2: ep.x,
-					y2: ep.y,
-					"stroke-width": (0.5 + t * 1.9).toFixed(2),
-					"stroke-opacity": (0.07 + t * 0.53).toFixed(3),
+					d: conjD,
+					"stroke-width": sw,
+					"stroke-opacity": so,
 				});
-				conjHost.appendChild(line);
+				conjHost.appendChild(path);
 			}
 		}
 

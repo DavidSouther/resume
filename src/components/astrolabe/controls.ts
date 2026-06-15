@@ -17,6 +17,9 @@ export function initControls(): { getConfig: () => Config } {
 		twilight: true,
 		conj: true,
 		conjDeg: 3,
+		conjCurved: true,
+		guilloche: true,
+		guillocheN: 120,
 		hands: true,
 		bgMode: "flat",
 	};
@@ -133,6 +136,21 @@ export function initControls(): { getConfig: () => Config } {
 		updateHands();
 	});
 	bindCheck("t_moon", (v) => setHide("hide-moon", v));
+	bindCheck("t_conj_curved", (v) => {
+		cfg = { ...cfg, conjCurved: v };
+	});
+	bindCheck("t_guilloche", (v) => {
+		cfg = { ...cfg, guilloche: v };
+		setHide("hide-guilloche", v);
+	});
+	const cGuilN = bindRange(
+		"guillocheN",
+		"guillocheNVal",
+		(v) => String(Math.round(v)),
+		(v) => {
+			cfg = { ...cfg, guillocheN: Math.round(v) };
+		},
+	);
 
 	// Dial finish
 	const bgSel = document.getElementById("bgMode") as HTMLSelectElement;
@@ -188,8 +206,12 @@ export function initControls(): { getConfig: () => Config } {
 		setChk("t_occ", true);
 		setChk("t_twilight", true);
 		setChk("t_conj", true);
+		setChk("t_conj_curved", true);
+		setChk("t_guilloche", true);
 		setChk("t_hands", true);
 		setChk("t_moon", true);
+		cGuilN.value = "120";
+		cGuilN.dispatchEvent(new Event("input"));
 		setChk("parallaxOn", !reduce);
 		bgSel.value = "flat";
 		bgSel.dispatchEvent(new Event("change"));

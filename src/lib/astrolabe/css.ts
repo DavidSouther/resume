@@ -59,6 +59,9 @@ export const ASTROLABE_CSS = `
   #twilightCone{pointer-events:none;}
   .hide-twilight #twilightCone{display:none;}
   .conj-line{stroke:var(--conjunction);fill:none;pointer-events:none;}
+  .guilloche-line{stroke:rgba(255,255,255,0.13);stroke-width:1;fill:none;pointer-events:none;}
+  #guilloche{pointer-events:none;}
+  .hide-guilloche #guilloche{display:none;}
   #texture,#sparkles{display:none;pointer-events:none;}
   .bg-textured #texture,.bg-sparkle #texture{display:block;}
   .bg-sparkle #sparkles{display:block;}
@@ -81,6 +84,7 @@ export const ASTROLABE_CSS = `
   .hide-zlabels .zglyph{display:none;}
   .hide-dividers .zdiv{display:none;}
   .hide-conj .conj-line{display:none;}
+  .hide-conj-curved .conj-line{display:none;}
   .hide-hands .hand-min,.hide-hands .hand-hour,.hide-hands .hub,.hide-hands .hub-dot{display:none;}
   .hide-moon .disc-moon{display:none;}
   #gear{position:fixed;top:max(10px,env(safe-area-inset-top));right:12px;z-index:60;
