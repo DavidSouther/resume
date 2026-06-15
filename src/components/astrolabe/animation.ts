@@ -1,4 +1,5 @@
 import { assertExists } from "@davidsouther/jiffies/assert.ts";
+import { circle, stop, text } from "@davidsouther/jiffies/dom/svg.ts";
 import {
 	BODIES,
 	EARTH,
@@ -9,11 +10,14 @@ import {
 } from "../../lib/astrolabe/bodies.ts";
 import { helioA, pt } from "../../lib/astrolabe/math.ts";
 import type { Config } from "../../lib/astrolabe/types.ts";
-import { guillochePathD, updateGuilloche } from "./guilloche.ts";
+import {
+	guillochePoints,
+	pointsToPathD,
+	updateGuilloche,
+} from "./guilloche.ts";
 import type { PlanetRefs } from "./planets.ts";
 import type { ZodiacRefs } from "./zodiac.ts";
 
-const SVGNS = "http://www.w3.org/2000/svg";
 const CX = 500;
 const CY = 500;
 const ZLAB = 445;
@@ -35,15 +39,6 @@ const MONTHS = [
 ];
 const EARTH_RATE = 360 / (EARTH.period * EARTH_YEAR);
 
-function svgEl<K extends keyof SVGElementTagNameMap>(
-	tag: K,
-	attrs: Record<string, string | number>,
-): SVGElementTagNameMap[K] {
-	const e = document.createElementNS(SVGNS, tag);
-	for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, String(v));
-	return e;
-}
-
 function bodyColor(key: string): string {
 	return (
 		getComputedStyle(document.documentElement)
@@ -52,23 +47,20 @@ function bodyColor(key: string): string {
 	);
 }
 
-function setGradientStops(grad: SVGLinearGradientElement, keys: string[]) {
+function setGradientStops(grad: Element, keys: string[]) {
 	while (grad.firstChild) grad.removeChild(grad.firstChild);
 	if (keys.length === 1) {
 		const col = bodyColor(keys[0]);
-		const s0 = svgEl("stop", { offset: "0%" });
-		s0.setAttribute("stop-color", col);
-		const s1 = svgEl("stop", { offset: "100%" });
-		s1.setAttribute("stop-color", col);
-		grad.appendChild(s0);
-		grad.appendChild(s1);
+		grad.appendChild(stop({ offset: "0%", "stop-color": col }));
+		grad.appendChild(stop({ offset: "100%", "stop-color": col }));
 	} else {
 		for (let i = 0; i < keys.length; i++) {
-			const s = svgEl("stop", {
-				offset: `${((i / (keys.length - 1)) * 100).toFixed(1)}%`,
-			});
-			s.setAttribute("stop-color", bodyColor(keys[i]));
-			grad.appendChild(s);
+			grad.appendChild(
+				stop({
+					offset: `${((i / (keys.length - 1)) * 100).toFixed(1)}%`,
+					"stop-color": bodyColor(keys[i]),
+				}),
+			);
 		}
 	}
 }
@@ -84,7 +76,7 @@ export function startAnimation(
 	planets: PlanetRefs,
 	getConfig: () => Config,
 ): void {
-	const { wedges, arcs, glyphs, grads } = zodiac;
+	const { wedges, arcs, glyphs, grads, divs } = zodiac;
 	const zwheel = assertExists(
 		svg.querySelector<SVGGElement>("#zwheel"),
 		"#zwheel missing",
@@ -93,7 +85,6 @@ export function startAnimation(
 		svg.querySelector<SVGGElement>("#zhits"),
 		"#zhits missing",
 	);
-	const conjHost = document.getElementById("conj") as unknown as SVGGElement;
 	const simClock = document.getElementById("simClock") as HTMLDivElement;
 	const tip = document.getElementById("tip") as HTMLDivElement;
 	const signcard = document.getElementById("signcard") as HTMLDivElement;
@@ -112,16 +103,42 @@ export function startAnimation(
 		svg.querySelector<SVGPathElement>("#twilightCone"),
 		"#twilightCone missing",
 	);
+	const guillocheClipPath = assertExists(
+		svg.querySelector<SVGPathElement>("#guillocheClipPath"),
+		"#guillocheClipPath missing",
+	);
+	// Full dial circle path — outer boundary of the evenodd clip
+	const DIAL_CIRCLE = `M${CX} ${CY - 470} A470 470 0 1 1 ${CX - 0.01} ${CY - 470} Z`;
 
 	// Date complication text (created here — not pre-rendered)
-	const dateMonth = svgEl("text", { class: "date-month" });
+	const dateMonth = text({ class: "date-month" });
 	svg.appendChild(dateMonth);
-	const dateDay = svgEl("text", { class: "date-day" });
+	const dateDay = text({ class: "date-day" });
 	svg.appendChild(dateDay);
 
 	// Sun hit target at centre
-	const sunHit = svgEl("circle", { class: "hit", cx: CX, cy: CY, r: 18 });
+	const sunHit = circle({ class: "hit", cx: CX, cy: CY, r: 18 });
 	svg.appendChild(sunHit);
+
+	// Parallax mouse/touch tracking (normalized -1..1 from center)
+	let mouseNX = 0;
+	let mouseNY = 0;
+	function updateMouse(cx: number, cy: number) {
+		const r = svg.getBoundingClientRect();
+		mouseNX = Math.max(
+			-1,
+			Math.min(1, (cx - (r.left + r.width / 2)) / (r.width / 2)),
+		);
+		mouseNY = Math.max(
+			-1,
+			Math.min(1, (cy - (r.top + r.height / 2)) / (r.height / 2)),
+		);
+	}
+	svg.addEventListener("pointermove", (e) => updateMouse(e.clientX, e.clientY));
+	svg.addEventListener("pointerleave", () => {
+		mouseNX = 0;
+		mouseNY = 0;
+	});
 
 	// Hover state
 	let hovered: { key: string; name: string } | null = null;
@@ -129,7 +146,7 @@ export function startAnimation(
 	let hoveredSign: number | null = null;
 	let pinnedSign: number | null = null;
 
-	function bindHover(el: SVGElement, body: { key: string; name: string }) {
+	function bindHover(el: Element, body: { key: string; name: string }) {
 		el.addEventListener("pointerenter", () => {
 			hovered = body;
 		});
@@ -142,7 +159,7 @@ export function startAnimation(
 		});
 	}
 
-	function bindSignHover(el: SVGElement, i: number) {
+	function bindSignHover(el: Element, i: number) {
 		el.addEventListener("pointerenter", () => {
 			hoveredSign = i;
 		});
@@ -162,12 +179,11 @@ export function startAnimation(
 	});
 
 	bindHover(sunHit, { key: "sun", name: "SUN" });
-	for (let i = 0; i < zodiac.hits.length; i++)
-		bindSignHover(zodiac.hits[i] as SVGElement, i);
+	for (let i = 0; i < zodiac.hits.length; i++) bindSignHover(zodiac.hits[i], i);
 	for (const b of BODIES) {
 		const group = planets[b.key];
 		const hit = group?.querySelector(".hit");
-		if (hit) bindHover(hit as SVGElement, { key: b.key, name: b.name });
+		if (hit) bindHover(hit, { key: b.key, name: b.name });
 	}
 
 	// Live ephemeris via astronomy-engine (CDN script loaded in head)
@@ -240,8 +256,8 @@ export function startAnimation(
 				};
 			} else {
 				const on = cfg.parallaxOn ? 1 : 0;
-				const px = 0 * MAXPX * cfg.parallax * b.weight * on;
-				const py = 0 * MAXPX * cfg.parallax * b.weight * on;
+				const px = mouseNX * MAXPX * cfg.parallax * b.weight * on;
+				const py = mouseNY * MAXPX * cfg.parallax * b.weight * on;
 				group.setAttribute(
 					"transform",
 					`translate(${px.toFixed(2)} ${py.toFixed(2)}) rotate(${da.toFixed(3)} ${CX} ${CY})`,
@@ -301,7 +317,7 @@ export function startAnimation(
 
 		for (let i = 0; i < 12; i++) {
 			const keys = occ[i];
-			const lit = cfg.glow && !!keys;
+			const lit = !!keys;
 			wedges[i].classList.toggle("active", lit);
 			arcs[i].classList.toggle("active", lit);
 			glyphs[i].classList.toggle("active", lit);
@@ -323,7 +339,7 @@ export function startAnimation(
 			if (cardSig !== shownCardSig) {
 				const ks = occ[curSign] ?? [];
 				const pl = ks.length
-					? ks.map((k) => FULLNAME[k]).join("  ·  ")
+					? ks.map((k) => FULLNAME[k]).join("  \u00b7  ")
 					: "No planets";
 				signcard.innerHTML = `${glyphSVG(curSign, 46)}<div class="sc-name">${SIGN_FULL[curSign]}</div><div class="sc-pl">${pl}</div>`;
 				signcard.classList.add("show");
@@ -375,110 +391,77 @@ export function startAnimation(
 		}
 		const hh = String(d.getHours()).padStart(2, "0");
 		const mm = String(d.getMinutes()).padStart(2, "0");
-		simClock.textContent = `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}  ·  ${hh}:${mm}`;
+		simClock.textContent = `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}  \u00b7  ${hh}:${mm}`;
 
-		// Twilight cone
-		if (cfg.twilight && ew) {
+		const Ex = world.earth?.x ?? CX;
+		const Ey = world.earth?.y ?? CY;
+
+		// Twilight zone — a wedge around the Earth→Sun direction whose two edges
+		// follow the guilloche curves bounding it. Guilloche lines whose direction
+		// falls inside the band are dropped entirely (see updateGuilloche below),
+		// so none ever cross the zone.
+		const R_SUN = 40;
+		const MAX_R = 422;
+		const hw = (12.5 * Math.PI) / 180;
+		let exCenter = 0;
+		let exHalf = -1;
+		if (ew) {
 			const ds = Math.atan2(CY - ew.y, CX - ew.x);
-			const hw = (12.5 * Math.PI) / 180;
-			const L = 760;
-			const x1 = ew.x + L * Math.cos(ds - hw);
-			const y1 = ew.y + L * Math.sin(ds - hw);
-			const x2 = ew.x + L * Math.cos(ds + hw);
-			const y2 = ew.y + L * Math.sin(ds + hw);
-			cone.setAttribute(
-				"d",
-				`M${ew.x.toFixed(1)} ${ew.y.toFixed(1)} L${x1.toFixed(1)} ${y1.toFixed(1)} L${x2.toFixed(1)} ${y2.toFixed(1)} Z`,
-			);
+			exCenter = ds;
+			if (cfg.twilight) exHalf = hw;
+			const edgeA = guillochePoints(Ex, Ey, ds - hw, R_SUN, MAX_R, 40);
+			const edgeB = guillochePoints(Ex, Ey, ds + hw, R_SUN, MAX_R, 40);
+			if (cfg.twilight && edgeA.length >= 2 && edgeB.length >= 2) {
+				const bOut = edgeB[edgeB.length - 1];
+				let coneD = `M${ew.x.toFixed(1)} ${ew.y.toFixed(1)}`;
+				for (const p of edgeA) coneD += ` L${p.x} ${p.y}`;
+				coneD += ` A${MAX_R} ${MAX_R} 0 0 1 ${bOut.x} ${bOut.y}`;
+				for (let k = edgeB.length - 1; k >= 0; k--)
+					coneD += ` L${edgeB[k].x} ${edgeB[k].y}`;
+				coneD += " Z";
+				cone.setAttribute("d", coneD);
+			}
 		}
+		// Guilloche is clipped to the dial circle only; the zone is handled by
+		// dropping intersecting lines, not by clipping.
+		guillocheClipPath.setAttribute("d", DIAL_CIRCLE);
 
 		// Guilloche background
 		updateGuilloche(
 			svg,
-			world.earth?.x ?? CX,
-			world.earth?.y ?? CY,
+			Ex,
+			Ey,
 			cfg.guillocheN,
 			cfg.guilloche,
+			exCenter,
+			exHalf,
 		);
 
-		// Conjunction lines
-		while (conjHost.firstChild) conjHost.removeChild(conjHost.firstChild);
-		if (cfg.conj) {
-			const E = world.earth;
-			const Ex = E?.x ?? CX;
-			const Ey = E?.y ?? CY;
-			const TWILIGHT = 12.5;
-			const items = BODIES.filter((b) => b.key !== "earth").map((b) => ({
-				moon: !!b.moon,
-				g: geo[b.key]?.g ?? 0,
-			}));
-			items.sort((p, q) => p.g - q.g);
-			const n = items.length;
-
-			let start = 0;
-			let maxGap = -1;
-			for (let gi = 0; gi < n; gi++) {
-				const gap = (items[(gi + 1) % n].g - items[gi].g + 360) % 360;
-				if (gap > maxGap) {
-					maxGap = gap;
-					start = (gi + 1) % n;
-				}
-			}
-
-			const clusters: (typeof items)[] = [];
-			let cur = [items[start]];
-			for (let ci = 1; ci < n; ci++) {
-				const prev = items[(start + ci - 1) % n];
-				const it = items[(start + ci) % n];
-				if ((it.g - prev.g + 360) % 360 <= cfg.conjDeg) cur.push(it);
-				else {
-					clusters.push(cur);
-					cur = [it];
-				}
-			}
-			clusters.push(cur);
-
-			for (const group of clusters) {
-				if (group.length < 2) continue;
-				let nPlanets = 0;
-				let hasMoon = false;
-				let sx = 0;
-				let sy = 0;
-				for (const m of group) {
-					if (m.moon) hasMoon = true;
-					else nPlanets++;
-					const r = (m.g * Math.PI) / 180;
-					sx += Math.cos(r);
-					sy += Math.sin(r);
-				}
-				if (nPlanets === 0) continue;
-				const meanG = (Math.atan2(sy, sx) * 180) / Math.PI;
-				let sep = Math.abs(meanG - geo.sun.g) % 360;
-				if (sep > 180) sep = 360 - sep;
-				if (sep < TWILIGHT) continue;
-
-				const score = nPlanets + (hasMoon ? 0.5 : 0);
-				const conjT = Math.max(0, Math.min(1, (score - 1.5) / 2.5));
-				const sw = (0.5 + conjT * 1.9).toFixed(2);
-				const so = (0.07 + conjT * 0.53).toFixed(3);
-
-				let conjD: string;
-				if (cfg.conjCurved) {
-					const phi = ((meanG + rot) * Math.PI) / 180;
-					conjD = guillochePathD(Ex, Ey, phi, 168.4, 422, 30);
-				} else {
-					const ep = pt((((meanG + 90 + rot) % 360) + 360) % 360, 422);
-					conjD = `M${Ex.toFixed(1)},${Ey.toFixed(1)} L${ep.x.toFixed(1)},${ep.y.toFixed(1)}`;
-				}
-
-				const path = svgEl("path", {
-					class: "conj-line",
-					d: conjD,
-					"stroke-width": sw,
-					"stroke-opacity": so,
-				});
-				conjHost.appendChild(path);
-			}
+		// Zodiac sign boundaries and shaded wedges both follow the guilloche curve.
+		// phi converts from clock-angle (0=top, clockwise) to the curve's phi frame.
+		// bpts[j] is the boundary-j polyline, inner (ZIN) -> outer (ZOUT).
+		const ZIN = 422;
+		const ZOUT = 468;
+		const bpts: { x: number; y: number }[][] = [];
+		for (let j = 0; j < 12; j++) {
+			const clockDeg = j * 30 + rot;
+			const phi = ((-90 + clockDeg) * Math.PI) / 180;
+			let pts = guillochePoints(Ex, Ey, phi, ZIN, ZOUT, 6);
+			if (pts.length < 2) pts = [pt(clockDeg, ZIN), pt(clockDeg, ZOUT)];
+			bpts.push(pts);
+			divs[j].setAttribute("d", pointsToPathD(pts));
+		}
+		for (let i = 0; i < 12; i++) {
+			const a = bpts[i]; // boundary i (lower angle)
+			const b = bpts[(i + 1) % 12]; // boundary i+1 (higher angle)
+			const aIn = a[0];
+			const bOut = b[b.length - 1];
+			let d = `M${aIn.x} ${aIn.y}`;
+			for (let k = 1; k < a.length; k++) d += ` L${a[k].x} ${a[k].y}`;
+			d += ` A${ZOUT} ${ZOUT} 0 0 1 ${bOut.x} ${bOut.y}`;
+			for (let k = b.length - 2; k >= 0; k--) d += ` L${b[k].x} ${b[k].y}`;
+			d += ` A${ZIN} ${ZIN} 0 0 0 ${aIn.x} ${aIn.y} Z`;
+			wedges[i].setAttribute("d", d);
 		}
 
 		// Tooltip
@@ -491,7 +474,7 @@ export function startAnimation(
 			tip.style.top = `${r.top + w.y * sc}px`;
 			const s = geo[show.key];
 			tip.textContent = s
-				? `${show.name}  ·  ${SIGN_FULL[s.si]} ${s.deg}°`
+				? `${show.name}  \u00b7  ${SIGN_FULL[s.si]} ${s.deg}\u00b0`
 				: show.name;
 			tip.classList.add("show");
 		} else {

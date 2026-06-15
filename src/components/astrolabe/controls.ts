@@ -3,7 +3,6 @@ import { speedLabel, speedToMul } from "../../lib/astrolabe/math.ts";
 import type { Config } from "../../lib/astrolabe/types.ts";
 
 export function initControls(): { getConfig: () => Config } {
-	const root = document.documentElement;
 	const reduce =
 		window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
 
@@ -12,24 +11,18 @@ export function initControls(): { getConfig: () => Config } {
 		earthFixed: true,
 		parallaxOn: !reduce,
 		parallax: 0.7,
-		glow: true,
 		occ: true,
 		twilight: true,
-		conj: true,
-		conjDeg: 3,
-		conjCurved: true,
 		guilloche: true,
 		guillocheN: 120,
 		hands: true,
-		bgMode: "flat",
 	};
 
-	function setHide(cls: string, on: boolean) {
-		root.classList.toggle(cls, !on);
-	}
-
 	function updateHands() {
-		setHide("hide-hands", cfg.hands && cfg.speed <= HANDS_MAX);
+		document.documentElement.classList.toggle(
+			"hide-hands",
+			!(cfg.hands && cfg.speed <= HANDS_MAX),
+		);
 	}
 
 	// Panel open/close
@@ -88,7 +81,7 @@ export function initControls(): { getConfig: () => Config } {
 	const cSpeed = bindRange(
 		"speed",
 		"speedVal",
-		(v) => speedLabel(speedToMul(v)),
+		(v) => speedLabel(v),
 		(v) => {
 			cfg = { ...cfg, speed: speedToMul(v) };
 			updateHands();
@@ -102,46 +95,32 @@ export function initControls(): { getConfig: () => Config } {
 			cfg = { ...cfg, parallax: v };
 		},
 	);
-	const cConjD = bindRange(
-		"conjDeg",
-		"conjDegVal",
-		(v) => `${v}&deg;`,
-		(v) => {
-			cfg = { ...cfg, conjDeg: v };
-		},
-	);
 	bindCheck("parallaxOn", (v) => {
 		cfg = { ...cfg, parallaxOn: v };
 	});
-	bindCheck("t_orbits", (v) => setHide("hide-orbits", v));
-	bindCheck("t_spokes", (v) => setHide("hide-spokes", v));
-	bindCheck("t_zlabels", (v) => setHide("hide-zlabels", v));
-	bindCheck("t_dividers", (v) => setHide("hide-dividers", v));
-	bindCheck("t_glow", (v) => {
-		cfg = { ...cfg, glow: v };
-	});
+	bindCheck("t_orbits", (v) =>
+		document.documentElement.classList.toggle("hide-orbits", !v),
+	);
+	bindCheck("t_spokes", (v) =>
+		document.documentElement.classList.toggle("hide-spokes", !v),
+	);
 	bindCheck("t_occ", (v) => {
 		cfg = { ...cfg, occ: v };
 	});
 	bindCheck("t_twilight", (v) => {
 		cfg = { ...cfg, twilight: v };
-		setHide("hide-twilight", v);
-	});
-	bindCheck("t_conj", (v) => {
-		cfg = { ...cfg, conj: v };
-		setHide("hide-conj", v);
+		document.documentElement.classList.toggle("hide-twilight", !v);
 	});
 	bindCheck("t_hands", (v) => {
 		cfg = { ...cfg, hands: v };
 		updateHands();
 	});
-	bindCheck("t_moon", (v) => setHide("hide-moon", v));
-	bindCheck("t_conj_curved", (v) => {
-		cfg = { ...cfg, conjCurved: v };
-	});
+	bindCheck("t_moon", (v) =>
+		document.documentElement.classList.toggle("hide-moon", !v),
+	);
 	bindCheck("t_guilloche", (v) => {
 		cfg = { ...cfg, guilloche: v };
-		setHide("hide-guilloche", v);
+		document.documentElement.classList.toggle("hide-guilloche", !v);
 	});
 	const cGuilN = bindRange(
 		"guillocheN",
@@ -151,16 +130,6 @@ export function initControls(): { getConfig: () => Config } {
 			cfg = { ...cfg, guillocheN: Math.round(v) };
 		},
 	);
-
-	// Dial finish
-	const bgSel = document.getElementById("bgMode") as HTMLSelectElement;
-	function applyBg() {
-		root.classList.remove("bg-flat", "bg-textured", "bg-sparkle");
-		root.classList.add(`bg-${bgSel.value}`);
-		cfg = { ...cfg, bgMode: bgSel.value as Config["bgMode"] };
-	}
-	bgSel.addEventListener("change", applyBg);
-	applyBg();
 
 	// Earth frame
 	const earthSel = document.getElementById("earthMode") as HTMLSelectElement;
@@ -179,10 +148,11 @@ export function initControls(): { getConfig: () => Config } {
 		panel.querySelectorAll<HTMLInputElement>("input[type=color]");
 	for (const inp of colorInputs) {
 		if (inp.dataset.var) {
-			root.style.setProperty(inp.dataset.var, inp.value);
+			document.documentElement.style.setProperty(inp.dataset.var, inp.value);
 		}
 		inp.addEventListener("input", () => {
-			if (inp.dataset.var) root.style.setProperty(inp.dataset.var, inp.value);
+			if (inp.dataset.var)
+				document.documentElement.style.setProperty(inp.dataset.var, inp.value);
 		});
 	}
 
@@ -190,31 +160,23 @@ export function initControls(): { getConfig: () => Config } {
 	document.getElementById("resetBtn")?.addEventListener("click", () => {
 		for (const inp of colorInputs) {
 			if (inp.dataset.def) inp.value = inp.dataset.def;
-			if (inp.dataset.var) root.style.removeProperty(inp.dataset.var);
+			if (inp.dataset.var)
+				document.documentElement.style.removeProperty(inp.dataset.var);
 		}
 		cSpeed.value = "0";
 		cSpeed.dispatchEvent(new Event("input"));
 		cPx.value = "0.7";
 		cPx.dispatchEvent(new Event("input"));
-		cConjD.value = "3";
-		cConjD.dispatchEvent(new Event("input"));
 		setChk("t_orbits", true);
 		setChk("t_spokes", false);
-		setChk("t_zlabels", true);
-		setChk("t_dividers", true);
-		setChk("t_glow", true);
 		setChk("t_occ", true);
 		setChk("t_twilight", true);
-		setChk("t_conj", true);
-		setChk("t_conj_curved", true);
 		setChk("t_guilloche", true);
 		setChk("t_hands", true);
 		setChk("t_moon", true);
 		cGuilN.value = "120";
 		cGuilN.dispatchEvent(new Event("input"));
 		setChk("parallaxOn", !reduce);
-		bgSel.value = "flat";
-		bgSel.dispatchEvent(new Event("change"));
 		earthSel.value = "fixed";
 		earthSel.dispatchEvent(new Event("change"));
 	});

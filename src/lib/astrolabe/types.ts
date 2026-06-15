@@ -16,16 +16,11 @@ export interface Config {
 	earthFixed: boolean;
 	parallaxOn: boolean;
 	parallax: number;
-	glow: boolean;
 	occ: boolean;
 	twilight: boolean;
-	conj: boolean;
-	conjDeg: number;
-	conjCurved: boolean;
 	guilloche: boolean;
 	guillocheN: number;
 	hands: boolean;
-	bgMode: "flat" | "textured" | "sparkle";
 }
 
 export interface GeoPosition {

@@ -1,6 +1,13 @@
 import { describe, expect, test } from "vitest";
 import { EARTH, EARTH_YEAR } from "./bodies.ts";
-import { dirToSign, helioA, pt, speedLabel, speedToMul } from "./math.ts";
+import {
+	dirToSign,
+	helioA,
+	pt,
+	SPEED_STEPS,
+	speedLabel,
+	speedToMul,
+} from "./math.ts";
 
 describe("helioA", () => {
 	test("one full Earth orbit returns to start angle", () => {
@@ -46,32 +53,32 @@ describe("pt", () => {
 });
 
 describe("speedToMul", () => {
-	test("v=0 returns 1 (real time)", () => {
-		expect(speedToMul(0)).toBeCloseTo(1, 5);
+	test("step 0 is real time (1×)", () => {
+		expect(speedToMul(0)).toBe(1);
 	});
 
-	test("is monotone increasing", () => {
-		expect(speedToMul(1)).toBeGreaterThan(speedToMul(0.5));
-		expect(speedToMul(0.5)).toBeGreaterThan(speedToMul(0.25));
+	test("is monotone increasing across the four stops", () => {
+		expect(speedToMul(1)).toBeGreaterThan(speedToMul(0));
+		expect(speedToMul(2)).toBeGreaterThan(speedToMul(1));
+		expect(speedToMul(3)).toBeGreaterThan(speedToMul(2));
+	});
+
+	test("step 2 is one day per minute (1440×)", () => {
+		expect(speedToMul(2)).toBeCloseTo(1440, 5);
+	});
+
+	test("clamps out-of-range indices to the nearest stop", () => {
+		expect(speedToMul(-1)).toBe(SPEED_STEPS[0].mul);
+		expect(speedToMul(99)).toBe(SPEED_STEPS[SPEED_STEPS.length - 1].mul);
 	});
 });
 
 describe("speedLabel", () => {
-	test("returns 'real time' for multiplier below 1.5", () => {
-		expect(speedLabel(1)).toBe("real time");
-		expect(speedLabel(1.4)).toBe("real time");
-	});
-
-	test("returns multiplier with × for 2–3600", () => {
-		expect(speedLabel(100)).toBe("100×");
-	});
-
-	test("returns hr/s for 3600–86400", () => {
-		expect(speedLabel(7200)).toBe("2.0 hr/s");
-	});
-
-	test("returns day/s above 86400", () => {
-		expect(speedLabel(172_800)).toBe("2.0 day/s");
+	test("labels the four stops by index", () => {
+		expect(speedLabel(0)).toBe("real time");
+		expect(speedLabel(1)).toBe("5×");
+		expect(speedLabel(2)).toBe("1 day / min");
+		expect(speedLabel(3)).toBe("1 year / min");
 	});
 });
 

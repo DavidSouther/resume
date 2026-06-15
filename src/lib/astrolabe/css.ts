@@ -93,13 +93,13 @@ export const ASTROLABE_CSS = `
     border-radius:8px;padding:8px 12px;cursor:pointer;
     -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);}
   #gear:active{transform:scale(0.97);}
-  #controls{position:fixed;top:0;left:0;right:0;z-index:50;
-    max-height:min(80vh,80dvh);overflow-y:auto;-webkit-overflow-scrolling:touch;
-    background:rgba(8,11,18,0.94);border-bottom:1px solid rgba(255,255,255,0.10);
+  #controls{position:fixed;top:0;right:0;z-index:50;width:300px;
+    max-height:100dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;
+    background:rgba(8,11,18,0.94);border-left:1px solid rgba(255,255,255,0.10);
     -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
-    transform:translateY(-101%);transition:transform .26s ease;
+    transform:translateX(101%);transition:transform .26s ease;
     padding:54px 18px 22px;font-family:var(--mono);color:var(--label);font-size:12px;}
-  #controls.open{transform:translateY(0);}
+  #controls.open{transform:translateX(0);}
   #controls details{border-top:1px solid rgba(255,255,255,0.07);padding:8px 0;}
   #controls details:first-of-type{border-top:none;}
   #controls summary{cursor:pointer;color:#AEBDDE;letter-spacing:.1em;text-transform:uppercase;

@@ -1,21 +1,12 @@
+import { circle, ellipse, g, line } from "@davidsouther/jiffies/dom/svg.ts";
 import { BODIES } from "../../lib/astrolabe/bodies.ts";
 
-const SVGNS = "http://www.w3.org/2000/svg";
 const CX = 500;
 const CY = 500;
 
-function svgEl<K extends keyof SVGElementTagNameMap>(
-	tag: K,
-	attrs: Record<string, string | number>,
-): SVGElementTagNameMap[K] {
-	const e = document.createElementNS(SVGNS, tag);
-	for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, String(v));
-	return e;
-}
+export type PlanetRefs = Record<string, Element>;
 
-export type PlanetRefs = Record<string, SVGElement>;
-
-export function buildPlanets(g: SVGGElement): PlanetRefs {
+export function buildPlanets(grp: SVGGElement): PlanetRefs {
 	const refs: PlanetRefs = {};
 
 	for (const b of BODIES) {
@@ -24,18 +15,14 @@ export function buildPlanets(g: SVGGElement): PlanetRefs {
 		const oy = b.moon ? 0 : CY;
 		const dx = ox + b.r;
 
-		const group = svgEl("g", { class: `disc disc-${b.key}` });
+		const group = g({ class: `disc disc-${b.key}` });
 
-		group.appendChild(
-			svgEl("circle", { class: "orbit-ring", cx: ox, cy: oy, r: b.r }),
-		);
-		group.appendChild(
-			svgEl("line", { class: "spoke", x1: ox, y1: oy, x2: dx, y2: oy }),
-		);
+		group.appendChild(circle({ class: "orbit-ring", cx: ox, cy: oy, r: b.r }));
+		group.appendChild(line({ class: "spoke", x1: ox, y1: oy, x2: dx, y2: oy }));
 
 		if (b.ring) {
 			group.appendChild(
-				svgEl("ellipse", {
+				ellipse({
 					class: "saturn-ring",
 					cx: dx,
 					cy: oy,
@@ -47,21 +34,22 @@ export function buildPlanets(g: SVGGElement): PlanetRefs {
 
 		if (b.key === "earth") {
 			group.appendChild(
-				svgEl("circle", { class: "earth-ring", cx: dx, cy: oy, r: b.dot + 3 }),
+				circle({ class: "earth-ring", cx: dx, cy: oy, r: b.dot + 3 }),
 			);
 		}
 
-		const dot = svgEl("circle", {
-			class: "planet",
-			cx: dx,
-			cy: oy,
-			r: b.dot,
-			fill: `var(--${b.key})`,
-		});
-		group.appendChild(dot);
+		group.appendChild(
+			circle({
+				class: "planet",
+				cx: dx,
+				cy: oy,
+				r: b.dot,
+				fill: `var(--${b.key})`,
+			}),
+		);
 
 		group.appendChild(
-			svgEl("circle", {
+			circle({
 				class: "hit",
 				cx: dx,
 				cy: oy,
@@ -69,7 +57,7 @@ export function buildPlanets(g: SVGGElement): PlanetRefs {
 			}),
 		);
 
-		g.appendChild(group);
+		grp.appendChild(group);
 		refs[b.key] = group;
 	}
 

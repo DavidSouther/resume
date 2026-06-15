@@ -1,4 +1,4 @@
-import { EARTH_YEAR, MAX_SPEED } from "./bodies.ts";
+import { EARTH_YEAR } from "./bodies.ts";
 import type { Body } from "./types.ts";
 
 const CX = 500;
@@ -25,13 +25,24 @@ export function dirToSign(
 	return { si: Math.floor(clock / 30), deg: Math.floor(clock % 30) };
 }
 
-export function speedToMul(v: number): number {
-	return Math.exp(v * Math.log(MAX_SPEED));
+// Discrete animation speeds. `mul` is simulated seconds per real second; the
+// slider is an integer index into this table.
+export const SPEED_STEPS: readonly { mul: number; label: string }[] = [
+	{ mul: 1, label: "real time" },
+	{ mul: 5, label: "5×" },
+	{ mul: 86_400 / 60, label: "1 day / min" },
+	{ mul: EARTH_YEAR / 60, label: "1 year / min" },
+];
+
+function clampStep(step: number): number {
+	const i = Math.round(step);
+	return i < 0 ? 0 : i >= SPEED_STEPS.length ? SPEED_STEPS.length - 1 : i;
 }
 
-export function speedLabel(sp: number): string {
-	if (sp < 1.5) return "real time";
-	if (sp < 3600) return `${Math.round(sp)}×`;
-	if (sp < 86400) return `${(sp / 3600).toFixed(1)} hr/s`;
-	return `${(sp / 86400).toFixed(1)} day/s`;
+export function speedToMul(step: number): number {
+	return SPEED_STEPS[clampStep(step)].mul;
+}
+
+export function speedLabel(step: number): string {
+	return SPEED_STEPS[clampStep(step)].label;
 }
