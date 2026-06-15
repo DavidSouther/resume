@@ -1,23 +1,21 @@
 import { describe, expect, test } from "vitest";
-import { BODIES, EARTH_YEAR } from "./bodies.ts";
+import { EARTH, EARTH_YEAR } from "./bodies.ts";
 import { dirToSign, helioA, pt, speedLabel, speedToMul } from "./math.ts";
-
-const earth = BODIES.find((b) => b.key === "earth")!;
 
 describe("helioA", () => {
 	test("one full Earth orbit returns to start angle", () => {
-		const angle = helioA(earth, EARTH_YEAR);
-		expect(angle).toBeCloseTo(earth.start, 0);
+		const angle = helioA(EARTH, EARTH_YEAR);
+		expect(angle).toBeCloseTo(EARTH.start, 0);
 	});
 
 	test("wraps correctly past 360°", () => {
-		const angle = helioA(earth, EARTH_YEAR * 2.5);
+		const angle = helioA(EARTH, EARTH_YEAR * 2.5);
 		expect(angle).toBeGreaterThanOrEqual(0);
 		expect(angle).toBeLessThan(360);
 	});
 
 	test("t=0 returns start angle", () => {
-		expect(helioA(earth, 0)).toBeCloseTo(earth.start, 5);
+		expect(helioA(EARTH, 0)).toBeCloseTo(EARTH.start, 5);
 	});
 });
 

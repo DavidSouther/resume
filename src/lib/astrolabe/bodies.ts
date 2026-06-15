@@ -1,3 +1,4 @@
+import { assertExists } from "@davidsouther/jiffies/assert.ts";
 import type { Body } from "./types.ts";
 
 export const EARTH_YEAR = 31_557_600; // seconds per Earth orbit
@@ -96,7 +97,14 @@ export const BODIES: Body[] = [
 	},
 ];
 
-const SATURN = BODIES.find((b) => b.key === "saturn")!;
+export const EARTH = assertExists(
+	BODIES.find((b) => b.key === "earth"),
+	"earth missing from BODIES",
+);
+export const SATURN = assertExists(
+	BODIES.find((b) => b.key === "saturn"),
+	"saturn missing from BODIES",
+);
 
 // 1 Saturn orbit in 10 minutes
 export const MAX_SPEED = (SATURN.period * EARTH_YEAR) / 600;
