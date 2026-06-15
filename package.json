@@ -11,7 +11,7 @@
     "format": "biome format --write src pages scripts vitest.config.ts",
     "lint": "biome lint --write src pages scripts vitest.config.ts",
     "prebuild": "npm run check",
-    "build": "npm run css:bundle && node scripts/sitemap.ts && node node_modules/@davidsouther/jiffies/lib/esm/ssg/main.js --out docs",
+    "build": "npm run css:bundle && node scripts/sitemap.ts && node scripts/update-ephemeris-snapshot.ts && node scripts/render-guilloche.ts && node node_modules/@davidsouther/jiffies/lib/esm/ssg/main.js --out docs",
     "start": "node scripts/serve.ts --watch",
     "test": "vitest run",
     "posttest": "npm run check",

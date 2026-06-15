@@ -73,6 +73,38 @@
         oklch(15% 0.02 50deg / 0.30), oklch(12% 0.02 50deg / 0.68));
     --itinerary-hatch: oklch(72% 0.045 74deg / 0.16);
   }
+
+  /*
+   * Astrolabe watch token surface (F1, project Contracts 3 & 4). Declared once
+   * here, in @layer theme, so the astrolabe route and its #debug material
+   * controls share a single source of token NAMES with src/lib/astro-tokens.ts
+   * (bodyColorVar / MATERIAL_TOKENS). Names are the contract; these oklch values
+   * are PROVISIONAL — plausible haute-horology defaults per the visual brief,
+   * with exact tuning parked to a later cleanup pass. The material controls
+   * retint these live via element.style.setProperty.
+   */
+  :root {
+    /* Contract 3 — per-body colors. Warm gold Sun; the planets read as
+       skeletonized accents against the midnight dial. */
+    --color-sun: oklch(82% 0.15 85deg); /* warm gold core */
+    --color-mercury: oklch(72% 0.02 250deg); /* cool grey */
+    --color-venus: oklch(88% 0.07 95deg); /* pale cream-gold */
+    --color-earth: oklch(62% 0.13 230deg); /* ocean blue */
+    --color-moon: oklch(90% 0.01 250deg); /* near-white silver */
+    --color-mars: oklch(60% 0.16 35deg); /* rust red */
+    --color-jupiter: oklch(74% 0.08 70deg); /* banded tan */
+    --color-saturn: oklch(80% 0.07 90deg); /* pale straw */
+    --color-uranus: oklch(78% 0.09 200deg); /* cyan ice */
+    --color-neptune: oklch(58% 0.13 255deg); /* deep azure */
+
+    /* Contract 4 — finish/material tokens. Platinum case, mahogany cordovan
+       strap, tonal stitch, near-black midnight dial, translucent lacquer. */
+    --case-platinum: oklch(86% 0.008 250deg); /* cool white metal */
+    --strap-cordovan: oklch(38% 0.07 35deg); /* mahogany shell cordovan */
+    --strap-stitch: oklch(52% 0.06 40deg); /* tonal stitching */
+    --dial-midnight: oklch(20% 0.03 265deg); /* deep near-black sapphire */
+    --lacquer-depth: oklch(22% 0.05 265deg / 0.55); /* translucent midnight lacquer */
+  }
 }
 
 /*
@@ -850,5 +882,143 @@ section:has(img.float) + section {
     display: block;
     font-size: var(--font-size-small);
     color: var(--color-on-surface-variant);
+  }
+}
+
+/*
+ * Astrolabe watch shell finish (F1). The case/strap/dial structure is assembled
+ * by src/components/astrolabe/case.ts + dial-container.ts; the finish is painted
+ * here in @layer user (the THEMES.md Zen-Garden escape hatch for element/class
+ * treatments no Intent token covers) so jiffies layout layers cannot outrank it.
+ * Every surface reads a Contract-4 material token, so the #debug material
+ * section retints the watch live via element.style.setProperty. Geometry here is
+ * provisional shell framing; the dial fill / aspect / exact finish is tuned in a
+ * later browser-verified pass.
+ */
+@layer user {
+  /* Portrait watch wrapper: a centered column, strap-top / case / strap-bottom. */
+  .astrolabe-case {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    margin: 0;
+    width: 100%;
+    max-width: 24rem;
+  }
+
+  /* Cordovan strap regions above and below the case. CSS-painted on a plain <div>
+     carrier (no <svg>, so the dial stays the single queryable SVG): a cordovan
+     fill with two tonal dashed stitch seams, both reading the material tokens so
+     they retint live with the case under #debug. */
+  .astrolabe-strap {
+    width: 62%;
+    height: 2.2rem;
+    background:
+      repeating-linear-gradient(
+        90deg,
+        var(--strap-stitch) 0 0.18rem,
+        transparent 0.18rem 0.36rem
+      ) center top 0.3rem / 100% 0.04rem no-repeat,
+      repeating-linear-gradient(
+        90deg,
+        var(--strap-stitch) 0 0.18rem,
+        transparent 0.18rem 0.36rem
+      ) center bottom 0.3rem / 100% 0.04rem no-repeat,
+      var(--strap-cordovan);
+  }
+
+  /* Platinum case/bezel well wrapping the dial. The metal sheen comes from the
+     platinum token; the recessed lacquer depth backs the dial. */
+  .astrolabe-bezel {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1;
+    padding: 6%;
+    border-radius: 12%;
+    background: var(--case-platinum);
+    box-shadow:
+      inset 0 0 0 2px color-mix(in oklch, var(--case-platinum), black 18%),
+      0 0.5rem 1.5rem var(--lacquer-depth);
+  }
+  /* Bezel ring sits behind the dial, filling the case well. CSS-painted on a plain
+     <div> carrier (no <svg>): a lacquer-depth well ringed by the platinum case
+     metal, both reading the material tokens so they retint live under #debug. */
+  .astrolabe-bezel-ring {
+    position: absolute;
+    inset: 0;
+    border-radius: 8%;
+    background: var(--lacquer-depth);
+    box-shadow: inset 0 0 0 0.12rem var(--case-platinum);
+  }
+
+  /* The empty square dial host (F2's mount target). Midnight ground; square so
+     F2's -500..500 viewBox maps 1:1. Sits above the bezel ring. */
+  .astrolabe-dial {
+    position: relative;
+    aspect-ratio: 1;
+    width: 100%;
+    border-radius: 50%;
+    background: var(--dial-midnight);
+  }
+}
+
+/*
+ * Astrolabe motion & sky (F3). CSS-only visibility/highlight driven by data-*
+ * flags the F3 client writes onto the watch root (.astrolabe) and the dial:
+ *   data-fast          — Fast speed engaged: the clock hands hide (they'd blur).
+ *   data-occupied      — a zodiac sign is lit by an occupant: brighten its glyph.
+ *   data-hide-zodiac   — #debug: collapse the whole zodiac band.
+ *   data-hide-twilight — #debug: collapse the twilight dead-zone wedge.
+ * No new tokens (Contract 4 untouched); these only shape visibility/emphasis.
+ */
+@layer user {
+  /* The Realtime/Fast button on the case, OUTSIDE the controls sheet. A discreet
+     instrument pill in the readout face, sitting under the case. */
+  .astrolabe-speed-toggle {
+    display: block;
+    margin: 0.6rem auto 0;
+    padding: 0.3rem 1.1rem;
+    border: 1px solid var(--case-platinum, currentColor);
+    border-radius: 999px;
+    background: var(--dial-midnight, transparent);
+    /* Platinum lettering on the midnight pill — legible against the dark fill,
+       reading the existing case token (no new token). */
+    color: var(--case-platinum, #c9ced6);
+    font-family: "DM Mono", ui-monospace, monospace;
+    font-size: 0.8rem;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+  }
+
+  /* Hands hide once running faster than realtime (they'd just blur). The hands are
+     a later-session refinement; this rule is the ready seam — any element marked as
+     a hand collapses in Fast without further wiring. */
+  .astrolabe[data-fast] .astrolabe-hand,
+  .astrolabe[data-fast] [data-hand] {
+    display: none;
+  }
+
+  /* Occupancy highlight: a lit sign's glyph brightens and gains a faint glow tinted
+     by the occupant color the band wrote inline (style="color: var(--color-<body>)"). */
+  [data-zodiac-band] [data-sign] {
+    opacity: 0.45;
+    transition: opacity 200ms ease;
+  }
+  [data-zodiac-band] [data-sign] use {
+    stroke: currentColor;
+    fill: none;
+  }
+  [data-zodiac-band] [data-sign][data-occupied] {
+    opacity: 1;
+    filter: drop-shadow(0 0 6px currentColor);
+  }
+
+  /* #debug sky-layer toggles: collapse the band / twilight wedge live. */
+  .astrolabe[data-hide-zodiac] [data-zodiac-band] {
+    display: none;
+  }
+  .astrolabe[data-hide-twilight] [data-finish="twilight"] {
+    display: none;
   }
 }

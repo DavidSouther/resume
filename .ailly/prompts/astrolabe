@@ -1,0 +1,75 @@
+# Astrolabe Watch
+
+The brief below captures the decisions — what the piece is, what it shows, and how it should feel. The geometry (log scaling, the geocentric projection, the conjunction curve, the gear-train analysis) is deliberately left out; it's all re-derivable from the decisions here.
+
+## What it is
+
+An interactive astronomical wristwatch. It is a heliocentric orrery — Sun at the center, the planets on their orbits — rendered in a geocentric frame: Earth stays at a fixed 3 o'clock position and planets are geared to synodic rather than sidereal periods. Rendered with luxury-watch craft, showing the real current sky and animating forward in time. One self-contained HTML/SVG/JS file, mobile and desktop.
+
+### The defining decision: Earth stays still
+
+By default the frame is pinned to Earth — Earth holds a fixed spot on the dial while the rest of the system wheels around it. This is the whole point: a geocentric reading riding on a heliocentric mechanism, which is what makes it more than another planetarium. A Sun-fixed "orbital" mode (Earth moves) exists as an option, but stationary is the default.
+
+### What's on the dial
+
+All eight planets plus the Moon, each on its own disc, at true current positions moving at true rates.
+Orbits are placed on a logarithmic radial scale so Mercury through Neptune all read on one face — a linear scale would crush the inner planets into the center. This compression is the thing the conjunction lines later have to correct for.
+
+The Sun sits dead center as a warm gold core with a glow.
+The Moon orbits the live Earth (it rides Earth's position), not the Sun.
+
+Earth is the date complication: its disc is enlarged with a subdial and carries the month and day.
+
+Hour and minute hands only — no second hand — reading a simulated clock seeded to real "now."
+
+## Time and motion
+
+Positions are seeded from a live ephemeris at boot so it opens on the actual sky, with a baked snapshot as fallback if the ephemeris script can't load.
+
+Animation speed is an exponential slider: real-time at rest (the default), up to one Saturn orbit per ten minutes at full tilt. The hands hide once you're running faster than a few×, since they'd just blur.
+
+Parallax depth: bodies shift slightly with cursor (desktop) or device tilt (mobile); heavier/outer bodies move more.
+
+## Zodiac — tropical, geocentric
+
+The rim is the twelve tropical signs.
+
+A sign lights when a body is in it from Earth's vantage. The Sun's apparent zodiac position is highlighted. A wedge tints with the colors of whatever occupies it, so a crowded sign glows in mixed color.
+
+The Moon appears in conjunctions but is not counted as a sign occupant — the zodiac stays about the planets.
+
+Hover or tap a sign to get a card naming the sign and the bodies in it.
+
+Glyphs are drawn as stroke-path icons (Tabler), not Unicode zodiac characters — iOS renders the Unicode ones as color emoji, which wrecks the look. This one's a real gotcha, not an aesthetic preference.
+
+## Conjunctions & the guilloché dial
+
+The dial's finish guides the eye to reading conjunctions along the log scale from Earth.
+
+The finish is an embossed, crosshatched guilloché built from two opposite-handed families of logarithmic spirals, under translucent midnight-blue lacquer (after the Patek Calatrava 4997/200G). It should read as subtle relief, like engine-turning seen through dark lacquer, never a loud pattern. The spirals are centered from Earth, and end at the inside of the Zodiac disk.
+
+Why it doubles as the conjunction instrument: a straight line of sight from Earth, bent by the dial's logarithmic radial compression, takes the shape of one of these spirals. So the engraved spiral field is the log-corrected sightline graticule — bodies that share a line of sight from Earth fall along a common spiral, and the eye reads the alignment straight off the dial. No separate line gets drawn.
+
+What carries over from the old conjunction treatment: the reading is geocentric (what an Earth observer sees), and alignments lost in the Sun's glare aren't readable — the twilight wedge from Earth toward the Sun still marks that dead zone. The lines are anchored to Earth's fixed position — a true graticule of Earth sightlines, functional, and well-defined precisely because Earth is pinned in the stationary frame.
+
+Fully tunable in the panel: spiral density, pitch, relief depth, engraving glint, lacquer depth. "Flat" remains the alternative finish. (Render once to an image so the live repaint stays cheap.)
+
+## Case and strap
+
+Platinum case and bezel — cool white metal. Mahogany shell cordovan strap with tonal stitching and a domed-luster center. Presented in portrait — strap above and below — not as a bare floating dial. On a phone the dial still fills the width.
+
+## Visual language
+
+Deep near-black sapphire/midnight dial; skeletonized linework; haute-horology restraint, nothing loud; warm gold Sun. Type is Cormorant Garamond for display and DM Mono for labels and readouts, with system fallback. Every color is a token the user can change.
+
+## Controls
+
+A controls sheet exposing: Earth-stationary vs orbital; animation speed; parallax on/off and strength; device-tilt enable; dial finish plus the five guilloché sliders; toggles for orbit discs, disc arms, zodiac signs, sign dividers, sign highlight, the sign info card, the twilight zone, conjunction lines, conjunction tightness, hands, and the Moon; per-body color pickers; and reset.
+
+## Build constraints
+
+One self-contained HTML file, no build step, no browser storage; works on mobile and desktop Safari/Chrome. One fonts dependency (Google Fonts) plus one optional ephemeris script from a CDN.
+
+## Out of scope
+
+We also worked through the physical-clock realization — what the gear train looks like with Earth held stationary, and how small modern micro-manufacturing could take it. That's companion analysis, fully re-derivable, and doesn't touch the rendered watch. Leave it out unless asked.
