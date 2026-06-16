@@ -124,6 +124,14 @@ export function buildDial(): SVGSVGElement {
 		// guilloche (populated by updateGuilloche); twilight shadow is clipped out
 		g({ id: "guilloche", "clip-path": "url(#guillocheClip)" }),
 
+		// Ptolemaic radial spokes (populated by animation.ts in Ptolemaic mode).
+		// Clipped to the dial like the guilloche; hidden in Sun-centered frames.
+		g({
+			id: "spokes",
+			"clip-path": "url(#dialClip)",
+			style: "display:none",
+		}),
+
 		// texture and sparkles (populated by initTexture)
 		g({ id: "texture" }),
 		g({ id: "sparkles" }),
@@ -145,21 +153,25 @@ export function buildDial(): SVGSVGElement {
 
 		g({ id: "conj" }),
 
-		// sun at centre
-		circle({
-			cx: CX,
-			cy: CY,
-			r: 34,
-			fill: "url(#sunGlow)",
-			"pointer-events": "none",
-		}),
-		circle({
-			class: "sun-core",
-			cx: CX,
-			cy: CY,
-			r: 15,
-			"pointer-events": "none",
-		}),
+		// sun at centre (Sun-centered frames). Hidden in Ptolemaic, where the Sun
+		// becomes an orbiting disc (#sunDisc, created in animation.ts).
+		g(
+			{ id: "sunCenter" },
+			circle({
+				cx: CX,
+				cy: CY,
+				r: 34,
+				fill: "url(#sunGlow)",
+				"pointer-events": "none",
+			}),
+			circle({
+				class: "sun-core",
+				cx: CX,
+				cy: CY,
+				r: 15,
+				"pointer-events": "none",
+			}),
+		),
 
 		// case-metal bezel ring
 		circle({

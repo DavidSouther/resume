@@ -3,7 +3,20 @@ import {
 	materialVars,
 } from "../../lib/astrolabe/materials.ts";
 import { handsHidden, speedToMul } from "../../lib/astrolabe/math.ts";
-import type { Config } from "../../lib/astrolabe/types.ts";
+import {
+	type Config,
+	type EarthMode,
+	GALILEAN,
+	KEPLERIAN,
+	PTOLEMAIC,
+} from "../../lib/astrolabe/types.ts";
+
+// Map the earthMode segmented control's string data-value to the EarthMode enum.
+const EARTH_MODE_BY_VALUE: Record<string, EarthMode> = {
+	ptolemaic: PTOLEMAIC,
+	galilean: GALILEAN,
+	keplerian: KEPLERIAN,
+};
 
 const DEFAULT_MATERIAL: MaterialId = "platinum";
 
@@ -11,7 +24,7 @@ export function initControls(): { getConfig: () => Config } {
 	let cfg: Config = {
 		speed: 1,
 		sizeMode: "full",
-		earthFixed: true,
+		earthMode: GALILEAN,
 		parallaxOn: false,
 		parallax: 0.7,
 		occ: true,
@@ -35,12 +48,22 @@ export function initControls(): { getConfig: () => Config } {
 	function togglePanel(open?: boolean) {
 		const o = open ?? !panel.classList.contains("open");
 		panel.classList.toggle("open", o);
-		gear.textContent = o ? "CLOSE" : "CONTROLS";
+		// The pancake stays a pancake: reflect open state to assistive tech and via
+		// an active class, never a CONTROLS/CLOSE text swap.
+		gear.setAttribute("aria-expanded", String(o));
+		gear.classList.toggle("open", o);
 	}
 	gear.addEventListener("click", () => togglePanel());
 	document
 		.getElementById("closeBtn")
 		?.addEventListener("click", () => togglePanel(false));
+	// Default open on wide viewports, closed on narrow. The CSS supplies the same
+	// default for first paint (the `:not(.ready)` media rule); setting `.open`
+	// here makes that class the single source of truth so the toggle closes
+	// correctly at every width. matchMedia is guarded — jsdom does not implement
+	// it, so the test boots closed.
+	togglePanel(window.matchMedia?.("(min-width:768px)")?.matches ?? false);
+	panel.classList.add("ready");
 
 	// Range slider helper
 	function bindRange(
@@ -159,7 +182,7 @@ export function initControls(): { getConfig: () => Config } {
 
 	// Earth frame.
 	const earthGroup = bindGroup("earthMode", (v) => {
-		cfg = { ...cfg, earthFixed: v === "fixed" };
+		cfg = { ...cfg, earthMode: EARTH_MODE_BY_VALUE[v] ?? GALILEAN };
 	});
 
 	// Case size — re-run the dial sizing (which reads the group's value) on
@@ -191,7 +214,7 @@ export function initControls(): { getConfig: () => Config } {
 	// Case materials. Picking a material applies its coordinated variable map to
 	// the root and seeds the matching color pickers (which stay as an advanced
 	// override), then marks the active button.
-	// Material swatches live in the always-on panel, not the slide-out #controls.
+	// Material swatches now live in the motion block at the top of the one drawer.
 	const matBtns = document.querySelectorAll<HTMLButtonElement>(
 		"button.material-swatch",
 	);
@@ -244,7 +267,7 @@ export function initControls(): { getConfig: () => Config } {
 		cGuilN.value = "120";
 		cGuilN.dispatchEvent(new Event("input"));
 		setChk("parallaxOn", false);
-		earthGroup.set("fixed");
+		earthGroup.set("galilean");
 		caseGroup.set("full");
 	});
 

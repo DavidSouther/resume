@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 // Helpers do not exist yet — the mode-switch bugfix adds them. Keeps this red.
 import { caseOffsetPreservingRot, dialRotation } from "./math.ts";
+import { GALILEAN, KEPLERIAN } from "./types.ts";
 
 /**
  * Reproduction (bugfix shape) for the mode-switch jump:
@@ -24,16 +25,16 @@ describe("astrolabe mode switch — Earth holds its angle", () => {
 	];
 
 	for (const { aE, caseOffset } of cases) {
-		test(`orbital → fixed stays continuous (aE=${aE})`, () => {
-			const before = dialRotation(false, aE, caseOffset);
-			const next = caseOffsetPreservingRot(true, aE, caseOffset);
-			expect(dialRotation(true, aE, next)).toBeCloseTo(before, 9);
+		test(`KEPLERIAN → GALILEAN stays continuous (aE=${aE})`, () => {
+			const before = dialRotation(KEPLERIAN, aE, caseOffset);
+			const next = caseOffsetPreservingRot(KEPLERIAN, GALILEAN, aE, caseOffset);
+			expect(dialRotation(GALILEAN, aE, next)).toBeCloseTo(before, 9);
 		});
 
-		test(`fixed → orbital stays continuous (aE=${aE})`, () => {
-			const before = dialRotation(true, aE, caseOffset);
-			const next = caseOffsetPreservingRot(false, aE, caseOffset);
-			expect(dialRotation(false, aE, next)).toBeCloseTo(before, 9);
+		test(`GALILEAN → KEPLERIAN stays continuous (aE=${aE})`, () => {
+			const before = dialRotation(GALILEAN, aE, caseOffset);
+			const next = caseOffsetPreservingRot(GALILEAN, KEPLERIAN, aE, caseOffset);
+			expect(dialRotation(KEPLERIAN, aE, next)).toBeCloseTo(before, 9);
 		});
 	}
 });

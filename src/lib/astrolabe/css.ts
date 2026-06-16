@@ -84,38 +84,40 @@ export const ASTROLABE_CSS = `
   .hand-min,.hand-hour,.hub,.hub-dot{pointer-events:none;}
   .hide-orbits .orbit-ring{display:none;}
   .hide-spokes .spoke{display:none;}
+  .ptolemaic .disc-earth .orbit-ring,.ptolemaic .disc-earth .spoke{display:none;}
   .hide-zlabels .zglyph{display:none;}
   .hide-dividers .zdiv{display:none;}
   .hide-conj .conj-line{display:none;}
   .hide-conj-curved .conj-line{display:none;}
   .hide-hands .hand-min,.hide-hands .hand-hour,.hide-hands .hub,.hide-hands .hub-dot{display:none;}
   .hide-moon .disc-moon{display:none;}
-  #gear{position:fixed;top:max(10px,env(safe-area-inset-top));right:12px;z-index:60;
-    font-family:var(--mono);font-size:12px;letter-spacing:.08em;color:var(--label);
+  #gear{position:fixed;top:max(10px,env(safe-area-inset-top));left:12px;right:auto;z-index:60;
+    font-family:var(--mono);font-size:18px;line-height:1;color:var(--label);
     background:rgba(14,20,34,0.85);border:1px solid rgba(255,255,255,0.12);
-    border-radius:8px;padding:8px 12px;cursor:pointer;
+    border-radius:8px;padding:7px 11px;cursor:pointer;
     -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);}
   #gear:active{transform:scale(0.97);}
-  #controls{position:fixed;top:0;right:0;z-index:50;width:300px;
+  #gear.open{color:#E7ECF7;border-color:rgba(255,255,255,0.30);}
+  #controls{position:fixed;top:0;left:0;right:auto;z-index:50;width:300px;
     max-height:100dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;
-    background:rgba(8,11,18,0.94);border-left:1px solid rgba(255,255,255,0.10);
+    background:rgba(8,11,18,0.94);border-right:1px solid rgba(255,255,255,0.10);
     -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
-    transform:translateX(101%);transition:transform .26s ease;
-    padding:54px 18px 22px;font-family:var(--mono);color:var(--label);font-size:12px;}
+    transform:translateX(-101%);transition:transform .26s ease;
+    padding:58px 18px 22px;font-family:var(--mono);color:var(--label);font-size:12px;}
   #controls.open{transform:translateX(0);}
+  /* Wide viewports open by default for first paint; once controls.ts adds
+     .ready, the .open class alone governs so the toggle closes at any width. */
+  @media (min-width:768px){
+    #controls:not(.ready){transform:translateX(0);}
+  }
+  #controls .motion{padding-bottom:6px;}
   #controls details{border-top:1px solid rgba(255,255,255,0.07);padding:8px 0;}
-  #controls details:first-of-type{border-top:none;}
   #controls summary{cursor:pointer;color:#AEBDDE;letter-spacing:.1em;text-transform:uppercase;
     font-size:11px;list-style:none;padding:6px 0;user-select:none;}
   #controls summary::-webkit-details-marker{display:none;}
   #controls summary::after{content:'+';float:right;color:var(--label-dim);}
   #controls details[open] summary::after{content:'\\2013';}
-  #always-controls{position:fixed;top:max(10px,env(safe-area-inset-top));left:12px;z-index:55;
-    width:288px;max-width:calc(100vw - 24px);
-    background:rgba(14,20,34,0.85);border:1px solid rgba(255,255,255,0.12);border-radius:10px;
-    padding:12px 14px;font-family:var(--mono);color:var(--label);font-size:12px;
-    -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);}
-  #always-controls .clock{font-size:15px;line-height:1.45;letter-spacing:.02em;
+  #controls .clock{font-size:15px;line-height:1.45;letter-spacing:.02em;
     padding-bottom:10px;margin-bottom:6px;border-bottom:1px solid rgba(255,255,255,0.07);}
   .clock-row{display:flex;gap:8px;align-items:baseline;}
   .clock-k{color:var(--label-dim);min-width:42px;}

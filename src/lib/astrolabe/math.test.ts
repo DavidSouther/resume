@@ -14,6 +14,7 @@ import {
 	wrap180,
 	ZODIAC_DRAG_RATE,
 } from "./math.ts";
+import { GALILEAN, KEPLERIAN } from "./types.ts";
 
 const MERCURY = assertExists(BODIES.find((b) => b.key === "mercury"));
 const SATURN = assertExists(BODIES.find((b) => b.key === "saturn"));
@@ -134,32 +135,42 @@ describe("wrap180", () => {
 });
 
 describe("displayedRate", () => {
-	test("synodic rate of an inner planet is positive", () => {
-		const r = displayedRate(MERCURY, true);
+	test("synodic rate of an inner planet is positive (GALILEAN)", () => {
+		const r = displayedRate(MERCURY, GALILEAN);
 		expect(r).toBeGreaterThan(0);
 		expect(r).toBeCloseTo(rateOf(MERCURY) - rateOf(EARTH), 12);
 	});
 
-	test("sidereal mode returns the bare positive rate", () => {
-		expect(displayedRate(MERCURY, false)).toBeCloseTo(rateOf(MERCURY), 12);
+	test("sidereal mode (KEPLERIAN) returns the bare positive rate", () => {
+		expect(displayedRate(MERCURY, KEPLERIAN)).toBeCloseTo(rateOf(MERCURY), 12);
 	});
 
-	test("an outer planet has a negative synodic rate in earth-fixed mode", () => {
-		expect(displayedRate(SATURN, true)).toBeLessThan(0);
+	test("an outer planet has a negative synodic rate in GALILEAN mode", () => {
+		expect(displayedRate(SATURN, GALILEAN)).toBeLessThan(0);
 	});
 
-	test("Earth in earth-fixed mode has zero displayed rate", () => {
-		expect(displayedRate(EARTH, true)).toBe(0);
+	test("Earth in GALILEAN mode has zero displayed rate", () => {
+		expect(displayedRate(EARTH, GALILEAN)).toBe(0);
 	});
 
-	test("Earth in earth-free mode is one turn per year", () => {
-		expect(displayedRate(EARTH, false)).toBeCloseTo(360 / EARTH_YEAR, 12);
+	test("Earth in KEPLERIAN mode is one turn per year", () => {
+		expect(displayedRate(EARTH, KEPLERIAN)).toBeCloseTo(360 / EARTH_YEAR, 12);
+	});
+
+	test("GALILEAN matches old earthFixed===true; KEPLERIAN matches old false", () => {
+		// GALILEAN carries the old earthFixed===true synodic behavior.
+		expect(displayedRate(SATURN, GALILEAN)).toBeCloseTo(
+			rateOf(SATURN) - rateOf(EARTH),
+			12,
+		);
+		// KEPLERIAN carries the old earthFixed===false sidereal behavior.
+		expect(displayedRate(SATURN, KEPLERIAN)).toBeCloseTo(rateOf(SATURN), 12);
 	});
 });
 
 describe("dragTimeStep", () => {
 	test("is the winding quotient", () => {
-		const r = displayedRate(MERCURY, true);
+		const r = displayedRate(MERCURY, GALILEAN);
 		expect(dragTimeStep(360, r)).toBeCloseTo(360 / r, 3);
 	});
 

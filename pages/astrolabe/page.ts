@@ -96,9 +96,11 @@ function field(labelText: string, control: Node): HTMLDivElement {
 	);
 }
 
-function buildAlwaysControls(): HTMLDivElement {
+// The motion block — clock, Earth/Case/Speed segments, and material swatches —
+// rides at the top of the one drawer, above the expandable <details> sections.
+function buildMotionBlock(): HTMLDivElement {
 	return div(
-		{ id: "always-controls", ariaLabel: "Motion" },
+		{ class: "motion", ariaLabel: "Motion" },
 		div(
 			{ class: "clock" },
 			clockRow("Real:", "realClock"),
@@ -109,10 +111,11 @@ function buildAlwaysControls(): HTMLDivElement {
 			segGroup(
 				"earthMode",
 				[
-					{ value: "fixed", label: "Stationary" },
-					{ value: "orbital", label: "Orbital" },
+					{ value: "ptolemaic", label: "Ptolemaic" },
+					{ value: "galilean", label: "Galilean" },
+					{ value: "keplerian", label: "Keplerian" },
 				],
-				"fixed",
+				"galilean",
 			),
 		),
 		field(
@@ -149,6 +152,7 @@ function buildAlwaysControls(): HTMLDivElement {
 function buildControlsPanel(): HTMLDivElement {
 	return div(
 		{ id: "controls", ariaLabel: "Controls" },
+		buildMotionBlock(),
 		details(
 			{},
 			summary({}, "Motion"),
@@ -253,8 +257,7 @@ export default {
 				div({ class: "strap-band strap-top" }),
 				div({ class: "strap-band strap-bottom" }),
 			),
-			button({ id: "gear", ariaLabel: "Toggle controls" }, "CONTROLS"),
-			buildAlwaysControls(),
+			button({ id: "gear", ariaLabel: "Toggle controls" }, "☰"),
 			buildControlsPanel(),
 			div({ id: "tip" }),
 			div({ id: "signcard" }),

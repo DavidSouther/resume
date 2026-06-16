@@ -1,0 +1,1351 @@
+<html lang="en" class="hide-spokes bg-flat"><head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.13/html-to-image.min.js" integrity="sha512-iZ2ORl595Wx6miw+GuadDet4WQbdSWS3JLMoNfY8cRGoEFy6oT3G9IbcrBeL6AfkgpA51ETt/faX6yLV+/gFJg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script>
+      (function() {
+        // Capture host references before any artifact code runs: Window.parent
+        // is [Replaceable] (a top-level `var parent` in artifact code would
+        // replace the accessor with a data property), and a top-level
+        // `const crypto` would shadow the global — either would otherwise
+        // silently break the bridge for artifacts that worked before.
+        const realParent = window.parent;
+        const cryptoObj = window.crypto;
+        // crypto.randomUUID exists only in Secure Contexts; fall back to a
+        // unique non-crypto id elsewhere (http://LAN-IP dev flows) —
+        // uniqueness is what the bridge needs, unpredictability is
+        // defense-in-depth on top of the source guards.
+        const newRequestId =
+          cryptoObj && typeof cryptoObj.randomUUID === "function"
+            ? function () { return cryptoObj.randomUUID(); }
+            : function () { return Date.now() + "-" + Math.random(); };
+        const originalConsole = window.console;
+        window.console = {
+          log: (...args) => {
+            originalConsole.log(...args);
+            realParent.postMessage({ type: 'console', message: args.join(' ') }, '*');
+          },
+          error: (...args) => {
+            originalConsole.error(...args);
+            realParent.postMessage({ type: 'console', message: 'Error: ' + args.join(' ') }, '*');
+          },
+          warn: (...args) => {
+            originalConsole.warn(...args);
+            realParent.postMessage({ type: 'console', message: 'Warning: ' + args.join(' ') }, '*');
+          }
+        };
+
+        // Bridge request ids are crypto-random (not sequential) so they
+        // cannot be predicted by other frames in the tab.
+        let callbacksMap = new Map();
+        let streamControllers = new Map();
+        
+        window.claude = {
+          complete: (prompt) => {
+            return new Promise((resolve, reject) => {
+              const id = newRequestId();
+              callbacksMap.set(id, { resolve, reject });
+              realParent.postMessage({ type: 'claudeComplete', id, prompt }, '*');
+            });
+          }
+        };
+
+        window.storage = {
+          get: (key, shared = false) => {
+            return new Promise((resolve, reject) => {
+              const id = newRequestId();
+              callbacksMap.set(id, { resolve, reject });
+              realParent.postMessage({ type: 'storageGet', id, key, shared }, '*');
+            });
+          },
+          set: (key, value, shared = false) => {
+            return new Promise((resolve, reject) => {
+              const id = newRequestId();
+              callbacksMap.set(id, { resolve, reject });
+              realParent.postMessage({ type: 'storageSet', id, key, value, shared }, '*');
+            });
+          },
+          delete: (key, shared = false) => {
+            return new Promise((resolve, reject) => {
+              const id = newRequestId();
+              callbacksMap.set(id, { resolve, reject });
+              realParent.postMessage({ type: 'storageDelete', id, key, shared }, '*');
+            });
+          },
+          list: (prefix, shared = false) => {
+            return new Promise((resolve, reject) => {
+              const id = newRequestId();
+              callbacksMap.set(id, { resolve, reject });
+              realParent.postMessage({ type: 'storageList', id, prefix, shared }, '*');
+            });
+          }
+        };
+
+        let pendingBlobs = new Map();
+        URL.createObjectURL = (blob) => {
+          // Store the blob and create an ID and URL for it
+          const blobId = `blob-${Date.now()}-${Math.random()}`;
+          pendingBlobs.set(blobId, blob);
+          return `blob-request://${blobId}`;
+        };
+
+        URL.revokeObjectURL = (url) => {
+          // Remove the blob from our store
+          const blobId = url.replace("blob-request://", "");
+          pendingBlobs.delete(blobId);
+        };
+
+        const getBlobFromURL = (url) => {
+          const blobId = url.replace("blob-request://", "");
+          return pendingBlobs.get(blobId);
+        };
+
+        // Override global fetch with streaming support
+        window.fetch = (url, init = {}) => {
+          return new Promise((resolve, reject) => {
+            const id = newRequestId();
+            const channelId = `fetch-${id}-${Date.now()}`;
+            
+            callbacksMap.set(id, { 
+              resolve: (response) => {
+                // Null-body statuses: Response(stream, {status: 204}) throws
+                // per the Fetch spec, which would escape this resolver and
+                // hang the artifact's await forever.
+                if (response.status === 204 || response.status === 205 || response.status === 304) {
+                  try {
+                    resolve(new Response(null, {
+                      status: response.status,
+                      statusText: response.statusText,
+                      headers: response.headers
+                    }));
+                  } catch (err) {
+                    // Invalid statusText/header bytes can throw here too.
+                    reject(new TypeError(
+                      'Bridge fetch: unconstructable response (status ' + response.status + ')'
+                    ));
+                  }
+                  return;
+                }
+                // Create a ReadableStream for the response body
+                const stream = new ReadableStream({
+                  start(controller) {
+                    streamControllers.set(channelId, controller);
+                  },
+                  cancel() {
+                    streamControllers.delete(channelId);
+                  }
+                });
+                
+                // Create and return the Response with the stream. Response()
+                // requires status in [200, 599]; an opaque/no-cors fetch
+                // forwards status 0, which would throw here and escape the
+                // resolver, hanging the artifact's await. Surface it as a
+                // network-error-shaped rejection instead.
+                try {
+                  resolve(new Response(stream, {
+                    status: response.status,
+                    statusText: response.statusText,
+                    headers: response.headers
+                  }));
+                } catch (err) {
+                  streamControllers.delete(channelId);
+                  reject(new TypeError(
+                    'Bridge fetch: unconstructable response (status ' + response.status + ')'
+                  ));
+                }
+              },
+              reject,
+              channelId
+            });
+            
+            realParent.postMessage({
+              type: 'proxyFetch',
+              id,
+              url,
+              init,
+              channelId
+            }, '*');
+          });
+        };
+
+        window.addEventListener('message', async (event) => {
+          // Only the embedding parent may drive the bridge — sibling and
+          // nested frames can also postMessage into this window.
+          if (event.source !== realParent) return;
+          if (event.data.type === 'takeScreenshot') {
+            // Echo the request's nonce so the requester can correlate the
+            // reply to ITS request — a reply without the expected nonce
+            // (e.g. from a stale pre-remount artifact) is ignored upstream.
+            const screenshotNonce = event.data.nonce;
+            const rootElement = document.getElementById('artifacts-component-root-html');
+            if (!rootElement) {
+              realParent.postMessage({
+                type: 'screenshotError',
+                nonce: screenshotNonce,
+                error: new Error('Root element not found'),
+              }, '*');
+              return;
+            }
+            // Catch CDN load failures (htmlToImage undefined) and toPng errors
+            // so the parent always gets a response instead of hanging forever.
+            try {
+              const screenshot = await htmlToImage.toPng(rootElement, {
+                imagePlaceholder:
+                  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAA1JREFUGFdjePDgwX8ACOQDoNsk0PMAAAAASUVORK5CYII=",
+              });
+              realParent.postMessage({
+                type: 'screenshotData',
+                nonce: screenshotNonce,
+                data: screenshot,
+              }, '*');
+            } catch (err) {
+              realParent.postMessage({
+                type: 'screenshotError',
+                nonce: screenshotNonce,
+                error: err instanceof Error ? err : new Error(String(err)),
+              }, '*');
+            }
+          } else if (event.data.type === 'claudeComplete') {
+            const callback = callbacksMap.get(event.data.id);
+            if (!callback) return;
+            if (event.data.error) {
+              callback.reject(new Error(event.data.error));
+            } else {
+              callback.resolve(event.data.completion);
+            }
+            callbacksMap.delete(event.data.id);
+          } else if (event.data.type === 'proxyFetchResponse') {
+            const callback = callbacksMap.get(event.data.id);
+            if (!callback) return;
+            if (event.data.error) {
+              callback.reject(new Error(event.data.error));
+              callbacksMap.delete(event.data.id);
+            } else {
+              // Initial response with headers, status, etc.
+              callback.resolve({
+                status: event.data.status,
+                statusText: event.data.statusText,
+                headers: event.data.headers
+              });
+              // Don't delete the callback yet if streaming
+              if (!event.data.body) {
+                callbacksMap.delete(event.data.id);
+              }
+            }
+          } else if (event.data.type === 'proxyFetchStream') {
+            // Handle streaming data chunks
+            const controller = streamControllers.get(event.data.channelId);
+            if (controller) {
+              if (event.data.error) {
+                controller.error(new Error(event.data.error));
+                streamControllers.delete(event.data.channelId);
+              } else if (event.data.done) {
+                controller.close();
+                streamControllers.delete(event.data.channelId);
+                // Clean up the callback
+                const callback = Array.from(callbacksMap.entries()).find(
+                  ([_, value]) => value.channelId === event.data.channelId
+                );
+                if (callback) {
+                  callbacksMap.delete(callback[0]);
+                }
+              } else if (event.data.chunk) {
+                controller.enqueue(new Uint8Array(event.data.chunk));
+              }
+            }
+          } else if (event.data.type === 'storageGet') {
+            const callback = callbacksMap.get(event.data.id);
+            if (!callback) return;
+            if (event.data.error) {
+              callback.reject(new Error(event.data.error));
+            } else {
+              callback.resolve(event.data.result);
+            }
+            callbacksMap.delete(event.data.id);
+          } else if (event.data.type === 'storageSet') {
+            const callback = callbacksMap.get(event.data.id);
+            if (!callback) return;
+            if (event.data.error) {
+              callback.reject(new Error(event.data.error));
+            } else {
+              callback.resolve(event.data.result);
+            }
+            callbacksMap.delete(event.data.id);
+          } else if (event.data.type === 'storageDelete') {
+            const callback = callbacksMap.get(event.data.id);
+            if (!callback) return;
+            if (event.data.error) {
+              callback.reject(new Error(event.data.error));
+            } else {
+              callback.resolve(event.data.result);
+            }
+            callbacksMap.delete(event.data.id);
+          } else if (event.data.type === 'storageList') {
+            const callback = callbacksMap.get(event.data.id);
+            if (!callback) return;
+            if (event.data.error) {
+              callback.reject(new Error(event.data.error));
+            } else {
+              callback.resolve(event.data.result);
+            }
+            callbacksMap.delete(event.data.id);
+          }
+        });
+
+        window.addEventListener('click', (event) => {
+          const isEl = event.target instanceof HTMLElement;
+          if (!isEl) return;
+    
+          // find ancestor links
+          const linkEl = event.target.closest("a");
+          if (!linkEl || !linkEl.href) return;
+    
+          event.preventDefault();
+          event.stopImmediatePropagation();
+    
+          if (linkEl.href.startsWith("blob-request:")) {
+            const blob = getBlobFromURL(linkEl.href);
+            if (!blob) return;
+            void blob.arrayBuffer().then((data) => {
+              realParent.postMessage({
+                type: "downloadFile",
+                filename: linkEl.download,
+                data,
+                mimeType: blob.type || "application/octet-stream",
+              });
+            });
+          } else if (linkEl.href.startsWith("data:")) {
+            const [header, base64Data] = linkEl.href.split(",");
+            const mimeMatch = header.match(/data:([^;]+)/);
+            const mimeType = mimeMatch ? mimeMatch[1] : "application/octet-stream";
+            const binaryString = atob(base64Data);
+            const data = Uint8Array.from(binaryString, (c) =>
+              c.charCodeAt(0),
+            ).buffer;
+            realParent.postMessage({
+              type: "downloadFile",
+              filename: linkEl.download,
+              data,
+              mimeType,
+            });
+          } else {
+            let linkUrl;
+            try {
+              linkUrl = new URL(linkEl.href);
+            } catch (error) {
+              return;
+            }
+    
+            if (linkUrl.hostname === window.location.hostname) return;
+      
+            realParent.postMessage({
+              type: 'openExternal',
+              href: linkEl.href,
+            }, '*');
+          }
+      });
+
+        const originalOpen = window.open;
+        window.open = function (url) {
+          realParent.postMessage({
+            type: "openExternal",
+            href: url,
+          }, "*");
+        };
+
+        window.addEventListener('error', (event) => {
+          realParent.postMessage({ type: 'console', message: 'Uncaught Error: ' + event.message }, '*');
+        });
+      })();
+    </script>
+  
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Planetary Watch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&amp;family=DM+Mono:wght@400&amp;display=swap" rel="stylesheet">
+<style>
+  :root{
+    --page:#05070C;
+    --ground:#080B12;
+    --zband:#0E1422;
+    --orbit:#1A2340;
+    --spoke:rgba(255,255,255,0.06);
+    --divider:rgba(255,255,255,0.14);
+    --label:#8898BB;
+    --label-dim:#3A4A6A;
+    --zodiac-active:rgba(255,255,255,0.055);
+    --zodiac-arc:rgba(255,255,255,0.40);
+    --conjunction:rgba(232,239,255,1);
+    --hand:#EDE6CF;
+    --sun:#D4A843;
+    --mercury:#9A9AAE;
+    --venus:#C8B87A;
+    --earth:#4A7FC1;
+    --mars:#C46A3A;
+    --jupiter:#BFA06A;
+    --saturn:#C8BE9A;
+    --uranus:#6AACB8;
+    --neptune:#4A5CAA;
+    --moon:#D0D4DC;
+    --serif:'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+    --mono:'DM Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;background:var(--page);overflow:hidden;
+    -webkit-text-size-adjust:100%;text-size-adjust:100%;
+    -webkit-tap-highlight-color:transparent;}
+  #stage-wrap{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;}
+  #dial{display:block;touch-action:none;}
+
+  /* ---- dial elements ---- */
+  .ground{fill:var(--ground);}
+  .zband-bg{fill:var(--zband);}
+  .orbit-ring{fill:none;stroke:var(--orbit);stroke-width:0.6;}
+  .spoke{stroke:var(--spoke);stroke-width:1;}
+  .hit{fill:transparent;pointer-events:all;cursor:pointer;}
+  .planet,.saturn-ring,.moon-mark{pointer-events:none;}
+  .saturn-ring{fill:none;stroke:var(--saturn);stroke-width:0.8;opacity:0.5;}
+  .earth-ring{fill:none;stroke:rgba(255,255,255,0.40);stroke-width:1.2;pointer-events:none;}
+  .date-month{font-family:var(--mono);font-size:8.5px;letter-spacing:.08em;fill:#DCE6FF;
+    text-anchor:middle;dominant-baseline:central;pointer-events:none;}
+  .date-day{font-family:var(--mono);font-size:16px;fill:#FFFFFF;
+    text-anchor:middle;dominant-baseline:central;pointer-events:none;}
+  .orbit-ring,.spoke,.planet,.saturn-ring,.moon-mark{pointer-events:none;}
+
+  .zwedge{opacity:0;pointer-events:none;transition:opacity .55s ease;}
+  .zwedge.active{opacity:0.40;}
+  .zdiv{stroke:var(--divider);stroke-width:0.6;pointer-events:none;}
+  .zarc{fill:none;stroke-width:1.4;opacity:0;transition:opacity .55s ease;pointer-events:none;}
+  .zarc.active{opacity:0.9;}
+  .zlabel{fill:var(--label-dim);font-family:var(--serif);font-weight:300;font-size:23px;
+    letter-spacing:1.5px;text-anchor:middle;dominant-baseline:central;pointer-events:none;
+    transition:fill .55s ease;}
+  .zlabel.active{fill:var(--label);}
+  .zglyph path{fill:none;stroke:var(--label-dim);stroke-width:2;stroke-linecap:round;
+    stroke-linejoin:round;transition:stroke .55s ease;}
+  .zglyph.active path{stroke:var(--label);}
+  #twilightCone{pointer-events:none;}
+  .hide-twilight #twilightCone{display:none;}
+
+  .conj-line{stroke:var(--conjunction);fill:none;pointer-events:none;}
+
+  /* dial finishes */
+  #texture,#sparkles{display:none;pointer-events:none;}
+  .bg-textured #texture,.bg-sparkle #texture{display:block;}
+  .bg-sparkle #sparkles{display:block;}
+  .tline{stroke:#FFFFFF;}
+  .sparkle{opacity:0.55;animation:twinkle var(--d,4s) ease-in-out infinite;animation-delay:var(--dl,0s);}
+  @keyframes twinkle{0%,100%{opacity:var(--o0,0.15);}50%{opacity:var(--o1,0.85);}}
+
+  /* sign occupant labels */
+  .zoccupant{font-family:var(--mono);font-size:16px;letter-spacing:.02em;text-anchor:middle;
+    dominant-baseline:central;opacity:0;transition:opacity .45s ease;pointer-events:none;}
+  .zoccupant.active{opacity:1;}
+  .zhit{fill:transparent;pointer-events:all;cursor:pointer;}
+
+  .bezel-ring{fill:none;}
+  .bezel-edge{fill:none;stroke-width:1;}
+
+  .sun-core{fill:var(--sun);}
+  .hand-min,.hand-hour{fill:var(--hand);stroke:rgba(0,0,0,0.40);stroke-width:0.5;}
+  .hub{fill:var(--hand);}
+  .hub-dot{fill:#15161A;}
+  .hand-min,.hand-hour,.hub,.hub-dot{pointer-events:none;}
+
+  /* visibility toggles */
+  .hide-orbits .orbit-ring{display:none;}
+  .hide-spokes .spoke{display:none;}
+  .hide-zlabels .zglyph{display:none;}
+  .hide-dividers .zdiv{display:none;}
+  .hide-conj .conj-line{display:none;}
+  .hide-hands .hand-min,.hide-hands .hand-hour,.hide-hands .hub,.hide-hands .hub-dot{display:none;}
+  .hide-moon .disc-moon{display:none;}
+
+  /* ---- control panel ---- */
+  #gear{position:fixed;top:max(10px,env(safe-area-inset-top));right:12px;z-index:60;
+    font-family:var(--mono);font-size:12px;letter-spacing:.08em;color:var(--label);
+    background:rgba(14,20,34,0.85);border:1px solid rgba(255,255,255,0.12);
+    border-radius:8px;padding:8px 12px;cursor:pointer;
+    -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);}
+  #gear:active{transform:scale(0.97);}
+
+  #panel{position:fixed;top:0;left:0;right:0;z-index:50;
+    max-height:min(80vh,80dvh);overflow-y:auto;-webkit-overflow-scrolling:touch;
+    background:rgba(8,11,18,0.94);border-bottom:1px solid rgba(255,255,255,0.10);
+    -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+    transform:translateY(-101%);transition:transform .26s ease;
+    padding:54px 18px 22px;font-family:var(--mono);color:var(--label);font-size:12px;}
+  #panel.open{transform:translateY(0);}
+
+  #panel details{border-top:1px solid rgba(255,255,255,0.07);padding:8px 0;}
+  #panel details:first-of-type{border-top:none;}
+  #panel summary{cursor:pointer;color:#AEBDDE;letter-spacing:.1em;text-transform:uppercase;
+    font-size:11px;list-style:none;padding:6px 0;user-select:none;}
+  #panel summary::-webkit-details-marker{display:none;}
+  #panel summary::after{content:'+';float:right;color:var(--label-dim);}
+  #panel details[open] summary::after{content:'\2013';}
+
+  .row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:7px 2px;}
+  .row label{flex:1;color:var(--label);}
+  .row .val{color:#AEBDDE;min-width:48px;text-align:right;}
+  input[type=range]{flex:1.4;accent-color:var(--sun);height:22px;}
+  input[type=checkbox]{accent-color:var(--sun);width:17px;height:17px;}
+  .swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px;padding:6px 0;}
+  .sw{display:flex;align-items:center;gap:8px;}
+  .sw span{flex:1;color:var(--label);font-size:11px;text-align:right;}
+  input[type=color]{width:30px;height:24px;padding:0;border:1px solid rgba(255,255,255,0.15);
+    border-radius:5px;background:none;cursor:pointer;}
+  input[type=color]::-webkit-color-swatch-wrapper{padding:2px;}
+  input[type=color]::-webkit-color-swatch{border:none;border-radius:3px;}
+  select{font-family:var(--mono);font-size:12px;color:#AEBDDE;background:rgba(255,255,255,0.05);
+    border:1px solid rgba(255,255,255,0.15);border-radius:6px;padding:6px 8px;cursor:pointer;}
+  .btnrow{display:flex;gap:10px;padding-top:12px;}
+  .btn{flex:1;font-family:var(--mono);font-size:12px;letter-spacing:.05em;color:#AEBDDE;
+    background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);
+    border-radius:7px;padding:10px;cursor:pointer;}
+  .btn:active{transform:scale(0.98);}
+  #motionBtn{display:none;}
+  .note{color:var(--label-dim);font-size:10.5px;line-height:1.5;padding:4px 2px 0;}
+
+  /* tooltip */
+  #tip{position:fixed;z-index:40;pointer-events:none;
+    font-family:var(--mono);font-size:11px;letter-spacing:.04em;color:#E7ECF7;
+    background:rgba(10,14,24,0.92);border:1px solid rgba(255,255,255,0.14);
+    border-radius:6px;padding:5px 9px;white-space:nowrap;
+    transform:translate(-50%,-150%);opacity:0;transition:opacity .12s ease;}
+  #tip.show{opacity:1;}
+
+  /* sign info card */
+  #signcard{position:fixed;z-index:42;pointer-events:none;text-align:center;color:#E7ECF7;
+    background:rgba(10,14,24,0.95);border:1px solid rgba(255,255,255,0.14);border-radius:11px;
+    padding:11px 16px 9px;min-width:104px;transform:translate(-50%,-118%);
+    opacity:0;transition:opacity .13s ease;font-family:var(--mono);}
+  #signcard.show{opacity:1;}
+  #signcard .sc-glyph{display:block;margin:0 auto 5px;color:#EAF0FF;}
+  #signcard .sc-name{font-family:var(--serif);font-size:16px;letter-spacing:.04em;}
+  #signcard .sc-pl{font-size:10.5px;color:#9FB0D8;margin-top:4px;letter-spacing:.03em;line-height:1.35;}
+
+  @media (prefers-reduced-motion: reduce){
+    *{transition:none !important;animation:none !important;}
+  }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/astronomy-engine@2.1.19/astronomy.browser.js" async="" crossorigin="anonymous"></script></head>
+<body id="artifacts-component-root-html">
+
+<button id="gear" aria-label="Toggle controls">CONTROLS</button>
+
+<div id="panel" aria-label="Controls">
+  <details open="">
+    <summary>Motion</summary>
+    <div class="row">
+      <label for="earthMode">Earth</label>
+      <select id="earthMode">
+        <option value="ptolemaic">Ptolemaic</option>
+        <option value="galilean" selected="">Galilean</option>
+        <option value="keplerian">Keplerian</option>
+      </select>
+    </div>
+    <div class="row">
+      <label for="speed">Animation speed</label>
+      <input id="speed" type="range" min="0" max="1" step="0.002" value="0">
+      <span class="val" id="speedVal">real time</span>
+    </div>
+    <div class="note" id="simClock">15 JUN 2026  ·  13:53</div>
+    <div class="row">
+      <label for="parallaxOn">Parallax</label>
+      <input id="parallaxOn" type="checkbox" checked="">
+    </div>
+    <div class="row">
+      <label for="parallax">Parallax strength</label>
+      <input id="parallax" type="range" min="0" max="1.5" step="0.05" value="0.7">
+      <span class="val" id="parallaxVal">0.70</span>
+    </div>
+    <button id="motionBtn" class="btn">Enable device tilt</button>
+    <div class="note">Desktop uses the cursor for parallax. On phones, tap “Enable device tilt”.</div>
+  </details>
+
+  <details>
+    <summary>Display</summary>
+    <div class="row">
+      <label for="bgMode">Dial finish</label>
+      <select id="bgMode">
+        <option value="flat">Flat</option>
+        <option value="textured">Textured</option>
+        <option value="sparkle">Textured + sparkling</option>
+      </select>
+    </div>
+    <div class="row"><label for="t_orbits">Orbit discs</label><input id="t_orbits" type="checkbox" checked=""></div>
+    <div class="row"><label for="t_spokes">Disc arms</label><input id="t_spokes" type="checkbox"></div>
+    <div class="row"><label for="t_zlabels">Zodiac signs</label><input id="t_zlabels" type="checkbox" checked=""></div>
+    <div class="row"><label for="t_dividers">Sign dividers</label><input id="t_dividers" type="checkbox" checked=""></div>
+    <div class="row"><label for="t_glow">Sign highlight</label><input id="t_glow" type="checkbox" checked=""></div>
+    <div class="row"><label for="t_occ">Sign info</label><input id="t_occ" type="checkbox" checked=""></div>
+    <div class="row"><label for="t_twilight">Twilight zone</label><input id="t_twilight" type="checkbox" checked=""></div>
+    <div class="row"><label for="t_conj">Conjunction lines</label><input id="t_conj" type="checkbox" checked=""></div>
+    <div class="row">
+      <label for="conjDeg">Conjunction within</label>
+      <input id="conjDeg" type="range" min="1" max="12" step="0.5" value="3">
+      <span class="val" id="conjDegVal">3°</span>
+    </div>
+    <div class="row"><label for="t_hands">Watch hands</label><input id="t_hands" type="checkbox" checked=""></div>
+    <div class="row"><label for="t_moon">Moon</label><input id="t_moon" type="checkbox" checked=""></div>
+  </details>
+
+  <details>
+    <summary>Colors</summary>
+    <div class="swatches">
+      <div class="sw"><span>Background</span><input data-var="--ground" type="color" value="#080B12" data-def="#080b12"></div>
+      <div class="sw"><span>Zodiac band</span><input data-var="--zband" type="color" value="#0E1422" data-def="#0e1422"></div>
+      <div class="sw"><span>Orbits</span><input data-var="--orbit" type="color" value="#1A2340" data-def="#1a2340"></div>
+      <div class="sw"><span>Labels</span><input data-var="--label" type="color" value="#8898BB" data-def="#8898bb"></div>
+      <div class="sw"><span>Hands</span><input data-var="--hand" type="color" value="#EDE6CF" data-def="#ede6cf"></div>
+      <div class="sw"><span>Sun</span><input data-var="--sun" type="color" value="#D4A843" data-def="#d4a843"></div>
+      <div class="sw"><span>Mercury</span><input data-var="--mercury" type="color" value="#9A9AAE" data-def="#9a9aae"></div>
+      <div class="sw"><span>Venus</span><input data-var="--venus" type="color" value="#C8B87A" data-def="#c8b87a"></div>
+      <div class="sw"><span>Earth</span><input data-var="--earth" type="color" value="#4A7FC1" data-def="#4a7fc1"></div>
+      <div class="sw"><span>Mars</span><input data-var="--mars" type="color" value="#C46A3A" data-def="#c46a3a"></div>
+      <div class="sw"><span>Jupiter</span><input data-var="--jupiter" type="color" value="#BFA06A" data-def="#bfa06a"></div>
+      <div class="sw"><span>Saturn</span><input data-var="--saturn" type="color" value="#C8BE9A" data-def="#c8be9a"></div>
+      <div class="sw"><span>Uranus</span><input data-var="--uranus" type="color" value="#6AACB8" data-def="#6aacb8"></div>
+      <div class="sw"><span>Neptune</span><input data-var="--neptune" type="color" value="#4A5CAA" data-def="#4a5caa"></div>
+      <div class="sw"><span>Moon</span><input data-var="--moon" type="color" value="#D0D4DC" data-def="#d0d4dc"></div>
+    </div>
+  </details>
+
+  <div class="btnrow">
+    <button id="resetBtn" class="btn">Reset</button>
+    <button id="closeBtn" class="btn">Close</button>
+  </div>
+</div>
+
+<div id="stage-wrap">
+  <svg id="dial" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid meet" aria-label="Planetary watch face" style="width: 539px; height: 539px;">
+    <defs>
+      <clipPath id="dialClip"><circle cx="500" cy="500" r="470"></circle></clipPath>
+      <radialGradient id="twilightGrad" gradientUnits="userSpaceOnUse" cx="500" cy="500" r="470">
+        <stop offset="0%" stop-color="#D4A843" stop-opacity="0.30"></stop>
+        <stop offset="55%" stop-color="#D4A843" stop-opacity="0.10"></stop>
+        <stop offset="100%" stop-color="#D4A843" stop-opacity="0"></stop>
+      </radialGradient>
+      <radialGradient id="vignette" cx="50%" cy="50%" r="50%">
+        <stop offset="55%" stop-color="#000" stop-opacity="0"></stop>
+        <stop offset="100%" stop-color="#000" stop-opacity="0.55"></stop>
+      </radialGradient>
+      <radialGradient id="sunGlow" cx="50%" cy="50%" r="50%">
+        <stop class="sg0" offset="0%"></stop>
+        <stop class="sg1" offset="100%"></stop>
+      </radialGradient>
+      <linearGradient id="gold" gradientUnits="userSpaceOnUse" x1="500" y1="14" x2="500" y2="986">
+        <stop offset="0%" stop-color="#7C642E"></stop>
+        <stop offset="16%" stop-color="#E7D7A2"></stop>
+        <stop offset="38%" stop-color="#BC9C56"></stop>
+        <stop offset="62%" stop-color="#F1E8C4"></stop>
+        <stop offset="84%" stop-color="#A6873F"></stop>
+        <stop offset="100%" stop-color="#5E4A23"></stop>
+      </linearGradient>
+    <linearGradient id="zgrad0" gradientUnits="userSpaceOnUse" x1="500" y1="78" x2="711" y2="134.53727960296692"><stop offset="0.0%" stop-color="#4a5caa"></stop><stop offset="100.0%" stop-color="#c8be9a"></stop></linearGradient><linearGradient id="zgrad1" gradientUnits="userSpaceOnUse" x1="711" y1="134.53727960296692" x2="865.4627203970331" y2="289"><stop offset="0%" stop-color="#c46a3a"></stop><stop offset="100%" stop-color="#c46a3a"></stop></linearGradient><linearGradient id="zgrad2" gradientUnits="userSpaceOnUse" x1="865.4627203970331" y1="289" x2="922" y2="500"><stop offset="0.0%" stop-color="#d4a843"></stop><stop offset="100.0%" stop-color="#6aacb8"></stop></linearGradient><linearGradient id="zgrad3" gradientUnits="userSpaceOnUse" x1="922" y1="500" x2="865.4627203970331" y2="711"><stop offset="0.0%" stop-color="#bfa06a"></stop><stop offset="100.0%" stop-color="#9a9aae"></stop></linearGradient><linearGradient id="zgrad4" gradientUnits="userSpaceOnUse" x1="865.4627203970331" y1="711" x2="711" y2="865.4627203970331"><stop offset="0%" stop-color="#c8b87a"></stop><stop offset="100%" stop-color="#c8b87a"></stop></linearGradient><linearGradient id="zgrad5" gradientUnits="userSpaceOnUse" x1="711" y1="865.4627203970331" x2="500" y2="922"></linearGradient><linearGradient id="zgrad6" gradientUnits="userSpaceOnUse" x1="500" y1="922" x2="289.00000000000006" y2="865.4627203970331"></linearGradient><linearGradient id="zgrad7" gradientUnits="userSpaceOnUse" x1="289.00000000000006" y1="865.4627203970331" x2="134.53727960296686" y2="711"></linearGradient><linearGradient id="zgrad8" gradientUnits="userSpaceOnUse" x1="134.53727960296686" y1="711" x2="78" y2="500.00000000000006"></linearGradient><linearGradient id="zgrad9" gradientUnits="userSpaceOnUse" x1="78" y1="500.00000000000006" x2="134.53727960296692" y2="288.99999999999994"></linearGradient><linearGradient id="zgrad10" gradientUnits="userSpaceOnUse" x1="134.53727960296692" y1="288.99999999999994" x2="288.9999999999998" y2="134.53727960296703"></linearGradient><linearGradient id="zgrad11" gradientUnits="userSpaceOnUse" x1="288.9999999999998" y1="134.53727960296703" x2="499.99999999999994" y2="78"></linearGradient><radialGradient id="dialSheen" gradientUnits="userSpaceOnUse" cx="500" cy="452" r="470"><stop offset="0%" stop-color="#9FB2DE" stop-opacity="0.17"></stop><stop offset="55%" stop-color="#9FB2DE" stop-opacity="0.05"></stop><stop offset="100%" stop-color="#9FB2DE" stop-opacity="0"></stop></radialGradient></defs>
+
+    <circle class="ground" cx="500" cy="500" r="470"></circle><g id="texture"><circle cx="500" cy="500" r="468" fill="url(#dialSheen)"></circle><line class="tline" x1="500" y1="460" x2="500.00000000000006" y2="32" stroke-width="0.7" stroke-opacity="0.117"></line><line class="tline" x1="502.09343824971774" y1="460.05481860981706" x2="524.4932275216978" y2="32.64137773485942" stroke-width="0.7" stroke-opacity="0.114"></line><line class="tline" x1="504.18113853070616" y1="460.21912418526904" x2="548.9193208092618" y2="34.5637529676481" stroke-width="0.7" stroke-opacity="0.071"></line><line class="tline" x1="506.2573786016092" y1="460.4924663761945" x2="573.211329638828" y2="37.76185660147553" stroke-width="0.7" stroke-opacity="0.068"></line><line class="tline" x1="508.3164676327104" y1="460.8740959706478" x2="597.3026713027115" y2="42.226922856578994" stroke-width="0.7" stroke-opacity="0.098"></line><line class="tline" x1="510.35276180410085" y1="461.36296694843725" x2="621.1273131079797" y2="47.94671329671604" stroke-width="0.7" stroke-opacity="0.095"></line><line class="tline" x1="512.360679774998" y1="461.95773934819385" x2="644.6199533674754" y2="54.90555037386815" stroke-width="0.7" stroke-opacity="0.099"></line><line class="tline" x1="514.334717981812" y1="462.65678294011195" x2="667.7162003872006" y2="63.08436039930956" stroke-width="0.7" stroke-opacity="0.084"></line><line class="tline" x1="516.269465723032" y1="463.45818169429594" x2="690.3527489594745" y2="72.4607258232628" stroke-width="0.7" stroke-opacity="0.089"></line><line class="tline" x1="518.1596199895819" y1="464.3597390324653" x2="712.467553878108" y2="83.0089466798438" stroke-width="0.7" stroke-opacity="0.083"></line><line class="tline" x1="520" y1="465.3589838486225" x2="734" y2="94.70011102888276" stroke-width="0.7" stroke-opacity="0.094"></line><line class="tline" x1="521.7855614006011" y1="466.45317728218305" x2="754.8910683870326" y2="107.5021742015416" stroke-width="0.7" stroke-opacity="0.058"></line><line class="tline" x1="523.511410091699" y1="467.6393202250021" x2="775.0834980728774" y2="121.38004663252457" stroke-width="0.7" stroke-opacity="0.059"></line><line class="tline" x1="525.1728156419935" y1="468.91416154172117" x2="794.521943011324" y2="136.29569003813765" stroke-width="0.7" stroke-opacity="0.081"></line><line class="tline" x1="526.7652242543543" y1="470.27420698090424" x2="813.1531237759457" y2="152.2082216765795" stroke-width="0.7" stroke-opacity="0.093"></line><line class="tline" x1="528.2842712474619" y1="471.7157287525381" x2="830.9259735953042" y2="169.07402640469581" stroke-width="0.7" stroke-opacity="0.090"></line><line class="tline" x1="529.7257930190958" y1="473.23477574564566" x2="847.7917783234204" y2="186.84687622405437" stroke-width="0.7" stroke-opacity="0.060"></line><line class="tline" x1="531.0858384582789" y1="474.8271843580065" x2="863.7043099618625" y2="205.4780569886761" stroke-width="0.7" stroke-opacity="0.114"></line><line class="tline" x1="532.360679774998" y1="476.4885899083011" x2="878.6199533674754" y2="224.91650192712257" stroke-width="0.7" stroke-opacity="0.063"></line><line class="tline" x1="533.546822717817" y1="478.21443859939893" x2="892.4978257984585" y2="245.10893161296733" stroke-width="0.7" stroke-opacity="0.053"></line><line class="tline" x1="534.6410161513776" y1="480" x2="905.2998889711173" y2="266" stroke-width="0.7" stroke-opacity="0.062"></line><line class="tline" x1="535.6402609675347" y1="481.84038001041813" x2="916.9910533201562" y2="287.53244612189206" stroke-width="0.7" stroke-opacity="0.096"></line><line class="tline" x1="536.541818305704" y1="483.730534276968" x2="927.5392741767372" y2="309.64725104052553" stroke-width="0.7" stroke-opacity="0.113"></line><line class="tline" x1="537.343217059888" y1="485.665282018188" x2="936.9156396006904" y2="332.2837996127995" stroke-width="0.7" stroke-opacity="0.088"></line><line class="tline" x1="538.0422606518061" y1="487.6393202250021" x2="945.0944496261318" y2="355.3800466325246" stroke-width="0.7" stroke-opacity="0.077"></line><line class="tline" x1="538.6370330515628" y1="489.64723819589915" x2="952.0532867032839" y2="378.8726868920203" stroke-width="0.7" stroke-opacity="0.065"></line><line class="tline" x1="539.1259040293522" y1="491.6835323672896" x2="957.773077143421" y2="402.69732869728864" stroke-width="0.7" stroke-opacity="0.117"></line><line class="tline" x1="539.5075336238056" y1="493.7426213983908" x2="962.2381433985245" y2="426.78867036117197" stroke-width="0.7" stroke-opacity="0.063"></line><line class="tline" x1="539.780875814731" y1="495.81886146929384" x2="965.436247032352" y2="451.0806791907382" stroke-width="0.7" stroke-opacity="0.061"></line><line class="tline" x1="539.9451813901829" y1="497.90656175028226" x2="967.3586222651406" y2="475.5067724783023" stroke-width="0.7" stroke-opacity="0.077"></line><line class="tline" x1="540" y1="500" x2="968" y2="500" stroke-width="0.7" stroke-opacity="0.119"></line><line class="tline" x1="539.9451813901829" y1="502.09343824971774" x2="967.3586222651406" y2="524.4932275216978" stroke-width="0.7" stroke-opacity="0.065"></line><line class="tline" x1="539.780875814731" y1="504.18113853070616" x2="965.436247032352" y2="548.9193208092618" stroke-width="0.7" stroke-opacity="0.097"></line><line class="tline" x1="539.5075336238056" y1="506.2573786016092" x2="962.2381433985245" y2="573.2113296388281" stroke-width="0.7" stroke-opacity="0.097"></line><line class="tline" x1="539.1259040293522" y1="508.3164676327104" x2="957.773077143421" y2="597.3026713027114" stroke-width="0.7" stroke-opacity="0.071"></line><line class="tline" x1="538.6370330515628" y1="510.35276180410085" x2="952.0532867032839" y2="621.1273131079797" stroke-width="0.7" stroke-opacity="0.074"></line><line class="tline" x1="538.0422606518061" y1="512.360679774998" x2="945.0944496261318" y2="644.6199533674753" stroke-width="0.7" stroke-opacity="0.083"></line><line class="tline" x1="537.343217059888" y1="514.334717981812" x2="936.9156396006904" y2="667.7162003872005" stroke-width="0.7" stroke-opacity="0.066"></line><line class="tline" x1="536.541818305704" y1="516.269465723032" x2="927.5392741767372" y2="690.3527489594744" stroke-width="0.7" stroke-opacity="0.063"></line><line class="tline" x1="535.6402609675347" y1="518.1596199895819" x2="916.9910533201562" y2="712.4675538781079" stroke-width="0.7" stroke-opacity="0.097"></line><line class="tline" x1="534.6410161513776" y1="520" x2="905.2998889711173" y2="734" stroke-width="0.7" stroke-opacity="0.069"></line><line class="tline" x1="533.546822717817" y1="521.7855614006011" x2="892.4978257984585" y2="754.8910683870326" stroke-width="0.7" stroke-opacity="0.111"></line><line class="tline" x1="532.360679774998" y1="523.511410091699" x2="878.6199533674754" y2="775.0834980728773" stroke-width="0.7" stroke-opacity="0.116"></line><line class="tline" x1="531.0858384582789" y1="525.1728156419935" x2="863.7043099618625" y2="794.5219430113239" stroke-width="0.7" stroke-opacity="0.085"></line><line class="tline" x1="529.7257930190958" y1="526.7652242543543" x2="847.7917783234204" y2="813.1531237759457" stroke-width="0.7" stroke-opacity="0.081"></line><line class="tline" x1="528.2842712474619" y1="528.2842712474619" x2="830.9259735953042" y2="830.9259735953042" stroke-width="0.7" stroke-opacity="0.094"></line><line class="tline" x1="526.7652242543543" y1="529.7257930190958" x2="813.1531237759457" y2="847.7917783234204" stroke-width="0.7" stroke-opacity="0.070"></line><line class="tline" x1="525.1728156419935" y1="531.0858384582789" x2="794.521943011324" y2="863.7043099618624" stroke-width="0.7" stroke-opacity="0.069"></line><line class="tline" x1="523.511410091699" y1="532.360679774998" x2="775.0834980728774" y2="878.6199533674754" stroke-width="0.7" stroke-opacity="0.097"></line><line class="tline" x1="521.7855614006011" y1="533.546822717817" x2="754.8910683870326" y2="892.4978257984584" stroke-width="0.7" stroke-opacity="0.077"></line><line class="tline" x1="520" y1="534.6410161513776" x2="734" y2="905.2998889711173" stroke-width="0.7" stroke-opacity="0.068"></line><line class="tline" x1="518.1596199895819" y1="535.6402609675347" x2="712.467553878108" y2="916.9910533201562" stroke-width="0.7" stroke-opacity="0.051"></line><line class="tline" x1="516.269465723032" y1="536.541818305704" x2="690.3527489594745" y2="927.5392741767372" stroke-width="0.7" stroke-opacity="0.120"></line><line class="tline" x1="514.334717981812" y1="537.343217059888" x2="667.7162003872006" y2="936.9156396006904" stroke-width="0.7" stroke-opacity="0.080"></line><line class="tline" x1="512.360679774998" y1="538.0422606518061" x2="644.6199533674754" y2="945.0944496261318" stroke-width="0.7" stroke-opacity="0.119"></line><line class="tline" x1="510.35276180410085" y1="538.6370330515628" x2="621.1273131079797" y2="952.0532867032839" stroke-width="0.7" stroke-opacity="0.071"></line><line class="tline" x1="508.3164676327104" y1="539.1259040293522" x2="597.3026713027115" y2="957.773077143421" stroke-width="0.7" stroke-opacity="0.092"></line><line class="tline" x1="506.2573786016092" y1="539.5075336238056" x2="573.211329638828" y2="962.2381433985245" stroke-width="0.7" stroke-opacity="0.060"></line><line class="tline" x1="504.18113853070616" y1="539.780875814731" x2="548.9193208092618" y2="965.436247032352" stroke-width="0.7" stroke-opacity="0.065"></line><line class="tline" x1="502.09343824971774" y1="539.9451813901829" x2="524.4932275216978" y2="967.3586222651406" stroke-width="0.7" stroke-opacity="0.095"></line><line class="tline" x1="500" y1="540" x2="500.00000000000006" y2="968" stroke-width="0.7" stroke-opacity="0.085"></line><line class="tline" x1="497.90656175028226" y1="539.9451813901829" x2="475.50677247830237" y2="967.3586222651406" stroke-width="0.7" stroke-opacity="0.114"></line><line class="tline" x1="495.81886146929384" y1="539.780875814731" x2="451.08067919073795" y2="965.436247032352" stroke-width="0.7" stroke-opacity="0.066"></line><line class="tline" x1="493.7426213983908" y1="539.5075336238056" x2="426.78867036117185" y2="962.2381433985245" stroke-width="0.7" stroke-opacity="0.077"></line><line class="tline" x1="491.6835323672896" y1="539.1259040293522" x2="402.69732869728875" y2="957.773077143421" stroke-width="0.7" stroke-opacity="0.052"></line><line class="tline" x1="489.64723819589915" y1="538.6370330515628" x2="378.8726868920202" y2="952.0532867032839" stroke-width="0.7" stroke-opacity="0.079"></line><line class="tline" x1="487.6393202250021" y1="538.0422606518061" x2="355.38004663252445" y2="945.0944496261318" stroke-width="0.7" stroke-opacity="0.105"></line><line class="tline" x1="485.665282018188" y1="537.343217059888" x2="332.2837996127995" y2="936.9156396006904" stroke-width="0.7" stroke-opacity="0.092"></line><line class="tline" x1="483.730534276968" y1="536.541818305704" x2="309.6472510405256" y2="927.5392741767373" stroke-width="0.7" stroke-opacity="0.055"></line><line class="tline" x1="481.84038001041813" y1="535.6402609675347" x2="287.53244612189235" y2="916.9910533201562" stroke-width="0.7" stroke-opacity="0.107"></line><line class="tline" x1="480" y1="534.6410161513776" x2="266.0000000000001" y2="905.2998889711173" stroke-width="0.7" stroke-opacity="0.076"></line><line class="tline" x1="478.21443859939893" y1="533.546822717817" x2="245.10893161296727" y2="892.4978257984585" stroke-width="0.7" stroke-opacity="0.091"></line><line class="tline" x1="476.4885899083011" y1="532.360679774998" x2="224.91650192712262" y2="878.6199533674754" stroke-width="0.7" stroke-opacity="0.067"></line><line class="tline" x1="474.82718435800655" y1="531.0858384582789" x2="205.47805698867631" y2="863.7043099618626" stroke-width="0.7" stroke-opacity="0.068"></line><line class="tline" x1="473.23477574564566" y1="529.7257930190958" x2="186.84687622405437" y2="847.7917783234204" stroke-width="0.7" stroke-opacity="0.067"></line><line class="tline" x1="471.7157287525381" y1="528.2842712474619" x2="169.07402640469581" y2="830.9259735953042" stroke-width="0.7" stroke-opacity="0.070"></line><line class="tline" x1="470.27420698090424" y1="526.7652242543543" x2="152.20822167657957" y2="813.1531237759457" stroke-width="0.7" stroke-opacity="0.098"></line><line class="tline" x1="468.91416154172117" y1="525.1728156419935" x2="136.29569003813748" y2="794.5219430113237" stroke-width="0.7" stroke-opacity="0.118"></line><line class="tline" x1="467.6393202250021" y1="523.511410091699" x2="121.38004663252462" y2="775.0834980728775" stroke-width="0.7" stroke-opacity="0.079"></line><line class="tline" x1="466.45317728218305" y1="521.7855614006011" x2="107.5021742015415" y2="754.8910683870326" stroke-width="0.7" stroke-opacity="0.087"></line><line class="tline" x1="465.3589838486225" y1="520" x2="94.7001110288827" y2="734" stroke-width="0.7" stroke-opacity="0.112"></line><line class="tline" x1="464.35973903246526" y1="518.1596199895819" x2="83.00894667984375" y2="712.4675538781078" stroke-width="0.7" stroke-opacity="0.065"></line><line class="tline" x1="463.45818169429594" y1="516.269465723032" x2="72.46072582326286" y2="690.3527489594746" stroke-width="0.7" stroke-opacity="0.081"></line><line class="tline" x1="462.65678294011195" y1="514.334717981812" x2="63.08436039930956" y2="667.7162003872005" stroke-width="0.7" stroke-opacity="0.086"></line><line class="tline" x1="461.95773934819385" y1="512.360679774998" x2="54.90555037386821" y2="644.6199533674757" stroke-width="0.7" stroke-opacity="0.079"></line><line class="tline" x1="461.36296694843725" y1="510.35276180410085" x2="47.9467132967161" y2="621.1273131079798" stroke-width="0.7" stroke-opacity="0.114"></line><line class="tline" x1="460.8740959706478" y1="508.3164676327104" x2="42.22692285657894" y2="597.3026713027114" stroke-width="0.7" stroke-opacity="0.051"></line><line class="tline" x1="460.4924663761945" y1="506.2573786016092" x2="37.761856601475586" y2="573.2113296388281" stroke-width="0.7" stroke-opacity="0.074"></line><line class="tline" x1="460.21912418526904" y1="504.18113853070616" x2="34.5637529676481" y2="548.919320809262" stroke-width="0.7" stroke-opacity="0.077"></line><line class="tline" x1="460.05481860981706" y1="502.09343824971774" x2="32.64137773485942" y2="524.4932275216977" stroke-width="0.7" stroke-opacity="0.062"></line><line class="tline" x1="460" y1="500" x2="32" y2="500.00000000000006" stroke-width="0.7" stroke-opacity="0.102"></line><line class="tline" x1="460.05481860981706" y1="497.90656175028226" x2="32.64137773485942" y2="475.5067724783024" stroke-width="0.7" stroke-opacity="0.091"></line><line class="tline" x1="460.21912418526904" y1="495.8188614692939" x2="34.56375296764804" y2="451.08067919073835" stroke-width="0.7" stroke-opacity="0.093"></line><line class="tline" x1="460.4924663761945" y1="493.7426213983908" x2="37.76185660147553" y2="426.788670361172" stroke-width="0.7" stroke-opacity="0.087"></line><line class="tline" x1="460.8740959706478" y1="491.6835323672896" x2="42.22692285657894" y2="402.69732869728875" stroke-width="0.7" stroke-opacity="0.085"></line><line class="tline" x1="461.36296694843725" y1="489.6472381958992" x2="47.946713296715984" y2="378.8726868920205" stroke-width="0.7" stroke-opacity="0.054"></line><line class="tline" x1="461.95773934819385" y1="487.6393202250021" x2="54.90555037386815" y2="355.38004663252445" stroke-width="0.7" stroke-opacity="0.063"></line><line class="tline" x1="462.65678294011195" y1="485.665282018188" x2="63.08436039930962" y2="332.2837996127994" stroke-width="0.7" stroke-opacity="0.054"></line><line class="tline" x1="463.45818169429594" y1="483.730534276968" x2="72.46072582326269" y2="309.6472510405257" stroke-width="0.7" stroke-opacity="0.075"></line><line class="tline" x1="464.35973903246526" y1="481.84038001041813" x2="83.00894667984375" y2="287.53244612189235" stroke-width="0.7" stroke-opacity="0.114"></line><line class="tline" x1="465.3589838486225" y1="480" x2="94.70011102888276" y2="265.99999999999994" stroke-width="0.7" stroke-opacity="0.097"></line><line class="tline" x1="466.45317728218305" y1="478.21443859939893" x2="107.50217420154155" y2="245.10893161296733" stroke-width="0.7" stroke-opacity="0.073"></line><line class="tline" x1="467.6393202250021" y1="476.4885899083011" x2="121.38004663252457" y2="224.91650192712262" stroke-width="0.7" stroke-opacity="0.061"></line><line class="tline" x1="468.91416154172117" y1="474.8271843580065" x2="136.29569003813765" y2="205.47805698867597" stroke-width="0.7" stroke-opacity="0.057"></line><line class="tline" x1="470.27420698090424" y1="473.23477574564566" x2="152.2082216765795" y2="186.84687622405437" stroke-width="0.7" stroke-opacity="0.061"></line><line class="tline" x1="471.7157287525381" y1="471.7157287525381" x2="169.0740264046957" y2="169.07402640469581" stroke-width="0.7" stroke-opacity="0.116"></line><line class="tline" x1="473.23477574564566" y1="470.27420698090424" x2="186.84687622405426" y2="152.20822167657957" stroke-width="0.7" stroke-opacity="0.081"></line><line class="tline" x1="474.82718435800655" y1="468.91416154172117" x2="205.47805698867626" y2="136.29569003813754" stroke-width="0.7" stroke-opacity="0.100"></line><line class="tline" x1="476.4885899083011" y1="467.6393202250021" x2="224.9165019271225" y2="121.38004663252462" stroke-width="0.7" stroke-opacity="0.056"></line><line class="tline" x1="478.21443859939893" y1="466.45317728218305" x2="245.10893161296738" y2="107.5021742015415" stroke-width="0.7" stroke-opacity="0.063"></line><line class="tline" x1="480" y1="465.3589838486225" x2="265.9999999999998" y2="94.70011102888282" stroke-width="0.7" stroke-opacity="0.077"></line><line class="tline" x1="481.84038001041813" y1="464.3597390324653" x2="287.532446121892" y2="83.00894667984386" stroke-width="0.7" stroke-opacity="0.105"></line><line class="tline" x1="483.730534276968" y1="463.45818169429594" x2="309.6472510405256" y2="72.46072582326275" stroke-width="0.7" stroke-opacity="0.072"></line><line class="tline" x1="485.66528201818795" y1="462.65678294011195" x2="332.28379961279927" y2="63.08436039930967" stroke-width="0.7" stroke-opacity="0.101"></line><line class="tline" x1="487.6393202250021" y1="461.95773934819385" x2="355.38004663252457" y2="54.90555037386815" stroke-width="0.7" stroke-opacity="0.115"></line><line class="tline" x1="489.64723819589915" y1="461.36296694843725" x2="378.87268689202034" y2="47.94671329671604" stroke-width="0.7" stroke-opacity="0.100"></line><line class="tline" x1="491.6835323672896" y1="460.8740959706478" x2="402.6973286972884" y2="42.226922856578994" stroke-width="0.7" stroke-opacity="0.051"></line><line class="tline" x1="493.7426213983908" y1="460.4924663761945" x2="426.78867036117185" y2="37.761856601475586" stroke-width="0.7" stroke-opacity="0.091"></line><line class="tline" x1="495.8188614692939" y1="460.21912418526904" x2="451.08067919073824" y2="34.56375296764804" stroke-width="0.7" stroke-opacity="0.096"></line><line class="tline" x1="497.9065617502822" y1="460.05481860981706" x2="475.5067724783021" y2="32.64137773485942" stroke-width="0.7" stroke-opacity="0.070"></line></g><g id="sparkles"><circle class="sparkle" cx="633.6" cy="753.3" r="3.73" fill="#BFD2F2" style="--o1: 0.97; --o0: 0.25; --d: 5.22s; --dl: 1.18s;"></circle><circle class="sparkle" cx="414.4" cy="574.0" r="3.53" fill="#EAF0FF" style="--o1: 0.66; --o0: 0.13; --d: 6.99s; --dl: 2.24s;"></circle><circle class="sparkle" cx="551.0" cy="758.1" r="3.78" fill="#EAF0FF" style="--o1: 0.59; --o0: 0.21; --d: 5.68s; --dl: 2.32s;"></circle><circle class="sparkle" cx="899.3" cy="288.1" r="1.87" fill="#EAF0FF" style="--o1: 0.57; --o0: 0.19; --d: 4.91s; --dl: 1.55s;"></circle><circle class="sparkle" cx="548.1" cy="777.6" r="1.50" fill="#EAF0FF" style="--o1: 0.90; --o0: 0.12; --d: 5.90s; --dl: 4.98s;"></circle><circle class="sparkle" cx="801.2" cy="765.5" r="2.81" fill="#EAF0FF" style="--o1: 0.95; --o0: 0.25; --d: 4.86s; --dl: 1.71s;"></circle><circle class="sparkle" cx="246.6" cy="582.9" r="3.03" fill="#EAF0FF" style="--o1: 0.78; --o0: 0.19; --d: 3.84s; --dl: 0.16s;"></circle><circle class="sparkle" cx="592.5" cy="776.9" r="2.40" fill="#BFD2F2" style="--o1: 0.68; --o0: 0.20; --d: 5.51s; --dl: 4.89s;"></circle><circle class="sparkle" cx="181.0" cy="702.4" r="2.54" fill="#EAF0FF" style="--o1: 1.00; --o0: 0.20; --d: 6.13s; --dl: 0.77s;"></circle><circle class="sparkle" cx="216.0" cy="801.7" r="3.23" fill="#EAF0FF" style="--o1: 0.59; --o0: 0.15; --d: 2.58s; --dl: 0.92s;"></circle><circle class="sparkle" cx="534.5" cy="73.5" r="3.76" fill="#F3DFA6" style="--o1: 0.76; --o0: 0.14; --d: 3.57s; --dl: 0.05s;"></circle><circle class="sparkle" cx="302.3" cy="97.2" r="2.25" fill="#EAF0FF" style="--o1: 0.67; --o0: 0.16; --d: 6.80s; --dl: 4.08s;"></circle><circle class="sparkle" cx="710.6" cy="624.6" r="3.74" fill="#EAF0FF" style="--o1: 0.90; --o0: 0.17; --d: 2.85s; --dl: 4.88s;"></circle><circle class="sparkle" cx="599.0" cy="508.1" r="3.73" fill="#EAF0FF" style="--o1: 0.71; --o0: 0.14; --d: 6.42s; --dl: 0.77s;"></circle><circle class="sparkle" cx="253.3" cy="413.5" r="3.70" fill="#EAF0FF" style="--o1: 0.96; --o0: 0.18; --d: 6.08s; --dl: 2.82s;"></circle><circle class="sparkle" cx="797.9" cy="303.9" r="3.79" fill="#BFD2F2" style="--o1: 0.80; --o0: 0.19; --d: 3.73s; --dl: 4.14s;"></circle><circle class="sparkle" cx="745.6" cy="736.8" r="3.85" fill="#BFD2F2" style="--o1: 0.88; --o0: 0.25; --d: 3.45s; --dl: 4.48s;"></circle><circle class="sparkle" cx="722.5" cy="126.1" r="2.79" fill="#BFD2F2" style="--o1: 0.95; --o0: 0.25; --d: 5.95s; --dl: 4.82s;"></circle><circle class="sparkle" cx="906.6" cy="367.8" r="1.46" fill="#F3DFA6" style="--o1: 0.76; --o0: 0.14; --d: 3.58s; --dl: 1.60s;"></circle><circle class="sparkle" cx="932.7" cy="623.6" r="2.62" fill="#F3DFA6" style="--o1: 0.73; --o0: 0.22; --d: 5.73s; --dl: 3.83s;"></circle><circle class="sparkle" cx="563.0" cy="679.5" r="3.55" fill="#F3DFA6" style="--o1: 0.94; --o0: 0.25; --d: 4.80s; --dl: 2.01s;"></circle><circle class="sparkle" cx="909.0" cy="331.8" r="3.89" fill="#EAF0FF" style="--o1: 0.95; --o0: 0.14; --d: 6.72s; --dl: 2.94s;"></circle><circle class="sparkle" cx="291.4" cy="556.5" r="1.91" fill="#EAF0FF" style="--o1: 0.83; --o0: 0.27; --d: 5.01s; --dl: 3.71s;"></circle><circle class="sparkle" cx="841.3" cy="766.9" r="2.59" fill="#BFD2F2" style="--o1: 0.56; --o0: 0.16; --d: 2.87s; --dl: 4.78s;"></circle><circle class="sparkle" cx="913.6" cy="594.4" r="3.77" fill="#BFD2F2" style="--o1: 0.70; --o0: 0.27; --d: 3.70s; --dl: 2.46s;"></circle><circle class="sparkle" cx="683.6" cy="216.7" r="3.25" fill="#EAF0FF" style="--o1: 0.74; --o0: 0.18; --d: 4.60s; --dl: 0.59s;"></circle><circle class="sparkle" cx="244.2" cy="642.5" r="3.43" fill="#EAF0FF" style="--o1: 0.62; --o0: 0.23; --d: 4.32s; --dl: 1.87s;"></circle><circle class="sparkle" cx="76.9" cy="441.8" r="2.52" fill="#EAF0FF" style="--o1: 0.83; --o0: 0.19; --d: 5.90s; --dl: 1.27s;"></circle><circle class="sparkle" cx="648.9" cy="427.2" r="3.07" fill="#EAF0FF" style="--o1: 0.94; --o0: 0.24; --d: 3.76s; --dl: 1.67s;"></circle><circle class="sparkle" cx="515.2" cy="842.7" r="1.79" fill="#F3DFA6" style="--o1: 0.80; --o0: 0.17; --d: 4.99s; --dl: 3.85s;"></circle><circle class="sparkle" cx="84.8" cy="366.5" r="3.02" fill="#BFD2F2" style="--o1: 0.68; --o0: 0.12; --d: 2.56s; --dl: 0.58s;"></circle><circle class="sparkle" cx="645.7" cy="138.8" r="4.06" fill="#EAF0FF" style="--o1: 0.83; --o0: 0.24; --d: 4.54s; --dl: 1.30s;"></circle><circle class="sparkle" cx="248.3" cy="741.0" r="2.13" fill="#EAF0FF" style="--o1: 0.99; --o0: 0.18; --d: 4.05s; --dl: 2.63s;"></circle><circle class="sparkle" cx="138.3" cy="372.2" r="3.37" fill="#EAF0FF" style="--o1: 0.87; --o0: 0.25; --d: 5.92s; --dl: 1.99s;"></circle><circle class="sparkle" cx="373.3" cy="739.9" r="1.67" fill="#EAF0FF" style="--o1: 0.61; --o0: 0.28; --d: 3.05s; --dl: 3.08s;"></circle><circle class="sparkle" cx="484.1" cy="215.1" r="2.39" fill="#F3DFA6" style="--o1: 0.85; --o0: 0.12; --d: 6.84s; --dl: 0.48s;"></circle><circle class="sparkle" cx="749.1" cy="283.8" r="3.91" fill="#BFD2F2" style="--o1: 0.81; --o0: 0.16; --d: 5.49s; --dl: 2.68s;"></circle><circle class="sparkle" cx="488.5" cy="174.0" r="3.50" fill="#EAF0FF" style="--o1: 0.66; --o0: 0.23; --d: 3.62s; --dl: 0.12s;"></circle><circle class="sparkle" cx="550.2" cy="485.7" r="4.14" fill="#EAF0FF" style="--o1: 0.80; --o0: 0.24; --d: 5.33s; --dl: 1.53s;"></circle><circle class="sparkle" cx="296.5" cy="702.2" r="3.22" fill="#EAF0FF" style="--o1: 0.72; --o0: 0.14; --d: 4.11s; --dl: 1.42s;"></circle><circle class="sparkle" cx="393.3" cy="304.9" r="2.55" fill="#EAF0FF" style="--o1: 0.55; --o0: 0.25; --d: 3.98s; --dl: 2.11s;"></circle><circle class="sparkle" cx="667.6" cy="410.2" r="4.02" fill="#EAF0FF" style="--o1: 0.73; --o0: 0.14; --d: 4.21s; --dl: 1.03s;"></circle><circle class="sparkle" cx="452.3" cy="210.7" r="2.48" fill="#EAF0FF" style="--o1: 0.63; --o0: 0.27; --d: 6.21s; --dl: 1.53s;"></circle><circle class="sparkle" cx="598.7" cy="585.5" r="1.54" fill="#EAF0FF" style="--o1: 0.84; --o0: 0.16; --d: 3.85s; --dl: 3.37s;"></circle><circle class="sparkle" cx="292.8" cy="350.0" r="1.54" fill="#EAF0FF" style="--o1: 0.90; --o0: 0.12; --d: 5.22s; --dl: 3.12s;"></circle><circle class="sparkle" cx="875.9" cy="404.9" r="2.64" fill="#EAF0FF" style="--o1: 0.86; --o0: 0.16; --d: 6.02s; --dl: 1.59s;"></circle><circle class="sparkle" cx="196.3" cy="216.1" r="2.95" fill="#EAF0FF" style="--o1: 0.62; --o0: 0.18; --d: 5.59s; --dl: 2.10s;"></circle><circle class="sparkle" cx="793.5" cy="712.0" r="3.87" fill="#F3DFA6" style="--o1: 0.63; --o0: 0.10; --d: 6.57s; --dl: 1.88s;"></circle><circle class="sparkle" cx="491.4" cy="694.1" r="2.29" fill="#BFD2F2" style="--o1: 0.83; --o0: 0.20; --d: 4.09s; --dl: 3.71s;"></circle><circle class="sparkle" cx="476.9" cy="899.0" r="1.52" fill="#F3DFA6" style="--o1: 0.97; --o0: 0.22; --d: 5.20s; --dl: 0.40s;"></circle><circle class="sparkle" cx="444.0" cy="81.9" r="2.12" fill="#EAF0FF" style="--o1: 0.69; --o0: 0.18; --d: 3.42s; --dl: 0.19s;"></circle><circle class="sparkle" cx="643.4" cy="752.9" r="1.96" fill="#F3DFA6" style="--o1: 0.67; --o0: 0.14; --d: 6.75s; --dl: 4.91s;"></circle><circle class="sparkle" cx="389.2" cy="381.5" r="3.19" fill="#EAF0FF" style="--o1: 0.80; --o0: 0.17; --d: 4.97s; --dl: 0.58s;"></circle><circle class="sparkle" cx="591.6" cy="540.2" r="3.00" fill="#EAF0FF" style="--o1: 0.97; --o0: 0.24; --d: 5.75s; --dl: 0.94s;"></circle><circle class="sparkle" cx="861.1" cy="313.7" r="3.61" fill="#EAF0FF" style="--o1: 0.59; --o0: 0.25; --d: 3.47s; --dl: 0.28s;"></circle><circle class="sparkle" cx="625.0" cy="315.9" r="2.49" fill="#F3DFA6" style="--o1: 0.98; --o0: 0.10; --d: 3.25s; --dl: 3.12s;"></circle><circle class="sparkle" cx="672.2" cy="724.8" r="1.51" fill="#EAF0FF" style="--o1: 0.58; --o0: 0.13; --d: 3.06s; --dl: 2.01s;"></circle><circle class="sparkle" cx="471.8" cy="547.5" r="2.26" fill="#EAF0FF" style="--o1: 0.76; --o0: 0.27; --d: 2.99s; --dl: 3.60s;"></circle><circle class="sparkle" cx="514.2" cy="403.7" r="1.52" fill="#EAF0FF" style="--o1: 0.70; --o0: 0.28; --d: 3.63s; --dl: 3.03s;"></circle><circle class="sparkle" cx="154.2" cy="365.2" r="3.91" fill="#EAF0FF" style="--o1: 0.86; --o0: 0.26; --d: 6.78s; --dl: 1.22s;"></circle><circle class="sparkle" cx="704.4" cy="856.9" r="4.19" fill="#EAF0FF" style="--o1: 0.63; --o0: 0.10; --d: 2.90s; --dl: 2.71s;"></circle><circle class="sparkle" cx="512.8" cy="156.6" r="3.63" fill="#BFD2F2" style="--o1: 0.80; --o0: 0.19; --d: 5.61s; --dl: 4.77s;"></circle><circle class="sparkle" cx="630.8" cy="202.6" r="2.29" fill="#F3DFA6" style="--o1: 0.68; --o0: 0.26; --d: 5.98s; --dl: 1.82s;"></circle><circle class="sparkle" cx="891.0" cy="342.8" r="2.65" fill="#EAF0FF" style="--o1: 0.72; --o0: 0.23; --d: 6.18s; --dl: 1.54s;"></circle><circle class="sparkle" cx="191.6" cy="632.3" r="3.98" fill="#EAF0FF" style="--o1: 0.64; --o0: 0.16; --d: 4.29s; --dl: 2.15s;"></circle><circle class="sparkle" cx="713.7" cy="744.4" r="3.00" fill="#BFD2F2" style="--o1: 0.64; --o0: 0.25; --d: 2.57s; --dl: 0.20s;"></circle><circle class="sparkle" cx="649.2" cy="876.2" r="2.94" fill="#EAF0FF" style="--o1: 0.67; --o0: 0.11; --d: 4.18s; --dl: 1.06s;"></circle><circle class="sparkle" cx="819.6" cy="727.0" r="3.79" fill="#F3DFA6" style="--o1: 0.69; --o0: 0.15; --d: 4.87s; --dl: 4.29s;"></circle><circle class="sparkle" cx="895.6" cy="405.5" r="3.13" fill="#EAF0FF" style="--o1: 0.62; --o0: 0.12; --d: 4.38s; --dl: 1.78s;"></circle><circle class="sparkle" cx="516.3" cy="329.4" r="3.64" fill="#EAF0FF" style="--o1: 0.94; --o0: 0.12; --d: 4.24s; --dl: 1.28s;"></circle><circle class="sparkle" cx="754.0" cy="307.2" r="2.96" fill="#EAF0FF" style="--o1: 0.78; --o0: 0.20; --d: 5.60s; --dl: 4.78s;"></circle><circle class="sparkle" cx="756.3" cy="286.9" r="1.67" fill="#EAF0FF" style="--o1: 0.65; --o0: 0.20; --d: 2.67s; --dl: 0.20s;"></circle><circle class="sparkle" cx="884.9" cy="497.3" r="3.01" fill="#EAF0FF" style="--o1: 0.59; --o0: 0.22; --d: 2.66s; --dl: 1.32s;"></circle><circle class="sparkle" cx="665.5" cy="282.6" r="1.58" fill="#F3DFA6" style="--o1: 0.84; --o0: 0.11; --d: 2.66s; --dl: 4.71s;"></circle><circle class="sparkle" cx="209.3" cy="443.7" r="2.76" fill="#EAF0FF" style="--o1: 0.63; --o0: 0.27; --d: 4.31s; --dl: 4.21s;"></circle><circle class="sparkle" cx="202.4" cy="338.8" r="1.86" fill="#EAF0FF" style="--o1: 0.61; --o0: 0.27; --d: 4.16s; --dl: 3.35s;"></circle><circle class="sparkle" cx="718.7" cy="851.7" r="3.69" fill="#EAF0FF" style="--o1: 0.65; --o0: 0.25; --d: 5.94s; --dl: 0.18s;"></circle><circle class="sparkle" cx="495.4" cy="726.8" r="1.44" fill="#EAF0FF" style="--o1: 0.55; --o0: 0.15; --d: 2.53s; --dl: 4.13s;"></circle><circle class="sparkle" cx="785.1" cy="214.1" r="3.10" fill="#EAF0FF" style="--o1: 0.78; --o0: 0.22; --d: 3.92s; --dl: 0.73s;"></circle><circle class="sparkle" cx="445.8" cy="742.8" r="2.39" fill="#BFD2F2" style="--o1: 0.99; --o0: 0.18; --d: 4.69s; --dl: 1.30s;"></circle><circle class="sparkle" cx="393.5" cy="847.8" r="2.27" fill="#EAF0FF" style="--o1: 0.72; --o0: 0.25; --d: 5.32s; --dl: 3.58s;"></circle><circle class="sparkle" cx="738.7" cy="595.1" r="2.02" fill="#EAF0FF" style="--o1: 0.98; --o0: 0.23; --d: 6.26s; --dl: 3.85s;"></circle><circle class="sparkle" cx="710.9" cy="103.4" r="2.94" fill="#EAF0FF" style="--o1: 0.65; --o0: 0.15; --d: 5.88s; --dl: 1.95s;"></circle><circle class="sparkle" cx="599.4" cy="451.5" r="2.37" fill="#F3DFA6" style="--o1: 0.56; --o0: 0.20; --d: 3.79s; --dl: 4.41s;"></circle><circle class="sparkle" cx="384.1" cy="449.5" r="3.73" fill="#F3DFA6" style="--o1: 0.75; --o0: 0.16; --d: 6.67s; --dl: 2.42s;"></circle><circle class="sparkle" cx="249.3" cy="433.4" r="2.03" fill="#F3DFA6" style="--o1: 0.97; --o0: 0.21; --d: 5.89s; --dl: 2.51s;"></circle><circle class="sparkle" cx="464.1" cy="175.2" r="2.88" fill="#F3DFA6" style="--o1: 0.88; --o0: 0.14; --d: 5.02s; --dl: 4.02s;"></circle><circle class="sparkle" cx="903.4" cy="609.8" r="3.76" fill="#F3DFA6" style="--o1: 0.71; --o0: 0.10; --d: 4.37s; --dl: 3.61s;"></circle><circle class="sparkle" cx="757.6" cy="160.2" r="2.60" fill="#EAF0FF" style="--o1: 0.56; --o0: 0.19; --d: 6.66s; --dl: 4.77s;"></circle><circle class="sparkle" cx="365.9" cy="265.0" r="2.25" fill="#EAF0FF" style="--o1: 0.69; --o0: 0.18; --d: 3.16s; --dl: 1.01s;"></circle><circle class="sparkle" cx="608.3" cy="216.0" r="2.94" fill="#F3DFA6" style="--o1: 0.84; --o0: 0.11; --d: 4.18s; --dl: 0.29s;"></circle><circle class="sparkle" cx="905.5" cy="515.8" r="1.58" fill="#BFD2F2" style="--o1: 0.69; --o0: 0.12; --d: 6.60s; --dl: 3.61s;"></circle><circle class="sparkle" cx="808.3" cy="730.7" r="2.99" fill="#BFD2F2" style="--o1: 0.76; --o0: 0.26; --d: 6.00s; --dl: 2.65s;"></circle><circle class="sparkle" cx="369.6" cy="227.2" r="3.58" fill="#EAF0FF" style="--o1: 0.79; --o0: 0.20; --d: 3.71s; --dl: 3.16s;"></circle><circle class="sparkle" cx="684.1" cy="112.7" r="3.72" fill="#EAF0FF" style="--o1: 0.82; --o0: 0.25; --d: 6.34s; --dl: 3.27s;"></circle><circle class="sparkle" cx="580.8" cy="374.7" r="1.43" fill="#EAF0FF" style="--o1: 0.62; --o0: 0.10; --d: 3.33s; --dl: 1.23s;"></circle><circle class="sparkle" cx="589.7" cy="637.5" r="2.40" fill="#EAF0FF" style="--o1: 0.55; --o0: 0.14; --d: 3.05s; --dl: 2.20s;"></circle><circle class="sparkle" cx="425.7" cy="944.1" r="3.63" fill="#F3DFA6" style="--o1: 0.72; --o0: 0.10; --d: 2.92s; --dl: 0.42s;"></circle><circle class="sparkle" cx="320.1" cy="177.1" r="3.78" fill="#EAF0FF" style="--o1: 0.70; --o0: 0.20; --d: 3.05s; --dl: 3.48s;"></circle><circle class="sparkle" cx="620.5" cy="344.3" r="1.55" fill="#EAF0FF" style="--o1: 0.61; --o0: 0.15; --d: 6.57s; --dl: 2.59s;"></circle><circle class="sparkle" cx="293.8" cy="856.0" r="2.95" fill="#EAF0FF" style="--o1: 0.94; --o0: 0.14; --d: 6.09s; --dl: 3.63s;"></circle><circle class="sparkle" cx="475.9" cy="737.5" r="2.96" fill="#F3DFA6" style="--o1: 0.97; --o0: 0.14; --d: 5.08s; --dl: 3.54s;"></circle><circle class="sparkle" cx="576.7" cy="723.9" r="3.30" fill="#F3DFA6" style="--o1: 0.86; --o0: 0.20; --d: 5.03s; --dl: 4.79s;"></circle><circle class="sparkle" cx="519.7" cy="230.6" r="3.48" fill="#EAF0FF" style="--o1: 0.86; --o0: 0.12; --d: 4.23s; --dl: 1.60s;"></circle><circle class="sparkle" cx="511.4" cy="372.4" r="1.43" fill="#BFD2F2" style="--o1: 0.88; --o0: 0.28; --d: 5.21s; --dl: 4.60s;"></circle><circle class="sparkle" cx="516.6" cy="688.0" r="3.11" fill="#F3DFA6" style="--o1: 0.82; --o0: 0.26; --d: 5.75s; --dl: 1.96s;"></circle><circle class="sparkle" cx="269.6" cy="716.3" r="1.64" fill="#BFD2F2" style="--o1: 0.74; --o0: 0.19; --d: 6.08s; --dl: 2.11s;"></circle><circle class="sparkle" cx="281.0" cy="107.2" r="3.11" fill="#EAF0FF" style="--o1: 0.81; --o0: 0.19; --d: 5.01s; --dl: 4.03s;"></circle><circle class="sparkle" cx="701.9" cy="231.7" r="4.12" fill="#EAF0FF" style="--o1: 0.90; --o0: 0.22; --d: 5.00s; --dl: 3.76s;"></circle><circle class="sparkle" cx="269.6" cy="464.9" r="4.08" fill="#F3DFA6" style="--o1: 0.77; --o0: 0.20; --d: 3.05s; --dl: 4.61s;"></circle><circle class="sparkle" cx="769.9" cy="224.9" r="2.35" fill="#EAF0FF" style="--o1: 0.87; --o0: 0.20; --d: 6.49s; --dl: 4.10s;"></circle><circle class="sparkle" cx="362.1" cy="347.2" r="3.71" fill="#EAF0FF" style="--o1: 0.84; --o0: 0.17; --d: 3.49s; --dl: 1.52s;"></circle><circle class="sparkle" cx="512.2" cy="652.4" r="4.04" fill="#EAF0FF" style="--o1: 0.78; --o0: 0.16; --d: 2.62s; --dl: 0.74s;"></circle><circle class="sparkle" cx="517.2" cy="165.3" r="3.71" fill="#EAF0FF" style="--o1: 0.65; --o0: 0.25; --d: 5.26s; --dl: 0.76s;"></circle><circle class="sparkle" cx="528.3" cy="820.3" r="1.68" fill="#BFD2F2" style="--o1: 0.85; --o0: 0.18; --d: 6.01s; --dl: 3.79s;"></circle><circle class="sparkle" cx="768.7" cy="705.4" r="2.56" fill="#F3DFA6" style="--o1: 0.91; --o0: 0.11; --d: 5.40s; --dl: 0.50s;"></circle><circle class="sparkle" cx="216.6" cy="326.7" r="3.55" fill="#BFD2F2" style="--o1: 0.58; --o0: 0.24; --d: 5.74s; --dl: 2.82s;"></circle><circle class="sparkle" cx="623.3" cy="812.4" r="2.11" fill="#EAF0FF" style="--o1: 0.58; --o0: 0.14; --d: 5.50s; --dl: 2.77s;"></circle><circle class="sparkle" cx="102.7" cy="566.0" r="2.75" fill="#F3DFA6" style="--o1: 0.86; --o0: 0.20; --d: 6.36s; --dl: 0.18s;"></circle><circle class="sparkle" cx="914.5" cy="490.0" r="3.71" fill="#EAF0FF" style="--o1: 0.56; --o0: 0.11; --d: 2.99s; --dl: 0.48s;"></circle><circle class="sparkle" cx="617.0" cy="881.6" r="3.53" fill="#EAF0FF" style="--o1: 0.81; --o0: 0.17; --d: 2.94s; --dl: 4.59s;"></circle><circle class="sparkle" cx="816.6" cy="370.1" r="2.39" fill="#BFD2F2" style="--o1: 0.95; --o0: 0.15; --d: 4.56s; --dl: 2.63s;"></circle><circle class="sparkle" cx="688.9" cy="548.6" r="2.17" fill="#EAF0FF" style="--o1: 0.82; --o0: 0.11; --d: 5.10s; --dl: 0.77s;"></circle><circle class="sparkle" cx="70.4" cy="368.5" r="2.06" fill="#EAF0FF" style="--o1: 0.65; --o0: 0.25; --d: 5.30s; --dl: 3.07s;"></circle><circle class="sparkle" cx="495.8" cy="419.9" r="3.77" fill="#BFD2F2" style="--o1: 0.58; --o0: 0.28; --d: 3.69s; --dl: 1.09s;"></circle><circle class="sparkle" cx="532.4" cy="107.6" r="4.16" fill="#F3DFA6" style="--o1: 1.00; --o0: 0.27; --d: 5.71s; --dl: 2.73s;"></circle><circle class="sparkle" cx="564.7" cy="631.5" r="3.65" fill="#EAF0FF" style="--o1: 0.79; --o0: 0.15; --d: 4.27s; --dl: 3.00s;"></circle><circle class="sparkle" cx="644.3" cy="595.2" r="2.59" fill="#EAF0FF" style="--o1: 0.96; --o0: 0.24; --d: 3.77s; --dl: 4.28s;"></circle><circle class="sparkle" cx="522.5" cy="341.7" r="2.42" fill="#BFD2F2" style="--o1: 0.99; --o0: 0.12; --d: 6.90s; --dl: 4.75s;"></circle><circle class="sparkle" cx="745.7" cy="787.1" r="2.48" fill="#BFD2F2" style="--o1: 0.88; --o0: 0.11; --d: 3.22s; --dl: 4.64s;"></circle><circle class="sparkle" cx="662.4" cy="83.3" r="2.58" fill="#F3DFA6" style="--o1: 0.88; --o0: 0.13; --d: 5.21s; --dl: 2.52s;"></circle><circle class="sparkle" cx="321.8" cy="333.1" r="3.75" fill="#EAF0FF" style="--o1: 0.92; --o0: 0.26; --d: 6.33s; --dl: 2.21s;"></circle><circle class="sparkle" cx="533.0" cy="425.8" r="3.76" fill="#EAF0FF" style="--o1: 0.74; --o0: 0.15; --d: 3.16s; --dl: 4.80s;"></circle><circle class="sparkle" cx="563.8" cy="298.1" r="3.96" fill="#F3DFA6" style="--o1: 0.84; --o0: 0.16; --d: 4.17s; --dl: 4.19s;"></circle><circle class="sparkle" cx="892.8" cy="446.4" r="3.19" fill="#EAF0FF" style="--o1: 0.67; --o0: 0.13; --d: 6.16s; --dl: 1.47s;"></circle><circle class="sparkle" cx="288.5" cy="669.1" r="1.44" fill="#BFD2F2" style="--o1: 0.92; --o0: 0.26; --d: 2.87s; --dl: 1.71s;"></circle><circle class="sparkle" cx="890.9" cy="512.5" r="1.67" fill="#EAF0FF" style="--o1: 0.78; --o0: 0.20; --d: 6.84s; --dl: 2.39s;"></circle><circle class="sparkle" cx="435.9" cy="389.0" r="1.74" fill="#BFD2F2" style="--o1: 0.76; --o0: 0.18; --d: 5.72s; --dl: 3.65s;"></circle><circle class="sparkle" cx="672.5" cy="415.8" r="3.64" fill="#EAF0FF" style="--o1: 0.77; --o0: 0.21; --d: 4.75s; --dl: 2.24s;"></circle><circle class="sparkle" cx="159.3" cy="418.1" r="3.31" fill="#EAF0FF" style="--o1: 0.82; --o0: 0.11; --d: 6.27s; --dl: 0.60s;"></circle><circle class="sparkle" cx="864.8" cy="328.4" r="3.31" fill="#EAF0FF" style="--o1: 0.87; --o0: 0.19; --d: 6.20s; --dl: 0.49s;"></circle><circle class="sparkle" cx="491.1" cy="858.8" r="1.65" fill="#EAF0FF" style="--o1: 0.68; --o0: 0.23; --d: 4.16s; --dl: 3.00s;"></circle><circle class="sparkle" cx="778.2" cy="786.1" r="3.53" fill="#EAF0FF" style="--o1: 0.67; --o0: 0.24; --d: 2.62s; --dl: 2.93s;"></circle><circle class="sparkle" cx="532.0" cy="734.9" r="3.15" fill="#BFD2F2" style="--o1: 0.86; --o0: 0.14; --d: 6.82s; --dl: 4.62s;"></circle><circle class="sparkle" cx="648.9" cy="220.2" r="2.61" fill="#F3DFA6" style="--o1: 0.97; --o0: 0.18; --d: 2.70s; --dl: 2.61s;"></circle><circle class="sparkle" cx="259.8" cy="842.6" r="3.54" fill="#EAF0FF" style="--o1: 0.71; --o0: 0.23; --d: 5.94s; --dl: 3.25s;"></circle><circle class="sparkle" cx="581.1" cy="855.9" r="3.61" fill="#EAF0FF" style="--o1: 0.89; --o0: 0.20; --d: 2.92s; --dl: 3.85s;"></circle><circle class="sparkle" cx="344.3" cy="261.3" r="3.13" fill="#EAF0FF" style="--o1: 0.60; --o0: 0.23; --d: 4.54s; --dl: 0.88s;"></circle><circle class="sparkle" cx="609.7" cy="837.1" r="3.79" fill="#EAF0FF" style="--o1: 0.66; --o0: 0.18; --d: 6.76s; --dl: 3.75s;"></circle><circle class="sparkle" cx="587.9" cy="415.5" r="2.00" fill="#F3DFA6" style="--o1: 0.63; --o0: 0.15; --d: 3.31s; --dl: 3.77s;"></circle><circle class="sparkle" cx="759.6" cy="576.5" r="1.52" fill="#EAF0FF" style="--o1: 0.70; --o0: 0.14; --d: 4.95s; --dl: 3.24s;"></circle><circle class="sparkle" cx="672.1" cy="293.5" r="4.01" fill="#BFD2F2" style="--o1: 0.90; --o0: 0.15; --d: 2.80s; --dl: 3.63s;"></circle><circle class="sparkle" cx="232.1" cy="620.9" r="3.21" fill="#F3DFA6" style="--o1: 0.75; --o0: 0.22; --d: 5.39s; --dl: 1.57s;"></circle><circle class="sparkle" cx="822.6" cy="741.5" r="1.72" fill="#EAF0FF" style="--o1: 0.67; --o0: 0.22; --d: 6.64s; --dl: 4.61s;"></circle><circle class="sparkle" cx="667.0" cy="894.8" r="1.71" fill="#BFD2F2" style="--o1: 0.56; --o0: 0.25; --d: 3.97s; --dl: 3.36s;"></circle><circle class="sparkle" cx="305.6" cy="451.8" r="2.64" fill="#BFD2F2" style="--o1: 0.85; --o0: 0.16; --d: 3.04s; --dl: 3.74s;"></circle><circle class="sparkle" cx="642.3" cy="259.2" r="2.62" fill="#BFD2F2" style="--o1: 0.78; --o0: 0.24; --d: 5.58s; --dl: 4.84s;"></circle><circle class="sparkle" cx="72.3" cy="489.7" r="3.91" fill="#EAF0FF" style="--o1: 0.70; --o0: 0.24; --d: 5.88s; --dl: 2.67s;"></circle><circle class="sparkle" cx="885.4" cy="268.9" r="3.45" fill="#BFD2F2" style="--o1: 0.98; --o0: 0.15; --d: 6.59s; --dl: 3.36s;"></circle><circle class="sparkle" cx="275.3" cy="604.4" r="3.40" fill="#EAF0FF" style="--o1: 0.97; --o0: 0.26; --d: 5.34s; --dl: 0.86s;"></circle></g>
+    <path id="zbandBg" class="zband-bg" d="M500.00000000000006 32A468 468 0 1 1 499.99000000000007 32 Z M500 78A422 422 0 1 0 499.99 78 Z" fill-rule="evenodd"></path>
+    <circle cx="500" cy="500" r="470" fill="url(#vignette)" pointer-events="none"></circle>
+
+    <path id="twilightCone" fill="url(#twilightGrad)" clip-path="url(#dialClip)" d="M668.4 500.0 L-73.6 664.5 L-73.6 335.5 Z"></path>
+
+    <g id="discs"><g class="disc disc-neptune" transform="translate(0.00 -0.00) rotate(97.722 500 500)"><circle class="orbit-ring" cx="500" cy="500" r="405"></circle><line class="spoke" x1="500" y1="500" x2="905" y2="500"></line><circle class="planet" cx="905" cy="500" r="7" fill="var(--neptune)"></circle><circle class="hit" cx="905" cy="500" r="18"></circle></g><g class="disc disc-uranus" transform="translate(0.00 -0.00) rotate(157.147 500 500)"><circle class="orbit-ring" cx="500" cy="500" r="373.7"></circle><line class="spoke" x1="500" y1="500" x2="873.7" y2="500"></line><circle class="planet" cx="873.7" cy="500" r="7" fill="var(--uranus)"></circle><circle class="hit" cx="873.7" cy="500" r="18"></circle></g><g class="disc disc-saturn" transform="translate(0.00 -0.00) rotate(102.866 500 500)"><circle class="orbit-ring" cx="500" cy="500" r="325"></circle><line class="spoke" x1="500" y1="500" x2="825" y2="500"></line><ellipse class="saturn-ring" cx="825" cy="500" rx="14" ry="5.04"></ellipse><circle class="planet" cx="825" cy="500" r="8" fill="var(--saturn)"></circle><circle class="hit" cx="825" cy="500" r="19"></circle></g><g class="disc disc-jupiter" transform="translate(0.00 -0.00) rotate(218.236 500 500)"><circle class="orbit-ring" cx="500" cy="500" r="283"></circle><line class="spoke" x1="500" y1="500" x2="783" y2="500"></line><circle class="planet" cx="783" cy="500" r="9" fill="var(--jupiter)"></circle><circle class="hit" cx="783" cy="500" r="20"></circle></g><g class="disc disc-mars" transform="translate(0.00 -0.00) rotate(122.429 500 500)"><circle class="orbit-ring" cx="500" cy="500" r="197.5"></circle><line class="spoke" x1="500" y1="500" x2="697.5" y2="500"></line><circle class="planet" cx="697.5" cy="500" r="5" fill="var(--mars)"></circle><circle class="hit" cx="697.5" cy="500" r="16"></circle></g><g class="disc disc-earth" transform="translate(0.00 -0.00) rotate(0.000 500 500)"><circle class="orbit-ring" cx="500" cy="500" r="168.4"></circle><line class="spoke" x1="500" y1="500" x2="668.4" y2="500"></line><circle class="earth-ring" cx="668.4" cy="500" r="21"></circle><circle class="planet" cx="668.4" cy="500" r="18" fill="var(--earth)"></circle><circle class="hit" cx="668.4" cy="500" r="29"></circle></g><g class="disc disc-venus" transform="translate(0.00 -0.00) rotate(278.511 500 500)"><circle class="orbit-ring" cx="500" cy="500" r="145.5"></circle><line class="spoke" x1="500" y1="500" x2="645.5" y2="500"></line><circle class="planet" cx="645.5" cy="500" r="6" fill="var(--venus)"></circle><circle class="hit" cx="645.5" cy="500" r="17"></circle></g><g class="disc disc-mercury" transform="translate(0.00 -0.00) rotate(307.979 500 500)"><circle class="orbit-ring" cx="500" cy="500" r="102.9"></circle><line class="spoke" x1="500" y1="500" x2="602.9" y2="500"></line><circle class="planet" cx="602.9" cy="500" r="5" fill="var(--mercury)"></circle><circle class="hit" cx="602.9" cy="500" r="16"></circle></g><g class="disc disc-moon" transform="translate(668.40 500.00) rotate(188.944 0 0)"><circle class="orbit-ring" cx="0" cy="0" r="30"></circle><line class="spoke" x1="0" y1="0" x2="30" y2="0"></line><circle class="planet" cx="30" cy="0" r="4" fill="var(--moon)"></circle><circle class="hit" cx="30" cy="0" r="16"></circle></g></g>
+    <g id="conj" class="conj-layer"></g>
+
+    <!-- sun + spindle -->
+    <circle cx="500" cy="500" r="34" fill="url(#sunGlow)" pointer-events="none"></circle>
+    <circle class="sun-core" cx="500" cy="500" r="15" pointer-events="none"></circle>
+
+    <g id="zodiac"><g id="zwheel" transform="rotate(185.348 500 500)"><path class="zwedge active" d="M500.00000000000006 32 A468 468 0 0 1 734 94.70011102888276 L711 134.53727960296692 A422 422 0 0 0 500 78 Z" fill="url(#zgrad0)"></path><path class="zarc active" d="M500 78 A422 422 0 0 1 711 134.53727960296692" stroke="url(#zgrad0)"></path><path class="zwedge active" d="M734 94.70011102888276 A468 468 0 0 1 905.2998889711173 266 L865.4627203970331 289 A422 422 0 0 0 711 134.53727960296692 Z" fill="url(#zgrad1)"></path><path class="zarc active" d="M711 134.53727960296692 A422 422 0 0 1 865.4627203970331 289" stroke="url(#zgrad1)"></path><path class="zwedge active" d="M905.2998889711173 266 A468 468 0 0 1 968 500 L922 500 A422 422 0 0 0 865.4627203970331 289 Z" fill="url(#zgrad2)"></path><path class="zarc active" d="M865.4627203970331 289 A422 422 0 0 1 922 500" stroke="url(#zgrad2)"></path><path class="zwedge active" d="M968 500 A468 468 0 0 1 905.2998889711173 734 L865.4627203970331 711 A422 422 0 0 0 922 500 Z" fill="url(#zgrad3)"></path><path class="zarc active" d="M922 500 A422 422 0 0 1 865.4627203970331 711" stroke="url(#zgrad3)"></path><path class="zwedge active" d="M905.2998889711173 734 A468 468 0 0 1 734 905.2998889711173 L711 865.4627203970331 A422 422 0 0 0 865.4627203970331 711 Z" fill="url(#zgrad4)"></path><path class="zarc active" d="M865.4627203970331 711 A422 422 0 0 1 711 865.4627203970331" stroke="url(#zgrad4)"></path><path class="zwedge" d="M734 905.2998889711173 A468 468 0 0 1 500.00000000000006 968 L500 922 A422 422 0 0 0 711 865.4627203970331 Z" fill="url(#zgrad5)"></path><path class="zarc" d="M711 865.4627203970331 A422 422 0 0 1 500 922" stroke="url(#zgrad5)"></path><path class="zwedge" d="M500.00000000000006 968 A468 468 0 0 1 266.0000000000001 905.2998889711173 L289.00000000000006 865.4627203970331 A422 422 0 0 0 500 922 Z" fill="url(#zgrad6)"></path><path class="zarc" d="M500 922 A422 422 0 0 1 289.00000000000006 865.4627203970331" stroke="url(#zgrad6)"></path><path class="zwedge" d="M266.0000000000001 905.2998889711173 A468 468 0 0 1 94.7001110288827 734 L134.53727960296686 711 A422 422 0 0 0 289.00000000000006 865.4627203970331 Z" fill="url(#zgrad7)"></path><path class="zarc" d="M289.00000000000006 865.4627203970331 A422 422 0 0 1 134.53727960296686 711" stroke="url(#zgrad7)"></path><path class="zwedge" d="M94.7001110288827 734 A468 468 0 0 1 32 500.00000000000006 L78 500.00000000000006 A422 422 0 0 0 134.53727960296686 711 Z" fill="url(#zgrad8)"></path><path class="zarc" d="M134.53727960296686 711 A422 422 0 0 1 78 500.00000000000006" stroke="url(#zgrad8)"></path><path class="zwedge" d="M32 500.00000000000006 A468 468 0 0 1 94.70011102888276 265.99999999999994 L134.53727960296692 288.99999999999994 A422 422 0 0 0 78 500.00000000000006 Z" fill="url(#zgrad9)"></path><path class="zarc" d="M78 500.00000000000006 A422 422 0 0 1 134.53727960296692 288.99999999999994" stroke="url(#zgrad9)"></path><path class="zwedge" d="M94.70011102888276 265.99999999999994 A468 468 0 0 1 265.9999999999998 94.70011102888282 L288.9999999999998 134.53727960296703 A422 422 0 0 0 134.53727960296692 288.99999999999994 Z" fill="url(#zgrad10)"></path><path class="zarc" d="M134.53727960296692 288.99999999999994 A422 422 0 0 1 288.9999999999998 134.53727960296703" stroke="url(#zgrad10)"></path><path class="zwedge" d="M265.9999999999998 94.70011102888282 A468 468 0 0 1 499.9999999999999 32 L499.99999999999994 78 A422 422 0 0 0 288.9999999999998 134.53727960296703 Z" fill="url(#zgrad11)"></path><path class="zarc" d="M288.9999999999998 134.53727960296703 A422 422 0 0 1 499.99999999999994 78" stroke="url(#zgrad11)"></path><line class="zdiv" x1="500" y1="78" x2="500.00000000000006" y2="32"></line><line class="zdiv" x1="711" y1="134.53727960296692" x2="734" y2="94.70011102888276"></line><line class="zdiv" x1="865.4627203970331" y1="289" x2="905.2998889711173" y2="266"></line><line class="zdiv" x1="922" y1="500" x2="968" y2="500"></line><line class="zdiv" x1="865.4627203970331" y1="711" x2="905.2998889711173" y2="734"></line><line class="zdiv" x1="711" y1="865.4627203970331" x2="734" y2="905.2998889711173"></line><line class="zdiv" x1="500" y1="922" x2="500.00000000000006" y2="968"></line><line class="zdiv" x1="289.00000000000006" y1="865.4627203970331" x2="266.0000000000001" y2="905.2998889711173"></line><line class="zdiv" x1="134.53727960296686" y1="711" x2="94.7001110288827" y2="734"></line><line class="zdiv" x1="78" y1="500.00000000000006" x2="32" y2="500.00000000000006"></line><line class="zdiv" x1="134.53727960296692" y1="288.99999999999994" x2="94.70011102888276" y2="265.99999999999994"></line><line class="zdiv" x1="288.9999999999998" y1="134.53727960296703" x2="265.9999999999998" y2="94.70011102888282"></line></g><g class="zglyph active" transform="translate(345.27 917.23) scale(1.12) translate(-12 -12)"><path d="M12 5a5 5 0 1 0 -4 8"></path><path d="M16 13a5 5 0 1 0 -4 -8"></path><path d="M12 21l0 -16"></path></g><g class="zglyph active" transform="translate(157.38 783.97) scale(1.12) translate(-12 -12)"><path d="M6 3a6 6 0 0 0 12 0"></path><path d="M6 15a6 6 0 1 0 12 0a6 6 0 1 0 -12 0"></path></g><g class="zglyph active" transform="translate(61.30 574.61) scale(1.12) translate(-12 -12)"><path d="M3 3a21 21 0 0 0 18 0"></path><path d="M3 21a21 21 0 0 1 18 0"></path><path d="M7 4.5l0 15"></path><path d="M17 4.5l0 15"></path></g><g class="zglyph active" transform="translate(82.77 345.27) scale(1.12) translate(-12 -12)"><path d="M3 12a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"></path><path d="M15 12a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"></path><path d="M3 12a10 6.5 0 0 1 14 -6.5"></path><path d="M21 12a10 6.5 0 0 1 -14 6.5"></path></g><g class="zglyph active" transform="translate(216.03 157.38) scale(1.12) translate(-12 -12)"><path d="M13 17a4 4 0 1 0 8 0"></path><path d="M3 16a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"></path><path d="M7 7a4 4 0 1 0 8 0a4 4 0 1 0 -8 0"></path><path d="M7 7c0 3 2 5 2 9"></path><path d="M15 7c0 4 -2 6 -2 10"></path></g><g class="zglyph" transform="translate(425.39 61.30) scale(1.12) translate(-12 -12)"><path d="M3 4a2 2 0 0 1 2 2v9"></path><path d="M5 6a2 2 0 0 1 4 0v9"></path><path d="M9 6a2 2 0 0 1 4 0v10a7 5 0 0 0 7 5"></path><path d="M12 21a7 5 0 0 0 7 -5v-2a3 3 0 0 0 -6 0"></path></g><g class="zglyph" transform="translate(654.73 82.77) scale(1.12) translate(-12 -12)"><path d="M5 20l14 0"></path><path d="M5 17h5v-.3a7 7 0 1 1 4 0v.3h5"></path></g><g class="zglyph" transform="translate(842.62 216.03) scale(1.12) translate(-12 -12)"><path d="M3 4a2 2 0 0 1 2 2v9"></path><path d="M5 6a2 2 0 0 1 4 0v9"></path><path d="M9 6a2 2 0 0 1 4 0v10a3 3 0 0 0 3 3h5l-3 -3m0 6l3 -3"></path></g><g class="zglyph" transform="translate(938.70 425.39) scale(1.12) translate(-12 -12)"><path d="M4 20l16 -16"></path><path d="M13 4h7v7"></path><path d="M6.5 12.5l5 5"></path></g><g class="zglyph" transform="translate(917.23 654.73) scale(1.12) translate(-12 -12)"><path d="M4 4a3 3 0 0 1 3 3v9"></path><path d="M7 7a3 3 0 0 1 6 0v11a3 3 0 0 1 -3 3"></path><path d="M13 17a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"></path></g><g class="zglyph" transform="translate(783.97 842.62) scale(1.12) translate(-12 -12)"><path d="M3 10l3 -3l3 3l3 -3l3 3l3 -3l3 3"></path><path d="M3 17l3 -3l3 3l3 -3l3 3l3 -3l3 3"></path></g><g class="zglyph" transform="translate(574.61 938.70) scale(1.12) translate(-12 -12)"><path d="M5 3a21 21 0 0 1 0 18"></path><path d="M19 3a21 21 0 0 0 0 18"></path><path d="M5 12l14 0"></path></g></g>
+
+    <!-- gold bezel -->
+    <circle class="bezel-ring" cx="500" cy="500" r="484" stroke="url(#gold)" stroke-width="28"></circle>
+    <circle class="bezel-edge" cx="500" cy="500" r="470" stroke="rgba(255,255,255,0.16)"></circle>
+    <circle class="bezel-edge" cx="500" cy="500" r="498" stroke="rgba(0,0,0,0.45)"></circle>
+
+    <!-- hands -->
+    <g id="hands">
+      <path id="handHour" class="hand-hour" d="M500 252 L505 472 L502 548 L498 548 L495 472 Z" transform="rotate(56.74166666666666 500 500)"></path>
+      <path id="handMin" class="hand-min" d="M500 152 L503 470 L501 542 L499 542 L497 470 Z" transform="rotate(320.9 500 500)"></path>
+      <circle class="hub" cx="500" cy="500" r="9"></circle>
+      <circle class="hub-dot" cx="500" cy="500" r="2.6"></circle>
+    </g>
+  <g id="zhits" transform="rotate(185.348 500 500)"><path class="zhit" d="M500.00000000000006 28 A472 472 0 0 1 736 91.23600941374497 L705 144.92958444838018 A410 410 0 0 0 500 90 Z"></path><path class="zhit" d="M736 91.23600941374497 A472 472 0 0 1 908.7639905862551 264 L855.0704155516198 295 A410 410 0 0 0 705 144.92958444838018 Z"></path><path class="zhit" d="M908.7639905862551 264 A472 472 0 0 1 972 500 L910 500 A410 410 0 0 0 855.0704155516198 295 Z"></path><path class="zhit" d="M972 500 A472 472 0 0 1 908.7639905862551 736 L855.0704155516198 705 A410 410 0 0 0 910 500 Z"></path><path class="zhit" d="M908.7639905862551 736 A472 472 0 0 1 736 908.763990586255 L705 855.0704155516198 A410 410 0 0 0 855.0704155516198 705 Z"></path><path class="zhit" d="M736 908.763990586255 A472 472 0 0 1 500.00000000000006 972 L500 910 A410 410 0 0 0 705 855.0704155516198 Z"></path><path class="zhit" d="M500.00000000000006 972 A472 472 0 0 1 264.0000000000001 908.7639905862551 L295.00000000000006 855.0704155516198 A410 410 0 0 0 500 910 Z"></path><path class="zhit" d="M264.0000000000001 908.7639905862551 A472 472 0 0 1 91.23600941374491 736 L144.92958444838013 705 A410 410 0 0 0 295.00000000000006 855.0704155516198 Z"></path><path class="zhit" d="M91.23600941374491 736 A472 472 0 0 1 28 500.00000000000006 L90 500.00000000000006 A410 410 0 0 0 144.92958444838013 705 Z"></path><path class="zhit" d="M28 500.00000000000006 A472 472 0 0 1 91.23600941374497 263.99999999999994 L144.92958444838018 294.99999999999994 A410 410 0 0 0 90 500.00000000000006 Z"></path><path class="zhit" d="M91.23600941374497 263.99999999999994 A472 472 0 0 1 263.9999999999998 91.23600941374508 L294.99999999999983 144.92958444838024 A410 410 0 0 0 144.92958444838018 294.99999999999994 Z"></path><path class="zhit" d="M263.9999999999998 91.23600941374508 A472 472 0 0 1 499.9999999999999 28 L499.99999999999994 90 A410 410 0 0 0 294.99999999999983 144.92958444838024 Z"></path></g><circle class="hit" cx="500" cy="500" r="18"></circle><text class="date-month" x="668.4" y="492.5">JUN</text><text class="date-day" x="668.4" y="504.5">15</text></svg>
+</div>
+
+<div id="tip"></div>
+<div id="signcard" class="" style="left: 752.827759px; top: 436.557455px;"><svg class="sc-glyph" viewBox="0 0 24 24" width="46" height="46" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3a6 6 0 0 0 12 0"></path><path d="M6 15a6 6 0 1 0 12 0a6 6 0 1 0 -12 0"></path></svg><div class="sc-name">Taurus</div><div class="sc-pl">Mars</div></div>
+
+<script>
+(function(){
+  "use strict";
+  var SVGNS="http://www.w3.org/2000/svg";
+  var CX=500, CY=500;
+  var EARTH_YEAR=31557600;   // seconds per Earth orbit at speed 1 => speed 1 is real time (365.25 d)
+  var MAXPX=16;           // max parallax shift in viewBox units, at weight 1
+
+  // ---- bodies: painted back (first) to front (last) ----
+  // au = real semi-major axis, used for the TRUE geocentric sky positions (not the drawn radii).
+  // start = dial angle at simT=0. Convention: a = (heliocentric ecliptic longitude - 90); the Moon
+  // uses geocentric longitude. These defaults are a real ephemeris snapshot for 2026-06-13; at boot
+  // initEphemeris() recomputes them live from astronomy-engine, falling back to this snapshot.
+  var BODIES=[
+    {key:'neptune',name:'NEPTUNE',r:405,  dot:7, au:30.07,period:164.8, start:272.36,weight:0.15},
+    {key:'uranus', name:'URANUS', r:373.7,dot:7, au:19.19,period:84.02, start:331.77,weight:0.22},
+    {key:'saturn', name:'SATURN', r:325,  dot:8, au:9.54, period:29.457,start:277.44,weight:0.30,ring:true},
+    {key:'jupiter',name:'JUPITER',r:283,  dot:9, au:5.20, period:11.862,start:32.71, weight:0.40},
+    {key:'mars',   name:'MARS',   r:197.5,dot:5, au:1.52, period:1.8808,start:295.74,weight:0.55},
+    {key:'earth',  name:'EARTH',  r:168.4,dot:18,au:1.00, period:1.0,   start:172.51,weight:0.68},
+    {key:'venus',  name:'VENUS',  r:145.5,dot:6, au:0.72, period:0.6152,start:89.53, weight:0.80},
+    {key:'mercury',name:'MERCURY',r:102.9,dot:5, au:0.39, period:0.2408,start:115.34,weight:0.92},
+    {key:'moon',   name:'MOON',   r:30,   dot:4, period:0.0748,start:329.31,weight:1.00,moon:true}
+  ];
+  var SIGNS=['ARI','TAU','GEM','CAN','LEO','VIR','LIB','SCO','SAG','CAP','AQR','PIS'];
+  var SIGN_FULL=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
+  var ABBR={sun:'SUN',mercury:'MER',venus:'VEN',earth:'EAR',mars:'MAR',jupiter:'JUP',saturn:'SAT',uranus:'URA',neptune:'NEP',moon:'MOO'};
+  var FULLNAME={sun:'Sun',mercury:'Mercury',venus:'Venus',earth:'Earth',mars:'Mars',jupiter:'Jupiter',saturn:'Saturn',uranus:'Uranus',neptune:'Neptune',moon:'Moon'};
+  // Zodiac glyphs (Tabler Icons, MIT) — 24x24, stroke line figures, in sign order Aries..Pisces
+  var GLYPHS=[
+    ["M12 5a5 5 0 1 0 -4 8","M16 13a5 5 0 1 0 -4 -8","M12 21l0 -16"],
+    ["M6 3a6 6 0 0 0 12 0","M6 15a6 6 0 1 0 12 0a6 6 0 1 0 -12 0"],
+    ["M3 3a21 21 0 0 0 18 0","M3 21a21 21 0 0 1 18 0","M7 4.5l0 15","M17 4.5l0 15"],
+    ["M3 12a3 3 0 1 0 6 0a3 3 0 1 0 -6 0","M15 12a3 3 0 1 0 6 0a3 3 0 1 0 -6 0","M3 12a10 6.5 0 0 1 14 -6.5","M21 12a10 6.5 0 0 1 -14 6.5"],
+    ["M13 17a4 4 0 1 0 8 0","M3 16a3 3 0 1 0 6 0a3 3 0 1 0 -6 0","M7 7a4 4 0 1 0 8 0a4 4 0 1 0 -8 0","M7 7c0 3 2 5 2 9","M15 7c0 4 -2 6 -2 10"],
+    ["M3 4a2 2 0 0 1 2 2v9","M5 6a2 2 0 0 1 4 0v9","M9 6a2 2 0 0 1 4 0v10a7 5 0 0 0 7 5","M12 21a7 5 0 0 0 7 -5v-2a3 3 0 0 0 -6 0"],
+    ["M5 20l14 0","M5 17h5v-.3a7 7 0 1 1 4 0v.3h5"],
+    ["M3 4a2 2 0 0 1 2 2v9","M5 6a2 2 0 0 1 4 0v9","M9 6a2 2 0 0 1 4 0v10a3 3 0 0 0 3 3h5l-3 -3m0 6l3 -3"],
+    ["M4 20l16 -16","M13 4h7v7","M6.5 12.5l5 5"],
+    ["M4 4a3 3 0 0 1 3 3v9","M7 7a3 3 0 0 1 6 0v11a3 3 0 0 1 -3 3","M13 17a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"],
+    ["M3 10l3 -3l3 3l3 -3l3 3l3 -3l3 3","M3 17l3 -3l3 3l3 -3l3 3l3 -3l3 3"],
+    ["M5 3a21 21 0 0 1 0 18","M19 3a21 21 0 0 0 0 18","M5 12l14 0"]
+  ];
+  var GLYPH_S=1.12;   // wheel glyph scale (24px grid)
+  var EARTH=BODIES.filter(function(b){return b.key==='earth';})[0];
+  var SATURN=BODIES.filter(function(b){return b.key==='saturn';})[0];
+  // Speed is a real-time multiplier. Slider is exponential: v=0 -> 1x (real time), v=1 -> MAX.
+  // MAX = 1 Saturn orbit in 10 minutes => Saturn's period (s) / 600 s.
+  var MAX_SPEED=SATURN.period*EARTH_YEAR/600;       // ~1.55 million x
+  var HANDS_MAX=5;                                   // above 5x real time, hide the watch hands
+  function speedToMul(v){ return Math.exp(v*Math.log(MAX_SPEED)); }   // v in [0,1]
+  function speedLabel(sp){
+    if(sp<1.5) return 'real time';
+    if(sp<3600) return Math.round(sp)+'\u00D7';                 // 2x .. 3600x
+    if(sp<86400) return (sp/3600).toFixed(1)+' hr/s';           // ~1 .. 24 hr/s
+    return (sp/86400).toFixed(1)+' day/s';                      // ~1 .. 18 day/s
+  }
+  var EARTH_RATE=360/(EARTH.period*EARTH_YEAR);   // deg/sec; used to pin Earth in the stationary frame
+  var MONTHS=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+  function helioA(b,t){ return ((b.start+(360/(b.period*EARTH_YEAR))*t)%360+360)%360; }
+
+  var ZIN=422, ZOUT=468, ZLAB=445, ZOCC=412;
+
+  function el(tag,attrs){
+    var e=document.createElementNS(SVGNS,tag);
+    if(attrs)for(var k in attrs)e.setAttribute(k,attrs[k]);
+    return e;
+  }
+  // clockFrom12 (deg, clockwise from top) -> point at radius R
+  function pt(c,R){
+    var th=(-90+c)*Math.PI/180;
+    return [CX+R*Math.cos(th), CY+R*Math.sin(th)];
+  }
+  // sign at the end of the ray from (fx,fy) to (tx,ty). rot = current zodiac-wheel rotation,
+  // subtracted so the sign is the same whether the wheel is fixed or turning.
+  function dirToSign(fx,fy,tx,ty,rot){
+    var ang=Math.atan2(ty-fy,tx-fx)*180/Math.PI; // screen angle, +y down => clockwise
+    var clock=((ang+90-(rot||0))%360+360)%360;
+    return {si:Math.floor(clock/30), deg:Math.floor(clock%30)};
+  }
+  // paint a wedge gradient with one stop per occupying body color (a rainbow when several)
+  function setStops(g,cols){
+    var sig=cols.join('|');
+    if(g._sig===sig)return;                 // only rebuild when occupancy changes
+    g._sig=sig;
+    while(g.firstChild)g.removeChild(g.firstChild);
+    if(cols.length===1){
+      g.appendChild(el('stop',{offset:'0%','stop-color':cols[0]}));
+      g.appendChild(el('stop',{offset:'100%','stop-color':cols[0]}));
+    }else{
+      for(var i=0;i<cols.length;i++){
+        g.appendChild(el('stop',{offset:(i/(cols.length-1)*100).toFixed(1)+'%','stop-color':cols[i]}));
+      }
+    }
+  }
+  // write the occupying bodies into a sign's label, each tinted its own color
+  function setOccupants(t,keys){
+    var sig=keys.join(',');
+    if(t._sig===sig)return;
+    t._sig=sig;
+    while(t.firstChild)t.removeChild(t.firstChild);
+    keys.forEach(function(k,idx){
+      var ts=el('tspan',{fill:colorMap[k]});
+      ts.textContent=(idx?'  ':'')+ABBR[k];
+      t.appendChild(ts);
+    });
+  }
+
+  // ---- build zodiac band background (full annulus) ----
+  (function(){
+    var oS=pt(0,ZOUT), iS=pt(0,ZIN);
+    var d="M"+oS[0]+" "+oS[1]+
+          "A"+ZOUT+" "+ZOUT+" 0 1 1 "+(oS[0]-0.01)+" "+oS[1]+" Z "+
+          "M"+iS[0]+" "+iS[1]+
+          "A"+ZIN+" "+ZIN+" 0 1 0 "+(iS[0]-0.01)+" "+iS[1]+" Z";
+    var p=document.getElementById('zbandBg');
+    p.setAttribute('d',d);
+    p.setAttribute('fill-rule','evenodd');
+  })();
+
+  // ---- build zodiac wedges / arcs / dividers / labels ----
+  // Graphics that may rotate live in #zwheel (rotated as one group). Text labels live
+  // outside it and are repositioned each frame so their glyphs stay upright.
+  var zwedges=[], zarcs=[], zgrads=[], zglyphs=[], zwheel=null;
+  (function(){
+    var g=document.getElementById('zodiac');
+    var defs=document.querySelector('#dial defs');
+    zwheel=el('g',{id:'zwheel'}); g.appendChild(zwheel);
+    for(var i=0;i<12;i++){
+      var c0=i*30, c1=c0+30;
+      var oA=pt(c0,ZOUT), oB=pt(c1,ZOUT), iB=pt(c1,ZIN), iA=pt(c0,ZIN);
+
+      // gradient spanning the wedge's inner edge, stops filled in per frame
+      var grad=el('linearGradient',{id:'zgrad'+i,gradientUnits:'userSpaceOnUse',
+                                    x1:iA[0],y1:iA[1],x2:iB[0],y2:iB[1]});
+      defs.appendChild(grad); zgrads.push(grad);
+
+      var wd="M"+oA[0]+" "+oA[1]+
+             " A"+ZOUT+" "+ZOUT+" 0 0 1 "+oB[0]+" "+oB[1]+
+             " L"+iB[0]+" "+iB[1]+
+             " A"+ZIN+" "+ZIN+" 0 0 0 "+iA[0]+" "+iA[1]+" Z";
+      var w=el('path',{class:'zwedge',d:wd,fill:'url(#zgrad'+i+')'}); zwheel.appendChild(w); zwedges.push(w);
+
+      var ad="M"+iA[0]+" "+iA[1]+" A"+ZIN+" "+ZIN+" 0 0 1 "+iB[0]+" "+iB[1];
+      var a=el('path',{class:'zarc',d:ad,stroke:'url(#zgrad'+i+')'}); zwheel.appendChild(a); zarcs.push(a);
+    }
+    for(var j=0;j<12;j++){
+      var inP=pt(j*30,ZIN), ouP=pt(j*30,ZOUT);
+      zwheel.appendChild(el('line',{class:'zdiv',x1:inP[0],y1:inP[1],x2:ouP[0],y2:ouP[1]}));
+    }
+    for(var k=0;k<12;k++){
+      var gg=el('g',{class:'zglyph'});
+      GLYPHS[k].forEach(function(d){ gg.appendChild(el('path',{d:d})); });
+      g.appendChild(gg); zglyphs.push(gg);
+    }
+  })();
+
+  // ---- build planet discs ----
+  var groups={};
+  (function(){
+    var host=document.getElementById('discs');
+    BODIES.forEach(function(b){
+      var ox=b.moon?0:CX, oy=b.moon?0:CY, dx=ox+b.r;   // moon group is local-origin; placed on Earth each frame
+      var g=el('g',{class:'disc disc-'+b.key});
+      g.appendChild(el('circle',{class:'orbit-ring',cx:ox,cy:oy,r:b.r}));
+      g.appendChild(el('line',{class:'spoke',x1:ox,y1:oy,x2:dx,y2:oy}));
+      if(b.ring){
+        g.appendChild(el('ellipse',{class:'saturn-ring',cx:dx,cy:oy,rx:b.dot+6,ry:(b.dot+6)*0.36}));
+      }
+      if(b.key==='earth'){
+        g.appendChild(el('circle',{class:'earth-ring',cx:dx,cy:oy,r:b.dot+3}));
+      }
+      // visible marker
+      var dot=el('circle',{class:'planet',cx:dx,cy:oy,r:b.dot,fill:'var(--'+b.key+')'});
+      g.appendChild(dot);
+      // hit target (larger, invisible)
+      var hit=el('circle',{class:'hit',cx:dx,cy:oy,r:Math.max(16,b.dot+11)});
+      g.appendChild(hit);
+      host.appendChild(g);
+      groups[b.key]=g;
+      bindHover(hit,b);
+    });
+  })();
+
+  // dial finishes: a radial sunburst texture (sheen + brushed lines) and an aventurine
+  // sparkle field. Both sit behind the orbits; visibility is driven by a class on the root.
+  (function(){
+    var svgEl=document.getElementById('dial');
+    var defs=document.querySelector('#dial defs');
+    var ground=document.querySelector('#dial .ground');
+    var anchor=ground.nextSibling;
+
+    // soft domed sheen so "textured" reads at a glance
+    var sheen=el('radialGradient',{id:'dialSheen',gradientUnits:'userSpaceOnUse',cx:500,cy:452,r:470});
+    sheen.appendChild(el('stop',{offset:'0%','stop-color':'#9FB2DE','stop-opacity':'0.17'}));
+    sheen.appendChild(el('stop',{offset:'55%','stop-color':'#9FB2DE','stop-opacity':'0.05'}));
+    sheen.appendChild(el('stop',{offset:'100%','stop-color':'#9FB2DE','stop-opacity':'0'}));
+    defs.appendChild(sheen);
+
+    var tex=el('g',{id:'texture'});
+    tex.appendChild(el('circle',{cx:CX,cy:CY,r:468,fill:'url(#dialSheen)'}));
+    for(var i=0;i<120;i++){
+      var ang=i/120*360, a=pt(ang,40), b=pt(ang,468);
+      tex.appendChild(el('line',{class:'tline',x1:a[0],y1:a[1],x2:b[0],y2:b[1],
+        'stroke-width':0.7,'stroke-opacity':(0.05+Math.random()*0.07).toFixed(3)}));
+    }
+    svgEl.insertBefore(tex,anchor);
+
+    var sp=el('g',{id:'sparkles'});
+    var palette=['#EAF0FF','#EAF0FF','#EAF0FF','#F3DFA6','#BFD2F2'];
+    for(var k=0;k<160;k++){
+      var th=Math.random()*Math.PI*2, rr=Math.sqrt(Math.random())*456;
+      var c=el('circle',{class:'sparkle',cx:(CX+rr*Math.cos(th)).toFixed(1),cy:(CY+rr*Math.sin(th)).toFixed(1),
+        r:(1.4+Math.random()*2.8).toFixed(2),fill:palette[(Math.random()*palette.length)|0]});
+      c.style.setProperty('--o1',(0.55+Math.random()*0.45).toFixed(2));
+      c.style.setProperty('--o0',(0.10+Math.random()*0.18).toFixed(2));
+      c.style.setProperty('--d',(2.5+Math.random()*4.5).toFixed(2)+'s');
+      c.style.setProperty('--dl',(Math.random()*5).toFixed(2)+'s');
+      sp.appendChild(c);
+    }
+    svgEl.insertBefore(sp,anchor);
+  })();
+
+  // ===== state =====
+  var cfg={speed:1, earthFixed:true, parallaxOn:true, parallax:0.7, glow:true, occ:true, twilight:true, conj:true, conjDeg:3, hands:true};
+  var colorMap={};                  // body key -> current hex, kept in sync with the pickers
+  var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(reduce){cfg.parallaxOn=false;}
+
+  var simT=0, last=performance.now();
+  var bootMs=Date.now();                         // sim clock = bootMs + simT*1000 (driven by speed)
+  var simClock=document.getElementById('simClock');
+  var tiltX=0, tiltY=0, tTiltX=0, tTiltY=0;   // current + target tilt, range ~[-1,1]
+  var hovered=null, pinned=null;
+  var hoveredSign=null, pinnedSign=null;
+  var world={}; // last computed world positions per body
+
+  // ===== sizing =====
+  var svg=document.getElementById('dial');
+  function size(){
+    var pad=28;
+    var topSafe=parseFloat(getComputedStyle(document.body).paddingTop)||0;
+    var s=Math.min(window.innerWidth, window.innerHeight)-pad;
+    if(s<160)s=160;
+    svg.style.width=s+'px';
+    svg.style.height=s+'px';
+  }
+  size();
+  window.addEventListener('resize',size);
+  window.addEventListener('orientationchange',function(){setTimeout(size,200);});
+  if(window.visualViewport)window.visualViewport.addEventListener('resize',size);
+
+  // ===== parallax input =====
+  // desktop: cursor; mobile: device tilt (after permission)
+  svg.addEventListener('pointermove',function(e){
+    if(e.pointerType==='touch')return;
+    var r=svg.getBoundingClientRect();
+    tTiltX=((e.clientX-r.left)/r.width-0.5)*2;
+    tTiltY=((e.clientY-r.top)/r.height-0.5)*2;
+  },{passive:true});
+  svg.addEventListener('pointerleave',function(){tTiltX=0;tTiltY=0;});
+
+  function onOrient(ev){
+    if(ev.gamma==null&&ev.beta==null)return;
+    var gx=Math.max(-30,Math.min(30,ev.gamma||0));
+    var by=Math.max(-30,Math.min(30,(ev.beta||45)-45));
+    tTiltX=gx/30; tTiltY=by/30;
+  }
+  var motionBtn=document.getElementById('motionBtn');
+  var needsPermission = typeof DeviceOrientationEvent!=='undefined'
+                        && typeof DeviceOrientationEvent.requestPermission==='function';
+  if(needsPermission){
+    motionBtn.style.display='block';
+    motionBtn.addEventListener('click',function(){
+      DeviceOrientationEvent.requestPermission().then(function(res){
+        if(res==='granted'){
+          window.addEventListener('deviceorientation',onOrient,{passive:true});
+          motionBtn.textContent='Device tilt enabled';
+          motionBtn.disabled=true;
+        }else{
+          motionBtn.textContent='Tilt permission denied';
+        }
+      }).catch(function(){motionBtn.textContent='Tilt unavailable';});
+    });
+  } else if('ondeviceorientation' in window){
+    try{window.addEventListener('deviceorientation',onOrient,{passive:true});}catch(e){}
+  }
+
+  // ===== hover / tap tooltip =====
+  var tip=document.getElementById('tip');
+  function bindHover(hit,b){
+    hit.addEventListener('mouseenter',function(){hovered=b;});
+    hit.addEventListener('mouseleave',function(){hovered=null;});
+    hit.addEventListener('pointerdown',function(e){
+      e.stopPropagation();
+      pinnedSign=null;
+      pinned=(pinned===b)?null:b;
+    });
+  }
+  function bindSignHover(h,i){
+    h.addEventListener('mouseenter',function(){hoveredSign=i;});
+    h.addEventListener('mouseleave',function(){if(hoveredSign===i)hoveredSign=null;});
+    h.addEventListener('pointerdown',function(e){
+      e.stopPropagation();
+      pinned=null;
+      pinnedSign=(pinnedSign===i)?null:i;
+    });
+  }
+  svg.addEventListener('pointerdown',function(){pinned=null;pinnedSign=null;});
+
+  // per-sign hover/tap targets over the band, to reveal a sign's contents.
+  // Grouped so they rotate together with the zodiac wheel.
+  var zhits=el('g',{id:'zhits'});
+  (function(){
+    for(var i=0;i<12;i++){
+      var c0=i*30,c1=c0+30,HI=410,HO=472;
+      var oA=pt(c0,HO),oB=pt(c1,HO),iB=pt(c1,HI),iA=pt(c0,HI);
+      var d="M"+oA[0]+" "+oA[1]+" A"+HO+" "+HO+" 0 0 1 "+oB[0]+" "+oB[1]+
+            " L"+iB[0]+" "+iB[1]+" A"+HI+" "+HI+" 0 0 0 "+iA[0]+" "+iA[1]+" Z";
+      var h=el('path',{class:'zhit',d:d});
+      zhits.appendChild(h);
+      bindSignHover(h,i);
+    }
+    svg.appendChild(zhits);
+  })();
+
+  // ===== controls wiring =====
+  var root=document.documentElement;
+  function setHide(cls,on){root.classList.toggle(cls,!on);}
+
+  var gear=document.getElementById('gear');
+  var panel=document.getElementById('panel');
+  function togglePanel(open){
+    var o=(open==null)?!panel.classList.contains('open'):open;
+    panel.classList.toggle('open',o);
+    gear.textContent=o?'CLOSE':'CONTROLS';
+  }
+  gear.addEventListener('click',function(){togglePanel();});
+  document.getElementById('closeBtn').addEventListener('click',function(){togglePanel(false);});
+
+  function bindRange(id,valId,fmt,apply){
+    var inp=document.getElementById(id), out=valId?document.getElementById(valId):null;
+    function upd(){var v=parseFloat(inp.value);if(out)out.innerHTML=fmt(v);apply(v);}
+    inp.addEventListener('input',upd); upd();
+    return inp;
+  }
+  function bindCheck(id,apply){
+    var inp=document.getElementById(id);
+    function upd(){apply(inp.checked);}
+    inp.addEventListener('change',upd); upd();
+    return inp;
+  }
+
+  function updateHands(){ setHide('hide-hands', cfg.hands && cfg.speed<=HANDS_MAX); }
+  var cSpeed=bindRange('speed','speedVal',function(v){return speedLabel(speedToMul(v));},
+                       function(v){cfg.speed=speedToMul(v); updateHands();});
+  var cPx   =bindRange('parallax','parallaxVal',function(v){return v.toFixed(2);},function(v){cfg.parallax=v;});
+  var cConjD=bindRange('conjDeg','conjDegVal',function(v){return v+'&deg;';},function(v){cfg.conjDeg=v;});
+  var cPxOn =bindCheck('parallaxOn',function(v){cfg.parallaxOn=v;});
+  bindCheck('t_orbits',function(v){setHide('hide-orbits',v);});
+  bindCheck('t_spokes',function(v){setHide('hide-spokes',v);});
+  bindCheck('t_zlabels',function(v){setHide('hide-zlabels',v);});
+  bindCheck('t_dividers',function(v){setHide('hide-dividers',v);});
+  bindCheck('t_glow',function(v){cfg.glow=v;});
+  bindCheck('t_occ',function(v){cfg.occ=v;});
+  bindCheck('t_twilight',function(v){cfg.twilight=v;setHide('hide-twilight',v);});
+  bindCheck('t_conj',function(v){cfg.conj=v;setHide('hide-conj',v);});
+  bindCheck('t_hands',function(v){cfg.hands=v;updateHands();});
+  bindCheck('t_moon',function(v){setHide('hide-moon',v);});
+
+  // dial finish selector -> root class (bg-flat | bg-textured | bg-sparkle)
+  var bgSel=document.getElementById('bgMode');
+  function applyBg(){
+    root.classList.remove('bg-flat','bg-textured','bg-sparkle');
+    root.classList.add('bg-'+bgSel.value);
+  }
+  bgSel.addEventListener('change',applyBg); applyBg();
+
+  // Earth frame selector
+  var earthSel=document.getElementById('earthMode');
+  function applyEarth(){cfg.earthFixed=(earthSel.value==='fixed');}
+  earthSel.addEventListener('change',applyEarth); applyEarth();
+
+  // reflect reduced-motion default into the checkbox
+  document.getElementById('parallaxOn').checked=cfg.parallaxOn;
+
+  // color inputs
+  var colorInputs=panel.querySelectorAll('input[type=color]');
+  Array.prototype.forEach.call(colorInputs,function(inp){
+    inp.dataset.def=inp.value;
+    colorMap[inp.dataset.var.replace('--','')]=inp.value;
+    inp.addEventListener('input',function(){
+      root.style.setProperty(inp.dataset.var,inp.value);
+      colorMap[inp.dataset.var.replace('--','')]=inp.value;
+    });
+  });
+
+  // reset
+  document.getElementById('resetBtn').addEventListener('click',function(){
+    Array.prototype.forEach.call(colorInputs,function(inp){
+      inp.value=inp.dataset.def; root.style.removeProperty(inp.dataset.var);
+      colorMap[inp.dataset.var.replace('--','')]=inp.dataset.def;
+    });
+    cSpeed.value=0; cSpeed.dispatchEvent(new Event('input'));
+    cPx.value=0.7;  cPx.dispatchEvent(new Event('input'));
+    cConjD.value=3; cConjD.dispatchEvent(new Event('input'));
+    setChk('t_orbits',true);setChk('t_spokes',false);setChk('t_zlabels',true);
+    setChk('t_dividers',true);setChk('t_glow',true);setChk('t_occ',true);setChk('t_twilight',true);setChk('t_conj',true);
+    setChk('t_hands',true);setChk('t_moon',true);setChk('parallaxOn',!reduce);
+    bgSel.value='flat'; bgSel.dispatchEvent(new Event('change'));
+    earthSel.value='fixed'; earthSel.dispatchEvent(new Event('change'));
+  });
+  function setChk(id,v){var c=document.getElementById(id);c.checked=v;c.dispatchEvent(new Event('change'));}
+
+  // ===== conjunction line pool =====
+  var conjHost=document.getElementById('conj');
+
+  // Sun sits at center (the spindle); give it a hover target for Earth's sign
+  world['sun']={x:CX,y:CY,a:0};
+  (function(){
+    var sh=el('circle',{class:'hit',cx:CX,cy:CY,r:18});
+    svg.appendChild(sh);
+    bindHover(sh,{key:'sun',name:'SUN'});
+  })();
+
+  // Earth's date complication: two text lines positioned over Earth each frame, kept upright
+  var dateMonth=el('text',{class:'date-month'}); svg.appendChild(dateMonth);
+  var dateDay=el('text',{class:'date-day'});     svg.appendChild(dateDay);
+
+  var cone=document.getElementById('twilightCone');
+  var signcard=document.getElementById('signcard');
+  var shownCardSig='', cardCX=0, cardCY=0;
+  function glyphSVG(i,size){
+    var p=GLYPHS[i].map(function(d){return '<path d="'+d+'"/>';}).join('');
+    return '<svg class="sc-glyph" viewBox="0 0 24 24" width="'+size+'" height="'+size+'" fill="none" '+
+           'stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+p+'</svg>';
+  }
+
+  // ===== animation loop =====
+  function frame(now){
+    var dt=(now-last)/1000; last=now;
+    if(dt>0.1)dt=0.1;                 // clamp after tab-switch
+    simT += dt*cfg.speed;
+
+    // smooth tilt
+    tiltX += (tTiltX-tiltX)*0.08;
+    tiltY += (tTiltY-tiltY)*0.08;
+    var on=cfg.parallaxOn?1:0;
+
+    // Earth's heliocentric angle, and the rotation that pins Earth at 3 o'clock (stationary mode).
+    // Stationary mode rotates the whole scene (and the zodiac) by this amount.
+    var aE=((EARTH.start+EARTH_RATE*simT)%360+360)%360;
+    var rot=cfg.earthFixed ? ((360-aE)%360) : 0;     // Earth display angle = aE + rot = 0 (3 o'clock)
+
+    BODIES.forEach(function(b){
+      var rate=360/(b.period*EARTH_YEAR);       // deg per sim-second
+      var a=((b.start+rate*simT)%360+360)%360;
+      var da=(a+rot)%360;                        // display angle in the current frame
+      var rad=da*Math.PI/180;
+      if(b.moon){
+        // orbit the live Earth position (inherits Earth's parallax)
+        var e=world['earth']||{x:CX,y:CY};
+        groups[b.key].setAttribute('transform','translate('+e.x.toFixed(2)+' '+e.y.toFixed(2)+') rotate('+da.toFixed(3)+' 0 0)');
+        world[b.key]={x:e.x+b.r*Math.cos(rad), y:e.y+b.r*Math.sin(rad), a:da};
+      }else{
+        var px=-tiltX*MAXPX*cfg.parallax*b.weight*on;
+        var py=-tiltY*MAXPX*cfg.parallax*b.weight*on;
+        groups[b.key].setAttribute('transform','translate('+px.toFixed(2)+' '+py.toFixed(2)+') rotate('+da.toFixed(3)+' '+CX+' '+CY+')');
+        world[b.key]={x:CX+b.r*Math.cos(rad)+px, y:CY+b.r*Math.sin(rad)+py, a:da};
+      }
+    });
+
+    // turn the zodiac wheel and its hit targets to match the frame
+    zwheel.setAttribute('transform','rotate('+rot.toFixed(3)+' '+CX+' '+CY+')');
+    zhits.setAttribute('transform','rotate('+rot.toFixed(3)+' '+CX+' '+CY+')');
+
+    // TRUE geocentric directions, from real orbital distances (NOT the drawn log radii).
+    // This is what an observer on Earth actually sees: the sign and conjunction sky.
+    var aErad=aE*Math.PI/180, exh=Math.cos(aErad), eyh=Math.sin(aErad);  // Earth heliocentric (au=1)
+    var geo={};
+    function setGeo(key,gScreen){
+      var g=((gScreen%360)+360)%360;
+      var lon=((g+90)%360+360)%360;                  // zodiac longitude (clockFrom12)
+      geo[key]={g:g, si:Math.floor(lon/30), deg:Math.floor(lon%30)};
+    }
+    setGeo('sun', aE+180);                            // Sun appears opposite Earth's heliocentric position
+    BODIES.forEach(function(b){
+      if(b.key==='earth')return;
+      var a=helioA(b,simT);
+      if(b.moon){ setGeo('moon', a); }                // Moon's geocentric direction is its orbital angle
+      else{
+        var ar=a*Math.PI/180;
+        setGeo(b.key, Math.atan2(b.au*Math.sin(ar)-eyh, b.au*Math.cos(ar)-exh)*180/Math.PI);
+      }
+    });
+    geo['earth']=geo['sun'];                          // Earth's sign = the Sun's sign
+
+    // zodiac occupancy from the true sky. Sun lights Earth's sign; planets light their own. Moon excluded.
+    var occ={};
+    (occ[geo['sun'].si]||(occ[geo['sun'].si]=[])).push('sun');
+    BODIES.forEach(function(b){
+      if(b.key==='earth'||b.moon)return;
+      var si=geo[b.key].si;
+      (occ[si]||(occ[si]=[])).push(b.key);
+    });
+
+    // zodiac highlight; glyphs repositioned, kept upright, as the wheel turns
+    for(var i=0;i<12;i++){
+      var keys=occ[i];
+      var lit=cfg.glow && !!keys;
+      zwedges[i].classList.toggle('active',lit);
+      zarcs[i].classList.toggle('active',lit);
+      zglyphs[i].classList.toggle('active',lit);
+      if(lit)setStops(zgrads[i],keys.map(function(k){return colorMap[k];}));
+
+      var lc=(i*30+15+rot)%360, gp=pt(lc,ZLAB);
+      zglyphs[i].setAttribute('transform','translate('+gp[0].toFixed(2)+' '+gp[1].toFixed(2)+') scale('+GLYPH_S+') translate(-12 -12)');
+    }
+
+    // sign info card: full name, glyph, and the planets in that sign (on hover / tap)
+    var curSign=(pinnedSign!=null)?pinnedSign:(hoveredSign!=null?hoveredSign:-1);
+    var want=cfg.occ&&curSign>=0;
+    var cardSig=want?(curSign+':'+((occ[curSign]||[]).join(','))):'';
+    if(want){
+      if(cardSig!==shownCardSig){
+        var ks=occ[curSign]||[];
+        var pl=ks.length?ks.map(function(k){return FULLNAME[k];}).join('  ·  '):'No planets';
+        signcard.innerHTML=glyphSVG(curSign,46)+
+          '<div class="sc-name">'+SIGN_FULL[curSign]+'</div><div class="sc-pl">'+pl+'</div>';
+        signcard.classList.add('show');
+      }
+      var cp=pt((curSign*30+15+rot)%360,ZLAB);
+      var rr=svg.getBoundingClientRect(), scl=rr.width/1000;
+      var sx=rr.left+cp[0]*scl, sy=rr.top+cp[1]*scl;
+      if(cardSig!==shownCardSig){                       // recompute clamp only when content changed
+        signcard.style.left=sx+'px'; signcard.style.top=sy+'px';
+        var cr=signcard.getBoundingClientRect(), vw=window.innerWidth, vh=window.innerHeight;
+        cardCX=0; cardCY=0;
+        if(cr.left<6)cardCX=6-cr.left; else if(cr.right>vw-6)cardCX=(vw-6)-cr.right;
+        if(cr.top<6)cardCY=6-cr.top; else if(cr.bottom>vh-6)cardCY=(vh-6)-cr.bottom;
+      }
+      signcard.style.left=(sx+cardCX)+'px'; signcard.style.top=(sy+cardCY)+'px';
+      shownCardSig=cardSig;
+    }else if(shownCardSig){
+      signcard.classList.remove('show'); shownCardSig='';
+    }
+
+    // sim clock: starts at the real boot time, advances at (speed x) real time
+    var d=new Date(bootMs+simT*1000);
+    var mh=(d.getMinutes()+d.getSeconds()/60);
+    var minDeg=mh*6;
+    var hrDeg=((d.getHours()%12)+mh/60)*30;
+    document.getElementById('handMin').setAttribute('transform','rotate('+minDeg+' '+CX+' '+CY+')');
+    document.getElementById('handHour').setAttribute('transform','rotate('+hrDeg+' '+CX+' '+CY+')');
+
+    // date complication rides Earth, upright
+    var ew=world['earth'];
+    dateMonth.setAttribute('x',ew.x); dateMonth.setAttribute('y',ew.y-7.5); dateMonth.textContent=MONTHS[d.getMonth()];
+    dateDay.setAttribute('x',ew.x);   dateDay.setAttribute('y',ew.y+4.5);   dateDay.textContent=d.getDate();
+    var hh=('0'+d.getHours()).slice(-2), mm=('0'+d.getMinutes()).slice(-2);
+    simClock.textContent=d.getDate()+' '+MONTHS[d.getMonth()]+' '+d.getFullYear()+'  \u00B7  '+hh+':'+mm;
+
+    // twilight cone: 25 deg wide (+/-12.5) around the Earth->Sun direction, clipped to the dial
+    if(cfg.twilight){
+      var ds=Math.atan2(CY-ew.y,CX-ew.x), hw=12.5*Math.PI/180, L=760;
+      var x1=ew.x+L*Math.cos(ds-hw), y1=ew.y+L*Math.sin(ds-hw);
+      var x2=ew.x+L*Math.cos(ds+hw), y2=ew.y+L*Math.sin(ds+hw);
+      cone.setAttribute('d','M'+ew.x.toFixed(1)+' '+ew.y.toFixed(1)+' L'+x1.toFixed(1)+' '+y1.toFixed(1)+' L'+x2.toFixed(1)+' '+y2.toFixed(1)+' Z');
+    }
+
+    // conjunctions, detected in the TRUE sky (geocentric directions from real distances),
+    // so the dates match what an observer would see. Each cluster draws one line from Earth
+    // to the conjunction's point on the zodiac. Weight grows with bodies (Moon = half step).
+    // Conjunctions inside twilight (within 12.5 deg of the Sun) are hidden.
+    while(conjHost.firstChild)conjHost.removeChild(conjHost.firstChild);
+    if(cfg.conj){
+      var E=world['earth'], TWILIGHT=12.5;
+      var items=BODIES.filter(function(b){return b.key!=='earth';})
+                      .map(function(b){return {moon:!!b.moon, g:geo[b.key].g};});
+      items.sort(function(p,q){return p.g-q.g;});
+      var n=items.length;
+
+      // rotate the start to just after the widest gap, so clusters never straddle the wrap
+      var start=0, maxGap=-1;
+      for(var gi=0;gi<n;gi++){
+        var gap=(items[(gi+1)%n].g-items[gi].g+360)%360;
+        if(gap>maxGap){maxGap=gap;start=(gi+1)%n;}
+      }
+      // single-linkage walk: break a cluster wherever the step exceeds the threshold
+      var clusters=[], cur=[items[start]];
+      for(var ci=1;ci<n;ci++){
+        var prev=items[(start+ci-1)%n], it=items[(start+ci)%n];
+        if((it.g-prev.g+360)%360<=cfg.conjDeg)cur.push(it);
+        else{clusters.push(cur);cur=[it];}
+      }
+      clusters.push(cur);
+
+      clusters.forEach(function(group){
+        if(group.length<2)return;
+        var nPlanets=0, hasMoon=false, sx=0, sy=0;
+        group.forEach(function(m){
+          if(m.moon)hasMoon=true; else nPlanets++;
+          var r=m.g*Math.PI/180; sx+=Math.cos(r); sy+=Math.sin(r);     // circular mean direction
+        });
+        if(nPlanets===0)return;
+        var meanG=Math.atan2(sy,sx)*180/Math.PI;
+        var sep=Math.abs(meanG-geo['sun'].g)%360; if(sep>180)sep=360-sep;
+        if(sep<TWILIGHT)return;                                          // lost in twilight
+
+        var score=nPlanets+(hasMoon?0.5:0);          // Moon is a half step
+        var t=Math.max(0,Math.min(1,(score-1.5)/2.5)); // 1.5 -> whisper, 4.0 -> heaviest
+        var ep=pt(((meanG+90+rot)%360+360)%360, ZIN);  // the conjunction's spot on the zodiac
+        conjHost.appendChild(el('line',{class:'conj-line',x1:E.x,y1:E.y,x2:ep[0],y2:ep[1],
+          'stroke-width':(0.5+t*1.9).toFixed(2),'stroke-opacity':(0.07+t*0.53).toFixed(3)}));
+      });
+    }
+
+    // tooltip
+    var show=hovered||pinned;
+    if(show){
+      var w=world[show.key]||{x:CX,y:CY};
+      var r=svg.getBoundingClientRect();
+      var sc=r.width/1000;
+      tip.style.left=(r.left+w.x*sc)+'px';
+      tip.style.top =(r.top +w.y*sc)+'px';
+      var s=geo[show.key];                                 // earth maps to the Sun's sign
+      if(s)tip.textContent=show.name+'  \u00B7  '+SIGN_FULL[s.si]+' '+s.deg+'\u00B0';
+      else tip.textContent=show.name;
+      tip.classList.add('show');
+    }else{
+      tip.classList.remove('show');
+    }
+
+    requestAnimationFrame(frame);
+  }
+  // ---- live ephemeris (production) ----
+  // Try to load astronomy-engine and recompute each body's start angle for the real current date.
+  // a = heliocentric ecliptic longitude - 90 (planets/Earth); Moon uses geocentric longitude.
+  // If the script is blocked or offline, the baked-in snapshot above is used unchanged.
+  var AE_URL='https://cdn.jsdelivr.net/npm/astronomy-engine@2.1.19/astronomy.browser.js';
+  function applyEphemeris(A){
+    try{
+      var date=new Date(bootMs+simT*1000);   // the sim clock (= real now at boot)
+      BODIES.forEach(function(b){
+        var rate=360/(b.period*EARTH_YEAR), lon;
+        if(b.moon){ lon=A.EclipticGeoMoon(date).lon; }
+        else{
+          var key=b.key.charAt(0).toUpperCase()+b.key.slice(1);
+          if(!A.Body[key])return;
+          lon=A.EclipticLongitude(A.Body[key],date);    // heliocentric, equinox of date
+        }
+        b.start=(((lon-90)-rate*simT)%360+360)%360;      // seamless at the current simT
+      });
+    }catch(e){/* keep snapshot */}
+  }
+  (function loadEphemeris(){
+    if(window.Astronomy){ applyEphemeris(window.Astronomy); return; }
+    var s=document.createElement('script');
+    s.src=AE_URL; s.async=true; s.crossOrigin='anonymous';
+    s.onload=function(){ if(window.Astronomy) applyEphemeris(window.Astronomy); };
+    s.onerror=function(){/* blocked/offline -> snapshot stays */};
+    document.head.appendChild(s);
+  })();
+
+  requestAnimationFrame(frame);
+
+})();
+</script>
+
+
+</body></html>

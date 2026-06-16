@@ -4,6 +4,7 @@ import { BODIES, EARTH_YEAR } from "./bodies.ts";
 // These helpers do not exist yet — the drag-mode build phase adds them.
 // The import keeps this feature test red until then.
 import { dialAngle, displayedRate, dragTimeStep, wrap180 } from "./math.ts";
+import { GALILEAN } from "./types.ts";
 
 const DAY = 86_400;
 
@@ -28,7 +29,7 @@ const MERCURY = assertExists(
  */
 describe("astrolabe drag mode — Mercury three turns advances time", () => {
 	test("winding Mercury 3x clockwise in earth-fixed mode ~ 347.5 days", () => {
-		const rate = displayedRate(MERCURY, true); // synodic, deg per sim-second
+		const rate = displayedRate(MERCURY, GALILEAN); // synodic, deg per sim-second
 		expect(rate).toBeGreaterThan(0); // inner planet: clockwise advances time
 
 		// 36 frames of 30 deg = 1080 deg = three full clockwise turns, taken

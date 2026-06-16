@@ -1,5 +1,5 @@
 import { assertExists } from "@davidsouther/jiffies/assert.ts";
-import { circle, stop, text } from "@davidsouther/jiffies/dom/svg.ts";
+import { circle, g, line, stop, text } from "@davidsouther/jiffies/dom/svg.ts";
 import {
 	BODIES,
 	EARTH,
@@ -8,6 +8,7 @@ import {
 	GLYPHS,
 	SIGN_FULL,
 } from "../../lib/astrolabe/bodies.ts";
+import { geoDirection, radialSpokes } from "../../lib/astrolabe/geocentric.ts";
 import {
 	caseOffsetPreservingRot,
 	dialAngle,
@@ -21,7 +22,13 @@ import {
 	wrap180,
 	ZODIAC_DRAG_RATE,
 } from "../../lib/astrolabe/math.ts";
-import type { Config } from "../../lib/astrolabe/types.ts";
+import {
+	type Config,
+	type EarthMode,
+	GALILEAN,
+	KEPLERIAN,
+	PTOLEMAIC,
+} from "../../lib/astrolabe/types.ts";
 import {
 	guillochePoints,
 	pointsToPathD,
@@ -50,6 +57,16 @@ const MONTHS = [
 	"DEC",
 ];
 const EARTH_RATE = 360 / (EARTH.period * EARTH_YEAR);
+
+// Ptolemaic geometry: the Sun disc orbits at Earth's 1 AU dial radius; the
+// radial-spoke guilloche runs from just outside the center hub out to the zodiac
+// inner edge, doubling density at Mars (matching the heliocentric guilloche).
+const R_SUN_DISC = 168.4;
+const R_MARS = 197.5;
+const MAX_SPOKE_R = 422;
+// Spokes start just outside the center hub (hands hub r=9, Earth dot) so they
+// reach the center, unlike the heliocentric curve that clears the sun glow.
+const R_SPOKE_INNER = 14;
 
 function fmtClock(d: Date): string {
 	const hh = String(d.getHours()).padStart(2, "0");
@@ -135,9 +152,56 @@ export function startAnimation(
 	const dateDay = text({ class: "date-day" });
 	svg.appendChild(dateDay);
 
-	// Sun hit target at centre
-	const sunHit = circle({ class: "hit", cx: CX, cy: CY, r: 18 });
+	// Sun hit target at centre (sized to the larger Ptolemaic Sun disc)
+	const sunHit = circle({ class: "hit", cx: CX, cy: CY, r: 24 });
 	svg.appendChild(sunHit);
+
+	// Center glow shown in the Sun-centered frames; hidden in Ptolemaic where the
+	// Sun becomes an orbiting disc.
+	const sunCenter = svg.querySelector<SVGGElement>("#sunCenter");
+
+	// Ptolemaic Sun disc: a planet-style disc orbiting at Earth's 1 AU radius
+	// (R_SUN_DISC). Hidden in the Sun-centered frames. Rendered before #discs so
+	// the planet discs sit on top.
+	const discsGroup = assertExists(
+		svg.querySelector<SVGGElement>("#discs"),
+		"#discs missing",
+	);
+	const sunDisc = g({ class: "disc disc-sun", style: "display:none" });
+	// Centered 1 AU orbit ring; invariant under the disc's rotate-about-center, so
+	// the Sun dot always rides exactly on it (no parallax mismatch).
+	sunDisc.appendChild(
+		circle({ class: "orbit-ring", cx: CX, cy: CY, r: R_SUN_DISC }),
+	);
+	// Larger and a deeper, more saturated gold than the default --sun so the light
+	// date complication that rides it in Ptolemaic stays legible.
+	sunDisc.appendChild(
+		circle({
+			class: "planet sun-disc-dot",
+			cx: CX + R_SUN_DISC,
+			cy: CY,
+			r: 21,
+			fill: "#9C6B14",
+		}),
+	);
+	svg.insertBefore(sunDisc, discsGroup);
+
+	// Ptolemaic radial-spoke host (created statically in dial.ts).
+	const spokesGroup = svg.querySelector<SVGGElement>("#spokes");
+	// Spokes are static in dial coordinates — build once.
+	if (spokesGroup) {
+		for (const s of radialSpokes(120, R_SPOKE_INNER, R_MARS, MAX_SPOKE_R)) {
+			spokesGroup.appendChild(
+				line({
+					class: "guilloche-line",
+					x1: s.x1.toFixed(1),
+					y1: s.y1.toFixed(1),
+					x2: s.x2.toFixed(1),
+					y2: s.y2.toFixed(1),
+				}),
+			);
+		}
+	}
 
 	// Parallax mouse/touch tracking (normalized -1..1 from center)
 	let mouseNX = 0;
@@ -215,11 +279,17 @@ export function startAnimation(
 
 	// Live ephemeris via astronomy-engine (CDN script loaded in head)
 	const bootMs = Date.now();
-	function applyEphemeris(A: Record<string, unknown>) {
+	// Seed each body's `start` from the live sky. In the Sun-centered frames the
+	// seed is heliocentric ecliptic longitude. In Ptolemaic the seed is geocentric
+	// right ascension (Equator) so bodies boot at their true Earth-relative sky
+	// position; the Sun-direction seed pins Earth's heliocentric phase so the Sun
+	// disc boots near 3 o'clock. Either way only `b.start` (the boot phase) is set;
+	// the running simulation stays simplified-circular every frame.
+	function applyEphemeris(A: Record<string, unknown>, mode: EarthMode) {
 		try {
 			const date = new Date(bootMs);
+			const ptol = mode === PTOLEMAIC;
 			for (const b of BODIES) {
-				const rate = 360 / (b.period * EARTH_YEAR);
 				let lon: number;
 				if (b.moon) {
 					lon = (A.EclipticGeoMoon as (d: Date) => { lon: number })(date).lon;
@@ -227,12 +297,25 @@ export function startAnimation(
 					const key = b.key.charAt(0).toUpperCase() + b.key.slice(1);
 					const Body = A.Body as Record<string, unknown>;
 					if (!Body[key]) continue;
-					lon = (A.EclipticLongitude as (body: unknown, date: Date) => number)(
-						Body[key],
-						date,
-					);
+					if (ptol && b.key !== "earth") {
+						// Geocentric right ascension (degrees): hours * 15.
+						const eq = (
+							A.Equator as (
+								body: unknown,
+								date: Date,
+								obs: unknown,
+								ofdate: boolean,
+								aberration: boolean,
+							) => { ra: number }
+						)(Body[key], date, null, true, true);
+						lon = eq.ra * 15;
+					} else {
+						lon = (
+							A.EclipticLongitude as (body: unknown, date: Date) => number
+						)(Body[key], date);
+					}
 				}
-				b.start = (((lon - 90 - rate * 0) % 360) + 360) % 360;
+				b.start = (((lon - 90) % 360) + 360) % 360;
 			}
 		} catch {
 			// keep snapshot defaults
@@ -240,9 +323,19 @@ export function startAnimation(
 	}
 
 	const win = window as unknown as Record<string, unknown>;
-	if (win.Astronomy) {
-		applyEphemeris(win.Astronomy as Record<string, unknown>);
+	// Track the mode group last seeded (PTOLEMAIC seeds from RA; the Sun-centered
+	// frames seed from ecliptic longitude) so the frame loop re-seeds bodies when
+	// the user crosses between the two groups. -1 = not yet seeded.
+	let seededPtolemaic = -1;
+	function seedFor(mode: EarthMode) {
+		const A = win.Astronomy as Record<string, unknown> | undefined;
+		if (!A) return;
+		const want = mode === PTOLEMAIC ? 1 : 0;
+		if (want === seededPtolemaic) return;
+		applyEphemeris(A, mode);
+		seededPtolemaic = want;
 	}
+	seedFor(getConfig().earthMode);
 
 	// Simulation state
 	let simT = 0;
@@ -254,7 +347,7 @@ export function startAnimation(
 	let caseOffset = 0;
 	// Tracks the earth-frame mode so a Stationary/Orbital switch can re-aim the
 	// case and keep Earth at its current angle (see caseOffsetPreservingRot).
-	let prevEarthFixed = getConfig().earthFixed;
+	let prevEarthMode = getConfig().earthMode;
 	let dragging: {
 		kind: DragKind;
 		prevAngle: number;
@@ -327,21 +420,22 @@ export function startAnimation(
 		el.addEventListener("pointercancel", end);
 	}
 
-	// Orbiting planets and Earth are draggable; Sun and Moon are not. Target
-	// routing follows the design table, read live from getConfig().earthFixed.
+	// Orbiting planets and Earth are draggable; the Moon never is, and the Sun
+	// only in Ptolemaic (where it is the 1 AU orbiting body). Target routing
+	// follows the design table, read live from getConfig().earthMode.
 	for (const b of BODIES) {
 		if (b.moon) continue;
 		const hit = planets[b.key]?.querySelector(".hit");
 		if (!hit) continue;
 		bindDrag(hit, () => {
-			const ef = getConfig().earthFixed;
+			const mode = getConfig().earthMode;
 			if (b.key === "earth") {
-				// earth-fixed: Earth re-aims the case; earth-free: Earth winds time.
-				return ef
+				// GALILEAN: Earth re-aims the case; otherwise Earth winds time.
+				return mode === GALILEAN
 					? { time: false }
-					: { time: true, R: displayedRate(b, false) };
+					: { time: true, R: displayedRate(b, KEPLERIAN) };
 			}
-			return { time: true, R: displayedRate(b, ef) };
+			return { time: true, R: displayedRate(b, mode) };
 		});
 		// Double-clicking Earth resets simulated time to the real system time.
 		if (b.key === "earth") {
@@ -352,13 +446,21 @@ export function startAnimation(
 	}
 	for (let i = 0; i < zodiac.hits.length; i++) {
 		bindDrag(zodiac.hits[i], () =>
-			// earth-fixed: band winds time at the simplified-year rate;
-			// earth-free: band re-aims the case.
-			getConfig().earthFixed
+			// GALILEAN: band winds time at the simplified-year rate;
+			// otherwise the band re-aims the case.
+			getConfig().earthMode === GALILEAN
 				? { time: true, R: ZODIAC_DRAG_RATE }
 				: { time: false },
 		);
 	}
+	// In Ptolemaic the Sun is the 1 AU orbiting body, so dragging it winds time.
+	// Its geocentric direction (aE + 180) advances at Earth's heliocentric rate.
+	// In the Sun-centered frames the Sun is fixed at the center: not draggable.
+	bindDrag(sunHit, () =>
+		getConfig().earthMode === PTOLEMAIC
+			? { time: true, R: displayedRate(EARTH, KEPLERIAN) }
+			: null,
+	);
 
 	function frame(now: number) {
 		const cfg = getConfig();
@@ -373,18 +475,43 @@ export function startAnimation(
 		const aE = (((EARTH.start + EARTH_RATE * simT) % 360) + 360) % 360;
 		// On a Stationary/Orbital switch, re-aim the case so Earth keeps its
 		// current angle instead of snapping by aE.
-		if (cfg.earthFixed !== prevEarthFixed) {
-			caseOffset = caseOffsetPreservingRot(cfg.earthFixed, aE, caseOffset);
-			prevEarthFixed = cfg.earthFixed;
+		if (cfg.earthMode !== prevEarthMode) {
+			caseOffset = caseOffsetPreservingRot(
+				prevEarthMode,
+				cfg.earthMode,
+				aE,
+				caseOffset,
+			);
+			prevEarthMode = cfg.earthMode;
+			// Re-seed boot phases when crossing into/out of the Ptolemaic (RA) seed
+			// group. Zodiac rotation stays continuous via caseOffsetPreservingRot;
+			// only the bodies re-place, per the design.
+			seedFor(cfg.earthMode);
 		}
-		const rot = dialRotation(cfg.earthFixed, aE, caseOffset);
+		const rot = dialRotation(cfg.earthMode, aE, caseOffset);
+		const ptolemaic = cfg.earthMode === PTOLEMAIC;
+
+		// Toggle the center glow / Sun disc / radial spokes by mode.
+		if (sunCenter) sunCenter.style.display = ptolemaic ? "none" : "";
+		sunDisc.style.display = ptolemaic ? "" : "none";
+		if (spokesGroup) spokesGroup.style.display = ptolemaic ? "" : "none";
+		// Drives Ptolemaic-only CSS (e.g. hiding Earth's now-centered orbit ring).
+		svg.classList.toggle("ptolemaic", ptolemaic);
 
 		for (const b of BODIES) {
-			const a = helioA(b, simT);
-			const da = (a + rot) % 360;
-			const rad = (da * Math.PI) / 180;
 			const group = planets[b.key];
 			if (!group) continue;
+
+			// Disc angle: heliocentric (helioA) in the Sun-centered frames; the true
+			// geocentric sight line (geoDirection) in Ptolemaic, where Earth sits at
+			// the center and a fixed dial radius + geocentric angle yields apparent
+			// retrograde. Both are offset by the dial rotation `rot`.
+			const a = ptolemaic ? geoDirection(b, simT) : helioA(b, simT);
+			// In Ptolemaic, Earth collapses to the center spindle.
+			const earthCentered = ptolemaic && b.key === "earth";
+			const r = earthCentered ? 0 : b.r;
+			const da = (((a + rot) % 360) + 360) % 360;
+			const rad = (da * Math.PI) / 180;
 
 			if (b.moon) {
 				const e = world.earth ?? { x: CX, y: CY };
@@ -401,16 +528,40 @@ export function startAnimation(
 				const on = cfg.parallaxOn ? 1 : 0;
 				const px = mouseNX * MAXPX * cfg.parallax * b.weight * on;
 				const py = mouseNY * MAXPX * cfg.parallax * b.weight * on;
-				group.setAttribute(
-					"transform",
-					`translate(${px.toFixed(2)} ${py.toFixed(2)}) rotate(${da.toFixed(3)} ${CX} ${CY})`,
-				);
+				// The disc's dot is drawn at CX + b.r (planets.ts). Sun-centered frames
+				// orbit it with rotate-about-center; Ptolemaic Earth is pulled to the
+				// center by translating back the full dial radius (its now-centered
+				// orbit ring and spoke are hidden via the `ptolemaic` svg class).
+				const transform = earthCentered
+					? `translate(${(px - b.r).toFixed(2)} ${py.toFixed(2)})`
+					: `translate(${px.toFixed(2)} ${py.toFixed(2)}) rotate(${da.toFixed(3)} ${CX} ${CY})`;
+				group.setAttribute("transform", transform);
 				world[b.key] = {
-					x: CX + b.r * Math.cos(rad) + px,
-					y: CY + b.r * Math.sin(rad) + py,
+					x: CX + r * Math.cos(rad) + px,
+					y: CY + r * Math.sin(rad) + py,
 					a: da,
 				};
 			}
+		}
+
+		// Ptolemaic Sun disc orbits the center (Earth) at 1 AU, along the
+		// geocentric Earth→Sun sight line (aE + 180).
+		if (ptolemaic) {
+			const sa = (((aE + 180 + rot) % 360) + 360) % 360;
+			const srad = (sa * Math.PI) / 180;
+			sunDisc.setAttribute("transform", `rotate(${sa.toFixed(3)} ${CX} ${CY})`);
+			world.sun = {
+				x: CX + R_SUN_DISC * Math.cos(srad),
+				y: CY + R_SUN_DISC * Math.sin(srad),
+				a: sa,
+			};
+			// Sun hit target follows the disc.
+			sunHit.setAttribute("cx", world.sun.x.toFixed(2));
+			sunHit.setAttribute("cy", world.sun.y.toFixed(2));
+		} else {
+			world.sun = { x: CX, y: CY, a: 0 };
+			sunHit.setAttribute("cx", String(CX));
+			sunHit.setAttribute("cy", String(CY));
 		}
 
 		zhits.setAttribute("transform", `rotate(${rot.toFixed(3)} ${CX} ${CY})`);
@@ -447,8 +598,9 @@ export function startAnimation(
 
 		// Zodiac occupancy
 		const occ: Record<number, string[]> = {};
-		// The dial is heliocentric with Earth as a body; the occupant of the
-		// sun-direction sign is presented as Earth, not the Sun.
+		// The sun-direction sign's occupant is presented as Earth in every frame,
+		// for cross-frame consistency (the Sun-Earth axis sign is labelled the same
+		// whether Earth is a dial body or sits at the Ptolemaic center).
 		const sunSi = geo.sun.si;
 		occ[sunSi] = occ[sunSi] ?? [];
 		occ[sunSi].push("earth");
@@ -527,7 +679,10 @@ export function startAnimation(
 		// Sim clock + date complication follow simulated time.
 		const d = new Date(bootMs + simT * 1000);
 
-		const ew = world.earth;
+		// The date complication rides Earth in the Sun-centered frames; in
+		// Ptolemaic Earth sits at the center under the hands, so it rides the Sun
+		// disc (the 1 AU annual body) instead.
+		const ew = ptolemaic ? world.sun : world.earth;
 		if (ew) {
 			dateMonth.setAttribute("x", ew.x.toFixed(1));
 			dateMonth.setAttribute("y", (ew.y - 7.5).toFixed(1));
@@ -551,7 +706,10 @@ export function startAnimation(
 		const hw = (12.5 * Math.PI) / 180;
 		let exCenter = 0;
 		let exHalf = -1;
-		if (ew) {
+		// In Ptolemaic, Earth is at the center: the Earth→Sun cone and the
+		// curved guilloche degenerate, so the twilight cone is suppressed and the
+		// radial spokes stand in for the guilloche background.
+		if (ew && !ptolemaic) {
 			const ds = Math.atan2(CY - ew.y, CX - ew.x);
 			exCenter = ds;
 			if (cfg.twilight) exHalf = hw;
@@ -568,20 +726,29 @@ export function startAnimation(
 				cone.setAttribute("d", coneD);
 			}
 		}
+		// In Ptolemaic the twilight cone is hidden (radial spokes replace the
+		// curved guilloche; no Earth→Sun wedge with Earth at the center).
+		if (ptolemaic) cone.setAttribute("d", "");
+
 		// Guilloche is clipped to the dial circle only; the zone is handled by
 		// dropping intersecting lines, not by clipping.
 		guillocheClipPath.setAttribute("d", DIAL_CIRCLE);
 
-		// Guilloche background
+		// Curved guilloche background — suppressed in Ptolemaic, where the static
+		// radial spokes (#spokes) are the guilloche.
 		updateGuilloche(
 			svg,
 			Ex,
 			Ey,
 			cfg.guillocheN,
-			cfg.guilloche,
+			cfg.guilloche && !ptolemaic,
 			exCenter,
 			exHalf,
 		);
+		if (ptolemaic) {
+			const host = svg.querySelector<SVGGElement>("#guilloche");
+			while (host?.firstChild) host.removeChild(host.firstChild);
+		}
 
 		// Zodiac sign boundaries and shaded wedges both follow the guilloche curve.
 		// phi converts from clock-angle (0=top, clockwise) to the curve's phi frame.
@@ -592,7 +759,9 @@ export function startAnimation(
 		for (let j = 0; j < 12; j++) {
 			const clockDeg = j * 30 + rot;
 			const phi = ((-90 + clockDeg) * Math.PI) / 180;
-			let pts = guillochePoints(Ex, Ey, phi, ZIN, ZOUT, 6);
+			// Earth at center (Ptolemaic) gives straight radial boundaries; in the
+			// Sun-centered frames the boundaries follow the guilloche curve.
+			let pts = ptolemaic ? [] : guillochePoints(Ex, Ey, phi, ZIN, ZOUT, 6);
 			if (pts.length < 2) pts = [pt(clockDeg, ZIN), pt(clockDeg, ZOUT)];
 			bpts.push(pts);
 			divs[j].setAttribute("d", pointsToPathD(pts));

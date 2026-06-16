@@ -1,5 +1,5 @@
 import { EARTH, EARTH_YEAR } from "./bodies.ts";
-import type { Body, SizeMode } from "./types.ts";
+import { type Body, type EarthMode, GALILEAN, type SizeMode } from "./types.ts";
 
 const CX = 500;
 const CY = 500;
@@ -21,10 +21,11 @@ function rateOf(body: Body): number {
 }
 
 // Signed displayed angular rate of an orbiting body (and Earth), deg per
-// sim-second. earthFixed subtracts Earth's rate (synodic). Returns 0 for Earth
-// when earthFixed (Earth is then a case-rotation target, routed by the harness).
-export function displayedRate(body: Body, earthFixed: boolean): number {
-	return rateOf(body) - (earthFixed ? rateOf(EARTH) : 0);
+// sim-second. GALILEAN subtracts Earth's rate (synodic). Returns 0 for Earth in
+// GALILEAN (Earth is then a case-rotation target, routed by the harness).
+// KEPLERIAN and PTOLEMAIC leave the bare sidereal rate.
+export function displayedRate(body: Body, mode: EarthMode): number {
+	return rateOf(body) - (mode === GALILEAN ? rateOf(EARTH) : 0);
 }
 
 // simT delta for one winding frame: dThetaDeg / ratePerSec.
@@ -76,27 +77,31 @@ export function simTimeForNow(bootMs: number, nowMs: number): number {
 	return (nowMs - bootMs) / 1000;
 }
 
-// Rotation applied to the whole dial, degrees. Earth-fixed mode adds `360 - aE`
-// so Earth holds a fixed screen angle; caseOffset is the user's case re-aim.
+// Rotation applied to the whole dial, degrees. GALILEAN adds `360 - aE` so Earth
+// holds a fixed screen angle; KEPLERIAN and PTOLEMAIC leave the term at 0 (the
+// zodiac is fixed). caseOffset is the user's case re-aim.
 export function dialRotation(
-	earthFixed: boolean,
+	mode: EarthMode,
 	aE: number,
 	caseOffset: number,
 ): number {
-	return ((((earthFixed ? 360 - aE : 0) + caseOffset) % 360) + 360) % 360;
+	return (
+		((((mode === GALILEAN ? 360 - aE : 0) + caseOffset) % 360) + 360) % 360
+	);
 }
 
-// caseOffset for the mode being switched to (`nowFixed`) that leaves dialRotation
-// unchanged, so Earth keeps its current angle across a Stationary/Orbital toggle.
-// The earth-fixed term `360 - aE` moves between the two modes; caseOffset absorbs
-// the difference.
+// caseOffset for the mode being switched to (`nowMode`) that leaves dialRotation
+// unchanged, so Earth keeps its current angle across a frame toggle. The
+// GALILEAN term `360 - aE` is the only per-mode contribution; caseOffset absorbs
+// the difference between the old and new mode's contributions.
 export function caseOffsetPreservingRot(
-	nowFixed: boolean,
+	prevMode: EarthMode,
+	nowMode: EarthMode,
 	aE: number,
 	caseOffset: number,
 ): number {
-	const contribOld = nowFixed ? 0 : 360 - aE; // old mode = !nowFixed
-	const contribNew = nowFixed ? 360 - aE : 0;
+	const contribOld = prevMode === GALILEAN ? 360 - aE : 0;
+	const contribNew = nowMode === GALILEAN ? 360 - aE : 0;
 	return caseOffset + contribOld - contribNew;
 }
 
