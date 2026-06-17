@@ -20,6 +20,83 @@ const EARTH_MODE_BY_VALUE: Record<string, EarthMode> = {
 
 const DEFAULT_MATERIAL: MaterialId = "platinum";
 
+// Namespaced + versioned localStorage key for the controls-drawer snapshot.
+const STORAGE_KEY = "astrolabe.controls.v1";
+
+// The persisted shape: per-control DOM state addressed by DOM handle. No
+// simulation fields (simT/bootMs/caseOffset/seeds) ever appear here.
+interface ControlSnapshot {
+	inputs: Record<string, string | boolean>; // element id -> value | checked
+	groups: Record<string, string>; // group id -> dataset.value
+	material: string; // selected material id
+	colors: Record<string, string>; // data-var -> picker value
+}
+
+// Keep only the string-valued entries of an unknown blob. A non-object (or a
+// nested non-string value from a tampered/stale store) yields an empty map.
+function parseStringMap(v: unknown): Record<string, string> {
+	const out: Record<string, string> = {};
+	if (typeof v === "object" && v !== null) {
+		for (const [k, val] of Object.entries(v)) {
+			if (typeof val === "string") out[k] = val;
+		}
+	}
+	return out;
+}
+
+// Parse an unknown blob into a known-good ControlSnapshot, dropping any field or
+// entry that does not match the declared shape. The returned value is a real
+// proof of its type — every map is an object, every value the right primitive —
+// so the restore paths below need no further shape guards. Returns null only
+// when the top level is not an object.
+function parseSnapshot(raw: unknown): ControlSnapshot | null {
+	if (typeof raw !== "object" || raw === null) return null;
+	const o = raw as Record<string, unknown>;
+	const inputs: Record<string, string | boolean> = {};
+	if (typeof o.inputs === "object" && o.inputs !== null) {
+		for (const [k, val] of Object.entries(o.inputs)) {
+			if (typeof val === "string" || typeof val === "boolean") inputs[k] = val;
+		}
+	}
+	return {
+		inputs,
+		groups: parseStringMap(o.groups),
+		material: typeof o.material === "string" ? o.material : DEFAULT_MATERIAL,
+		colors: parseStringMap(o.colors),
+	};
+}
+
+// Best-effort read, then parse (not cast) at the storage boundary. A
+// missing/unparseable/throwing access -> null (fall back to markup defaults);
+// a present blob is normalized to a valid snapshot by parseSnapshot.
+function readSnapshot(): ControlSnapshot | null {
+	try {
+		const raw = localStorage.getItem(STORAGE_KEY);
+		if (!raw) return null;
+		return parseSnapshot(JSON.parse(raw));
+	} catch {
+		return null;
+	}
+}
+
+// Best-effort write. A disabled or full store is swallowed.
+function writeSnapshot(snap: ControlSnapshot): void {
+	try {
+		localStorage.setItem(STORAGE_KEY, JSON.stringify(snap));
+	} catch {
+		// ignore: storage disabled or over quota
+	}
+}
+
+// Best-effort clear of just the persistence key.
+function clearSnapshot(): void {
+	try {
+		localStorage.removeItem(STORAGE_KEY);
+	} catch {
+		// ignore: storage disabled
+	}
+}
+
 export function initControls(): { getConfig: () => Config } {
 	let cfg: Config = {
 		speed: 1,
@@ -44,6 +121,62 @@ export function initControls(): { getConfig: () => Config } {
 	// Panel open/close
 	const gear = document.getElementById("gear") as HTMLButtonElement;
 	const panel = document.getElementById("controls") as HTMLDivElement;
+
+	// Persistence: restore the saved drawer snapshot onto the DOM controls BEFORE
+	// the bind/apply pass below replays initial values, so binds observe the
+	// restored DOM rather than the markup defaults. A null snapshot (first visit,
+	// disabled storage, or unparseable blob) leaves markup defaults in place.
+	const restored = readSnapshot();
+
+	// Write each persisted input/group/color value back onto its DOM control.
+	// Material is handled separately at applyMaterial (it has its own var/picker
+	// seeding). Per-control: skip any id absent from this DOM version.
+	function applySnapshot(snap: ControlSnapshot) {
+		for (const [id, v] of Object.entries(snap.inputs)) {
+			const el = document.getElementById(id) as HTMLInputElement | null;
+			if (!el) continue;
+			if (el.type === "checkbox") el.checked = Boolean(v);
+			else el.value = String(v);
+		}
+		for (const [id, v] of Object.entries(snap.groups)) {
+			const grp = document.getElementById(id);
+			if (grp) grp.dataset.value = v;
+		}
+	}
+	if (restored) applySnapshot(restored);
+
+	// Read the live drawer state into a snapshot. Reads only named control handles
+	// (inputs by id, groups by dataset.value, the active material swatch, color
+	// pickers by data-var), so simulation state is excluded by construction.
+	function captureSnapshot(): ControlSnapshot {
+		const inputs: Record<string, string | boolean> = {};
+		for (const inp of panel.querySelectorAll<HTMLInputElement>(
+			"input[id]:not([type=color])",
+		)) {
+			if (inp.type === "checkbox") inputs[inp.id] = inp.checked;
+			else inputs[inp.id] = inp.value;
+		}
+		const groups: Record<string, string> = {};
+		for (const grp of panel.querySelectorAll<HTMLElement>(".btn-group[id]")) {
+			if (grp.dataset.value !== undefined) groups[grp.id] = grp.dataset.value;
+		}
+		const active = panel.querySelector<HTMLButtonElement>(
+			"button.material-swatch.active",
+		);
+		const material = active?.dataset.material ?? DEFAULT_MATERIAL;
+		const colors: Record<string, string> = {};
+		for (const inp of panel.querySelectorAll<HTMLInputElement>(
+			"input[type=color][data-var]",
+		)) {
+			if (inp.dataset.var) colors[inp.dataset.var] = inp.value;
+		}
+		return { inputs, groups, material, colors };
+	}
+
+	// Write-on-change persistence writer.
+	function persist() {
+		writeSnapshot(captureSnapshot());
+	}
 
 	function togglePanel(open?: boolean) {
 		const o = open ?? !panel.classList.contains("open");
@@ -238,7 +371,54 @@ export function initControls(): { getConfig: () => Config } {
 			applyMaterial(b.dataset.material as MaterialId),
 		);
 	}
-	applyMaterial(DEFAULT_MATERIAL);
+
+	// Seed the material: the restored one if a snapshot exists and names a known
+	// swatch, otherwise the default. applyMaterial re-seeds the material-driven
+	// color pickers, so any persisted per-picker overrides (e.g. --ground, the
+	// independent --strap-leather) must be layered AFTER, matching the existing
+	// "advanced override" behavior.
+	const restoredMaterial = restored?.material;
+	const hasSwatch = Array.from(matBtns).some(
+		(b) => b.dataset.material === restoredMaterial,
+	);
+	applyMaterial(
+		hasSwatch ? (restoredMaterial as MaterialId) : DEFAULT_MATERIAL,
+	);
+	if (restored?.colors) {
+		for (const inp of colorInputs) {
+			const varName = inp.dataset.var;
+			if (varName && varName in restored.colors) {
+				inp.value = restored.colors[varName];
+				document.documentElement.style.setProperty(varName, inp.value);
+			}
+		}
+	}
+
+	// Persistence: write the current snapshot on every control change. Listeners
+	// attach directly to each control rather than relying on event delegation,
+	// because the synthetic input/change events controls dispatch (here and in
+	// tests) do not bubble. Color/material changes flow through the color picker
+	// inputs; group choices flow through their buttons. No simulation state is
+	// ever read by captureSnapshot, so the snapshot stays controls-only.
+	for (const inp of panel.querySelectorAll<HTMLInputElement>("input[id]")) {
+		inp.addEventListener("input", persist);
+		inp.addEventListener("change", persist);
+	}
+	for (const inp of colorInputs) {
+		inp.addEventListener("input", persist);
+	}
+	// Same generic selector captureSnapshot uses, so a future fourth group is
+	// both captured and write-triggered without touching a second hardcoded list.
+	for (const grp of panel.querySelectorAll<HTMLElement>(".btn-group[id]")) {
+		for (const b of grp.querySelectorAll<HTMLButtonElement>(
+			"button[data-value]",
+		)) {
+			b.addEventListener("click", persist);
+		}
+	}
+	for (const b of matBtns) {
+		b.addEventListener("click", persist);
+	}
 
 	// Reset button
 	document.getElementById("resetBtn")?.addEventListener("click", () => {
@@ -269,6 +449,10 @@ export function initControls(): { getConfig: () => Config } {
 		setChk("parallaxOn", false);
 		earthGroup.set("galilean");
 		caseGroup.set("full");
+		// Clear last: the default-applying dispatches above synchronously
+		// re-trigger the persistence writer, so removing the key here leaves
+		// storage truly empty after a Reset.
+		clearSnapshot();
 	});
 
 	return { getConfig: () => ({ ...cfg }) };
