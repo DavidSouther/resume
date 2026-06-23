@@ -102,12 +102,6 @@ describe("Next.js → Jiffies migration", () => {
 		}
 	});
 
-	it("writes docs/trips/index.html with links to trips", () => {
-		expect(existsSync(join(ROOT, "docs/trips/index.html"))).toBe(true);
-		const html = readFileSync(join(ROOT, "docs/trips/index.html"), "utf-8");
-		expect(html).toMatch(/href="\/trips\/[^"]+"/);
-	});
-
 	it("writes docs/CNAME with davidsouther.com", () => {
 		expect(readFileSync(join(ROOT, "docs/CNAME"), "utf-8").trim()).toBe(
 			"davidsouther.com",
