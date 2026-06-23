@@ -4,12 +4,14 @@ import { BODIES } from "../../lib/astrolabe/bodies.ts";
 const CX = 500;
 const CY = 500;
 
-export type PlanetRefs = Record<string, Element>;
+import type { BodyName } from "../../lib/astrolabe/types.ts";
+
+export type PlanetRefs = Record<BodyName, Element>;
 
 export function buildPlanets(grp: SVGGElement): PlanetRefs {
-	const refs: PlanetRefs = {};
+	const refs = {} as PlanetRefs;
 
-	for (const b of BODIES) {
+	for (const b of BODIES.values()) {
 		// Moon group uses local origin; placed on Earth each frame
 		const ox = b.moon ? 0 : CX;
 		const oy = b.moon ? 0 : CY;

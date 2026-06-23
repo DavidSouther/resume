@@ -9,7 +9,7 @@ import { GALILEAN } from "./types.ts";
 const DAY = 86_400;
 
 const MERCURY = assertExists(
-	BODIES.find((b) => b.key === "mercury"),
+	BODIES.get("mercury"),
 	"mercury missing from BODIES",
 );
 

@@ -7,8 +7,8 @@ import { helioA } from "./math.ts";
 const CX = 500;
 const CY = 500;
 
-const mars = assertExists(BODIES.find((b) => b.key === "mars"));
-const moon = assertExists(BODIES.find((b) => b.key === "moon"));
+const mars = assertExists(BODIES.get("mars"));
+const moon = assertExists(BODIES.get("moon"));
 
 describe("geoDirection", () => {
 	test("matches setGeo's geocentric formula for an outer body", () => {

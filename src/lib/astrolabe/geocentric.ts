@@ -2,21 +2,22 @@ import { EARTH } from "./bodies.ts";
 import { helioA } from "./math.ts";
 import type { Body } from "./types.ts";
 
+// A body-like object whose key may be "sun" (not a BodyName, used only in tests
+// and the Ptolemaic Sun-direction special case).
+type BodyLike = Omit<Body, "key"> & { key: string };
+
 // Dial center, matching math.ts's pt().
 const CX = 500;
 const CY = 500;
 
-// Geocentric direction of `body` as seen from Earth, in display degrees, as a
-// pure function of simulated time. Extracted verbatim from animation.ts's
-// `setGeo`: the au-scaled vector from Earth (on the unit circle) to the body (at
-// radius = au); the quantity that produces apparent retrograde at a fixed dial
-// radius. The Moon keeps its own `helioA` (it already orbits Earth in the
-// model), the Sun's geocentric direction is `aE + 180`, and Earth itself returns
-// the Sun direction (the source's `geo.earth = geo.sun`).
-export function geoDirection(body: Body, simT: number): number {
+// Geocentric direction of `body` as seen from Earth, in display degrees.
+// Computes the au-scaled vector from Earth (on the unit circle) to the body (at
+// radius = au) — the quantity that produces apparent retrograde at a fixed dial
+// radius.
+export function geoDirection(body: BodyLike, simT: number): number {
 	// Moon already orbits Earth in the model: its own helioA is the geocentric
 	// direction.
-	if (body.moon) return helioA(body, simT);
+	if (body.moon) return helioA(body as Body, simT);
 	// Sun sits opposite Earth's heliocentric direction.
 	if (body.key === "sun") return helioA(EARTH, simT) + 180;
 	// Earth itself looks toward the Sun (geo.earth = geo.sun in the source).
@@ -24,7 +25,7 @@ export function geoDirection(body: Body, simT: number): number {
 	const aErad = (helioA(EARTH, simT) * Math.PI) / 180;
 	const exh = Math.cos(aErad);
 	const eyh = Math.sin(aErad);
-	const ar = (helioA(body, simT) * Math.PI) / 180;
+	const ar = (helioA(body as Body, simT) * Math.PI) / 180;
 	const au = body.au ?? 1;
 	return (
 		(Math.atan2(au * Math.sin(ar) - eyh, au * Math.cos(ar) - exh) * 180) /

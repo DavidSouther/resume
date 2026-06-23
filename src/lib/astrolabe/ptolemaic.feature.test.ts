@@ -20,10 +20,7 @@ import { helioA } from "./math.ts";
  * dial angle over the same window is strictly monotonic.
  */
 describe("astrolabe Ptolemaic frame — retrograde emerges geocentrically", () => {
-	const mars = assertExists(
-		BODIES.find((b) => b.key === "mars"),
-		"mars missing from BODIES",
-	);
+	const mars = assertExists(BODIES.get("mars"), "mars missing from BODIES");
 
 	// Mars synodic period ~779.94 days ~ 2.135 Earth years; 2.4 years guarantees
 	// the window contains one full retrograde loop regardless of start phase.
