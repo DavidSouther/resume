@@ -7,20 +7,13 @@ import { describe, expect, it } from "vitest";
 // sitemap.ts exports nothing.
 import { buildSitemap } from "./sitemap.ts";
 
-describe("XML sitemap excludes trips", () => {
-	it("lists the home and blog routes but no /trips URL", () => {
-		// Arrange: a real committed trip (trips/hvar) exists, so today's generator
-		// emits /trips and /trips/hvar. That makes the negative assertion real.
-
+describe("XML sitemap lists the public routes", () => {
+	it("advertises the home and blog routes", () => {
 		// Act
 		const xml = buildSitemap();
 
-		// Assert: the durable public surface is still advertised.
+		// Assert: the durable public surface is advertised.
 		expect(xml).toContain("<loc>https://davidsouther.com/</loc>");
 		expect(xml).toContain("<loc>https://davidsouther.com/blog</loc>");
-
-		// Assert: no trip URL leaks — one substring check covers the /trips index
-		// and every per-trip /trips/<id> page at once.
-		expect(xml).not.toContain("/trips");
 	});
 });

@@ -35,10 +35,10 @@ describe("Layout", () => {
 
 	it("applies an extra class to the root alongside .root", () => {
 		const container = mount(
-			Layout({ lastUpdate: "2025-01-24", header: [], class: "TripPage" }),
+			Layout({ lastUpdate: "2025-01-24", header: [], class: "Custom" }),
 		);
 
-		expect(container.querySelector("#root.root.TripPage")).not.toBeNull();
+		expect(container.querySelector("#root.root.Custom")).not.toBeNull();
 	});
 
 	it("renders a copyright footer with the given last-update year", () => {
