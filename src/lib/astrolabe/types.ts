@@ -1,5 +1,16 @@
+export type BodyName =
+	| "mercury"
+	| "venus"
+	| "earth"
+	| "mars"
+	| "jupiter"
+	| "saturn"
+	| "uranus"
+	| "neptune"
+	| "moon";
+
 export interface Body {
-	key: string;
+	key: BodyName;
 	name: string;
 	r: number;
 	dot: number;
@@ -17,10 +28,10 @@ export type SizeMode = "full" | "90" | "48" | "38";
 // geocentric (Earth-centered) frame; GALILEAN carries the old
 // `earthFixed === true` (Earth held at a fixed screen angle); KEPLERIAN carries
 // `earthFixed === false` (Sun-centered, dial unrotated).
-export const PTOLEMAIC = 1;
-export const GALILEAN = 2;
-export const KEPLERIAN = 3;
-export type EarthMode = typeof PTOLEMAIC | typeof GALILEAN | typeof KEPLERIAN;
+export type EarthMode = 1 | 2 | 3;
+export const PTOLEMAIC: EarthMode = 1;
+export const GALILEAN: EarthMode = 2;
+export const KEPLERIAN: EarthMode = 3;
 
 export interface Config {
 	speed: number;

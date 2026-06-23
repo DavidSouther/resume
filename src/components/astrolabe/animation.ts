@@ -271,7 +271,7 @@ export function startAnimation(
 
 	bindHover(sunHit, { key: "sun", name: "SUN" });
 	for (let i = 0; i < zodiac.hits.length; i++) bindSignHover(zodiac.hits[i], i);
-	for (const b of BODIES) {
+	for (const b of BODIES.values()) {
 		const group = planets[b.key];
 		const hit = group?.querySelector(".hit");
 		if (hit) bindHover(hit, { key: b.key, name: b.name });
@@ -289,7 +289,7 @@ export function startAnimation(
 		try {
 			const date = new Date(bootMs);
 			const ptol = mode === PTOLEMAIC;
-			for (const b of BODIES) {
+			for (const b of BODIES.values()) {
 				let lon: number;
 				if (b.moon) {
 					lon = (A.EclipticGeoMoon as (d: Date) => { lon: number })(date).lon;
@@ -423,7 +423,7 @@ export function startAnimation(
 	// Orbiting planets and Earth are draggable; the Moon never is, and the Sun
 	// only in Ptolemaic (where it is the 1 AU orbiting body). Target routing
 	// follows the design table, read live from getConfig().earthMode.
-	for (const b of BODIES) {
+	for (const b of BODIES.values()) {
 		if (b.moon) continue;
 		const hit = planets[b.key]?.querySelector(".hit");
 		if (!hit) continue;
@@ -498,7 +498,7 @@ export function startAnimation(
 		// Drives Ptolemaic-only CSS (e.g. hiding Earth's now-centered orbit ring).
 		svg.classList.toggle("ptolemaic", ptolemaic);
 
-		for (const b of BODIES) {
+		for (const b of BODIES.values()) {
 			const group = planets[b.key];
 			if (!group) continue;
 
@@ -579,7 +579,7 @@ export function startAnimation(
 		}
 
 		setGeo("sun", aE + 180);
-		for (const b of BODIES) {
+		for (const b of BODIES.values()) {
 			if (b.key === "earth") continue;
 			const a = helioA(b, simT);
 			if (b.moon) {
@@ -604,7 +604,7 @@ export function startAnimation(
 		const sunSi = geo.sun.si;
 		occ[sunSi] = occ[sunSi] ?? [];
 		occ[sunSi].push("earth");
-		for (const b of BODIES) {
+		for (const b of BODIES.values()) {
 			if (b.key === "earth" || b.moon) continue;
 			const si = geo[b.key]?.si ?? 0;
 			occ[si] = occ[si] ?? [];

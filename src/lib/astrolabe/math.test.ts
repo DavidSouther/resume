@@ -16,8 +16,8 @@ import {
 } from "./math.ts";
 import { GALILEAN, KEPLERIAN } from "./types.ts";
 
-const MERCURY = assertExists(BODIES.find((b) => b.key === "mercury"));
-const SATURN = assertExists(BODIES.find((b) => b.key === "saturn"));
+const MERCURY = assertExists(BODIES.get("mercury"));
+const SATURN = assertExists(BODIES.get("saturn"));
 const rateOf = (b: { period: number }) => 360 / (b.period * EARTH_YEAR);
 
 describe("helioA", () => {
