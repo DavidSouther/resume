@@ -2,10 +2,13 @@ import { dialSizePx } from "../../lib/astrolabe/math.ts";
 import type { SizeMode } from "../../lib/astrolabe/types.ts";
 import { startAnimation } from "./animation.ts";
 import { initControls } from "./controls.ts";
-import { buildPlanets } from "./planets.ts";
-import { initTexture } from "./texture.ts";
-import { buildZodiac } from "./zodiac.ts";
+import { astrolabeView } from "./view.ts";
 
+// Host sizing: writes the <svg> host element's width/height and the
+// `--dial-px` custom property on the document root. client.ts is the bootstrap
+// module and is out of the Feature-1 no-raw-dom guard scope — these target the
+// host element and documentElement, not a dial descendant (see design,
+// Deferred decisions).
 function sizeDial() {
 	const dial = document.getElementById("dial") as unknown as SVGSVGElement;
 	const grp = document.getElementById("caseSize");
@@ -13,7 +16,6 @@ function sizeDial() {
 	const s = dialSizePx(mode, window.innerWidth, window.innerHeight);
 	dial.style.width = `${s}px`;
 	dial.style.height = `${s}px`;
-	// The strap mock sizes itself to the dial via this custom property.
 	document.documentElement.style.setProperty("--dial-px", `${s}px`);
 }
 
@@ -24,18 +26,8 @@ window.addEventListener("DOMContentLoaded", () => {
 		window.visualViewport.addEventListener("resize", sizeDial);
 	}
 
-	const zodiac = buildZodiac(
-		document.getElementById("zodiac") as unknown as SVGGElement,
-	);
-	const planets = buildPlanets(
-		document.getElementById("discs") as unknown as SVGGElement,
-	);
-	initTexture(document.getElementById("dial") as unknown as SVGSVGElement);
+	const svg = document.getElementById("dial") as unknown as SVGSVGElement;
+	const view = astrolabeView(svg);
 	const { getConfig } = initControls();
-	startAnimation(
-		document.getElementById("dial") as unknown as SVGSVGElement,
-		zodiac,
-		planets,
-		getConfig,
-	);
+	startAnimation(svg, view, getConfig);
 });

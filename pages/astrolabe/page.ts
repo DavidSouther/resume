@@ -19,14 +19,24 @@ import { pageHead } from "../../src/lib/page-head.ts";
 const ASTRONOMY_CDN =
 	"https://cdn.jsdelivr.net/npm/astronomy-engine@2.1.19/astronomy.browser.js";
 
+// The HTML builder `Attrs` type names only an element's own properties (plus
+// class/style/events/role), so `data-*`/`for`/`role="group"` attribute keys —
+// valid HTML attributes the builder writes verbatim — need a wider payload type.
+// `a()` widens an attribute literal for a builder call; the engine still writes
+// every key as a real attribute (no raw setAttribute survives in this module).
+function a<T>(attrs: Record<string, unknown>): T {
+	return attrs as T;
+}
+
 function row(labelText: string, ...controls: Node[]): HTMLDivElement {
 	// Associate the label with the first control that carries an id, so clicking
 	// the whole label toggles its checkbox (a no-op for range/select rows).
-	const forId = (controls[0] as Partial<HTMLElement>)?.id;
-	const lbl = label({}, labelText);
-	// jiffies renders attrs verbatim (no htmlFor→for mapping), so set `for`
+	// jiffies renders attrs verbatim (no htmlFor→for mapping), so pass `for`
 	// directly to associate the label with its control.
-	if (forId) lbl.setAttribute("for", forId);
+	const forId = (controls[0] as Partial<HTMLElement>)?.id;
+	const lbl = forId
+		? label(a<Parameters<typeof label>[0]>({ for: forId }), labelText)
+		: label({}, labelText);
 	return div({ class: "row" }, lbl, ...controls);
 }
 
@@ -35,9 +45,14 @@ function colorSwatch(
 	varName: string,
 	defaultColor: string,
 ): HTMLDivElement {
-	const inp = input({ type: "color", value: defaultColor });
-	inp.dataset.var = varName;
-	inp.dataset.def = defaultColor;
+	const inp = input(
+		a<Parameters<typeof input>[0]>({
+			type: "color",
+			value: defaultColor,
+			"data-var": varName,
+			"data-def": defaultColor,
+		}),
+	);
 	return div({ class: "sw" }, span({}, labelText), inp);
 }
 
@@ -48,15 +63,16 @@ function materialButton(
 	name: string,
 	swatch: string,
 ): HTMLButtonElement {
-	const chip = span({ class: "chip" });
-	chip.style.setProperty("--chip", swatch);
-	const btn = button(
-		{ class: "material-swatch", ariaLabel: name },
+	const chip = span({ class: "chip", style: `--chip:${swatch}` });
+	return button(
+		a<Parameters<typeof button>[0]>({
+			class: "material-swatch",
+			ariaLabel: name,
+			"data-material": id,
+		}),
 		chip,
 		span({}, name),
 	);
-	btn.dataset.material = id;
-	return btn;
 }
 
 // Primary motion controls: visible on screen at all times, independent of the
@@ -77,15 +93,23 @@ function segGroup(
 	items: { value: string; label: string }[],
 	active: string,
 ): HTMLDivElement {
-	const grp = div({ class: "btn-group", id: groupId });
-	grp.setAttribute("role", "group");
-	grp.dataset.value = active;
-	for (const { value, label: text } of items) {
-		const b = button({ class: value === active ? "seg active" : "seg" }, text);
-		b.dataset.value = value;
-		grp.appendChild(b);
-	}
-	return grp;
+	return div(
+		a<Parameters<typeof div>[0]>({
+			class: "btn-group",
+			id: groupId,
+			role: "group",
+			"data-value": active,
+		}),
+		...items.map(({ value, label: text }) =>
+			button(
+				a<Parameters<typeof button>[0]>({
+					class: value === active ? "seg active" : "seg",
+					"data-value": value,
+				}),
+				text,
+			),
+		),
+	);
 }
 
 function field(labelText: string, control: Node): HTMLDivElement {

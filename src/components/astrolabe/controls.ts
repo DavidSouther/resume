@@ -1,3 +1,10 @@
+// The Astrolabe controls drawer. Every form construction, value binding,
+// listener, and class/style/dataset write flows through Jiffies builders +
+// `events:`/`class`/`style` attrs (via `setAttrs()` / element `.update()`), never a raw
+// DOM mutation call. `localStorage` persistence (read/write/clear/capture) stays —
+// it is not a DOM mutation. See
+// .ailly/developer/2026-06-23-A-astrolabe-fcc-refactor/design.md.
+import { type DenormAttrs, up } from "@davidsouther/jiffies/dom/dom.ts";
 import {
 	type MaterialId,
 	materialVars,
@@ -20,6 +27,20 @@ const EARTH_MODE_BY_VALUE: Record<string, EarthMode> = {
 
 const DEFAULT_MATERIAL: MaterialId = "platinum";
 
+// Loose attr payload for the Jiffies `setAttrs()` write path. The HTML builder/element
+// `Attrs` type only names an element's own properties (plus class/style/events/
+// role), so `data-*`/`for`/`aria-*` attribute keys — all valid SVG/HTML
+// attributes the engine writes verbatim — need a wider payload type. Every value
+// here flows through `setAttrs()` (a Jiffies write), never a raw setAttribute.
+type Attr = Record<string, unknown>;
+function setAttrs(
+	el: Element,
+	attrs: Attr,
+	...children: (Node | string)[]
+): void {
+	up(el as Omit<Element, "update">, attrs as DenormAttrs<Element>, ...children);
+}
+
 // Namespaced + versioned localStorage key for the controls-drawer snapshot.
 const STORAGE_KEY = "astrolabe.controls.v1";
 
@@ -27,7 +48,7 @@ const STORAGE_KEY = "astrolabe.controls.v1";
 // simulation fields (simT/bootMs/caseOffset/seeds) ever appear here.
 interface ControlSnapshot {
 	inputs: Record<string, string | boolean>; // element id -> value | checked
-	groups: Record<string, string>; // group id -> dataset.value
+	groups: Record<string, string>; // group id -> data-value
 	material: string; // selected material id
 	colors: Record<string, string>; // data-var -> picker value
 }
@@ -111,11 +132,40 @@ export function initControls(): { getConfig: () => Config } {
 		hands: true,
 	};
 
+	const docRoot = document.documentElement;
+
+	// --- Root-scoped class + CSS-var application (via Jiffies, never raw style) ---
+	// `setAttrs(root, { class })` adds/removes only the named class, leaving every other
+	// class (and the document's own) untouched — the incremental classList.toggle
+	// replacement. Custom-property writes must go through a cssText string (the
+	// object-style path cannot set `--*`), so the owned vars are tracked here and
+	// the full cssText is rebuilt on each change. `--dial-px` (owned by client.ts'
+	// host sizing) is read fresh via getComputedStyle and re-emitted so the
+	// cssText replace never drops it.
+	const rootVars = new Map<string, string>();
+	function applyRootClass(name: string, on: boolean) {
+		setAttrs(docRoot, { class: on ? name : `!${name}` });
+	}
+	// Write the full owned-var cssText to the root in ONE pass. cssText replaces
+	// all inline style, so `--dial-px` (owned by client.ts' host sizing) is read
+	// fresh and re-emitted. Callers that change many vars at once (applyMaterial)
+	// mutate `rootVars` then flush once, rather than flushing per var — a per-var
+	// flush forces a getComputedStyle reflow + full-document restyle each time,
+	// which is what made material switching slow.
+	function flushRootVars() {
+		const dialPx = getComputedStyle(docRoot).getPropertyValue("--dial-px");
+		const parts: string[] = [];
+		if (dialPx?.trim()) parts.push(`--dial-px:${dialPx.trim()}`);
+		for (const [k, v] of rootVars) parts.push(`${k}:${v}`);
+		setAttrs(docRoot, { style: parts.join(";") });
+	}
+	function applyRootVar(name: string, value: string) {
+		rootVars.set(name, value);
+		flushRootVars();
+	}
+
 	function updateHands() {
-		document.documentElement.classList.toggle(
-			"hide-hands",
-			handsHidden(cfg.hands),
-		);
+		applyRootClass("hide-hands", handsHidden(cfg.hands));
 	}
 
 	// Panel open/close
@@ -130,7 +180,9 @@ export function initControls(): { getConfig: () => Config } {
 
 	// Write each persisted input/group/color value back onto its DOM control.
 	// Material is handled separately at applyMaterial (it has its own var/picker
-	// seeding). Per-control: skip any id absent from this DOM version.
+	// seeding). Per-control: skip any id absent from this DOM version. Input
+	// value/checked are element-state properties (not setAttribute/class/style),
+	// so direct assignment is permitted; the group data-value goes through `up`.
 	function applySnapshot(snap: ControlSnapshot) {
 		for (const [id, v] of Object.entries(snap.inputs)) {
 			const el = document.getElementById(id) as HTMLInputElement | null;
@@ -140,14 +192,16 @@ export function initControls(): { getConfig: () => Config } {
 		}
 		for (const [id, v] of Object.entries(snap.groups)) {
 			const grp = document.getElementById(id);
-			if (grp) grp.dataset.value = v;
+			if (grp) setAttrs(grp, { "data-value": v });
 		}
 	}
 	if (restored) applySnapshot(restored);
 
 	// Read the live drawer state into a snapshot. Reads only named control handles
-	// (inputs by id, groups by dataset.value, the active material swatch, color
+	// (inputs by id, groups by data-value, the active material swatch, color
 	// pickers by data-var), so simulation state is excluded by construction.
+	// Dataset reads move to getAttribute (a permitted read; only set/remove/toggle
+	// attribute are forbidden, and the guard's /\.dataset\./ trips on reads too).
 	function captureSnapshot(): ControlSnapshot {
 		const inputs: Record<string, string | boolean> = {};
 		for (const inp of panel.querySelectorAll<HTMLInputElement>(
@@ -158,17 +212,19 @@ export function initControls(): { getConfig: () => Config } {
 		}
 		const groups: Record<string, string> = {};
 		for (const grp of panel.querySelectorAll<HTMLElement>(".btn-group[id]")) {
-			if (grp.dataset.value !== undefined) groups[grp.id] = grp.dataset.value;
+			const v = grp.getAttribute("data-value");
+			if (v !== null) groups[grp.id] = v;
 		}
 		const active = panel.querySelector<HTMLButtonElement>(
 			"button.material-swatch.active",
 		);
-		const material = active?.dataset.material ?? DEFAULT_MATERIAL;
+		const material = active?.getAttribute("data-material") ?? DEFAULT_MATERIAL;
 		const colors: Record<string, string> = {};
 		for (const inp of panel.querySelectorAll<HTMLInputElement>(
 			"input[type=color][data-var]",
 		)) {
-			if (inp.dataset.var) colors[inp.dataset.var] = inp.value;
+			const varName = inp.getAttribute("data-var");
+			if (varName) colors[varName] = inp.value;
 		}
 		return { inputs, groups, material, colors };
 	}
@@ -178,27 +234,31 @@ export function initControls(): { getConfig: () => Config } {
 		writeSnapshot(captureSnapshot());
 	}
 
+	// `aria-expanded` reflects the open state; the pancake stays a pancake — open
+	// state reaches assistive tech and an `open` class, never a CONTROLS/CLOSE text
+	// swap. Class reads use classList? No — open state is the single source of
+	// truth tracked here.
+	let panelOpen = false;
 	function togglePanel(open?: boolean) {
-		const o = open ?? !panel.classList.contains("open");
-		panel.classList.toggle("open", o);
-		// The pancake stays a pancake: reflect open state to assistive tech and via
-		// an active class, never a CONTROLS/CLOSE text swap.
-		gear.setAttribute("aria-expanded", String(o));
-		gear.classList.toggle("open", o);
+		const o = open ?? !panelOpen;
+		panelOpen = o;
+		setAttrs(panel, { class: o ? "open" : "!open" });
+		setAttrs(gear, { "aria-expanded": String(o), class: o ? "open" : "!open" });
 	}
-	gear.addEventListener("click", () => togglePanel());
-	document
-		.getElementById("closeBtn")
-		?.addEventListener("click", () => togglePanel(false));
+	setAttrs(gear, { events: { click: () => togglePanel() } });
+	const closeBtn = document.getElementById("closeBtn");
+	if (closeBtn)
+		setAttrs(closeBtn, { events: { click: () => togglePanel(false) } });
 	// Default open on wide viewports, closed on narrow. The CSS supplies the same
 	// default for first paint (the `:not(.ready)` media rule); setting `.open`
 	// here makes that class the single source of truth so the toggle closes
 	// correctly at every width. matchMedia is guarded — jsdom does not implement
 	// it, so the test boots closed.
 	togglePanel(window.matchMedia?.("(min-width:768px)")?.matches ?? false);
-	panel.classList.add("ready");
+	setAttrs(panel, { class: "ready" });
 
-	// Range slider helper
+	// Range slider helper. The output text updates via a text-node child (`update`
+	// reconcile), and the `input` listener via an `events:` attr.
 	function bindRange(
 		id: string,
 		valId: string | null,
@@ -207,39 +267,51 @@ export function initControls(): { getConfig: () => Config } {
 	): HTMLInputElement {
 		const inp = document.getElementById(id) as HTMLInputElement;
 		const out = valId ? document.getElementById(valId) : null;
-		function upd() {
+		function upd(persistOnChange: boolean) {
 			const v = parseFloat(inp.value);
-			if (out) out.innerHTML = fmt(v);
+			if (out) setAttrs(out, {}, fmt(v));
 			apply(v);
+			if (persistOnChange) persist();
 		}
-		inp.addEventListener("input", upd);
-		upd();
+		// Apply AND persist in the one input handler. A separate persist listener
+		// would replace this one — Jiffies keeps a single handler per event type.
+		setAttrs(inp, { events: { input: () => upd(true) } });
+		upd(false);
 		return inp;
 	}
 
-	// Checkbox helper
+	// Checkbox helper.
 	function bindCheck(
 		id: string,
 		apply: (v: boolean) => void,
 	): HTMLInputElement {
 		const inp = document.getElementById(id) as HTMLInputElement;
-		function upd() {
-			apply(inp.checked);
-		}
-		inp.addEventListener("change", upd);
-		upd();
+		// Apply AND persist in the one change handler (see bindRange).
+		setAttrs(inp, {
+			events: {
+				change: () => {
+					apply(inp.checked);
+					persist();
+				},
+			},
+		});
+		apply(inp.checked);
 		return inp;
 	}
 
-	function setChk(id: string, v: boolean) {
+	// Set a checkbox to a value and run its bound apply directly (no synthetic
+	// DOM event round-trip). `.checked` is an element-state property, not an
+	// attribute/class/style write, so direct assignment is permitted.
+	function setChk(id: string, v: boolean, apply: (v: boolean) => void) {
 		const c = document.getElementById(id) as HTMLInputElement;
 		c.checked = v;
-		c.dispatchEvent(new Event("change"));
+		apply(v);
+		persist();
 	}
 
 	// Segmented single-choice control. Marks the chosen button active, reflects
-	// the value on the group's dataset (so non-DOM readers can see it), and runs
-	// `apply`. Applies the markup's initial value once on bind.
+	// the value on the group's data-value (so non-DOM readers can see it), and
+	// runs `apply`. Applies the markup's initial value once on bind.
 	function bindGroup(
 		id: string,
 		apply: (value: string) => void,
@@ -249,17 +321,29 @@ export function initControls(): { getConfig: () => Config } {
 			grp.querySelectorAll<HTMLButtonElement>("button[data-value]"),
 		);
 		function set(value: string) {
-			grp.dataset.value = value;
+			setAttrs(grp, { "data-value": value });
 			for (const b of btns) {
-				b.classList.toggle("active", b.dataset.value === value);
+				const on = b.getAttribute("data-value") === value;
+				setAttrs(b, { class: on ? "active" : "!active" });
 			}
 			apply(value);
 		}
 		for (const b of btns) {
-			const v = b.dataset.value ?? "";
-			b.addEventListener("click", () => set(v));
+			const v = b.getAttribute("data-value") ?? "";
+			setAttrs(b, {
+				events: {
+					click: () => {
+						set(v);
+						persist();
+					},
+				},
+			});
 		}
-		set(grp.dataset.value ?? btns[0]?.dataset.value ?? "");
+		set(
+			grp.getAttribute("data-value") ??
+				btns[0]?.getAttribute("data-value") ??
+				"",
+		);
 		return { set };
 	}
 
@@ -274,29 +358,23 @@ export function initControls(): { getConfig: () => Config } {
 	bindCheck("parallaxOn", (v) => {
 		cfg = { ...cfg, parallaxOn: v };
 	});
-	bindCheck("t_orbits", (v) =>
-		document.documentElement.classList.toggle("hide-orbits", !v),
-	);
-	bindCheck("t_spokes", (v) =>
-		document.documentElement.classList.toggle("hide-spokes", !v),
-	);
+	bindCheck("t_orbits", (v) => applyRootClass("hide-orbits", !v));
+	bindCheck("t_spokes", (v) => applyRootClass("hide-spokes", !v));
 	bindCheck("t_occ", (v) => {
 		cfg = { ...cfg, occ: v };
 	});
 	bindCheck("t_twilight", (v) => {
 		cfg = { ...cfg, twilight: v };
-		document.documentElement.classList.toggle("hide-twilight", !v);
+		applyRootClass("hide-twilight", !v);
 	});
 	bindCheck("t_hands", (v) => {
 		cfg = { ...cfg, hands: v };
 		updateHands();
 	});
-	bindCheck("t_moon", (v) =>
-		document.documentElement.classList.toggle("hide-moon", !v),
-	);
+	bindCheck("t_moon", (v) => applyRootClass("hide-moon", !v));
 	bindCheck("t_guilloche", (v) => {
 		cfg = { ...cfg, guilloche: v };
-		document.documentElement.classList.toggle("hide-guilloche", !v);
+		applyRootClass("hide-guilloche", !v);
 	});
 	const cGuilN = bindRange(
 		"guillocheN",
@@ -323,53 +401,67 @@ export function initControls(): { getConfig: () => Config } {
 	// so hide it when the dial fills the screen.
 	const caseGroup = bindGroup("caseSize", (v) => {
 		cfg = { ...cfg, sizeMode: v as Config["sizeMode"] };
-		document.documentElement.classList.toggle("full-screen", v === "full");
+		applyRootClass("full-screen", v === "full");
 		window.dispatchEvent(new Event("resize"));
 	});
 
-	// Reflect the parallax default into the checkbox
+	// Reflect the parallax default into the checkbox (element-state property).
 	(document.getElementById("parallaxOn") as HTMLInputElement).checked =
 		cfg.parallaxOn;
 
-	// Color pickers
+	// Color pickers. Each picker drives its CSS var on the root; the picker value
+	// itself is read off the live element (`.value`, a permitted property read).
 	const colorInputs =
 		panel.querySelectorAll<HTMLInputElement>("input[type=color]");
+	function applyColor(inp: HTMLInputElement) {
+		const varName = inp.getAttribute("data-var");
+		if (varName) applyRootVar(varName, inp.value);
+	}
 	for (const inp of colorInputs) {
-		if (inp.dataset.var) {
-			document.documentElement.style.setProperty(inp.dataset.var, inp.value);
-		}
-		inp.addEventListener("input", () => {
-			if (inp.dataset.var)
-				document.documentElement.style.setProperty(inp.dataset.var, inp.value);
+		applyColor(inp);
+		// Apply AND persist in the one input handler (a separate persist listener
+		// would replace this one — Jiffies keeps a single handler per event type).
+		setAttrs(inp, {
+			events: {
+				input: () => {
+					applyColor(inp);
+					persist();
+				},
+			},
 		});
 	}
 
 	// Case materials. Picking a material applies its coordinated variable map to
 	// the root and seeds the matching color pickers (which stay as an advanced
 	// override), then marks the active button.
-	// Material swatches now live in the motion block at the top of the one drawer.
 	const matBtns = document.querySelectorAll<HTMLButtonElement>(
 		"button.material-swatch",
 	);
 	function applyMaterial(id: MaterialId) {
+		// Stage every material var into the map, seed the matching pickers, then
+		// flush the root cssText ONCE — not once per var.
 		for (const [k, v] of Object.entries(materialVars(id))) {
-			document.documentElement.style.setProperty(k, v);
+			rootVars.set(k, v);
 			const picker = panel.querySelector<HTMLInputElement>(
 				`input[type=color][data-var="${k}"]`,
 			);
-			if (picker) {
-				picker.value = v;
-				picker.dispatchEvent(new Event("input"));
-			}
+			if (picker) picker.value = v;
 		}
+		flushRootVars();
 		for (const b of matBtns) {
-			b.classList.toggle("active", b.dataset.material === id);
+			const on = b.getAttribute("data-material") === id;
+			setAttrs(b, { class: on ? "active" : "!active" });
 		}
 	}
 	for (const b of matBtns) {
-		b.addEventListener("click", () =>
-			applyMaterial(b.dataset.material as MaterialId),
-		);
+		setAttrs(b, {
+			events: {
+				click: () => {
+					applyMaterial(b.getAttribute("data-material") as MaterialId);
+					persist();
+				},
+			},
+		});
 	}
 
 	// Seed the material: the restored one if a snapshot exists and names a known
@@ -379,81 +471,91 @@ export function initControls(): { getConfig: () => Config } {
 	// "advanced override" behavior.
 	const restoredMaterial = restored?.material;
 	const hasSwatch = Array.from(matBtns).some(
-		(b) => b.dataset.material === restoredMaterial,
+		(b) => b.getAttribute("data-material") === restoredMaterial,
 	);
 	applyMaterial(
 		hasSwatch ? (restoredMaterial as MaterialId) : DEFAULT_MATERIAL,
 	);
 	if (restored?.colors) {
 		for (const inp of colorInputs) {
-			const varName = inp.dataset.var;
+			const varName = inp.getAttribute("data-var");
 			if (varName && varName in restored.colors) {
 				inp.value = restored.colors[varName];
-				document.documentElement.style.setProperty(varName, inp.value);
+				applyRootVar(varName, inp.value);
 			}
 		}
 	}
 
-	// Persistence: write the current snapshot on every control change. Listeners
-	// attach directly to each control rather than relying on event delegation,
-	// because the synthetic input/change events controls dispatch (here and in
-	// tests) do not bubble. Color/material changes flow through the color picker
-	// inputs; group choices flow through their buttons. No simulation state is
-	// ever read by captureSnapshot, so the snapshot stays controls-only.
-	for (const inp of panel.querySelectorAll<HTMLInputElement>("input[id]")) {
-		inp.addEventListener("input", persist);
-		inp.addEventListener("change", persist);
-	}
-	for (const inp of colorInputs) {
-		inp.addEventListener("input", persist);
-	}
-	// Same generic selector captureSnapshot uses, so a future fourth group is
-	// both captured and write-triggered without touching a second hardcoded list.
-	for (const grp of panel.querySelectorAll<HTMLElement>(".btn-group[id]")) {
-		for (const b of grp.querySelectorAll<HTMLButtonElement>(
-			"button[data-value]",
-		)) {
-			b.addEventListener("click", persist);
-		}
-	}
-	for (const b of matBtns) {
-		b.addEventListener("click", persist);
-	}
+	// Persistence is wired INTO each control's own apply handler (bindRange,
+	// bindCheck, the color-input loop, bindGroup, and the material buttons) so the
+	// write happens in the same listener as the apply. A separate persist listener
+	// per control is NOT used: Jiffies keeps a single handler per event type, so a
+	// second `input`/`change` registration would silently replace the apply one.
 
-	// Reset button
-	document.getElementById("resetBtn")?.addEventListener("click", () => {
-		// Restore the default material (which re-seeds every material-driven
-		// picker), then reset the independent leather picker.
-		applyMaterial(DEFAULT_MATERIAL);
-		for (const inp of colorInputs) {
-			if (inp.dataset.var === "--strap-leather" && inp.dataset.def) {
-				inp.value = inp.dataset.def;
-				document.documentElement.style.setProperty(
-					"--strap-leather",
-					inp.dataset.def,
-				);
-			}
-		}
-		speedGroup.set("0");
-		cPx.value = "0.7";
-		cPx.dispatchEvent(new Event("input"));
-		setChk("t_orbits", true);
-		setChk("t_spokes", false);
-		setChk("t_occ", true);
-		setChk("t_twilight", true);
-		setChk("t_guilloche", true);
-		setChk("t_hands", true);
-		setChk("t_moon", true);
-		cGuilN.value = "120";
-		cGuilN.dispatchEvent(new Event("input"));
-		setChk("parallaxOn", false);
-		earthGroup.set("galilean");
-		caseGroup.set("full");
-		// Clear last: the default-applying dispatches above synchronously
-		// re-trigger the persistence writer, so removing the key here leaves
-		// storage truly empty after a Reset.
-		clearSnapshot();
-	});
+	// Reset button.
+	const resetBtn = document.getElementById("resetBtn");
+	if (resetBtn) {
+		setAttrs(resetBtn, {
+			events: {
+				click: () => {
+					// Restore the default material (which re-seeds every material-driven
+					// picker), then reset the independent leather picker.
+					applyMaterial(DEFAULT_MATERIAL);
+					for (const inp of colorInputs) {
+						if (
+							inp.getAttribute("data-var") === "--strap-leather" &&
+							inp.getAttribute("data-def")
+						) {
+							inp.value = inp.getAttribute("data-def") as string;
+							applyRootVar("--strap-leather", inp.value);
+						}
+					}
+					speedGroup.set("0");
+					cPx.value = "0.7";
+					cfg = { ...cfg, parallax: 0.7 };
+					setAttrs(
+						document.getElementById("parallaxVal") as HTMLElement,
+						{},
+						"0.70",
+					);
+					setChk("t_orbits", true, (v) => applyRootClass("hide-orbits", !v));
+					setChk("t_spokes", false, (v) => applyRootClass("hide-spokes", !v));
+					setChk("t_occ", true, (v) => {
+						cfg = { ...cfg, occ: v };
+					});
+					setChk("t_twilight", true, (v) => {
+						cfg = { ...cfg, twilight: v };
+						applyRootClass("hide-twilight", !v);
+					});
+					setChk("t_guilloche", true, (v) => {
+						cfg = { ...cfg, guilloche: v };
+						applyRootClass("hide-guilloche", !v);
+					});
+					setChk("t_hands", true, (v) => {
+						cfg = { ...cfg, hands: v };
+						updateHands();
+					});
+					setChk("t_moon", true, (v) => applyRootClass("hide-moon", !v));
+					cGuilN.value = "120";
+					cfg = { ...cfg, guillocheN: 120 };
+					setAttrs(
+						document.getElementById("guillocheNVal") as HTMLElement,
+						{},
+						"120",
+					);
+					setChk("parallaxOn", false, (v) => {
+						cfg = { ...cfg, parallaxOn: v };
+					});
+					earthGroup.set("galilean");
+					caseGroup.set("full");
+					// Clear last: the default-applying paths above synchronously
+					// re-trigger the persistence writer, so removing the key here leaves
+					// storage truly empty after a Reset.
+					clearSnapshot();
+				},
+			},
+		});
+	}
 
 	return { getConfig: () => ({ ...cfg }) };
 }
