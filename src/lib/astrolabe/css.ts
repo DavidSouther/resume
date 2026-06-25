@@ -143,6 +143,8 @@ export const ASTROLABE_CSS = `
     font-family:var(--mono);font-size:10px;letter-spacing:.04em;color:var(--label);
     background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);
     border-radius:8px;padding:9px 4px 7px;cursor:pointer;}
+  /* Clicks resolve to the button (its event.target carries data-material), not a child span. */
+  .material-swatch>*{pointer-events:none;}
   .material-swatch:active{transform:scale(0.98);}
   .material-swatch.active{border-color:rgba(255,255,255,0.55);color:#E7ECF7;
     background:rgba(255,255,255,0.08);}

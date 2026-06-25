@@ -1,13 +1,14 @@
 // Pure per-frame projection for the Astrolabe dial. `simulate(input) -> Scene`
 // computes every DOM string and flag the view needs, with no DOM access. The
 // 60fps animation loop reads layout/clock/color through `FrameInput` and pushes
-// the resulting `Scene` to the FCC tree via `astrolabeView(svg).update(scene)`.
+// the resulting `Scene` to the FCC tree via `stageRoot.update({ scene })`.
 //
 // This is the seam the project's design fixes: "what the frame is" (this pure
 // module, fully unit-testable) is separated from "how it reaches the screen"
 // (the FCC tree in src/components/astrolabe/view.ts). The two reference-branch
 // holes are filled HERE: gradient-stop colors (via the injected `color`
 // resolver) and the guilloche line list (ported from updateGuilloche).
+import { range } from "@davidsouther/jiffies/range.ts";
 import { BODIES, EARTH, EARTH_YEAR, SIGN_FULL } from "./bodies.ts";
 import { geoDirection } from "./geocentric.ts";
 import {
@@ -74,10 +75,10 @@ export interface FrameInput {
 	prevEarthMode: EarthMode;
 	mouse: { nx: number; ny: number };
 	interaction: {
-		hovered: string | null; // body key
-		pinned: string | null;
-		hoveredSign: number | null; // 0..11
-		pinnedSign: number | null;
+		hovered?: string; // body key
+		pinned?: string;
+		hoveredSign?: number; // 0..11
+		pinnedSign?: number;
 		dragging: boolean;
 	};
 	layout: {
@@ -136,47 +137,43 @@ function guillochePoints(
 	rTo: number,
 	samples: number,
 ): { x: number; y: number }[] {
-	const aEr = Math.atan2(Ey - CY, Ex - CX);
-	const cosAe = Math.cos(aEr);
-	const sinAe = Math.sin(aEr);
+	const earthAngle = Math.atan2(Ey - CY, Ex - CX);
+	const cosEarth = Math.cos(earthAngle);
+	const sinEarth = Math.sin(earthAngle);
 	const cosPhi = Math.cos(phi);
 	const sinPhi = Math.sin(phi);
-	const c = Math.cos(phi - aEr);
+	const cosRel = Math.cos(phi - earthAngle);
 
-	const dAuTo = Math.exp((rTo - GB) / GA);
-	const discTo = dAuTo * dAuTo + c * c - 1;
+	const distAuTo = Math.exp((rTo - GB) / GA);
+	const discTo = distAuTo * distAuTo + cosRel * cosRel - 1;
 	if (discTo < 0) return [];
-	const tMax = -c + Math.sqrt(discTo);
+	const tMax = -cosRel + Math.sqrt(discTo);
 	if (tMax <= 0) return [];
 
-	const dAuFrom = Math.exp((rFrom - GB) / GA);
-	const discFrom = dAuFrom * dAuFrom + c * c - 1;
-	const tStart = discFrom >= 0 ? Math.max(0, -c + Math.sqrt(discFrom)) : 0;
+	const distAuFrom = Math.exp((rFrom - GB) / GA);
+	const discFrom = distAuFrom * distAuFrom + cosRel * cosRel - 1;
+	const tStart = discFrom >= 0 ? Math.max(0, -cosRel + Math.sqrt(discFrom)) : 0;
 
-	const points: { x: number; y: number }[] = [];
-	for (let s = 0; s <= samples; s++) {
-		const t = tStart + ((tMax - tStart) * s) / samples;
-		const px = cosAe + t * cosPhi;
-		const py = sinAe + t * sinPhi;
-		const dAu = Math.sqrt(px * px + py * py);
-		if (dAu < 1e-6) continue;
-		const rD = GA * Math.log(dAu) + GB;
-		if (rD < rFrom - 0.5 || rD > rTo + 0.5) continue;
-		const theta = Math.atan2(py, px);
-		points.push({
-			x: +(CX + rD * Math.cos(theta)).toFixed(1),
-			y: +(CY + rD * Math.sin(theta)).toFixed(1),
-		});
-	}
-	return points;
+	return range(0, samples + 1)
+		.map((s) => {
+			const t = tStart + ((tMax - tStart) * s) / samples;
+			const rayX = cosEarth + t * cosPhi;
+			const rayY = sinEarth + t * sinPhi;
+			const distAu = Math.sqrt(rayX * rayX + rayY * rayY);
+			if (distAu < 1e-6) return null;
+			const radius = GA * Math.log(distAu) + GB;
+			if (radius < rFrom - 0.5 || radius > rTo + 0.5) return null;
+			const theta = Math.atan2(rayY, rayX);
+			return {
+				x: +(CX + radius * Math.cos(theta)).toFixed(1),
+				y: +(CY + radius * Math.sin(theta)).toFixed(1),
+			};
+		})
+		.filter((p): p is { x: number; y: number } => p !== null);
 }
 
 function pointsToPathD(points: { x: number; y: number }[]): string {
-	let d = "";
-	for (let i = 0; i < points.length; i++) {
-		d += `${i === 0 ? "M" : " L"}${points[i].x},${points[i].y}`;
-	}
-	return d;
+	return points.map((p, i) => `${i === 0 ? "M" : " L"}${p.x},${p.y}`).join("");
 }
 
 function guillochePathD(
@@ -196,24 +193,23 @@ function angDelta(phi: number, center: number): number {
 	return d;
 }
 
-function uniformPhis(n: number, aEr: number, refR: number): number[] {
+function uniformPhis(n: number, earthAngle: number, refR: number): number[] {
 	const FINE = n * 24;
-	const dAuRef = Math.exp((refR - GB) / GA);
-	const cosAer = Math.cos(aEr);
-	const sinAer = Math.sin(aEr);
+	const distAuRef = Math.exp((refR - GB) / GA);
+	const cosEarth = Math.cos(earthAngle);
+	const sinEarth = Math.sin(earthAngle);
 
-	const fineTheta: number[] = new Array(FINE);
-	for (let i = 0; i < FINE; i++) {
+	const fineTheta = range(0, FINE).map((i) => {
 		const phi = (i / FINE) * 2 * Math.PI;
 		const cosPhi = Math.cos(phi);
 		const sinPhi = Math.sin(phi);
-		const c = cosAer * cosPhi + sinAer * sinPhi;
-		const disc = dAuRef * dAuRef + c * c - 1;
-		const t = disc >= 0 ? -c + Math.sqrt(disc) : 0;
-		const px = cosAer + t * cosPhi;
-		const py = sinAer + t * sinPhi;
-		fineTheta[i] = Math.atan2(py, px);
-	}
+		const cosRel = cosEarth * cosPhi + sinEarth * sinPhi;
+		const disc = distAuRef * distAuRef + cosRel * cosRel - 1;
+		const t = disc >= 0 ? -cosRel + Math.sqrt(disc) : 0;
+		const rayX = cosEarth + t * cosPhi;
+		const rayY = sinEarth + t * sinPhi;
+		return Math.atan2(rayY, rayX);
+	});
 
 	for (let i = 1; i < FINE; i++) {
 		const diff = fineTheta[i] - fineTheta[i - 1];
@@ -268,9 +264,9 @@ function guillocheLines(
 		else lines.push({ d });
 	};
 
-	const aEr = Math.atan2(Ey - CY, Ex - CX);
+	const earthAngle = Math.atan2(Ey - CY, Ex - CX);
 
-	const phis = uniformPhis(n, aEr, G_R_MARS);
+	const phis = uniformPhis(n, earthAngle, G_R_MARS);
 	for (const phi of phis) {
 		add(guillochePathD(Ex, Ey, phi, GB, G_MAX_R, G_SAMPLES), opacityFor(phi));
 	}
@@ -396,9 +392,9 @@ export function simulate(input: FrameInput): Scene {
 	const zhitsTransform = `rotate(${rot.toFixed(3)} ${CX} ${CY})`;
 
 	// Geocentric directions (true sky) -> occupancy.
-	const aErad = (aE * Math.PI) / 180;
-	const exh = Math.cos(aErad);
-	const eyh = Math.sin(aErad);
+	const earthAngleRad = (aE * Math.PI) / 180;
+	const earthX = Math.cos(earthAngleRad);
+	const earthY = Math.sin(earthAngleRad);
 	const geo: Record<string, { g: number; si: number; deg: number }> = {};
 
 	function setGeo(key: string, gScreen: number) {
@@ -414,11 +410,15 @@ export function simulate(input: FrameInput): Scene {
 		if (b.moon) {
 			setGeo("moon", a);
 		} else {
-			const ar = (a * Math.PI) / 180;
+			const bodyAngleRad = (a * Math.PI) / 180;
 			const au = b.au ?? 1;
 			setGeo(
 				b.key,
-				(Math.atan2(au * Math.sin(ar) - eyh, au * Math.cos(ar) - exh) * 180) /
+				(Math.atan2(
+					au * Math.sin(bodyAngleRad) - earthY,
+					au * Math.cos(bodyAngleRad) - earthX,
+				) *
+					180) /
 					Math.PI,
 			);
 		}
@@ -476,27 +476,32 @@ export function simulate(input: FrameInput): Scene {
 	);
 
 	// Zodiac dividers / wedges / arcs (curved). bpts[j] is boundary j's polyline.
-	const bpts: { x: number; y: number }[][] = [];
-	for (let j = 0; j < 12; j++) {
+	const bpts = range(0, 12).map((j) => {
 		const clockDeg = j * 30 + rot;
 		const phi = ((-90 + clockDeg) * Math.PI) / 180;
-		let pts = ptolemaic ? [] : guillochePoints(Ex, Ey, phi, ZIN, ZOUT, 6);
-		if (pts.length < 2) pts = [pt(clockDeg, ZIN), pt(clockDeg, ZOUT)];
-		bpts.push(pts);
-	}
+		const pts = ptolemaic ? [] : guillochePoints(Ex, Ey, phi, ZIN, ZOUT, 6);
+		return pts.length < 2 ? [pt(clockDeg, ZIN), pt(clockDeg, ZOUT)] : pts;
+	});
 
-	const zodiac: ZodiacSlice[] = [];
-	for (let i = 0; i < 12; i++) {
+	const zodiac: ZodiacSlice[] = range(0, 12).map((i) => {
 		const a = bpts[i];
 		const b = bpts[(i + 1) % 12];
 		const aIn = a[0];
 		const bIn = b[0];
 		const bOut = b[b.length - 1];
-		let wedgeD = `M${aIn.x} ${aIn.y}`;
-		for (let k = 1; k < a.length; k++) wedgeD += ` L${a[k].x} ${a[k].y}`;
-		wedgeD += ` A${ZOUT} ${ZOUT} 0 0 1 ${bOut.x} ${bOut.y}`;
-		for (let k = b.length - 2; k >= 0; k--) wedgeD += ` L${b[k].x} ${b[k].y}`;
-		wedgeD += ` A${ZIN} ${ZIN} 0 0 0 ${aIn.x} ${aIn.y} Z`;
+		const wedgeD =
+			`M${aIn.x} ${aIn.y}` +
+			a
+				.slice(1)
+				.map((p) => ` L${p.x} ${p.y}`)
+				.join("") +
+			` A${ZOUT} ${ZOUT} 0 0 1 ${bOut.x} ${bOut.y}` +
+			b
+				.slice(0, -1)
+				.reverse()
+				.map((p) => ` L${p.x} ${p.y}`)
+				.join("") +
+			` A${ZIN} ${ZIN} 0 0 0 ${aIn.x} ${aIn.y} Z`;
 
 		const arcD = `M${aIn.x} ${aIn.y} A${ZIN} ${ZIN} 0 0 1 ${bIn.x} ${bIn.y}`;
 		const dividerD = pointsToPathD(bpts[i]);
@@ -508,15 +513,15 @@ export function simulate(input: FrameInput): Scene {
 		const glyphTransform = `translate(${gp.x.toFixed(2)} ${gp.y.toFixed(2)}) scale(${GLYPH_S}) translate(-12 -12)`;
 		const gradientStops = active ? gradientStopsFor(keys, input.color) : [];
 
-		zodiac.push({
+		return {
 			wedgeD,
 			arcD,
 			dividerD,
 			glyphTransform,
 			active,
 			gradientStops,
-		});
-	}
+		};
+	});
 
 	// Hands (real clock).
 	const handsA = handAngles(input.wallNow);

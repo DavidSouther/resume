@@ -5,10 +5,10 @@
 // a persistent pancake. Red until the merge lands. See
 // .ailly/developer/2026-06-16-E-astrolabe-control-menu/design.md.
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import page from "../../../pages/astrolabe/page.ts";
 import { ASTROLABE_CSS } from "../../lib/astrolabe/css.ts";
 import { mount, resetDom } from "../test-dom.ts";
-import { initControls } from "./controls.ts";
+import { initControls } from "./controls-components.ts";
+import { buildStage } from "./stage.ts";
 
 afterEach(resetDom);
 
@@ -16,8 +16,11 @@ describe("astrolabe control menu — one merged drawer", () => {
 	let drawer: HTMLElement;
 
 	beforeEach(() => {
-		mount(page.default());
-		initControls();
+		localStorage.clear();
+		const stage = buildStage();
+		mount(stage.root);
+		initControls(stage.root);
+		// The panel (#controls) is the slide-out drawer inside the stage shell.
 		drawer = document.getElementById("controls") as HTMLElement;
 	});
 

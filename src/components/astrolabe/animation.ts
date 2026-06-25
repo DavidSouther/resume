@@ -27,20 +27,19 @@ import {
 	KEPLERIAN,
 	PTOLEMAIC,
 } from "../../lib/astrolabe/types.ts";
+import type { ControlsDrawerHandle } from "./controls-components.ts";
 import type { ViewEvents } from "./view.ts";
 
 type EventMap = Record<string, (e: Event) => void>;
 
-interface AstrolabeView {
-	update(scene: ReturnType<typeof simulate>): void;
-	bindEvents(events: ViewEvents): void;
-}
-
+// `root` is the `#stage-wrap` component; the loop pushes each frame's Scene to it
+// via `root.update({ scene })` and it fans the dial + overlays. `svg` is the dial
+// `<svg>`, held only for layout reads (`getBoundingClientRect`) and dial-root
+// pointer wiring (`up(svg, { events })`). The dial's pointer event maps ride down
+// on the `dialEvents` prop and are wired once inside the dial.
 export function startAnimation(
-	svg: SVGSVGElement & {
-		update?: (attrs?: Record<string, unknown>) => unknown;
-	},
-	view: AstrolabeView,
+	root: ControlsDrawerHandle,
+	svg: SVGSVGElement,
 	getConfig: () => Config,
 ): void {
 	// Parallax mouse/touch tracking (normalized -1..1 from center).
@@ -279,12 +278,14 @@ export function startAnimation(
 		ev.pointercancel = end;
 	}
 
-	// Bind the per-boundary events through the view (no raw element listeners).
-	view.bindEvents({
+	// The dial's pointer event maps, authored here and handed down on the
+	// `dialEvents` prop each frame (the dial wires them onto its interactive
+	// children once). No raw element listeners.
+	const dialEvents: ViewEvents = {
 		body: bodyEvents,
 		sign: signEvents,
 		sunHit: sunHitEvents,
-	});
+	};
 
 	// Dial-root pointer wiring (parallax + clear-pins), applied through Jiffies
 	// `up()` (works on the raw page-emitted <svg>, which loses its build-time
@@ -339,10 +340,10 @@ export function startAnimation(
 			prevEarthMode,
 			mouse: { nx: mouseNX, ny: mouseNY },
 			interaction: {
-				hovered: hovered?.key ?? null,
-				pinned: pinned?.key ?? null,
-				hoveredSign,
-				pinnedSign,
+				hovered: hovered?.key,
+				pinned: pinned?.key,
+				hoveredSign: hoveredSign ?? undefined,
+				pinnedSign: pinnedSign ?? undefined,
 				dragging: dragging !== null,
 			},
 			layout: {
@@ -353,7 +354,9 @@ export function startAnimation(
 		};
 
 		const scene = simulate(input);
-		view.update(scene);
+		// Push the frame to the stage component; it fans the dial + overlays. The
+		// dial event maps ride along (wired once inside the dial).
+		root.update({ scene, dialEvents });
 
 		// Fold mutable loop state forward.
 		caseOffset = scene.next.caseOffset;

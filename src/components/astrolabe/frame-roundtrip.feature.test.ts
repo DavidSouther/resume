@@ -1,25 +1,21 @@
 // @vitest-environment jsdom
 
-// Regression guard (Astrolabe FCC refactor): the dial must update its
-// page-emitted static-id elements (twilight cone, guilloche clip, hands,
-// clocks) in PRODUCTION, i.e. after the SSG serializes the page to HTML and the
-// browser re-parses it. Re-parsing creates brand-new element objects that do
-// NOT carry Jiffies' build-time `.update` graft, so any code path that relies on
-// `el.update(...)` against a queried page element is a silent no-op in the
-// browser. The sibling frame-render test mounts `page.default()` IN MEMORY,
-// where the graft survives — so it cannot catch this class of bug. This test
-// closes that blind spot by round-tripping the markup through serialize→reparse
-// (the production fidelity loss) before wiring the view.
-//
-// The fix is to apply updates with Jiffies' `up()` (which works on any raw
-// element), the same mechanism controls.ts already uses against the document
-// root. See .ailly/developer/2026-06-23-A-astrolabe-fcc-refactor/design.md.
+// Regression guard (Astrolabe FCC refactor): the dial must update its leaf
+// elements (twilight cone, guilloche clip, hands, clocks) in PRODUCTION. The SSG
+// serializes the page to HTML and the browser re-parses it into brand-new element
+// objects that carry no Jiffies `.update` graft and that the render pipeline holds
+// no reference to. The client bootstrap closes that gap by building a FRESH stage
+// (whose handles DO carry working updates) and adopting it in place of the
+// re-parsed server markup. This test reproduces exactly that path: reparse the SSG
+// output, run the adopt-swap, then drive the view through the adopted handles —
+// proving the live DOM is the held handles, not the inert reparsed nodes. See
+// .ailly/developer/2026-06-23-A-astrolabe-fcc-refactor/design.md.
 import { afterEach, describe, expect, it } from "vitest";
 import page from "../../../pages/astrolabe/page.ts";
 import { type FrameInput, simulate } from "../../lib/astrolabe/simulate.ts";
 import { type Config, GALILEAN } from "../../lib/astrolabe/types.ts";
 import { resetDom } from "../test-dom.ts";
-import { astrolabeView } from "./view.ts";
+import { buildStage } from "./stage.ts";
 
 afterEach(resetDom);
 
@@ -47,10 +43,6 @@ function frameInput(): FrameInput {
 		prevEarthMode: GALILEAN,
 		mouse: { nx: 0, ny: 0 },
 		interaction: {
-			hovered: null,
-			pinned: null,
-			hoveredSign: null,
-			pinnedSign: null,
 			dragging: false,
 		},
 		layout: {
@@ -61,44 +53,47 @@ function frameInput(): FrameInput {
 	};
 }
 
-// Render the page, serialize it, and re-parse the HTML into a fresh container.
-// Re-parsing is what the browser does to SSG output; it strips the build-time
-// `.update` graft from every element, reproducing production fidelity.
-function mountRoundTripped(): HTMLElement {
-	const built = page.default();
-	const html = built.outerHTML;
+// Render the page and re-parse the HTML — exactly what the browser does to SSG
+// output, producing inert markup that carries no build-time `.update` graft and
+// that the render pipeline holds no reference to.
+function reparseSSG(): void {
+	const html = page.default().outerHTML;
 	const container = document.createElement("div");
 	container.innerHTML = html;
 	document.body.append(container);
-	return container;
 }
 
-describe("astrolabe frame: static-id elements update after the SSG round-trip", () => {
-	it("drives cone / clip / hands / clocks through the view post-reparse", () => {
-		const container = mountRoundTripped();
-		const svg = container.querySelector("#dial") as unknown as SVGSVGElement;
-
-		// Sanity: the re-parsed dial elements have lost their `.update` graft, so
-		// this really is the production fidelity (not the in-memory shortcut).
-		const cone = svg.querySelector("#twilightCone") as Element & {
+describe("astrolabe frame: the client adopts a fresh stage over reparsed SSG markup", () => {
+	it("drives cone / clip / hands / clocks through the adopted handles", () => {
+		// Arrange: the browser's view of SSG output — inert, graft-less markup.
+		reparseSSG();
+		const reparsed = document.getElementById("dial") as Element & {
 			update?: unknown;
 		};
-		expect(cone).not.toBeNull();
-		expect(cone.update).toBeUndefined();
+		expect(reparsed).not.toBeNull();
+		// Really graft-less: a reparsed element never carries Jiffies' `.update`.
+		expect(reparsed.update).toBeUndefined();
 
-		const view = astrolabeView(svg);
+		// Act: the client bootstrap — build a fresh stage and adopt it in place of
+		// the reparsed markup, then drive one frame through the root component
+		// (which fans the dial + overlays it owns). No element handle is poked.
+		const stage = buildStage();
+		document.getElementById("stage-wrap")?.replaceWith(stage.root);
 		const scene = simulate(frameInput());
-		view.update(scene);
+		stage.root.update({ scene });
 
-		// The hour hand's per-frame transform reaches the page-emitted #handHour.
+		// The adopted dial IS the live DOM now (the inert reparsed dial is gone).
+		expect(document.getElementById("dial")).toBe(stage.dial);
+
+		// Per-frame values reach the leaf elements — read by selector off the live
+		// dial, never through a handle bag.
+		const svg = stage.dial;
 		expect(svg.querySelector("#handHour")?.getAttribute("transform")).toBe(
 			scene.hands.hourTransform,
 		);
 		expect(svg.querySelector("#handMin")?.getAttribute("transform")).toBe(
 			scene.hands.minuteTransform,
 		);
-
-		// The twilight cone and guilloche clip paths receive their simulated `d`.
 		expect(svg.querySelector("#twilightCone")?.getAttribute("d")).toBe(
 			scene.coneD,
 		);
@@ -106,7 +101,7 @@ describe("astrolabe frame: static-id elements update after the SSG round-trip", 
 			scene.guilloche.clipD,
 		);
 
-		// The document-overlay clocks show the simulated strings.
+		// The overlay clocks show the simulated strings.
 		expect(document.getElementById("simClock")?.textContent).toBe(
 			scene.simClock,
 		);

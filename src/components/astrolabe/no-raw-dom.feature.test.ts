@@ -24,11 +24,13 @@ import { describe, expect, it } from "vitest";
 const DIR = import.meta.dirname;
 
 // Files in the component dir that are NOT part of the guarded set. client.ts
-// stays excluded — its window/visualViewport listeners are permitted
-// page-lifecycle wiring and its sizeDial writes target the <svg> host element,
-// not a dial descendant (see design, Deferred decisions). Feature 2 widens the
-// scan: controls.ts joins the set, and pages/astrolabe/page.ts is appended
-// explicitly (it lives outside this directory).
+// stays excluded — it is the bootstrap: its window/visualViewport listeners are
+// permitted page-lifecycle wiring, its sizeDial writes target the <svg> host
+// element (not a dial descendant), and it performs the one mount swap
+// (getElementById("stage-wrap").replaceWith) that adopts the freshly-built stage
+// in place of the server markup (see design, Deferred decisions). Every other
+// in-scope module receives its elements as handles and must neither mutate raw
+// DOM nor query the document.
 const EXCLUDE = new Set(["client.ts"]);
 
 // Extra in-scope files outside this directory (Feature 2). Resolved relative to
@@ -56,6 +58,8 @@ const FORBIDDEN: { name: string; pattern: RegExp }[] = [
 	{ name: "insertBefore", pattern: /\.insertBefore\s*\(/ },
 	{ name: "removeChild", pattern: /\.removeChild\s*\(/ },
 	{ name: "replaceChild", pattern: /\.replaceChild\s*\(/ },
+	{ name: "replaceChildren", pattern: /\.replaceChildren\s*\(/ },
+	{ name: "replaceWith", pattern: /\.replaceWith\s*\(/ },
 	{ name: "createElement(NS)", pattern: /\.createElement(NS)?\s*\(/ },
 	{ name: "setAttribute", pattern: /\.setAttribute\s*\(/ },
 	{ name: "removeAttribute", pattern: /\.removeAttribute\s*\(/ },
@@ -66,6 +70,13 @@ const FORBIDDEN: { name: string; pattern: RegExp }[] = [
 	{ name: "textContent assignment", pattern: /\.textContent\s*=(?!=)/ },
 	{ name: "dataset", pattern: /\.dataset\./ },
 	{ name: "style", pattern: /\.style\b/ },
+	// Document queries: the render pipeline holds handles built by `Dial()` /
+	// `buildStage()`; it never reaches back into the document to find a node.
+	{ name: "getElementById", pattern: /\.getElementById\s*\(/ },
+	{ name: "getElementsByClassName", pattern: /\.getElementsByClassName\s*\(/ },
+	{ name: "getElementsByTagName", pattern: /\.getElementsByTagName\s*\(/ },
+	{ name: "querySelector(All)", pattern: /\.querySelector(All)?\s*\(/ },
+	{ name: "closest", pattern: /\.closest\s*\(/ },
 ];
 
 // addEventListener/removeEventListener are forbidden on elements (use `events:`),
