@@ -27,19 +27,3 @@ Next-step queue for `developer:ailly` sessions in this repo.
   is not shipped in this repo (build-phase wiring). The sibling HyDE lit review
   stays a separate deliverable in `ailly_two`; cite it lightly. Session:
   [.ailly/developer/2026-06-25-C-manifold](2026-06-25-C-manifold).
-
-- **folder-style posts: support `posts/[id]/post.md` alongside `posts/[id].md`** —
-  [src/lib/posts.ts](../../src/lib/posts.ts) reads posts with `readdirSync(posts)`
-  + `readFileSync(posts/[id].md)`, so it only handles flat single-file posts. A
-  post that needs colocated assets (e.g. [posts/llm_manifold/post.md](../../posts/llm_manifold/post.md),
-  the manifold post's home) is a **directory**, which today breaks both
-  `getSortedPosts` (`readFileSync` on a dir throws `EISDIR`) and `getPost` (reads
-  `llm_manifold.md`, `ENOENT`). Teach the loader the folder form: an entry that is
-  a directory containing `post.md` is a post whose id is the directory name and
-  whose body+frontmatter come from `post.md`, so assets can sit beside it. Update
-  `getPostPaths` / `getSortedPosts` / `getPost`, the `migration.feature.test.ts`
-  expectation (`docs/blog/<id>/index.html` per post), and `posts.test.ts`. Decide
-  precedence if both `posts/[id].md` and `posts/[id]/post.md` exist (error vs
-  folder-wins). **Trigger:** any post needs colocated assets / a folder home — the
-  manifold post already does, and `posts/llm_manifold/post.md` will not render until
-  this lands.
