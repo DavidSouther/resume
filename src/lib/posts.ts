@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { cwd } from "node:process";
 import { toHTML as jiffdown } from "@davidsouther/jiffdown";
@@ -14,20 +14,60 @@ export interface Post {
 	image?: string;
 }
 
-export function getPostPaths(): string[] {
+interface PostSource {
+	id: string;
+	path: string;
+}
+
+function getPostSources(): PostSource[] {
 	const postsDir = join(cwd(), "posts");
-	const paths = readdirSync(postsDir).map((filename) => {
-		return filename.replace(/\.md$/, "");
-	});
-	return paths;
+	const sources = readdirSync(postsDir, { withFileTypes: true }).flatMap(
+		(entry): PostSource[] => {
+			if (entry.isFile() && entry.name.endsWith(".md")) {
+				return [
+					{
+						id: entry.name.replace(/\.md$/, ""),
+						path: join(postsDir, entry.name),
+					},
+				];
+			}
+
+			if (entry.isDirectory()) {
+				const path = join(postsDir, entry.name, "post.md");
+				if (existsSync(path)) {
+					return [{ id: entry.name, path }];
+				}
+			}
+
+			return [];
+		},
+	);
+
+	const seen = new Set<string>();
+	const duplicates = new Set<string>();
+	for (const { id } of sources) {
+		if (seen.has(id)) {
+			duplicates.add(id);
+		}
+		seen.add(id);
+	}
+	if (duplicates.size > 0) {
+		throw new Error(
+			`Duplicate post id${duplicates.size === 1 ? "" : "s"}: ${[...duplicates].join(", ")}`,
+		);
+	}
+
+	return sources;
+}
+
+export function getPostPaths(): string[] {
+	return getPostSources().map(({ id }) => id);
 }
 
 export function getSortedPosts(): Post[] {
-	const postsDir = join(cwd(), "posts");
-	const posts = readdirSync(postsDir)
-		.map((filename) => {
-			const id = filename.replace(/.md$/, "");
-			const post = readFileSync(join(postsDir, filename), "utf-8");
+	const posts = getPostSources()
+		.map(({ id, path }) => {
+			const post = readFileSync(path, "utf-8");
 			const front = matter(post);
 			const date =
 				(front.data.date as Date | undefined)?.toISOString() ?? undefined;
@@ -51,8 +91,12 @@ export function getSortedPosts(): Post[] {
 }
 
 export async function getPost(id: string): Promise<Post> {
-	const filename = join(cwd(), "posts", id);
-	const postText = readFileSync(`${filename}.md`, "utf-8");
+	const source = getPostSources().find((postSource) => postSource.id === id);
+	if (!source) {
+		throw new Error(`Post not found: ${id}`);
+	}
+
+	const postText = readFileSync(source.path, "utf-8");
 	const front = matter(postText);
 	const date =
 		(front.data.date as Date | undefined)?.toISOString() ?? undefined;

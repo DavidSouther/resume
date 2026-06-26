@@ -13,6 +13,12 @@ describe("getPostPaths", () => {
 		expect(paths.length).toBeGreaterThan(0);
 		expect(paths.every((id) => !id.endsWith(".md"))).toBe(true);
 	});
+
+	it("includes folder-style posts backed by post.md", () => {
+		const paths = getPostPaths();
+
+		expect(paths).toContain("llm_manifold");
+	});
 });
 
 describe("getSortedPosts", () => {
@@ -41,5 +47,13 @@ describe("getPost", () => {
 		expect(post.id).toBe(id);
 		expect(typeof post.title).toBe("string");
 		expect(post.body?.length ?? 0).toBeGreaterThan(0);
+	});
+
+	it("loads folder-style post bodies from post.md", async () => {
+		const post = await getPost("llm_manifold");
+
+		expect(post.id).toBe("llm_manifold");
+		expect(post.title).toBe("LLMs as a Model of Syntactic Space");
+		expect(post.body).toContain("syntactic space");
 	});
 });
