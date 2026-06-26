@@ -49,6 +49,10 @@ import {
 	KEPLERIAN,
 	PTOLEMAIC,
 } from "../../lib/astrolabe/types.ts";
+import {
+	ClockworkRearFace,
+	type ClockworkRearFaceProps,
+} from "./clockwork-components.ts";
 import { Clock, SignCard, Tooltip } from "./overlays.ts";
 import { AstrolabeView, type ViewEvents } from "./view.ts";
 
@@ -508,10 +512,41 @@ type DrawerInternals = {
 	moon: FCComponent<CheckProps, object>;
 	colors: FCComponent<ColorProps, object>[];
 	strap: Element;
+	caseback: ReturnType<typeof ClockworkRearFace>;
+	caseFlipped: boolean;
 	gear: HTMLElement;
 	panel: HTMLElement;
 	resetBtn: HTMLElement;
 };
+
+function clockworkProps(
+	root: Element,
+	st: DrawerInternals,
+	state = st.lastState ?? DEFAULTS,
+): ClockworkRearFaceProps {
+	return {
+		mode: state.earthMode,
+		speed: speedToMul(state.speedStep),
+		flipped: st.caseFlipped,
+		events: {
+			click: (e) => {
+				const target = e.target as HTMLElement;
+				if (!target.closest?.("#flipCase")) return;
+				st.caseFlipped = !st.caseFlipped;
+				syncCaseback(root, st);
+			},
+		},
+	};
+}
+
+function syncCaseback(
+	root: Element,
+	st: DrawerInternals,
+	state = st.lastState ?? DEFAULTS,
+): void {
+	up(root, { class: st.caseFlipped ? "case-flipped" : "!case-flipped" });
+	st.caseback.update(clockworkProps(root, st, state));
+}
 
 // The stage component. Boundary IS `#stage-wrap`. On first render it builds the
 // whole interactive subtree into `[State]` — the control leaves + shell (the
@@ -537,6 +572,7 @@ export const ControlsDrawer = FCC<DrawerProps, DrawerInternals>(
 			st.earthSeg.update({ value: s.earthMode, events: ev.earthMode });
 			st.caseSeg.update({ value: s.sizeMode, events: ev.caseSize });
 			st.speedSeg.update({ value: String(s.speedStep), events: ev.speed });
+			syncCaseback(el, st, s);
 			st.material.update({ value: s.material, events: ev.material });
 			st.parallaxOn.update({ checked: s.parallaxOn, events: ev.parallaxOn });
 			st.parallax.update({
@@ -592,7 +628,15 @@ export const ControlsDrawer = FCC<DrawerProps, DrawerInternals>(
 			});
 		}
 
-		return [st.strap, st.gear, st.panel, st.tip, st.signcard, st.dial];
+		return [
+			st.strap,
+			st.caseback,
+			st.gear,
+			st.panel,
+			st.tip,
+			st.signcard,
+			st.dial,
+		];
 	},
 );
 
@@ -629,6 +673,12 @@ function buildShell(panel: DrawerInternals): void {
 	});
 	panel.simClock = Clock({ id: "simClock", text: "" });
 	panel.realClock = Clock({ id: "realClock", text: "" });
+	panel.caseFlipped = false;
+	panel.caseback = ClockworkRearFace({
+		mode: DEFAULTS.earthMode,
+		speed: speedToMul(DEFAULTS.speedStep),
+		flipped: false,
+	});
 
 	panel.earthSeg = SegmentGroup({
 		id: "earthMode",

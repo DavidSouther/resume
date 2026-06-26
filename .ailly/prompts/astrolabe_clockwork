@@ -1,0 +1,21 @@
+# Astrolabe Clockwork
+
+Astrolabe simulation uses closed-form analytical solutions to directly calculate every angle and position.
+
+Modify the Astrolabe so that it behaves as a clockwork simulation. The front face is the astrolabe dial. The rear face will show the gears "in" the watch.
+
+For the hours and minutes, build a traditional 5-spring drive train:
+
+| Wheel | Pinion Teeth | Teeth | RPH | Arbor |
+| --- | ---: | ---: | ---: | --- |
+| Barrel | 0 | 80 | 0.125 | Mainspring, 5 windings for ~40 hr reserve |
+| Center Wheel | 10 | 80 | 1 | None; use minute/cannon pinion here only if the model includes motion work on this arbor |
+| Third Wheel | 10 | 75 | 8 | None |
+| Fourth Wheel | 10 | 60 | 60 | Seconds Hand |
+| Escape Wheel | 6 | 15 | 600 | Pallet fork / balance impulse |
+| Balance Wheel | 0 | 0 | 18,000 BPH | Balance staff |
+
+Suggest an appropriate motion train for each of the three modes - Copernican, Keplerian, and Gallilean. Each gets their own table, indicating which drive train arbor they branch off.
+Ignore a date complication at this time.
+
+Each orbital disk should drive on its own gear and arbor. 
