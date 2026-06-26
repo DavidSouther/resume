@@ -2,6 +2,7 @@ import { spawnSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
+import { getPostPaths } from "./lib/posts.ts";
 
 const ROOT = join(import.meta.dirname, "..");
 
@@ -89,9 +90,7 @@ describe("Next.js → Jiffies migration", () => {
 	});
 
 	it("writes one docs/blog/<id>/index.html per post in posts/", () => {
-		const postIds = readdirSync(join(ROOT, "posts"))
-			.filter((f) => f.endsWith(".md"))
-			.map((f) => f.replace(/\.md$/, ""));
+		const postIds = getPostPaths();
 
 		expect(postIds.length).toBeGreaterThan(0);
 		for (const id of postIds) {

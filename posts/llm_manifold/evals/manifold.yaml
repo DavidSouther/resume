@@ -1,0 +1,21 @@
+# Ailly eval suite — automated half of the manifold-paper Closing Bell.
+# Intended shape; see README.md for what blocks running this via the ailly CLI today.
+# The paper is bridged into a single assistant turn so judge/text assertions see it.
+name: manifold
+cases:
+  - name: paper
+    assertions:
+      # Structural — Python checkers reading paper.md / refs.bib off disk.
+      - { type: script, runtime: python, script: { path: evals/scripts/check_sections.py } }
+      - { type: script, runtime: python, script: { path: evals/scripts/check_citations.py } }
+      - { type: script, runtime: python, script: { path: evals/scripts/check_pandoc.py } }
+      # Claim ledger — LLM-as-judge. Consumes the checkers' output via PROGRAM_OUTPUTS.
+      - type: judge
+        prompt: |
+          The candidate is a synthesis/position paper. Verify its claim-ledger
+          table: every load-bearing claim is tagged established / contested /
+          author's-analogy and carries a citation; the required caveats are present
+          (contextual-states-not-token-embeddings; union-of-manifolds;
+          external-vs-intrinsic feedback; the missing correct/incorrect-basin
+          theorem); and novelty is NOT overclaimed — the Bradley et al. enriched-
+          category prior art is acknowledged. GRADE: P only if all hold.
