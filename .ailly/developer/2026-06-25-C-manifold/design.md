@@ -1,23 +1,34 @@
 # Design: Agentic LLM Workflows as Trajectory-Steering on a Document Manifold
 
-**Project phase: Review**
+**Project phase:** Implement
 
 ## Sizing: this is a Project, not a Feature
 
-Decided with the author (2026-06-26): the full-prose-draft done-bar pushes this
-past one feature into a **project loop** (`developer/references/project-cycle.md`).
-The same five phases run at larger scale; each plan step is its own
-design->cleanup cycle; the acceptance review is a **Literature Group Read**, not
-one continuously-red feature test; and these documents are long-lived (marked
-`completed:` rather than deleted at cleanup).
+Symposium final decision: **continue with
+constraints**. The constraints
+are local to the paper contract and its readiness gate; they do not turn this
+into a theorem project, benchmark project, frequency/base-rate study, or Ailly
+CLI tooling project.
 
 Sequence:
 
 1. **Outline + claim-ledger contract + eval section list** -- replace the current
-   geometry-first paper skeleton with the contribution-first outline below,
-   update the claim-ledger schema, and make the section checker enforce the new
-   contract. This is the shared contract every later step depends on. *(No
-   dependencies; start now.)*
+   geometry-first `posts/llm_manifold/paper.md` skeleton with the
+   contribution-first outline below; upgrade the old 4-column ledger to the
+   six-field schema; add the five currently missing worked-analysis citation keys
+   (`yao2023react`, `gao2023hyde`, `zhou2024lats`,
+   `wang2023selfconsistency`, `chen2024agentless`); update
+   `posts/llm_manifold/evals/scripts/check_sections.py` so it enforces the new
+   outline and exits non-zero on missing/empty sections; extend the
+   `manifold.yaml` judge to check `Does not support` and `Risk if wrong` for each
+   load-bearing ledger row; and carry the scored transfer-test protocol into the
+   paper/eval documentation. This is the shared contract every later step depends
+   on. *(No dependencies; start now.)* Allowed Step-1 deferral: if judge coverage
+   cannot be extended in the same pass, record the exact coverage gap in
+   `posts/llm_manifold/evals/README.md`. Not deferrable: the paper outline,
+   `check_sections.py` contract, six-field ledger, five citation keys, Section 2
+   Bradley boundary, Section 5 ReAct lead example with its hand-picked-trace
+   caveat, and the transfer-test protocol.
 2. **2..N-2. Per-section prose** -- one feature per section, writing full prose
    and wiring each section's load-bearing claims into the ledger. *(Each
    `Depends on: step 1`; most sections are `Parallel with:` each other once the
@@ -32,13 +43,15 @@ Sequence:
 
 ## Purpose
 
-Turn the blog-tone draft (now [post.md](../../../posts/llm_manifold/post.md))
-into a **synthesis / position paper** that gives engineers and CS readers a
+Write a **synthesis / position paper** that gives engineers and CS readers a
 useful diagnostic lens:
 
 > An LLM agent workflow can be read as a sequence of operators that steer
 > generation through syntactic/document space toward a target region of documents
 > that are acceptable artifacts for a given task.
+
+This paper supports the [draft blog post](../../../posts/llm_manifold/post.md), providing
+academic rigor underlying the general post.
 
 The genuine contribution is the **workflow-level reading**: prompt changes,
 retrieval, retries, execution feedback, thinking tokens, subagents, and tree
@@ -60,7 +73,7 @@ High-risk overlap:
 - The manifold / endofunctor / fuzzy-categorical / phase-space vocabulary is
   already published, often under the exact word. Bradley-Terilla-Vlassopoulos's
   `[0,1]`-enriched category of texts and the 2025 next-token-LM-probability
-  follow-up are the most dangerous prior art; DisCoCat, information geometry,
+  follow-up are the closest prior art overlap; DisCoCat, information geometry,
   mode connectivity, formal-language transformer theory, program synthesis, and
   representation-manifold work also occupy adjacent ground.
 - "Generation as a trajectory" has rigorous anchors (autoregressive decoding as
@@ -110,19 +123,27 @@ Each Lit Group session should produce notes that answer:
    compiler-error repair, CoT/pause tokens, HyDE, ReAct, subagent review, or
    tree search?
 5. What help/failure conditions does the lens predict?
-6. What would group members do differently after reading the paper: prompt,
+6. On at least one held-out workflow absent from Section 5, can readers fill the
+   fixed five-field transfer rubric: start point, target region, signal added,
+   predicted failure mode, and evidence?
+7. Before seeing the author's analysis, do most readers independently predict
+   the lens's failure mode, and do those predictions exceed a
+   prompt-engineering-only baseline?
+8. What would group members do differently after reading the paper: prompt,
    design, debug, review, or evaluate an agent workflow?
-7. What blocking issues remain before circulation or submission?
+9. What blocking issues remain before circulation or submission?
 
 Pass condition:
 
 > At least one Lit Group session, preferably two sessions with meaningfully
 > different participant mixes, reaches group consensus that the paper is ready
 > for circulation with no blocking novelty, soundness, or clarity objections. A
-> passing session shows that group members can restate the thesis as a
-> workflow-level lens, use the steering vocabulary on a new agent pattern, and
-> trust the claim ledger because each load-bearing claim says what its citations
-> do and do not support.
+> passing session includes a scored transfer test: readers receive at least one
+> held-out workflow they have not seen, record the five-field rubric and predicted
+> failure mode before seeing the author's analysis, and a majority independently
+> land on the lens's predicted failure mode above a prompt-engineering-only
+> baseline. The test measures transfer of the lens, not base-rate frequency; the
+> Analyst traces remain hand-picked examples that show what fails, not how often.
 
 If a session raises a blocking issue, it becomes a new project step rather than
 a failed vibe check: update the outline, prose, ledger, or bibliography until
@@ -165,9 +186,13 @@ paper.
    space. Name the paper as synthesis/position work, list the contribution, and
    say what is not being claimed.
 2. **Prior art and novelty boundaries.** Include a table separating "already
-   formalized" from "what this paper adds." Cover Bradley/Terilla/Vlassopoulos,
-   DisCoCat, information geometry, manifold/union-of-manifolds, transformer
-   formal-language work, program synthesis, CoT expressivity, and
+   formalized" from "what this paper adds." This section must appear in the first
+   third of the paper and actively engage Bradley/Terilla/Vlassopoulos, not just
+   mention them in the ledger: say what their `[0,1]`-enriched category of texts
+   and next-token-probability follow-up already formalize, then draw the boundary
+   where that work stops and this paper's workflow-level diagnostic reading
+   begins. Cover DisCoCat, information geometry, manifold/union-of-manifolds,
+   transformer formal-language work, program synthesis, CoT expressivity, and
    self-correction results.
 3. **The document-space model.** Introduce only the geometry needed for the
    workflow lens: functions and programs; documents and contextual
@@ -180,12 +205,16 @@ paper.
    prompting, retrieval/HyDE/Jeopardy, external tool/execution feedback,
    thinking/CoT/pause tokens, subagents/multi-sample branching, ReAct-style
    tool interaction, and LATS/tree-search agents.
-5. **Worked analyses.** Show the lens doing work beyond rephrasing. For each
-   example, include: pattern, steering move, literature support, predicted
-   failure mode, and boundary condition/counterexample. Required examples:
+5. **Worked analyses.** Show the lens doing work beyond rephrasing. Lead with the
+   ReAct/tool-interactive false-completion example: the document trajectory says
+   "done" while the external referent has not changed, often silently when the
+   observation channel is weak or unread. Preserve the caveat that the Analyst
+   evidence comes from hand-picked traces, not a random sample: it shows what
+   fails, not how often. For each example, include: pattern, steering move,
+   literature support, predicted failure mode, and boundary
+   condition/counterexample. Required examples: ReAct/tool-interactive agents;
    compiler-error repair or Self-Debug; CoT/pause tokens; HyDE/retrieval
-   expansion; subagent review or multi-sample search; ReAct/tool-interactive
-   agents; LATS/tree-search agents.
+   expansion; subagent review or multi-sample search; LATS/tree-search agents.
 6. **What this lens predicts.** State conditions under which steering should
    help, fail, or become too expensive: target observability, feedback
    reliability, search breadth, artifact inspectability, serial dependency,
@@ -261,8 +290,13 @@ Eval shape:
   are present and non-empty; every pandoc citation key resolves to `refs.bib`;
   claim-ledger citation keys are known; pandoc exits 0.
 - `judge` over the claim ledger: every load-bearing claim uses the required
-  schema, required caveats are present, and novelty is not overclaimed.
+  schema, required caveats are present, `Does not support` and `Risk if wrong`
+  are populated, and novelty is not overclaimed.
 - Documentation must use the actual colocated paths under `posts/llm_manifold/`.
+
+Allowed tooling deferrals: wiring `manifold.yaml` to a runnable Ailly CLI bridge
+and the future standalone/ad-hoc eval feature can remain outside this project
+step. The standalone Python checkers are the live gate until that tooling exists.
 
 ### Figures and reusable artifacts
 
@@ -302,22 +336,42 @@ internal e2e project vs. colocated eval were superseded by relocating the effort
 to this repo. The effective decision is a colocated paper/eval under
 `posts/llm_manifold/`, with Ailly CLI wiring deferred.
 
+## Stop Conditions
+
+- The scored transfer test runs and readers do not predict the lens's failure
+  mode above the prompt-engineering-only baseline; this falsifies the paper's
+  usefulness claim and triggers pause-and-rescope or stop.
+- Section 2 engagement shows Bradley/Terilla/Vlassopoulos already deliver the
+  workflow-level reading, collapsing the novelty boundary.
+- The sharpest falsifiable thesis cannot be stated without an unsupported
+  metric, basin, theorem, or categorical-formalism claim.
+- Defending the thesis comes to require a new theorem, new benchmark,
+  held-out frequency/base-rate study, or Ailly CLI tooling; that exceeds the
+  position/synthesis standard and requires rescoping.
+
 ## Summary / Deferred
 
-- **Immediate next design/build step:** update `posts/llm_manifold/paper.md`,
-  `posts/llm_manifold/evals/scripts/check_sections.py`, and eval documentation
-  to the new contribution-first outline contract.
+- **Immediate next Step-1 build contract:** update `posts/llm_manifold/paper.md`,
+  `posts/llm_manifold/evals/scripts/check_sections.py`,
+  `posts/llm_manifold/refs.bib`, `posts/llm_manifold/evals/manifold.yaml`, and
+  eval documentation to the contribution-first outline contract, six-field
+  ledger, five missing citation keys, scored transfer protocol, and judge
+  coverage rule above.
 - **The one sharp claim:** "agentic patterns are steering operators on a
   document/syntactic trajectory" remains the working thesis. The predictive
   section and worked analyses must make it falsifiable enough to avoid reading
   as metaphor-only.
 - **Out of scope for v1:** any new theorem; the endofunctor fixed-point
   formalism; the loss-landscape/document-manifold empirical bridge; a new
-  benchmark.
+  benchmark; a held-out frequency/base-rate study; or Ailly CLI tooling.
 - **Separate deliverable:** the HyDE lit review (`2026-06-25-B-hyde-litreview`,
   still in `ailly_two`); cite it lightly and use the current paper's HyDE
   coverage only as a worked steering example.
 - **Dependency on Ailly tooling:** the `resume` repo does not ship the `ailly`
-  CLI; wiring the eval to a runnable Ailly bridge is a build-phase concern
-  recorded with the paper-project task. The standalone Python checkers remain
-  the current executable gate.
+  CLI; wiring the eval to a runnable Ailly bridge is explicitly deferred. The
+  standalone Python checkers remain the current executable gate.
+- **Allowed deferrals:** full section prose, final bibliography polish beyond the
+  five missing keys, a second Lit Group session, Ailly CLI bridge work, and final
+  pinning of the sharpest thesis at holistic review. Do not defer the Step-1
+  outline, checker, ledger, citation-key, Bradley-boundary, ReAct-lead, or
+  transfer-test contracts.
