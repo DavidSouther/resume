@@ -1,0 +1,43 @@
+## 8. Evaluation and Claim Ledger
+
+Every load-bearing claim in this paper is tagged and cited below, using the
+schema `Claim | Status | Support | Does not support | Paper section | Risk if
+wrong`. `Status` is one of `established`, `contested`, `author-analogy`, or
+`deferred`. `Does not support` states the boundary where each citation
+stops; `Risk if wrong` states what part of the argument weakens if the claim
+does not hold. This ledger is a quality-control mechanism, not a
+bibliography: a row with an empty `Does not support` or `Risk if wrong` cell
+is a citation-drift risk, not a finished row.
+
+**Table 3. Claim ledger.**
+
+| Claim | Status | Support | Does not support | Section | Risk if wrong |
+| --- | --- | --- | --- | --- | --- |
+| Agentic workflows can be read as sequences of steering operators moving a document trajectory toward a target region, with a systematic account of when each operator helps, fails, or gets too expensive | author-analogy | The six worked analyses (§5) and the seven reversal conditions they generalize into (§6) | No theorem or formal model proves this reading is the correct or unique description of agentic behavior; it is a diagnostic lens, not a result | 4, 5, 6 | If the seven conditions don't transfer beyond §5's six examples, the thesis reduces to relabeling known techniques (§7's "just prompt engineering" objection) |
+| Prompting and soft prompts function as conditioning that locates a generation task, fixing where a trajectory starts | established (conditioning); author-analogy (spatial framing) | [@xie2021] models in-context learning as inference over a latent concept implied by the prompt | [@xie2021] does not describe or require a document-space geometry; "start point" is this paper's spatial gloss on an inference-over-latent-concept account | 4 | Weakens Table 1's prompting row to an unsupported restatement rather than a grounded conditioning claim |
+| External execution feedback improves correction; intrinsic self-correction without such a signal does not reliably help | established/contested split | [@chen2023] (external signal helps); [@huang2023; @kamoi2024] (intrinsic self-correction alone does not reliably help) | These results don't establish that every external signal is trustworthy; a noisy or malformed tool output is not guaranteed to help either | 5.2, 6 | Collapses the external/intrinsic distinction this paper leans on to separate genuine steering from unproductive self-review |
+| Chain-of-thought and pause tokens add serial computation depth; "widening" or "curving" the search path is this paper's spatial analogy | established (serial depth); author-analogy (spatial language) | [@li2024; @merrill2023; @pfau2024] | None of these results characterize CoT geometrically; the depth-vs-curvature distinction is this paper's, not theirs | 5.3, 6 | Misattributes a spatial metaphor to a purely computational-depth result |
+| Retrieval expansion (HyDE, HyPE) manufactures an intermediate document or query neighborhood; the recall improvement is established, the document-space framing is analogy | established (method); author-analogy (geometry) | [@gao2023hyde; @vake2025hype] | Neither paper claims or measures a document-space neighborhood; both describe embedding-space retrieval mechanics | 5.4 | The empty-neighborhood failure prediction (§6, artifact inspectability) loses its mechanistic grounding |
+| Subagents, multi-sample search, and tree search implement branch exploration plus selection pressure; the sampling/search mechanics are established, "document-space regions" is analogy | established (mechanics); author-analogy (regions) | [@wang2023selfconsistency; @du2023debate; @wang2024moa; @zhou2024lats; @yao2023react] | None of these papers frame their branches as covering regions of a document space; that reading, and the shared-bias-collapse prediction built on it, is this paper's | 5.1, 5.5, 5.6, 6 | Weakens the search-breadth and collapse-onto-shared-bias predictions (§6) to unsupported restatements of known sampling behavior |
+| Contextual hidden states may carry low-dimensional structure; raw token embeddings are not the manifold this paper describes, and have been shown to violate the manifold hypothesis outright | established caveat | [@valeriani2023; @tulchinskii2023] (contextual-state structure); [@robinson2025] (token embeddings violate the manifold hypothesis) | [@valeriani2023; @tulchinskii2023] establish low intrinsic dimension, not a single global manifold; see the next row | 3 | Collapsing this distinction lets the paper's document-space language be read as a claim about the disproven token-embedding manifold |
+| Real high-dimensional data forms a disconnected union of varying-dimension manifolds, not one smooth surface; this paper's "document space" is always such a union | established/scoping | [@brown2023] (verified for image data) | [@brown2023] does not study text or document representations directly; extending it to documents is this paper's scoping choice, made for caution absent a text-specific replication | 3 | Without this caveat, "document space" reads as one global surface, the exact overclaim §2-3 are structured to avoid |
+| Describing a workflow as moving toward a correct "basin" or away from an incorrect one, for single-pass generation, is this paper's analogy, not a theorem | author-analogy (deferred) | [@zekri2024] establishes only that autoregressive decoding is a Markov chain with a stationary distribution | [@zekri2024] says nothing about the shape of that distribution's support; no published result establishes a basin-of-attraction structure for one forward pass | 3, 6 | This paper's single largest overclaim risk if basin language is ever read as more than scaffolding for intuition |
+| Bradley, Terilla, and Vlassopoulos's enriched category of texts, and DisCoCat's functorial treatment of language, already formalize the categorical vocabulary this paper's language echoes | established | [@bradley2021; @bradley2025; @coecke2010] | Neither engages the workflow-level, multi-step diagnostic reading in Sections 4-6; that gap is exactly the boundary §2 draws | 2 | If this boundary is wrong — if Bradley et al. already covers the workflow reading — this paper's novelty claim collapses entirely |
+| Recent 2026 manifold- and anisotropy-geometry preprints are speculative, single-group related work, not core support for this paper's claims | contested | [@mabrok2026] models representations as a Riemannian manifold with a Fisher-metric structure; [@bernas2026] extends anisotropy arguments to learning dynamics; cited only as evidence this framing is an active, contemporaneous direction | Neither has been independently replicated at the time of writing, and neither supports any load-bearing claim in Sections 2-6; a separate, since-withdrawn 2026 preprint in the same space was deliberately excluded | 2 | None to the paper's core argument — no claim depends on them, so removing them would not weaken any other row |
+
+### Readiness gate
+
+This paper's Closing Bell has two halves. The automated half is the
+executable readiness gate in `evals/`: the three script checks
+(`check_sections.py`, `check_citations.py`, `check_pandoc.py`) plus a judge
+assertion over this ledger requiring every load-bearing row to carry a
+non-empty, specific `Does not support` and `Risk if wrong` cell (see
+`manifold.yaml`). The human half is a Lit Group review: a small group of
+engineers or CS-masters-level readers reads the finished paper, situates it
+against prior art, audits this ledger, and completes a scored transfer test
+on one held-out agentic workflow not covered in Section 5 — recording the
+five-field rubric (start point, target region, signal added, predicted
+failure mode, evidence) before seeing this paper's own analysis. The full
+transfer-test protocol lives in `design.md`'s User Journey and Metrics
+section. Passing both halves is a precondition for circulation, not a
+substitute for the argument itself.

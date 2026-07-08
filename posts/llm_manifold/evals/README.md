@@ -31,6 +31,24 @@ arguments** from the repo root — every script's default resolves to the actual
 the plan; the defaults previously pointed one directory too shallow, into
 `evals/`, and only worked when every path was passed explicitly).
 
+## Authoring: sections/ vs. paper.md
+
+`paper.md` is a **generated build artifact**, not the file to edit. The
+source of truth is `../sections/*.md` — one file per logical unit of the
+paper, numbered in final reading order (`01_abstract.md` through
+`08_references.md`). After editing anything under `sections/`, regenerate
+`paper.md`:
+
+```sh
+python posts/llm_manifold/evals/scripts/compose_paper.py
+```
+
+This concatenates the section files in numeric order and writes
+`posts/llm_manifold/paper.md`, which is what every checker, test, and pandoc
+itself actually reads. `check_sections.py` et al. were deliberately left
+pointed at `paper.md`, not at `sections/`, so this split required no changes
+to the existing eval scripts or tests.
+
 ## Running
 
 Standalone (no Ailly needed — works in this repo today), from the repo root:

@@ -23,10 +23,9 @@ csl: ieee.csl
 ---
 
 <!--
-DRAFT SKELETON — outline contract from
-.ailly/developer/2026-06-25-C-manifold/design.md (project phase: Review).
-Each section is a feature-step (design step 2..N-2). Build phase fills the prose.
-Citations are IEEE-style inline [n]; keys resolve against refs.bib.
+GENERATED FILE -- do not edit directly.
+Source sections live in sections/*.md; edit those, then re-run
+evals/scripts/compose_paper.py to regenerate this file.
 -->
 
 ## 1. Introduction
