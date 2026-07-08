@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Tests for check_sections.py against the Step-0 contribution-first outline contract.
+"""Tests for check_sections.py's REQUIRED-list contract (plan.md Step 0).
 
 Run: python3 test_check_sections.py
 """
@@ -14,7 +14,11 @@ PAPER = HERE.parents[1] / "paper.md"  # posts/llm_manifold/paper.md
 
 
 class CheckSectionsTest(unittest.TestCase):
-    def test_rejects_the_old_geometry_first_skeleton(self):
+    def test_flags_new_headings_not_yet_written(self):
+        # Sections not due until later plan steps (3 and 5) stay missing
+        # regardless of how many earlier steps have already landed — a
+        # regression check for the REQUIRED-list swap that doesn't go stale
+        # every time a later step fills in more prose.
         proc = subprocess.run(
             [sys.executable, str(SCRIPT), str(PAPER)],
             capture_output=True,
@@ -25,7 +29,7 @@ class CheckSectionsTest(unittest.TestCase):
             "missing section: 'Prior Art and Novelty Boundaries'", proc.stdout
         )
         self.assertIn(
-            "missing section: 'Steering Operators for Agentic Workflows'",
+            "missing section: 'Conclusion'",
             proc.stdout,
         )
 
