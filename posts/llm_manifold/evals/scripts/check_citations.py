@@ -28,8 +28,12 @@ def main() -> int:
     paper_text = paper.read_text(encoding="utf-8")
     entries = bib_entries(bib.read_text(encoding="utf-8"))
 
-    # `[@key]` pandoc cites and `[key]` ledger cites (lowercase+digits, not pure ints).
-    cited = set(re.findall(r"\[@([A-Za-z][\w:-]+)\]", paper_text))
+    # Pandoc `@key` cites -- single `[@key]`, multi `[@key1; @key2]`, and bare
+    # in-text `@key` all use this form, so match `@key` directly rather than
+    # requiring an immediately-following `]` (that anchor silently missed
+    # every non-last key in a multi-citation bracket). Plus the claim-ledger's
+    # bare `[key]` form (lowercase+digits, not pure ints).
+    cited = set(re.findall(r"@([A-Za-z][\w:-]+)", paper_text))
     cited |= {
         k for k in re.findall(r"\[([a-z][a-z0-9]+\d{2,4})\]", paper_text)
     }
