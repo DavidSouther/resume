@@ -123,9 +123,9 @@ Each Lit Group session should produce notes that answer:
    compiler-error repair, CoT/pause tokens, HyDE, ReAct, subagent review, or
    tree search?
 5. What help/failure conditions does the lens predict?
-6. On at least one held-out workflow absent from Section 5, can readers fill the
-   fixed five-field transfer rubric: start point, target region, signal added,
-   predicted failure mode, and evidence?
+6. On the scored transfer test below, can readers fill the fixed five-field
+   transfer rubric: start point, target region, signal added, predicted
+   failure mode, and evidence?
 7. Before seeing the author's analysis, do most readers independently predict
    the lens's failure mode, and do those predictions exceed a
    prompt-engineering-only baseline?
@@ -133,17 +133,80 @@ Each Lit Group session should produce notes that answer:
    design, debug, review, or evaluate an agent workflow?
 9. What blocking issues remain before circulation or submission?
 
+### The scored transfer test
+
+**Held-out workflow: Reflexion.** Shinn et al.'s Reflexion (NeurIPS 2023,
+arXiv:2303.11366) is deliberately absent from the paper's Section 5. An
+agent attempts a task; on failure, the agent generates a verbal
+self-reflection on what went wrong, and that reflection is stored in an
+episodic memory buffer and prepended to context on the *next* attempt at the
+same task. It is a genuinely different pattern from all six of Section 5's
+worked examples: it is not ReAct's per-step tool-observation loop,
+Self-Debug's single-turn execution-feedback loop, CoT's serial-depth budget,
+HyDE/HyPE's retrieval expansion, self-consistency's branch-and-vote, or
+LATS's tree search with backtracking. It is closest to external-feedback
+(Table 1, row 3) but adds a dimension none of the six examples need: a
+*persistent, cross-attempt* memory that compounds across trials rather than
+being consumed and discarded within one.
+
+**Facilitator packet (sealed until after the blind step).** Distribute this
+only after readers record their own five-field answers.
+
+- *Start point.* The prior attempt's action trajectory plus its outcome
+  signal (a failing test, a wrong final answer, a bad episode return).
+- *Target region.* A trajectory that satisfies the task's success criterion
+  on a *later* attempt — the target region here spans multiple episodes, not
+  one generation.
+- *Signal added.* Two signals are layered, and distinguishing them is the
+  crux of applying the lens correctly: an external outcome signal (pass/fail,
+  reward — trustworthy, same category as Section 5.2's compiler feedback),
+  and an *intrinsic*, model-generated verbal diagnosis of *why* it failed,
+  persisted into the next attempt's context.
+- *Predicted failure mode.* The lens predicts Reflexion reliably re-steers
+  when the outcome signal is trustworthy, exactly as Section 5.2 predicts for
+  external feedback generally — but the correction's *quality* rides on the
+  model's own self-diagnosis, which is intrinsic and can be wrong even when
+  the fact of failure is right (Section 5.2's external-vs-intrinsic split,
+  one level up). The lens's sharper, above-baseline prediction: on tasks
+  where the true root cause is hard for the model to self-diagnose from the
+  outcome alone, a wrong reflection should *entrench* across trials — because
+  it is persisted into every subsequent attempt — producing stalled or
+  declining performance over repeated trials, not just a failure to improve.
+  A prompt-engineering account predicts only that "reflecting" helps, roughly
+  monotonically with more attempts; it has no way to predict *when* more
+  reflection should make things worse.
+- *Evidence.* This specific compounding-wrong-diagnosis failure mode is an
+  extension of the lens by analogy from Section 5.2, not a measured result in
+  Shinn et al.: their reported gains are aggregate benchmark improvements,
+  not a breakdown by diagnosis difficulty. Flag this row `author-analogy` if
+  it appears in a future ledger extension, not `established`.
+
+**Protocol.**
+
+1. Give readers Reflexion's mechanism (the paragraph above, without the
+   facilitator packet) and the fixed five-field rubric.
+2. Readers record their own start point, target region, signal added,
+   predicted failure mode, and evidence *before* seeing the facilitator
+   packet — this is the blind step.
+3. Reveal the facilitator packet. Score each reader as a pass if their
+   predicted failure mode independently names the entrenchment-of-a-wrong-
+   diagnosis pattern (or an equivalent above-baseline prediction that a
+   prompt-engineering reading could not have produced), not merely "it might
+   not always work."
+4. Pass criterion: a majority of readers in the session independently land on
+   the lens's predicted failure mode above a prompt-engineering-only
+   baseline. The test measures transfer of the lens, not base-rate frequency.
+
 Pass condition:
 
 > At least one Lit Group session, preferably two sessions with meaningfully
 > different participant mixes, reaches group consensus that the paper is ready
 > for circulation with no blocking novelty, soundness, or clarity objections. A
-> passing session includes a scored transfer test: readers receive at least one
-> held-out workflow they have not seen, record the five-field rubric and predicted
-> failure mode before seeing the author's analysis, and a majority independently
-> land on the lens's predicted failure mode above a prompt-engineering-only
-> baseline. The test measures transfer of the lens, not base-rate frequency; the
-> Analyst traces remain hand-picked examples that show what fails, not how often.
+> passing session includes the scored transfer test above, run to completion,
+> with a majority of readers independently landing on the lens's predicted
+> failure mode above a prompt-engineering-only baseline. The test measures
+> transfer of the lens, not base-rate frequency; the Analyst traces remain
+> hand-picked examples that show what fails, not how often.
 
 If a session raises a blocking issue, it becomes a new project step rather than
 a failed vibe check: update the outline, prose, ledger, or bibliography until

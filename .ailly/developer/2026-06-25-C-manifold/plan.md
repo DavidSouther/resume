@@ -22,7 +22,7 @@ placeholders — so I can review the paper's argument instead of its scaffolding
 - [x] Step 4: Section 8 — Evaluation and Claim Ledger
 - [x] Step 5: Sections 1, 9, 10 — Introduction, Conclusion, References
 - [x] Step 6: Abstract
-- [ ] Step 7: Scored transfer-test protocol + judge extension (or recorded gap)
+- [x] Step 7: Scored transfer-test protocol + judge extension (or recorded gap)
 
 Write order runs contribution-first, background-second: the load-bearing
 sections (4–5) go down while the symposium's constraints are freshest, then
