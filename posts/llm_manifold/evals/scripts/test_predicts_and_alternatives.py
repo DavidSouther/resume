@@ -70,11 +70,16 @@ class PredictsAndAlternativesStep2Test(unittest.TestCase):
         self.assertIn("NeurIPS", body)
         self.assertIn("position", body.lower())
 
-    def test_relocated_ledger_is_staged_not_lost(self):
+    def test_old_ledgers_citations_survived_into_the_new_ledger(self):
+        # Step 2 relocated the old 4-column ledger into Section 8 staged for
+        # Step 4's six-field upgrade; now that Step 4 has run, the "Staged"
+        # marker is gone by design -- what must survive is the substance,
+        # i.e. every citation the old ledger carried still appears somewhere
+        # in the new Section 8.
         text = PAPER.read_text(encoding="utf-8")
         body = section(text, 8)
-        self.assertIn("Staged for Step 4", body)
-        self.assertIn("valeriani2023", body)
+        for key in ["valeriani2023", "tulchinskii2023", "brown2023", "zekri2024"]:
+            self.assertIn(key, body, f"old ledger's {key!r} citation did not survive the Step 4 upgrade")
 
 
 if __name__ == "__main__":
