@@ -12,10 +12,24 @@ cases:
       # Claim ledger — LLM-as-judge. Consumes the checkers' output via PROGRAM_OUTPUTS.
       - type: judge
         prompt: |
-          The candidate is a synthesis/position paper. Verify its claim-ledger
-          table: every load-bearing claim is tagged established / contested /
-          author's-analogy and carries a citation; the required caveats are present
-          (contextual-states-not-token-embeddings; union-of-manifolds;
-          external-vs-intrinsic feedback; the missing correct/incorrect-basin
-          theorem); and novelty is NOT overclaimed — the Bradley et al. enriched-
-          category prior art is acknowledged. GRADE: P only if all hold.
+          The candidate is a synthesis/position paper. Verify its Section 8
+          claim-ledger table against the six-field schema (Claim, Status,
+          Support, Does not support, Section, Risk if wrong):
+
+          1. Every load-bearing claim is tagged established / contested /
+             author-analogy / deferred and carries a citation.
+          2. Every row's "Does not support" cell is non-empty and names a
+             *specific* boundary the citation does not cover -- not "N/A" or
+             a restatement of the Support cell.
+          3. Every row's "Risk if wrong" cell is non-empty and states what
+             part of the paper's argument weakens if the claim fails.
+          4. The required caveats are present (contextual-states-not-token-
+             embeddings; union-of-manifolds; external-vs-intrinsic feedback;
+             the missing correct/incorrect-basin theorem).
+          5. Novelty is NOT overclaimed -- the Bradley et al. enriched-category
+             prior art is acknowledged and the novelty boundary is drawn
+             against it specifically, not just cited in passing.
+
+          GRADE: P only if all five hold. If any ledger row has an empty or
+          dodge-value "Does not support" or "Risk if wrong" cell, GRADE: F and
+          name the offending row.
