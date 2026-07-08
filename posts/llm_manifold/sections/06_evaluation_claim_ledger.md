@@ -1,15 +1,12 @@
 ## 8. Evaluation and Claim Ledger
 
-Every load-bearing claim in this paper is tagged and cited below, using the
-schema `Claim | Status | Support | Does not support | Paper section | Risk if
-wrong`. `Status` is one of `established`, `contested`, `author-analogy`, or
-`deferred`. `Does not support` states the boundary where each citation
-stops; `Risk if wrong` states what part of the argument weakens if the claim
-does not hold. This ledger is a quality-control mechanism, not a
-bibliography: a row with an empty `Does not support` or `Risk if wrong` cell
-is a citation-drift risk, not a finished row.
+Every load-bearing claim in this paper is tagged and cited below, using the schema `Claim | Status | Support | Does not support | Paper section | Risk if wrong`.
+`Status` is one of `established`, `contested`, `author-analogy`, or `deferred`.
+`Does not support` states the boundary where each citation stops; `Risk if wrong` states what part of the argument weakens if the claim does not hold.
+This ledger is a quality-control mechanism, not a bibliography: a row with an empty `Does not support` or `Risk if wrong` cell is a citation-drift risk, not a finished row.
 
-**Table 3. Claim ledger.**
+**Table 3.**
+**Claim ledger.**
 
 | Claim | Status | Support | Does not support | Section | Risk if wrong |
 | --- | --- | --- | --- | --- | --- |
@@ -27,17 +24,8 @@ is a citation-drift risk, not a finished row.
 
 ### Readiness gate
 
-This paper's Closing Bell has two halves. The automated half is the
-executable readiness gate in `evals/`: the three script checks
-(`check_sections.py`, `check_citations.py`, `check_pandoc.py`) plus a judge
-assertion over this ledger requiring every load-bearing row to carry a
-non-empty, specific `Does not support` and `Risk if wrong` cell (see
-`manifold.yaml`). The human half is a Lit Group review: a small group of
-engineers or CS-masters-level readers reads the finished paper, situates it
-against prior art, audits this ledger, and completes a scored transfer test
-on one held-out agentic workflow not covered in Section 5 — recording the
-five-field rubric (start point, target region, signal added, predicted
-failure mode, evidence) before seeing this paper's own analysis. The full
-transfer-test protocol lives in `design.md`'s User Journey and Metrics
-section. Passing both halves is a precondition for circulation, not a
-substitute for the argument itself.
+This paper's Closing Bell has two halves.
+The automated half is the executable readiness gate in `evals/`: the three script checks (`check_sections.py`, `check_citations.py`, `check_pandoc.py`) plus a judge assertion over this ledger requiring every load-bearing row to carry a non-empty, specific `Does not support` and `Risk if wrong` cell (see `manifold.yaml`).
+The human half is a Lit Group review: a small group of engineers or CS-masters-level readers reads the finished paper, situates it against prior art, audits this ledger, and completes a scored transfer test on one held-out agentic workflow not covered in Section 5 — recording the five-field rubric (start point, target region, signal added, predicted failure mode, evidence) before seeing this paper's own analysis.
+The full transfer-test protocol lives in `design.md`'s User Journey and Metrics section.
+Passing both halves is a precondition for circulation, not a substitute for the argument itself.
