@@ -9,13 +9,8 @@ import re
 import subprocess
 import sys
 import unittest
-from pathlib import Path
 
-HERE = Path(__file__).resolve().parent
-CHECK_SECTIONS = HERE / "check_sections.py"
-CHECK_CITATIONS = HERE / "check_citations.py"
-PAPER = HERE.parents[1] / "paper.md"
-REFS = HERE.parents[1] / "refs.bib"
+from paper_test_helpers import CHECK_CITATIONS, CHECK_SECTIONS, PAPER, REFS, section
 
 NEW_CITATION_KEYS = [
     "yao2023react",
@@ -50,18 +45,14 @@ class WorkedAnalysesStep1Test(unittest.TestCase):
 
     def test_operator_table_covers_all_seven_operators(self):
         text = PAPER.read_text(encoding="utf-8")
-        section = re.search(
-            r"^## 4\..*?(?=^## 5\.)", text, re.MULTILINE | re.DOTALL
-        ).group(0)
+        body = section(text, 4)
         for row in OPERATOR_TABLE_ROWS:
-            self.assertIn(row, section, f"operator table is missing {row!r}")
+            self.assertIn(row, body, f"operator table is missing {row!r}")
 
     def test_worked_analyses_leads_with_react(self):
         text = PAPER.read_text(encoding="utf-8")
-        section = re.search(
-            r"^## 5\..*?(?=^## 6\.)", text, re.MULTILINE | re.DOTALL
-        ).group(0)
-        subsections = re.findall(r"^###\s+(.*)$", section, re.MULTILINE)
+        body = section(text, 5)
+        subsections = re.findall(r"^###\s+(.*)$", body, re.MULTILINE)
         self.assertTrue(subsections, "Worked Analyses has no ### subsections")
         self.assertIn("ReAct", subsections[0])
 

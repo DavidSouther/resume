@@ -5,15 +5,11 @@
 
 Run: python3 test_predicts_and_alternatives.py
 """
-import re
 import subprocess
 import sys
 import unittest
-from pathlib import Path
 
-HERE = Path(__file__).resolve().parent
-CHECK_SECTIONS = HERE / "check_sections.py"
-PAPER = HERE.parents[1] / "paper.md"
+from paper_test_helpers import CHECK_SECTIONS, PAPER, section
 
 SEVEN_CONDITIONS = [
     "observability",
@@ -46,13 +42,11 @@ class PredictsAndAlternativesStep2Test(unittest.TestCase):
 
     def test_predictive_section_names_all_seven_conditions(self):
         text = PAPER.read_text(encoding="utf-8")
-        section = re.search(
-            r"^## 6\..*?(?=^## 7\.)", text, re.MULTILINE | re.DOTALL
-        ).group(0)
+        body = section(text, 6)
         for condition in SEVEN_CONDITIONS:
             self.assertIn(
                 condition.lower(),
-                section.lower(),
+                body.lower(),
                 f"Section 6 is missing the {condition!r} condition",
             )
 
@@ -61,32 +55,26 @@ class PredictsAndAlternativesStep2Test(unittest.TestCase):
         # objection: the section must claim operators can flip from helpful
         # to harmful/useless under stated conditions, not just list them.
         text = PAPER.read_text(encoding="utf-8")
-        section = re.search(
-            r"^## 6\..*?(?=^## 7\.)", text, re.MULTILINE | re.DOTALL
-        ).group(0)
-        self.assertIn("reverse", section.lower())
+        body = section(text, 6)
+        self.assertIn("reverse", body.lower())
 
     def test_alternative_views_section_covers_all_five_views(self):
         text = PAPER.read_text(encoding="utf-8")
-        section = re.search(
-            r"^## 7\..*?(?=^## 8\.)", text, re.MULTILINE | re.DOTALL
-        ).group(0)
+        body = section(text, 7)
         for view in ALTERNATIVE_VIEWS:
-            self.assertIn(view, section, f"Section 7 is missing {view!r}")
+            self.assertIn(view, body, f"Section 7 is missing {view!r}")
 
     def test_alternative_views_section_states_venue_fit_limitation(self):
         text = PAPER.read_text(encoding="utf-8")
-        section = re.search(
-            r"^## 7\..*?(?=^## 8\.)", text, re.MULTILINE | re.DOTALL
-        ).group(0)
-        self.assertIn("NeurIPS", section)
-        self.assertIn("position", section.lower())
+        body = section(text, 7)
+        self.assertIn("NeurIPS", body)
+        self.assertIn("position", body.lower())
 
     def test_relocated_ledger_is_staged_not_lost(self):
         text = PAPER.read_text(encoding="utf-8")
-        section = re.search(r"^## 8\..*", text, re.MULTILINE | re.DOTALL).group(0)
-        self.assertIn("Staged for Step 4", section)
-        self.assertIn("valeriani2023", section)
+        body = section(text, 8)
+        self.assertIn("Staged for Step 4", body)
+        self.assertIn("valeriani2023", body)
 
 
 if __name__ == "__main__":

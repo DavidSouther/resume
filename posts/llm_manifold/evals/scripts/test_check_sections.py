@@ -6,11 +6,8 @@ Run: python3 test_check_sections.py
 import subprocess
 import sys
 import unittest
-from pathlib import Path
 
-HERE = Path(__file__).resolve().parent
-SCRIPT = HERE / "check_sections.py"
-PAPER = HERE.parents[1] / "paper.md"  # posts/llm_manifold/paper.md
+from paper_test_helpers import CHECK_SECTIONS, PAPER, HERE
 
 
 class CheckSectionsTest(unittest.TestCase):
@@ -20,7 +17,7 @@ class CheckSectionsTest(unittest.TestCase):
         # regression check for the REQUIRED-list swap that doesn't go stale
         # every time a later step fills in more prose.
         proc = subprocess.run(
-            [sys.executable, str(SCRIPT), str(PAPER)],
+            [sys.executable, str(CHECK_SECTIONS), str(PAPER)],
             capture_output=True,
             text=True,
         )
