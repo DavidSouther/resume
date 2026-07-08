@@ -91,7 +91,12 @@ claim ledger as TODO until added.
   relocate the retrieval neighborhood — move the query to a better-connected
   region before drawing real evidence. Alternately in the HyPE variant, generate
   nearby queries (deliberately invoking plausible hallucinations), to then perform
-  the document space search.
+  the document space search. **The two expand opposite sides of the search:**
+  HyDE expands the **target basin** (a hypothetical answer/document generated to
+  sit near the true answer); HyPE expands the **source rim** (nearby queries
+  around the original ask). Both manufacture a stand-in point; they differ in
+  which side of the search — answer side or query side — gets the stand-in.
+  (Flagged 2026-07-08 during citation confirmation; not yet in the blog post.)
 - **Literature support.** HyDE `[gao2023hyde]` *(TODO key)*. Method behavior
   (better recall via a denser query neighborhood) is `established`; the geometric
   story is `author-analogy`. The HyDE lit-review is a **separate deliverable**
@@ -175,7 +180,12 @@ claim ledger as TODO until added.
   value estimates (LATS), rather than committing to one trajectory.
 - **Steering move.** **Explicit search over trajectory space** with a frontier
   and a value/selection function — the generalization of multi-sample to a tree
-  with lookahead and backtrack.
+  with lookahead and backtrack. This is the sharper cousin of Jeopardy! Search's
+  fan-out (§3): where Jeopardy fans out multiple candidate queries in parallel,
+  LATS's backtracking instead recognizes a trajectory isn't going to work out
+  and backs off to restart, rather than fanning out further — pruning instead
+  of broadening. (Flagged 2026-07-08 during citation confirmation; not yet in
+  the blog post.)
 - **Literature support.** LATS `[zhou2024lats]` *(TODO key)*. `established` for
   the search procedure; `author-analogy` for "regions of the document manifold."
 - **Predicted failure mode.** Cost explodes with breadth × depth, and the

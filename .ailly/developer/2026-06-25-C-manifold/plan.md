@@ -16,11 +16,21 @@ placeholders — so I can review the paper's argument instead of its scaffolding
 
 **Steps:**
 - [ ] Step 0: Contract stubs (REQUIRED section list, ledger header, citation-key checklist)
-- [ ] Step 1: Sections 1–3 — Introduction, Prior Art and Novelty Boundaries, The Document-Space Model
-- [ ] Step 2: Sections 4–5 — Steering Operators, Worked Analyses
-- [ ] Step 3: Sections 6–7 — What This Lens Predicts, Alternative Views and Limitations
-- [ ] Step 4: Sections 8–10 — Evaluation and Claim Ledger, Conclusion, References
-- [ ] Step 5: Scored transfer-test protocol + judge extension (or recorded gap)
+- [ ] Step 1: Sections 4–5 — Steering Operators, Worked Analyses
+- [ ] Step 2: Sections 6–7 — What This Lens Predicts, Alternative Views and Limitations
+- [ ] Step 3: Sections 2–3 — Prior Art and Novelty Boundaries, The Document-Space Model
+- [ ] Step 4: Section 8 — Evaluation and Claim Ledger
+- [ ] Step 5: Sections 1, 9, 10 — Introduction, Conclusion, References
+- [ ] Step 6: Abstract
+- [ ] Step 7: Scored transfer-test protocol + judge extension (or recorded gap)
+
+Write order runs contribution-first, background-second: the load-bearing
+sections (4–5) go down while the symposium's constraints are freshest, then
+the predictive/limitations discussion that follows directly from them (6–7),
+then back to prior art and the document-space model (2–3) now that it's clear
+exactly how much geometry the lens actually uses, then the cross-cutting
+ledger (8), then Introduction/Conclusion/References together (1, 9, 10) once
+there's real content to frame and recap, then the Abstract last of all.
 
 ## Step 0: Contract stubs
 
@@ -50,15 +60,20 @@ REQUIRED = [
 |---|---|---|---|---|---|
 ```
 
-Citation-key checklist (names only — real metadata is Step 2's job, verified
-against a live source before it goes in `refs.bib`, not copied from this
-plan):
+Citation-key checklist (names only — real metadata is Step 1's job; resolution
+status below is from `confirm_citations.md`, confirmed 2026-07-08):
 
-- `yao2023react` — ReAct (worked-analyses.md l.145, tentatively arXiv:2210.03629 — confirm before use)
-- `gao2023hyde` — HyDE (worked-analyses.md l.95, tentatively arXiv:2212.10496 — confirm before use)
-- `zhou2024lats` — LATS (worked-analyses.md l.179, tentatively arXiv:2310.04406 — confirm before use)
-- `wang2023selfconsistency` — self-consistency/pass@k (worked-analyses.md l.122, tentatively arXiv:2203.11171 — confirm before use)
-- `chen2024agentless` — multi-sample/subagent selection (worked-analyses.md ll.33-35 flags this key itself as tentative; confirm the source paper actually matches "Agentless" or pick the closer citation before use)
+- `yao2023react` — ReAct, arXiv:2210.03629 — **confirmed**
+- `gao2023hyde` — HyDE, arXiv:2212.10496 — **confirmed**
+- `zhou2024lats` — LATS, arXiv:2310.04406 — **confirmed**
+- `wang2023selfconsistency` — self-consistency/pass@k, arXiv:2203.11171 — **confirmed**
+- `chen2024agentless` — **rejected** (Agentless's approach reduces the explored
+  space rather than exemplifying branch-and-select, and its SWEBench-ambiguity
+  methodology is disqualifying). Needs a replacement citation, or drop the
+  second §5.4 citation and lean on `wang2023selfconsistency` plus the internal
+  Ailly `assemble` matrix-fan-out instance already in `worked-analyses.md`
+  ll.129-131 for the "genuinely distinct start points" case — open question,
+  see session.
 
 **Enables:** `check_sections.py` enforces the *new* 10-heading contract. It
 will still fail against the current `paper.md` (wrong headings, old ledger)
@@ -88,59 +103,7 @@ Replace the `REQUIRED` list literal in `check_sections.py` in place; no other
 logic in that file changes (the substring/TODO-stripping matcher already
 works generically over whatever list it's given).
 
-## Step 1: Sections 1–3
-
-**Enables:** `check_sections.py` non-empty check for "Introduction", "Prior
-Art and Novelty Boundaries", "The Document-Space Model"; `check_citations.py`
-resolution of `[@bradley2021]`, `[@bradley2025]`, `[@coecke2010]` once actually
-cited in prose (today they only appear in the old ledger table).
-
-Write full prose for:
-
-1. **Introduction** — state the thesis immediately (design.md's working
-   title's `Position:` framing), name it synthesis/position work, list the
-   contribution, say what is not claimed. Use Constraint 3's hedges: "as if",
-   "region" rather than "manifold/basin", explicit denial of
-   metric/basin/formalism claims.
-2. **Prior Art and Novelty Boundaries** — non-empty, in the first third of the
-   paper. Must actively engage Bradley/Terilla/Vlassopoulos (not just cite
-   them): what their `[0,1]`-enriched category of texts and next-token-
-   probability follow-up already formalize, and where that stops and this
-   paper's workflow-level diagnostic reading begins. Cover DisCoCat,
-   information geometry, union-of-manifolds, transformer formal-language work,
-   program synthesis, CoT expressivity, self-correction — a table separating
-   "already formalized" from "what this paper adds" (design.md l.188).
-3. **The Document-Space Model** — only the geometry the workflow lens needs:
-   functions/programs/documents; generation as trajectory. Carry the hard
-   caveats verbatim: contextual hidden states not raw token embeddings; union
-   of manifolds not one smooth surface; basin language is author-analogy
-   unless grounded.
-
-**Tests**
-
-```
-test "sections 1-3 are non-empty and Bradley is engaged, not just cited":
-  run check_sections.py
-  assert no failure for Introduction / Prior Art and Novelty Boundaries / The Document-Space Model
-  grep paper.md Section 2 body for "[@bradley2021]" and "[@bradley2025]"
-  assert Section 2 body length exceeds a citation-only one-liner
-    (i.e. it states what the enriched-category construction covers
-    and where the workflow reading begins, per Constraint 3)
-```
-
-- Edge case: Section 2's "already formalized vs. what this paper adds" table
-  must not silently omit Bradley — the symposium's hard-gate finding was
-  exactly this omission risk.
-- Edge case: hedge language ("as if", "region") must actually appear in
-  Section 1/3, not just be asserted in the ledger.
-
-**Implementation Outline**
-
-Rewrite the three section bodies under the Step-0 headings; carry footnote-
-style caveats as prose paragraphs, not bullet TODOs. Cite with pandoc
-`[@key]` form throughout (matches `check_citations.py`'s pandoc-cite regex).
-
-## Step 2: Sections 4–5
+## Step 1: Sections 4–5
 
 **Enables:** non-empty check for "Steering Operators for Agentic Workflows"
 and "Worked Analyses"; `check_citations.py` resolution of the five new keys
@@ -187,7 +150,7 @@ live source (`research:papers` or `research:public`) before writing the
 entries to `refs.bib` in the same pass as citing them, so `check_citations.py`
 never sees an orphan citation.
 
-## Step 3: Sections 6–7
+## Step 2: Sections 6–7
 
 **Enables:** non-empty check for "What This Lens Predicts" and "Alternative
 Views and Limitations".
@@ -221,21 +184,101 @@ test "predictive section states falsifiable conditions, not restated prompt engi
 Write both sections as prose with the "alternative views" section closing on
 the venue-fit limitation named in the meta-review.
 
-## Step 4: Sections 8–10
+## Step 3: Sections 2–3
 
-**Enables:** non-empty check for "Evaluation and Claim Ledger", "Conclusion",
-"References"; the six-field ledger schema is structurally in place (judge
-grading of its content is Step 5's job).
+**Enables:** `check_sections.py` non-empty check for "Prior Art and Novelty
+Boundaries" and "The Document-Space Model"; `check_citations.py` resolution of
+`[@bradley2021]`, `[@bradley2025]`, `[@coecke2010]` once actually cited in
+prose (today they only appear in the old ledger table).
 
-1. **Evaluation and Claim Ledger** — replace the old 4-column table with the
-   Step-0 six-field header, populate every mandatory row from design.md
-   ll.249-273 (thesis, prompting, external-feedback, CoT, retrieval/HyDE,
-   subagents/sampling/tree-search, contextual-vs-token-embedding caveat,
-   union-manifold caveat, basin-language caveat, Bradley/DisCoCat boundary,
-   2026 speculative-preprint caveat) with `Does not support` and
-   `Risk if wrong` filled on every one. Include the Lit Group review protocol
-   and automated-readiness judge contract (prose summary; the scored
-   transfer-test rewrite itself is Step 5).
+1. **Prior Art and Novelty Boundaries** — non-empty, in the first third of the
+   paper. Must actively engage Bradley/Terilla/Vlassopoulos (not just cite
+   them): what their `[0,1]`-enriched category of texts and next-token-
+   probability follow-up already formalize, and where that stops and this
+   paper's workflow-level diagnostic reading begins. Cover DisCoCat,
+   information geometry, union-of-manifolds, transformer formal-language work,
+   program synthesis, CoT expressivity, self-correction — a table separating
+   "already formalized" from "what this paper adds" (design.md l.188).
+2. **The Document-Space Model** — only the geometry the workflow lens needs:
+   functions/programs/documents; generation as trajectory. Carry the hard
+   caveats verbatim: contextual hidden states not raw token embeddings; union
+   of manifolds not one smooth surface; basin language is author-analogy
+   unless grounded.
+
+**Tests**
+
+```
+test "sections 2-3 are non-empty and Bradley is engaged, not just cited":
+  run check_sections.py
+  assert no failure for Prior Art and Novelty Boundaries / The Document-Space Model
+  grep paper.md Section 2 body for "[@bradley2021]" and "[@bradley2025]"
+  assert Section 2 body length exceeds a citation-only one-liner
+    (i.e. it states what the enriched-category construction covers
+    and where the workflow reading begins, per Constraint 3)
+```
+
+- Edge case: Section 2's "already formalized vs. what this paper adds" table
+  must not silently omit Bradley — the symposium's hard-gate finding was
+  exactly this omission risk.
+- Edge case: hedge language ("as if", "region") and Section 3's caveats
+  (contextual hidden states not raw token embeddings; union of manifolds not
+  one smooth surface) must actually appear in this prose, not just be
+  asserted in the ledger. Introduction's framing-level hedges land in Step 5.
+
+**Implementation Outline**
+
+Rewrite the two section bodies under the Step-0 headings; carry footnote-
+style caveats as prose paragraphs, not bullet TODOs. Cite with pandoc
+`[@key]` form throughout (matches `check_citations.py`'s pandoc-cite regex).
+
+## Step 4: Section 8
+
+**Enables:** `check_sections.py` non-empty check for "Evaluation and Claim
+Ledger"; the six-field ledger schema is structurally in place and populated
+(judge grading of its content is Step 7's job).
+
+**Evaluation and Claim Ledger** — replace the old 4-column table with the
+Step-0 six-field header, populate every mandatory row from design.md
+ll.249-273 (thesis, prompting, external-feedback, CoT, retrieval/HyDE,
+subagents/sampling/tree-search, contextual-vs-token-embedding caveat,
+union-manifold caveat, basin-language caveat, Bradley/DisCoCat boundary,
+2026 speculative-preprint caveat) with `Does not support` and `Risk if wrong`
+filled on every one. Include the Lit Group review protocol and
+automated-readiness judge contract (prose summary; the scored transfer-test
+rewrite itself is Step 7).
+
+**Tests**
+
+```
+test "every load-bearing ledger row has Does-not-support and Risk-if-wrong populated":
+  parse the Section 8 table
+  for each row: assert "Does not support" cell is non-empty and specific
+    (not "N/A" as a dodge)
+  assert "Risk if wrong" cell is non-empty
+```
+
+- Edge case: the basin-language row and the program-space-metric row must be
+  tagged `author-analogy` or `deferred` per design.md l.241, not
+  `established` — this is exactly the citation-drift risk the symposium
+  flagged.
+
+**Implementation Outline**
+
+Build the ledger table row-by-row from the design.md mandatory-rows list,
+cross-checking each `Support` cell's citation key against `refs.bib`.
+
+## Step 5: Sections 1, 9, 10
+
+**Enables:** `check_sections.py` non-empty check for "Introduction",
+"Conclusion", "References" — the last three sections needed for a full green
+run across all 10 required headings, since Steps 1–4 already cover 2, 3, 4,
+5, 6, 7, and 8.
+
+1. **Introduction** — state the thesis immediately (design.md's working
+   title's `Position:` framing), name it synthesis/position work, list the
+   contribution, say what is not claimed. Use Constraint 3's hedges: "as if",
+   "region" rather than "manifold/basin", explicit denial of
+   metric/basin/formalism claims.
 2. **Conclusion: the checklist** — the reusable checklist: start point, target
    region, signal added, failure mode addressed, evidence that the move
    works.
@@ -246,29 +289,63 @@ grading of its content is Step 5's job).
 **Tests**
 
 ```
-test "every load-bearing ledger row has Does-not-support and Risk-if-wrong populated":
-  parse the Section 8 table
-  for each row: assert "Does not support" cell is non-empty and specific
-    (not "N/A" as a dodge)
-  assert "Risk if wrong" cell is non-empty
+test "introduction states the thesis and hedges; conclusion gives the checklist; references render":
+  run check_sections.py -- assert no failure for Introduction / Conclusion / References
+  assert Introduction contains the Position: framing hedges ("as if", "region")
+    and an explicit denial of metric/basin/formalism claims
+  assert Conclusion's checklist has the five fields: start point, target region,
+    signal added, failure mode addressed, evidence
   run check_pandoc.py -- assert exit 0
 ```
 
-- Edge case: the basin-language row and the program-space-metric row must be
-  tagged `author-analogy` or `deferred` per design.md l.241, not
-  `established` — this is exactly the citation-drift risk the symposium
-  flagged.
-- Edge case: `check_pandoc.py` needs `pandoc` installed and `ieee.csl` present;
-  if `ieee.csl` is still missing, this step must add it (or the check fails
-  for a reason unrelated to prose content).
+- Edge case: this is the point at which `check_sections.py` should report full
+  green across all 10 sections — if an earlier step's heading regressed (e.g.
+  renamed or emptied), this test is what surfaces it.
+- Edge case: `check_pandoc.py` needs `pandoc` installed and `ieee.csl`
+  present; if `ieee.csl` is still missing, this step must add it (or the
+  check fails for a reason unrelated to prose content).
 
 **Implementation Outline**
 
-Build the ledger table row-by-row from the design.md mandatory-rows list,
-cross-checking each `Support` cell's citation key against `refs.bib`. Write
-the checklist as a numbered list mirroring the five-field rubric.
+Rewrite the Introduction under the Step-0 heading, carrying footnote-style
+caveats as prose paragraphs, not bullet TODOs, and citing with pandoc
+`[@key]` form. Write the Conclusion's checklist as a numbered list mirroring
+the five-field rubric. Confirm References renders via `check_pandoc.py`.
 
-## Step 5: Scored transfer-test protocol + judge extension
+## Step 6: Abstract
+
+**Enables:** the front-matter `abstract:` field in `paper.md`'s YAML header
+no longer reads `TODO (step N-1)`. This is outside `check_sections.py`'s
+heading scan (front matter, not a `##` section), so it doesn't gate the
+script, but it's the reader's first impression and only worth pinning once
+every section's content is fixed — hence writing it dead last.
+
+Summarize the thesis, the contribution (the agentic-workflow lens), what's
+not claimed (no new theorem/formalism), and the paper's shape
+(position/synthesis) — the shortest faithful restatement of the (now-written)
+Introduction plus the "what this lens predicts" gist.
+
+**Tests**
+
+```
+test "abstract summarizes the fixed content, not the outline":
+  read paper.md front matter
+  assert `abstract:` no longer contains "TODO"
+  assert it states the thesis, the contribution, and what is not claimed
+  assert it is consistent with the Introduction written in Step 5 -- no drift
+```
+
+- Edge case: because this step runs last, catch any late-breaking rewording
+  from Steps 1–5 the abstract should reflect (e.g. if holistic review later
+  repins the sharpest thesis form, the abstract is the first thing to
+  revisit).
+
+**Implementation Outline**
+
+Write the abstract as a 3–5 sentence restatement of the Introduction, not a
+new composition — standard write-the-abstract-last practice.
+
+## Step 7: Scored transfer-test protocol + judge extension
 
 **Enables:** the `manifold.yaml` judge assertion has something real to grade;
 closes Continuation Constraint 1 (the symposium's one veto) and Constraint 6.
@@ -313,7 +390,7 @@ Edit `design.md` in place (User Journey and Metrics section); edit
 `manifold.yaml`'s judge `prompt` string; if deferring, append a dated entry to
 `evals/README.md`'s existing prose rather than a new section.
 
-## Verification (not a plan step — run at the end of Step 5)
+## Verification (not a plan step — run at the end of Step 7)
 
 Run all three scripts and eyeball the judge criteria by hand:
 
