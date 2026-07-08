@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Check that paper.md contains every required section heading, non-empty.
 
-Usage: check_sections.py [paper.md]   (default: ../paper.md relative to this file)
+Usage: check_sections.py [paper.md]   (default: ../../paper.md relative to this file)
 Exit 0 = all present and non-empty; exit 1 = something missing/empty (prints why).
 The required list is the outline contract from the project design doc.
 """
@@ -24,7 +24,7 @@ REQUIRED = [
 
 
 def main() -> int:
-    default = Path(__file__).resolve().parents[1] / "paper.md"
+    default = Path(__file__).resolve().parents[2] / "paper.md"
     path = Path(sys.argv[1]) if len(sys.argv) > 1 else default
     text = path.read_text(encoding="utf-8")
 
