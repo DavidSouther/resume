@@ -11,7 +11,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-HERE = Path(__file__).resolve().parents[1]
+HERE = Path(__file__).resolve().parents[2]
 
 
 def main() -> int:

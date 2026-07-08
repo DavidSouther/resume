@@ -20,8 +20,51 @@ Citations are IEEE-style inline [n]; keys resolve against refs.bib.
 
 ## 1. Introduction
 
-TODO. The picture in one paragraph; what is and is not being claimed (synthesis +
-agentic lens, not a new formalism); roadmap.
+This paper's thesis fits in one sentence: an agentic LLM workflow can be
+read **as if** it were a sequence of operators steering a document through a
+region of syntactic space toward a target region of acceptable artifacts for
+a given task. Prompting fixes a start point; a retrieved document or a
+compiler's error message pulls the trajectory toward or away from that
+target; a subagent fan-out explores several regions at once; a tree search
+does the same with backtracking. Read this way, prompt changes, retrieval,
+retries, execution feedback, thinking tokens, subagents, and tree search
+stop looking like an unrelated grab-bag of tricks and become comparable
+moves, each with a different signal, a different cost, and a different way
+to fail.
+
+This is a **synthesis and position paper**, not a new formalism. It borrows
+its geometric vocabulary — manifold, trajectory, region, basin — from
+published prior art (Section 2), and none of that vocabulary is introduced
+here for the first time. What this paper contributes is the
+**workflow-level reading**: a lens that turns a list of known agentic
+techniques into a single diagnostic vocabulary with seven falsifiable
+conditions for when each technique should help, fail, or become too
+expensive (Section 6), grounded in six worked examples (Section 5) and a
+reusable operator table (Section 4).
+
+**What this paper is not claiming.** It is not a new theorem, a new
+categorical formalism, or a claim that treating LLMs as manifolds is itself
+novel — Section 2 draws that boundary against the closest prior art
+explicitly. It does not claim a metric on document space, a proven
+basin-of-attraction structure for a single forward pass, or that "document
+space" is one smooth surface rather than a union of task-local regions
+(Section 3's caveats). Two extensions the author has explored elsewhere are
+deliberately out of scope here: an endofunctor fixed-point formalism for
+iterated generation [@souther2024], and an empirical bridge between the
+loss-landscape geometry of training and the document-space geometry of
+generation. Both would require engaging the closest prior art (Section 2)
+far more formally than a position paper's evidence standard supports, and
+are left as future work.
+
+**Roadmap.** Section 2 states what is already formalized and draws the
+novelty boundary. Section 3 introduces only the geometry the rest of the
+paper needs. Sections 4 and 5 are the paper's load-bearing contribution: the
+operator table and six worked analyses. Section 6 generalizes those
+analyses into seven falsifiable predictive conditions, and Section 7
+compares this reading against the alternative frames a reviewer would
+reasonably reach for. Section 8 is this paper's evaluation: a claim ledger
+and a two-part readiness gate. Section 9 closes with a reusable checklist
+for reading an agent workflow through this lens.
 
 ## 2. Prior Art and Novelty Boundaries
 
@@ -543,6 +586,40 @@ transfer-test protocol lives in `design.md`'s User Journey and Metrics
 section. Passing both halves is a precondition for circulation, not a
 substitute for the argument itself.
 
-## References
+## 9. Conclusion
+
+The steering-operator lens earns its place only if it changes what a reader
+does with the next agent workflow they read, design, or debug. This paper's
+one reusable artifact for that purpose is a five-question checklist,
+distilled from the operator table (Section 4), the six worked analyses
+(Section 5), and the seven predictive conditions (Section 6):
+
+1. **Start point.** What does this operation take as its starting document,
+   and what conditioning fixed that start?
+2. **Target region.** What region of acceptable documents is this operation
+   trying to reach, and against what referent — a compiler, a test, a
+   retrieved fact, a visible panel — is "reached" actually checked?
+3. **Signal added.** What new signal does this move add to the trajectory:
+   a prompt, a retrieved neighborhood, external execution feedback, serial
+   computation, a branch-and-select step, or a search-and-backtrack step?
+4. **Failure mode addressed.** Which of Section 6's seven conditions —
+   observability, feedback reliability, search breadth, inspectability,
+   serial dependency, cost, or shared-bias collapse — does this move
+   actually address, and under what condition should it reverse from
+   helping to hurting?
+5. **Evidence.** What evidence — cited literature, a production trace, or a
+   worked example — supports that this specific move works for this
+   specific failure mode, and what is that evidence's own boundary? A
+   hand-picked trace is not a base rate; an established result about
+   sampling is not automatically a claim about document-space regions.
+
+A workflow that cannot answer these five questions is not wrong, but it is
+unexamined: the lens has not yet been applied to it. Applying it is this
+paper's claim to usefulness, and Section 8's Lit Group transfer test is
+exactly this checklist, run on a workflow the reader has not seen before,
+scored against whether the reader's own answers anticipate the failure mode
+this paper's analysis would find.
+
+## 10. References
 
 Rendered by pandoc `--citeproc` from `refs.bib` with `ieee.csl`. See `refs.bib`.
