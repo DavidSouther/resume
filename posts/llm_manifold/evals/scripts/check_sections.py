@@ -11,13 +11,14 @@ from pathlib import Path
 
 REQUIRED = [
     "Introduction",
-    "Functions, Programs, and Documents",
-    "Generation as a Wander on the Document Manifold",
-    "The Agentic-Workflow Lens",
-    "Worked Instances",
-    "Topology of the Space",
-    "Claim Ledger",
-    "Caveats and Scope",
+    "Prior Art and Novelty Boundaries",
+    "The Document-Space Model",
+    "Steering Operators for Agentic Workflows",
+    "Worked Analyses",
+    "What This Lens Predicts",
+    "Alternative Views and Limitations",
+    "Evaluation and Claim Ledger",
+    "Conclusion",
     "References",
 ]
 

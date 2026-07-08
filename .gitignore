@@ -24,3 +24,5 @@ docs/
 
 # Raw traveler document numbers sidecar — never committed, never imported by render
 trips/*/documents.local.yaml
+
+__pycache__/
