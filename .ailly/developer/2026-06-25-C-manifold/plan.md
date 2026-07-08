@@ -18,7 +18,7 @@ placeholders — so I can review the paper's argument instead of its scaffolding
 - [x] Step 0: Contract stubs (REQUIRED section list, ledger header, citation-key checklist)
 - [x] Step 1: Sections 4–5 — Steering Operators, Worked Analyses
 - [x] Step 2: Sections 6–7 — What This Lens Predicts, Alternative Views and Limitations
-- [ ] Step 3: Sections 2–3 — Prior Art and Novelty Boundaries, The Document-Space Model
+- [x] Step 3: Sections 2–3 — Prior Art and Novelty Boundaries, The Document-Space Model
 - [ ] Step 4: Section 8 — Evaluation and Claim Ledger
 - [ ] Step 5: Sections 1, 9, 10 — Introduction, Conclusion, References
 - [ ] Step 6: Abstract
