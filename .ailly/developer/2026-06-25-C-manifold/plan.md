@@ -21,7 +21,7 @@ placeholders — so I can review the paper's argument instead of its scaffolding
 - [x] Step 3: Sections 2–3 — Prior Art and Novelty Boundaries, The Document-Space Model
 - [x] Step 4: Section 8 — Evaluation and Claim Ledger
 - [x] Step 5: Sections 1, 9, 10 — Introduction, Conclusion, References
-- [ ] Step 6: Abstract
+- [x] Step 6: Abstract
 - [ ] Step 7: Scored transfer-test protocol + judge extension (or recorded gap)
 
 Write order runs contribution-first, background-second: the load-bearing
