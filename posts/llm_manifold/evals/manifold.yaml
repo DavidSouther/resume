@@ -1,4 +1,4 @@
-# Ailly eval suite — automated half of the manifold-paper Closing Bell.
+# Ailly eval suite — automated half of the manifold-paper readiness gate.
 # Intended shape; see README.md for what blocks running this via the ailly CLI today.
 # The paper is bridged into a single assistant turn so judge/text assertions see it.
 name: manifold

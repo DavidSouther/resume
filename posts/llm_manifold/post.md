@@ -2,99 +2,107 @@
 title: LLMs as a Model of Syntactic Space
 date: 2026-06-26
 show: false
-summary: An LLM is a machine-learned model over the syntactic space of language. Generation starts at the prompt and wanders the manifold of valid documents; agentic workflows are all ways of steering that wander toward the region you want.
+summary: Agentic LLM workflows can be understood as operators steering a document through syntactic space toward a target region of acceptable artifacts.
 image: "/fuzzy_llm.png"
 ---
 
-> **Draft.** This is the blog-tone companion to the paper in `llm_manifold/`. It is
-> the successor to [Fuzzy Homomorphic Endofunctors](/fuzzy_homomorphic_endofunctor),
-> the 2024 informal seed. Five diagrams are planned as snapshot stills from a larger
-> animation (marked `[Diagram: …]` below).
+> **Draft.** This is the blog-tone response to the paper in `posts/llm_manifold/paper.md`.
+> It is the successor to [Fuzzy Homomorphic Endofunctors](/fuzzy_homomorphic_endofunctor), the 2024 informal seed.
+> The diagrams below are planned as snapshot stills from one larger animation.
 
-I'm working on an explanation of LLMs as an ML model of the "syntactic space" of
-language, and the numerous manifolds within that space. My first attempt was
-[Fuzzy Homomorphic Endofunctors](/fuzzy_homomorphic_endofunctor); this is where the
-idea has gone since.
+Here is the whole idea:
 
-## Functions
+> Agentic LLM workflows can be understood as operators steering a document through syntactic space toward a target region of acceptable artifacts.
 
-Imagine the set of all functions — `is_even(number)`, `sort(numbers)`,
-`net_worth(person, date)`, `more_beautiful_than(thing_a, thing_b)`. Some are
-computable. All are definable. And around each function is a region of similar but
-slightly different functions — `is_odd`, `almost_net_worth()`,
-`sort_but_sometimes_random()`. Whether these are different functions entirely, or
-just the interesting function *with a bug*, turns out to matter.
+That sentence is doing most of the work.
+An LLM is not a database of answers.
+It is a learned model over the shape of documents: English paragraphs, Rust programs, SQL queries, meeting summaries, JSON blobs, half-broken test files, finished patches.
+Generation starts from the prompt and moves through that space one token at a time.
+Agentic workflows are the machinery we put around that motion so it lands in the region we actually wanted.
 
-[Diagram: a large oval for the set of all functions, with points for specific
-functions; a fully contained smaller oval for the computable functions; and small
-squiggly ovals around some computable points for "similar" functions.]
+## Documents As Regions
 
-## Programs
+Imagine the set of all possible documents.
+Most token sequences are garbage.
+A tiny part looks like valid language.
+Inside that are smaller regions: valid Python, valid Rust, polite emails, correct invoices, programs that compile, programs that implement `sort`, programs that implement `sort` but with an off-by-one bug.
 
-Separately from functions, we have programs. The computable subset of functions
-each have an infinite number of programs that correctly implement them — and an
-infinite number that *incorrectly* implement them. (The incorrect implementations
-are actually correct implementations of a *different* function: the one defined as
-having the bug.)
+[Diagram: a large document-space field with regions for natural language, code, Rust, compiling Rust, correct sort implementations, and near-miss buggy sort implementations.]
 
-[Diagram: a large oval, above the functions oval, for the set of all documents.
-Two squiggly ovals inside with a little overlap, for "all Python programs" and "all
-Rust programs." A small squiggly oval within the Rust region for "all Rust programs
-that implement sort," surrounded by a slightly larger one for "Rust programs that
-mostly implement sort, but with bugs." A dotted funnel from the Rust region to the
-function region: infinitely many Rust programs implement the sort function, and
-infinitely many implement each of the infinitely many almost-sorted functions.]
+This is why a bug can be useful to think about spatially.
+The buggy program is not nowhere.
+It sits near the correct program, but in the wrong region: the region of documents that look plausible, and maybe even compile, while denoting the wrong function.
+The LLM can reach that region easily because it is syntactically coherent.
+Our job is to steer it from plausible to acceptable.
 
-As programmers our goal is two-fold: first, find the correct function that models
-some real-world process; second, find a program encoding that function that meets
-some aesthetic definition of "good." Historically humans did this through intuition
-and trial and error. LLMs do it by walking through document space.
+## The Target Region
 
-## Document space, and the wander
+The target is the region of artifacts that satisfy the task's referent.
+For code, the referent might be a compiler, a test suite, a type checker, a benchmark, or a human review.
+For a coding agent such as Codex, Cursor, Claude Code, or a similar tool, it might be the visible file, terminal, or application change that actually exists after a tool call.
+For retrieval, it is the external document that really contains the answer.
 
-[Diagram: to the right of the prior two spaces, a larger "blown up" syntax-space
-diagram, about twice the area. Keep the Rust squiggle; drop the Python.]
+[Diagram: two paths through document space. One reaches a fluent completion labeled "looks done." The other reaches a smaller region labeled "actually passes the referent check."]
 
-This is where all possible documents live, and the magic of the LLM is that it has
-been trained to generate text that stays on the manifold of *valid* documents. Take
-tokens entirely at random and there's a vanishingly small chance of getting any
-semblance of a reasonable sentence. The Transformer architecture made it possible to
-constrain hundreds of thousands of tokens to the manifold of valid documents — valid
-French, valid Rust, valid Chinese, valid Rust written with French variable names and
-Chinese comments. Anything that comes out, a native speaker would agree is
-reasonable. Compared to the stilted gibberish of 2022, this is astounding.
+This distinction matters because a model can move the document into the *language* of success without moving the referent at all.
+It can write "I updated the file" while the file is unchanged.
+It can say "the tests pass" before running them.
+It can cite a document that was never retrieved.
+The words reached the success region; the world did not.
 
-But the algorithm itself just starts somewhere on the manifold (the prompt) and
-"wanders." We've succeeded when that wander happens to pass through the region that
-holds the correct Rust implementation of the sort function. It might hit… or it might
-miss.
+## Operators
 
-[Diagram: a big point in the larger diagram, with one line wandering into the correct
-region, another wandering off somewhere, and a third landing near the first but in
-the "sorted but has a bug" region.]
+Every common agent pattern is a steering operator, and each operator has three parts: its impulse, its signal, and its referent validation.
 
-## Nudges
+Prompting fixes the start point and uses only its conditioning tokens.
+Retrieval manufactures stand-ins, then searches around them.
+HyDE invents a hypothetical answer; HyPE and Jeopardy-style expansion generate query-side stand-ins.
+Compiler errors and tests return an outside verdict that can pull the next step back toward the actual target.
+Thinking tokens spend extra sequential computation before committing, but they do not validate the result by themselves.
+Subagents launch several trajectories and select among them.
+Tree search keeps a frontier of partial trajectories and backtracks using a value estimate.
 
-For a programming task with a near miss, we can add the error message from the failed
-run. That's a new prompt: it extends the path and points it toward the region we
-want.
+[Diagram: one initial prompt branching into operator-labeled paths: retrieval, tool feedback, thinking, subagents, tree search. Each path bends toward or away from the target region.]
 
-[Diagram: a point on the third line in the buggy area, then a shorter line to the
-correct region.]
+The operators are not equivalent.
+Some have no internal referent validation.
+Some validate only implicitly, through nearby retrieved documents.
+Some repeatedly recouple the text to a referent.
+That difference determines where they fail.
 
-Or, if the model supports them, we can use "thinking" tokens.
+## How Agents Fail
 
-[Diagram: a fourth line starting from the original prompt, following the first and
-third lines, but with substantially "wider" curves.]
+The most useful version of this model is not "agents steer documents."
+It is "operators reverse under identifiable conditions."
 
-## Still unwritten
+Tool feedback helps when the tool reports the true state and the model reads it.
+It fails silently when the observation channel is weak: the text says success, the repository or application did not change, and no error is raised.
 
-- Subagents; HyDE and HyPE / [Jeopardy search](/jeopardy_search).
-- Topology of the space: the LLM "learns" the topology, and the tokens mostly follow
-  the terrain.
+Retrieval expansion helps when the corpus is dense near the answer.
+It hurts when the neighborhood is empty and the hypothetical answer becomes a hallucination seed.
 
----
+Thinking helps when the task is bottlenecked on serial computation.
+It is mostly cost when the task needed a missing fact, a verifier, or broader search.
 
-The goal for this work is a paper explaining these ideas and their relevance to
-agentic AI workflows. See `llm_manifold/paper.md` for the rigorous treatment and the
-claim ledger.
+Subagents help when the branches really start in different places.
+They collapse when every branch shares the same prompt, same context, and same blind spot.
+
+Tree search helps when a cheap, trustworthy value signal can rank partial paths.
+It becomes expensive theater when the value signal is a proxy for the real target.
+
+[Diagram: a table-like animation still showing operator, signal, good regime, failure regime.]
+
+That is the practical payoff.
+When an agent workflow fails, ask which operator was supposed to steer the document, what impulse it applied, what signal it used, and whether its referent validation actually touched the thing being judged.
+
+## What The Paper Proves Out
+
+The paper does not claim that "LLMs are manifolds" is new.
+That vocabulary already exists in the literature, including categorical and manifold-flavored accounts of text and language-model probability.
+
+The paper's contribution is narrower: it treats agentic workflows as steering operators over documents, then asks what follows from each operator's impulse, signal, and validation path.
+The strongest test is not whether the metaphor feels nice.
+It is whether readers can apply it to a workflow the paper did not analyze and name a failure mode that "try a better prompt" would not have found.
+
+If the operator lens helps you design, debug, or evaluate the next agent workflow more clearly, it earned its place.
+If it cannot predict anything beyond ordinary prompt-engineering advice, throw it away.

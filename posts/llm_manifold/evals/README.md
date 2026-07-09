@@ -1,8 +1,8 @@
-# Manifold paper — eval (automated half of the Closing Bell)
+# Manifold paper — eval (automated readiness gate)
 
-This is the executable half of the project's Closing Bell (see
+This is the executable half of the project's readiness gate (see
 `../../.ailly/developer/2026-06-25-C-manifold/design.md`). The qualitative half is a
-human read-cold study; this half gates the mechanical contract.
+Lit Group transfer review; this half gates the mechanical contract.
 
 ## What it checks
 

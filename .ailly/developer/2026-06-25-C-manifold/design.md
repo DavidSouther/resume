@@ -55,11 +55,11 @@ academic rigor underlying the general post.
 
 The genuine contribution is the **workflow-level reading**: prompt changes,
 retrieval, retries, execution feedback, thinking tokens, subagents, and tree
-search become comparable steering moves with different evidence, costs, and
-failure modes. The paper is **not** a new theorem, a new categorical formalism,
+search become comparable steering moves with different impulses, signals,
+referent-validation paths, costs, and failure modes. The paper is **not** a new theorem, a new categorical formalism,
 or a claim that "LLMs are manifolds" is novel.
 
-The deliverable should be circulatable at work (Nominal and colleagues) and in
+The deliverable should be circulatable among engineering colleagues and in
 the author's CUNY/Brooklyn College masters program, with an eye to arXiv and a
 position/synthesis-friendly venue.
 
@@ -124,11 +124,11 @@ Each Lit Group session should produce notes that answer:
    tree search?
 5. What help/failure conditions does the lens predict?
 6. On the scored transfer test below, can readers fill the fixed five-field
-   transfer rubric: start point, target region, signal added, predicted
-   failure mode, and evidence?
-7. Before seeing the author's analysis, do most readers independently predict
-   the lens's failure mode, and do those predictions exceed a
-   prompt-engineering-only baseline?
+   transfer rubric: impulse, target region, signal, referent validation, and
+   evidence?
+7. Before seeing the author's analysis, do most readers independently identify
+   the failure condition, and do those answers exceed a prompt-engineering-only
+   baseline?
 8. What would group members do differently after reading the paper: prompt,
    design, debug, review, or evaluate an agent workflow?
 9. What blocking issues remain before circulation or submission?
@@ -140,41 +140,38 @@ arXiv:2303.11366) is deliberately absent from the paper's Section 5. An
 agent attempts a task; on failure, the agent generates a verbal
 self-reflection on what went wrong, and that reflection is stored in an
 episodic memory buffer and prepended to context on the *next* attempt at the
-same task. It is a genuinely different pattern from all six of Section 5's
-worked examples: it is not ReAct's per-step tool-observation loop,
-Self-Debug's single-turn execution-feedback loop, CoT's serial-depth budget,
-HyDE/HyPE's retrieval expansion, self-consistency's branch-and-vote, or
-LATS's tree search with backtracking. It is closest to external-feedback
-(Table 1, row 3) but adds a dimension none of the six examples need: a
+same task. It is a genuinely different pattern from all seven of Section 5's
+worked analyses: it is not prompting's start-point conditioning, ReAct's
+per-step tool-observation loop, Self-Debug's single-turn execution-feedback
+loop, CoT's serial-depth budget, HyDE/HyPE's retrieval expansion,
+self-consistency's branch-and-vote, or LATS's tree search with backtracking.
+It is closest to external-feedback (Table 1, row 3) but adds a dimension none of the seven analyses need: a
 *persistent, cross-attempt* memory that compounds across trials rather than
 being consumed and discarded within one.
 
 **Facilitator packet (sealed until after the blind step).** Distribute this
 only after readers record their own five-field answers.
 
-- *Start point.* The prior attempt's action trajectory plus its outcome
-  signal (a failing test, a wrong final answer, a bad episode return).
+- *Impulse.* Persist a model-generated reflection from the prior failed attempt
+  into the next attempt's context.
 - *Target region.* A trajectory that satisfies the task's success criterion
   on a *later* attempt — the target region here spans multiple episodes, not
   one generation.
-- *Signal added.* Two signals are layered, and distinguishing them is the
+- *Signal.* Two signals are layered, and distinguishing them is the
   crux of applying the lens correctly: an external outcome signal (pass/fail,
   reward — trustworthy, same category as Section 5.2's compiler feedback),
   and an *intrinsic*, model-generated verbal diagnosis of *why* it failed,
   persisted into the next attempt's context.
-- *Predicted failure mode.* The lens predicts Reflexion reliably re-steers
-  when the outcome signal is trustworthy, exactly as Section 5.2 predicts for
-  external feedback generally — but the correction's *quality* rides on the
-  model's own self-diagnosis, which is intrinsic and can be wrong even when
-  the fact of failure is right (Section 5.2's external-vs-intrinsic split,
-  one level up). The lens's sharper, above-baseline prediction: on tasks
-  where the true root cause is hard for the model to self-diagnose from the
-  outcome alone, a wrong reflection should *entrench* across trials — because
-  it is persisted into every subsequent attempt — producing stalled or
-  declining performance over repeated trials, not just a failure to improve.
-  A prompt-engineering account predicts only that "reflecting" helps, roughly
-  monotonically with more attempts; it has no way to predict *when* more
-  reflection should make things worse.
+- *Referent validation.* Reflexion can re-steer when the outcome signal is
+  trustworthy, as in Section 5.2's external-feedback case, but the correction's
+  *quality* rides on the model's own self-diagnosis, which is intrinsic and can
+  be wrong even when the fact of failure is right. On tasks where the true root
+  cause is hard for the model to self-diagnose from the outcome alone, a wrong
+  reflection should *entrench* across trials because it is persisted into every
+  subsequent attempt, producing stalled or declining performance over repeated
+  trials rather than a mere failure to improve. A prompt-engineering account
+  says only that "reflecting" helps, roughly monotonically with more attempts;
+  it has no way to name when more reflection should make things worse.
 - *Evidence.* This specific compounding-wrong-diagnosis failure mode is an
   extension of the lens by analogy from Section 5.2, not a measured result in
   Shinn et al.: their reported gains are aggregate benchmark improvements,
@@ -185,17 +182,17 @@ only after readers record their own five-field answers.
 
 1. Give readers Reflexion's mechanism (the paragraph above, without the
    facilitator packet) and the fixed five-field rubric.
-2. Readers record their own start point, target region, signal added,
-   predicted failure mode, and evidence *before* seeing the facilitator
+2. Readers record their own impulse, target region, signal, referent
+   validation, and evidence *before* seeing the facilitator
    packet — this is the blind step.
 3. Reveal the facilitator packet. Score each reader as a pass if their
-   predicted failure mode independently names the entrenchment-of-a-wrong-
-   diagnosis pattern (or an equivalent above-baseline prediction that a
+   referent-validation answer independently names the entrenchment-of-a-wrong-
+   diagnosis pattern (or an equivalent above-baseline failure condition that a
    prompt-engineering reading could not have produced), not merely "it might
    not always work."
 4. Pass criterion: a majority of readers in the session independently land on
-   the lens's predicted failure mode above a prompt-engineering-only
-   baseline. The test measures transfer of the lens, not base-rate frequency.
+   the failure condition above a prompt-engineering-only baseline. The test
+   measures transfer of the lens, not base-rate frequency.
 
 Pass condition:
 
@@ -203,9 +200,9 @@ Pass condition:
 > different participant mixes, reaches group consensus that the paper is ready
 > for circulation with no blocking novelty, soundness, or clarity objections. A
 > passing session includes the scored transfer test above, run to completion,
-> with a majority of readers independently landing on the lens's predicted
-> failure mode above a prompt-engineering-only baseline. The test measures
-> transfer of the lens, not base-rate frequency; the Analyst traces remain
+> with a majority of readers independently landing on the failure condition
+> above a prompt-engineering-only baseline. The test measures
+> transfer of the lens, not base-rate frequency; the coding-agent traces remain
 > hand-picked examples that show what fails, not how often.
 
 If a session raises a blocking issue, it becomes a new project step rather than
@@ -271,13 +268,14 @@ paper.
 5. **Worked analyses.** Show the lens doing work beyond rephrasing. Lead with the
    ReAct/tool-interactive false-completion example: the document trajectory says
    "done" while the external referent has not changed, often silently when the
-   observation channel is weak or unread. Preserve the caveat that the Analyst
+   observation channel is weak or unread. Preserve the caveat that the coding-agent
    evidence comes from hand-picked traces, not a random sample: it shows what
-   fails, not how often. For each example, include: pattern, steering move,
-   literature support, predicted failure mode, and boundary
+   fails, not how often. For each example, include: pattern, impulse, signal,
+   referent validation / failure condition, and boundary
    condition/counterexample. Required examples: ReAct/tool-interactive agents;
    compiler-error repair or Self-Debug; CoT/pause tokens; HyDE/retrieval
-   expansion; subagent review or multi-sample search; LATS/tree-search agents.
+   expansion; subagent review or multi-sample search; LATS/tree-search agents;
+   prompting/soft prompts.
 6. **What this lens predicts.** State conditions under which steering should
    help, fail, or become too expensive: target observability, feedback
    reliability, search breadth, artifact inspectability, serial dependency,
@@ -290,8 +288,8 @@ paper.
    mechanism, with appendix expansion if needed. Include the Lit Group review
    protocol and the automated-readiness judge contract.
 9. **Conclusion: the checklist.** End with a reusable checklist for reading an
-   agent paper or workflow through the lens: start point, target region, signal
-   added, failure mode addressed, and evidence that the steering move works.
+   agent paper or workflow through the lens: impulse, target region, signal,
+   referent validation, and evidence that the steering move works.
 10. **References.** Rendered by pandoc `--citeproc` from `refs.bib` with the
     IEEE CSL.
 

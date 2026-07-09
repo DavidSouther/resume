@@ -1,80 +1,164 @@
-## 2. Prior Art and Novelty Boundaries
+## 2. Prior Art
 
-Before stating this paper's picture, name the risk directly: nearly every piece of the manifold, categorical, and phase-space vocabulary used below is already published, in several places, often under close to the exact word.
-This section states what is already formalized, draws the boundary against the closest prior art specifically, and names the one place this paper adds anything at all.
+The document-space model builds on categorical semantics of language, geometric accounts of statistical and representation spaces, and program-space accounts of generated code.
+Mathematical literature supplies a vocabulary of manifolds, trajectories, probability distributions, and equivalence classes.
+This section summarizes the results needed before the model is stated.
 
-### The closest prior art: Bradley, Terilla, and Vlassopoulos
+### Categorical and probabilistic models of language
 
-Bradley, Terilla, and Vlassopoulos construct a `[0,1]`-enriched category of texts [@bradley2021]: documents are objects, and a morphism between two documents is valued in the unit interval rather than being a plain arrow — text compatibility is a categorical structure, not merely a metric one.
-Their 2025 follow-up enriches the same category with a trained language model's own next-token probabilities [@bradley2025], directly connecting an LM's output distribution to that categorical structure.
-Concretely, this is a *formal document-space category equipped with an LM-native probabilistic distance* — the single closest published construction to this paper's "document space," and it already carries more mathematical weight, an actual enriched-category structure rather than an analogy, than anything introduced here.
+The DisCoCat framework from [@coecke2010] structures grammar and distributional meaning via categorical connections.
+Pregroup grammar reductions supply the syntactic structure of a sentence, word meanings live in vector spaces, and the sentence meaning is obtained by applying corresponding linear maps.
+The key result is that compositional language semantics can be made functorial: grammatical composition is not merely a metaphor for vector composition, but a formal map from syntax to distributional semantics.
 
-**Where this paper's reading stops overlapping.**
-Bradley et al.'s enriched category is a static, structural object: it establishes that texts and probabilities form a well-defined categorical space.
-It does not ask, and does not answer, how a specific agentic workflow's sequence of operations — a retry, a retrieved document, a subagent's branch — moves through that space over the course of a task, or which of those operations are reliable levers under which conditions.
-This paper's claim sits entirely at that second, workflow-diagnostic level: it borrows the informal *picture* of a document space, not their categorical apparatus, and asks what happens to a trajectory through it under specific, named agentic operators.
-If Bradley et al.'s enriched category is the space, this paper offers a lens for reading motion inside it — nothing about the space itself is new here.
+Bradley, Terilla, and Vlassopoulos give the closest categorical account of a space of texts [@bradley2021].
+They construct a category enriched over `[0,1]`, with linguistic expressions as objects and unit-interval values encoding how one expression extends or relates to another.
+Using enriched-category machinery, including teh Yoneda embedding, moves moves from syntactic relations among expressions toward semantic representations.
+The key result is a formal text category whose arrows are graded rather than Boolean: compatibility among texts is represented as structure in the category.
 
-### The rest of the field this paper does not reinvent
+Their later work connects that category directly to language-model probabilities [@bradley2025].
+Instead of using a generic graded relation, the enrichment is supplied by the next-token probabilities of a trained language model, and the paper studies the magnitude of the resulting category of texts.
+The key result is that a language model's own predictive distribution can be used to enrich a category of text prefixes and continuations.
+This is a probabilistic, model-native document space.
 
-DisCoCat already treats language compositionally as a functorial, categorical structure connecting grammar to meaning [@coecke2010]; "language as a functor" is decades-settled vocabulary, not new here.
-Information geometry is the rigorous, decades-old theory of a statistical manifold — a Riemannian (Fisher) metric on a family of probability distributions [@amari1998]; any "phase space of a model" language risks silently reinventing this, and this paper adds nothing to it and claims no metric on anything it discusses.
-The Union of Manifolds Hypothesis shows that real high-dimensional data — verified for images, and the caution this paper carries forward for documents — sits on a *disconnected* set of varying-dimension pieces, not one smooth surface [@brown2023]; this paper's document-space picture is a union, never a single manifold, precisely because of this result.
-Transformer formal-language theory gives the rigorous capability frame for what a fixed-depth or chain-of-thought- augmented transformer can compute [@strobl2024; @li2024; @merrill2023]; Section 5.3's serial-depth claim is drawn from here, not from a geometric restatement.
-Program synthesis already defines "search over program space toward a specification" as the field's own founding frame [@gulwani2017]; Section 3 imports this directly rather than treating it as new.
+### Manifolds, representation geometry, and text generation
 
-### What this paper adds
+Amari's information geometry gives the rigorous version of a statistical manifold in machine learning [@amari1998].
+A parametric statistical model is treated as a manifold equipped with the Fisher information metric, and the natural gradient follows that geometry rather than the Euclidean geometry of raw parameters.
+The key result is not a claim about text, but a warning about vocabulary: "manifold" and "metric" have precise meanings in statistical learning, and a document-space model should not imply a Fisher metric or a Riemannian structure unless it supplies one.
 
-**Table 2.**
-**Already formalized vs. what this paper adds.**
+Brown and coauthors test the union-of-manifolds hypothesis for image data [@brown2023].
+Their result supports a more fragmented picture than the simple manifold hypothesis: real high-dimensional data are better modeled as a disconnected union of pieces with varying intrinsic dimension than as one smooth global manifold.
+The key consequence here is cautionary.
+If documents have manifold-like structure at all, the safer model is a union of local regions, not one continuous surface of all possible text.
 
-| Territory | Already formalized by | What this paper adds |
-| --- | --- | --- |
-| A categorical, probabilistic space of texts | Bradley, Terilla, and Vlassopoulos [@bradley2021; @bradley2025] | Nothing to the space itself; reads agentic operators as moves within it |
-| Language as a compositional functor | DisCoCat [@coecke2010] | Nothing; acknowledged, not used |
-| A statistical manifold with a rigorous metric | Information geometry [@amari1998] | Nothing; this paper's geometry is never metric |
-| Real data as a union of varying-dimension manifolds | Union of Manifolds Hypothesis [@brown2023] | Adopted as a caveat, not introduced as a novel claim |
-| Transformer expressivity and serial-computation limits | Formal-language and CoT-expressivity results [@strobl2024; @li2024; @merrill2023] | Read as a steering operator's mechanism (Section 5.3), not new theory |
-| Search over program space toward a specification | Program synthesis [@gulwani2017] | Section 3's document-space model borrows this frame directly |
-| A workflow-level diagnostic reading of agentic operators as moves toward or away from a target region | No existing paper unifies these strands this way | **This paper's contribution** (Sections 4-6) |
+Valeriani and coauthors study hidden representations in large transformer models [@valeriani2023].
+They estimate intrinsic dimension across layers and find structured, low-effective-dimensional behavior in transformer hidden states, with semantic information concentrated in particular low-dimensional regimes.
+Tulchinskii and coauthors apply intrinsic-dimension estimation to contextual language representations for human and AI-generated text [@tulchinskii2023].
+They treat a text as a point cloud of contextual token representations and find that intrinsic dimension is informative enough to help distinguish human text from generated text.
+Together, these papers support a limited claim: contextual representations of text can exhibit low-dimensional structure inside a much larger ambient vector space.
 
-This paper's only new claim is the bottom row of Table 2.
+Robinson, Dey, and Chiang give the counterweight to that claim [@robinson2025].
+They test raw token embeddings against the manifold hypothesis and find that the static token-embedding matrix is not well modeled as a manifold or even as a fiber bundle.
+The key boundary is therefore sharp: any document-space model grounded in manifold-like structure must refer to contextual hidden states or document-level representations, not to raw token embeddings.
+
+Zekri and coauthors model large language models as Markov chains [@zekri2024].
+Autoregressive decoding moves from one text state to the next by sampling a token from the model's conditional distribution.
+The key result is that generation can be formalized as a stochastic process over text states, with a stationary-distribution analysis available at that level.
+That result supports the use of "trajectory" for the sequence of generated prefixes, but it does not establish basins of attraction or a smooth dynamical system over documents.
+
+### Transformer computation and program space
+
+Strobl, Merrill, Weiss, Chiang, and Angluin survey the formal-language expressive power of transformers [@strobl2024].
+Their survey places transformer architectures in precise computational classes and distinguishes what fixed-depth attention can and cannot express.
+Li, Liu, Zhou, and Ma show that chain-of-thought tokens let transformers solve inherently serial problems that bounded-depth computation cannot solve directly [@li2024].
+Merrill and Sabharwal characterize how intermediate chain-of-thought steps increase transformer expressivity as the number of generated steps grows [@merrill2023].
+The shared key result is computational rather than geometric: extra generated tokens can add serial computation, but these papers do not describe that computation as movement on a manifold.
+
+Gulwani, Polozov, and Singh define program synthesis as the task of finding a program in an underlying language that satisfies a user's intent or specification [@gulwani2017].
+For generated code, the key result is that "search over program space" is the standard frame of a mature field, not a new metaphor.
+Program synthesis treats the space as a discrete search space of programs, usually organized by grammar, constraints, examples, and specifications.
+
+Milner's full-abstraction result gives the semantic basis for many programs implementing one behavior [@milner1977].
+In a fully abstract model, denotational equality coincides with observational equivalence: two program phrases have the same denotation when no program context can distinguish them.
+Program texts map many-to-one onto semantic behavior.
+A function is represented by an equivalence class of programs, not by a single canonical source string.
+
+Schulte, Fry, Fast, Weimer, and Forrest study software mutational robustness [@schulte2014].
+They find that many random program mutations are neutral with respect to the tested behavior, producing a neutral landscape of nearby program variants.
+The key result is empirical support for local clustering in program space: syntactically nearby programs often preserve behavior, while non-neutral mutations move to different behavior.
+This supports treating buggy code as a nearby program that implements a different function or specification, while still stopping short of proving a continuous metric on program syntax.
+
+<!-- ### Boundary carried into the model
+
+The literature above already supplies formal text categories, statistical manifolds, contextual representation geometry, Markov-chain generation, program-space search, and semantic equivalence classes of programs.
+The model in the next section uses those results as constraints.
+It treats documents as discrete token sequences with contextual representations; it treats generation as a stochastic trajectory through prefixes; it treats code documents as program texts mapped many-to-one onto functions; and it treats "near," "region," and "manifold" as local modeling terms unless a concrete metric is named. -->
 
 ## 3. The Document-Space Model
 
-This section introduces only the geometry Sections 4-6 actually need: functions, programs, documents, and generation as a trajectory.
-The hard caveats are stated here, up front, so nothing later can be read as claiming more than this.
+Let a document be a finite token sequence over a model's tokenizer.
+A prompt, an answer, a program, an error message, a retrieved passage, and a transcript are all documents in this sense.
+For a fixed language model, each document prefix has two associated objects: the next-token distribution `P(token | prefix)` and the contextual hidden states produced while processing that prefix.
+The document-space model concerns those prefixes, distributions, and contextual states.
+It does not identify document space with the static token-embedding matrix.
 
-### Functions, programs, and documents
+### Documents, prefixes, and trajectories
 
-Treat the set of computable functions as the object of ultimate interest, and a program as one syntactic realization of a function.
-Denotational semantics assigns each program text a denotation — the function it computes — and Milner's full-abstraction result is precisely the statement that two programs denote the same function exactly when no context can distinguish their behavior [@milner1977]: many programs implement one function, and the map from programs to functions is many-to-one by construction, not by analogy.
-This gives the paper's second load-bearing reframing: a bug is not merely wrong code, it is the correct implementation of a neighboring, unintended function.
-That is not a metaphor either — it is exactly what a non-equivalent mutant is in mutation testing, and a neutral-landscape result shows empirically that a large fraction of random program mutations are functionally neutral, meaning neighboring programs genuinely cluster by the function they compute [@schulte2014].
+Generation is a sequence of prefixes.
+Starting from an initial document `d_0`, the model samples or selects a token `x_t` from `P(x | d_t)` and forms `d_{t+1} = d_t x_t`.
+The finite sequence
 
-**Caveat to carry.**
-The step from "programs cluster by function under mutation" to "there is a continuous metric on program space whose geometry tracks function identity" is this paper's own analogy, not an established result: mutation testing measures neighborhoods under discrete edits, not a continuous space, and denotational semantics gives a topology on *denotations*, not on program *syntax*.
+```text
+d_0, d_1, d_2, ..., d_T
+```
 
-### Documents and generation as trajectory
+is the generation trajectory.
+This is a discrete trajectory through token-prefix states, not a continuous path through a proven smooth manifold.
+The Markov-chain account of autoregressive language models supplies the formal stochastic-process basis for this view [@zekri2024].
 
-A large language model is trained to place high probability on token continuations that keep a document within the shape of naturally occurring text — the same low-effective-dimension structure long observed in learned representations generally, and specifically confirmed for contextual language-model hidden states, whose intrinsic dimensionality sits far below the raw embedding width [@valeriani2023; @tulchinskii2023].
-Generation, in this picture, is a trajectory: starting from a prompt, each new token is a step that a well-trained model keeps inside the neighborhood of documents that look like the training distribution.
+A neighborhood in document space can be induced in several ways, and the choice matters.
+Two documents may be close because one is a high-probability continuation of the other under the model; because their contextual hidden-state summaries are near under a chosen embedding distance; because their program texts are close under edits or mutations; or because their denotations are observationally equivalent.
+There is no single global distance that all of these notions share.
 
-**Caveats to carry, verbatim, through the rest of the paper.**
+### Programs as documents with denotations
 
-1. *Contextual hidden states, not raw token embeddings.*
-   The low-dimensional structure above is a property of contextual hidden states produced while processing a document, not of the static token-embedding matrix.
-   Raw token embeddings have been shown to violate the manifold hypothesis outright under a direct statistical test [@robinson2025]; the document-space picture in this paper is only ever a claim about contextual states.
-2. *A union of manifolds, not one smooth surface.*
-   Real high-dimensional data — established for images, and the caution this paper extends to documents — sits on a disconnected collection of pieces of varying dimension, not a single smooth manifold [@brown2023].
-   Wherever this paper says "document space," read it as shorthand for a union of task-local, varying-dimension pieces, never a single global surface.
-3. *"Basin of attraction" is this paper's analogy, not a theorem.*
-   Later sections describe a workflow "moving toward a correct region" or "falling into an incorrect basin."
-   No published result establishes a basin-of-attraction structure for a single autoregressive forward pass; the closest formal anchor is that autoregressive decoding is a Markov chain with a stationary distribution [@zekri2024], which says nothing about the shape of that distribution's support.
-   The basin language is scaffolding for intuition, not a claim this paper can cite.
+Code is a special case of document generation.
+A program document is both a token sequence and, when it is well formed, a syntactic realization of a denotation.
+Write
 
-These three caveats are the load-bearing boundary of everything from Section
-4 onward: every operator in Table 1 acts on a trajectory through
-contextual-state space, understood as a union of task-local regions, moving
-toward or away from a region this paper never claims is a literal geometric
-basin.
+```text
+[[p]] = f
+```
+
+for the function or behavior denoted by program text `p`.
+Many program texts can denote the same function, as full abstraction and observational equivalence make precise [@milner1977].
+Program synthesis searches this space for a program satisfying a specification [@gulwani2017].
+Mutation-testing and mutational-robustness results show that small syntactic changes often leave behavior unchanged, while other small changes produce a different behavior [@schulte2014].
+
+This gives a direct model of a code-generation target.
+For a specification `S`, the acceptable region is
+
+```text
+R_S = { p | p satisfies S }
+```
+
+or, when the specification denotes a target behavior `f_S`,
+
+```text
+R_S = { p | [[p]] is observationally equivalent to f_S }
+```
+
+In practice, tests, compilers, type checkers, linters, benchmarks, and human review approximate membership in `R_S`.
+A bug is a program document outside that acceptable region.
+More specifically, it is often a nearby program document that denotes a similar but subtly different behavior from the one intended.
+
+### Contextual document regions
+
+For non-code text, a target region is not usually a denotational equivalence class.
+It is a set of documents satisfying task constraints: a faithful summary, a valid proof sketch, a correctly cited literature review, a user-acceptable email, or a transcript state that accurately reports what happened.
+The region is defined by the task and its referents, not by fluency alone.
+
+Contextual hidden states supply the representation-space side of this model.
+The evidence from transformer representation geometry and intrinsic-dimension estimation supports local low-dimensional structure in contextual states [@valeriani2023; @tulchinskii2023].
+That evidence does not imply that all documents lie on one smooth surface.
+It also does not apply to raw token embeddings, which have been shown not to satisfy the manifold hypothesis [@robinson2025].
+
+Accordingly, "document space" means a collection of task-local regions over document prefixes and their contextual representations.
+Those regions may be disconnected, may have different intrinsic dimensions, and may overlap only under a particular representation or task.
+The union-of-manifolds result for image data is the guiding caution here: natural data should not be assumed to form one global manifold [@brown2023].
+
+<!-- ### What the model claims
+
+The model makes four limited claims.
+
+1. A generated artifact can be represented as a trajectory of document prefixes.
+2. A task defines an acceptable region of documents, sometimes by denotation
+   and sometimes by external constraints.
+3. Contextual representations of those documents can have local
+   low-dimensional structure, but raw token embeddings are not the relevant
+   object.
+4. Any geometric word such as "near," "region," "manifold," or "basin" must be
+   read relative to the concrete representation and distance being used.
+
+The model does not claim a global metric on documents, a Riemannian manifold of texts, or a proven basin-of-attraction structure for autoregressive decoding.
+It is a local model of generated documents, their contextual representations, and the task-defined regions those documents are meant to reach. -->

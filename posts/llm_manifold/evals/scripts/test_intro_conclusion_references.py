@@ -15,10 +15,10 @@ from paper_test_helpers import CHECK_CITATIONS, CHECK_PANDOC, CHECK_SECTIONS, PA
 INTRODUCTION_HEDGES = ["as if", "region"]
 DENIED_CLAIMS = ["theorem", "categorical formalism", "metric"]
 CHECKLIST_FIELDS = [
-    "start point",
+    "impulse",
     "target region",
-    "signal added",
-    "failure mode",
+    "signal",
+    "referent validation",
     "evidence",
 ]
 
