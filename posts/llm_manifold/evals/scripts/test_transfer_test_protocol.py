@@ -19,16 +19,16 @@ class TransferTestProtocolStep7Test(unittest.TestCase):
     def test_design_md_names_a_specific_held_out_workflow(self):
         text = DESIGN_MD.read_text(encoding="utf-8")
         self.assertIn("Reflexion", text)
-        # It must be distinguished from Section 5's six examples, not just named.
+        # It must be distinguished from Section 5's seven analyses, not just named.
         self.assertIn("absent from the paper's Section 5", text)
 
     def test_design_md_has_the_five_field_rubric(self):
         text = DESIGN_MD.read_text(encoding="utf-8").lower()
         for field in [
-            "start point",
+            "impulse",
             "target region",
-            "signal added",
-            "predicted failure mode",
+            "signal",
+            "referent validation",
             "evidence",
         ]:
             self.assertIn(field, text)
