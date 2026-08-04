@@ -304,18 +304,26 @@ and citation resolution.
 
 ### Defensive Publication
 
-Souther, D. "Visualization by Organizing Connections in Collapsible Hierarchical
-Graphs." *Technical Disclosure Commons*, Defensive Publications Series, no. 2996,
-June 2019.
+Souther, D., et al. "Graph Visualization by Organizing Connections in Collapsible
+Hierarchical Graphs." *Technical Disclosure Commons*, Defensive Publications Series,
+Art. 2996, 2020. First author.
 [tdcommons.org/dpubs_series/2996](https://www.tdcommons.org/dpubs_series/2996/) ·
 [Full text (PDF)](https://www.tdcommons.org/cgi/viewcontent.cgi?article=4063&context=dpubs_series)
 
 Network graphs in domains such as cloud networking carry connections across multiple
-dimensions, making visualization at varying levels of hierarchy difficult. The
-disclosure defines a *hull* as a node together with its descendants and a *segment* as
-a bundle of edges between descendants of a pair of nodes; expanding and collapsing
-hulls while routing edges through segments permits high-level visualization of large
-graph networks that can be rapidly refocused to detail.
+dimensions — communication and configuration — producing a compound graph in which
+every node may contain a complete graph beneath it. Prior layout algorithms treat the
+hierarchy as a hinting constraint and lay out only the leaves, yielding a single static
+image of considerable complexity in which expanding a node can drastically rearrange
+the result. The disclosure defines a *hull* as a node together with its descendants and
+a *segment* as a bundle of edges between the descendants of a pair of nodes. Layout
+proceeds over the top level rather than the leaves; expansion changes only a node's
+size, never its position; and edges route up the ancestor chain, across once at the top
+level, and back down to their targets. Expansion state is tracked in the graph
+structure itself, so all visibility decisions resolve at render time. The result is a
+stable high-level visualization of a large graph network that can be refocused to
+detail without perturbing the layout. This is the formal write-up of the rendering
+approach behind the Cloud Topology work described above.
 
 ### Essays on Computing Education
 
