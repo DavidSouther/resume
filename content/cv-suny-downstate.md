@@ -306,7 +306,7 @@ and citation resolution.
 
 Souther, D., et al. "Graph Visualization by Organizing Connections in Collapsible
 Hierarchical Graphs." *Technical Disclosure Commons*, Defensive Publications Series,
-Art. 2996, 2020. First author.
+Art. 2996, 8 March 2020. First author.
 [tdcommons.org/dpubs_series/2996](https://www.tdcommons.org/dpubs_series/2996/) ·
 [Full text (PDF)](https://www.tdcommons.org/cgi/viewcontent.cgi?article=4063&context=dpubs_series)
 
