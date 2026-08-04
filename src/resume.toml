@@ -887,9 +887,12 @@ inconvenient for a user to visualize such graphs at varying levels of
 granularity or hierarchy. Per the techniques of this disclosure, a hull is 
 defined as a node with descendants, and a segment is defined as a bundle of 
 edges between descendants below a pair of nodes. By enabling a user to expand 
-or collapse a hull, and by routing edges via segments connecting parent nodes, 
-the described techniques enable a high-level visualization of large graph 
+or collapse a hull, and by routing edges via segments connecting parent nodes,
+the described techniques enable a high-level visualization of large graph
 networks that can be quickly refocused into low-level pictures.
+
+Technical Disclosure Commons, Defensive Publications Series, no. 2996.
+[Full text (PDF)](https://www.tdcommons.org/cgi/viewcontent.cgi?article=4063&context=dpubs_series)
 """
 URL = "https://www.tdcommons.org/dpubs_series/2996/"
 

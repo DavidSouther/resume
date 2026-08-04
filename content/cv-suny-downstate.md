@@ -306,7 +306,10 @@ and citation resolution.
 
 Souther, D. "Visualization by Organizing Connections in Collapsible Hierarchical
 Graphs." *Technical Disclosure Commons*, Defensive Publications Series, no. 2996,
-June 2019. [tdcommons.org/dpubs_series/2996](https://www.tdcommons.org/dpubs_series/2996/)
+June 2019.
+[tdcommons.org/dpubs_series/2996](https://www.tdcommons.org/dpubs_series/2996/) ·
+[Full text (PDF)](https://www.tdcommons.org/cgi/viewcontent.cgi?article=4063&context=dpubs_series)
+
 Network graphs in domains such as cloud networking carry connections across multiple
 dimensions, making visualization at varying levels of hierarchy difficult. The
 disclosure defines a *hull* as a node together with its descendants and a *segment* as
