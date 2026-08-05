@@ -11,26 +11,25 @@ davidsouther+resume@gmail.com · (650) 495-5402
 ## Research and Teaching Interests
 
 **Computing education for domain experts.** Nineteen years of industrial software
-engineering alongside a decade of teaching, with a consistent focus on bringing
-people who are expert in something other than programming to the point where they
+engineering alongside a decade of teaching, with a consistent focus on teaching
+domain experts with little to no programming exposure to the point where they
 can build, deploy, operate, and troubleshoot real software in their own field. This
-is the subject of my current graduate research: approaches to teaching software
+extends to the subject of my current graduate research, approaches to teaching software
 engineering to mid-career professionals with little to no programming experience.
 
 **Auditable AI-assisted software engineering.** Agentic large-language-model systems
-can absorb substantial portions of the development lifecycle, but only where prompts,
-context, and generated output are durable, reviewable, version-controlled artifacts
-rather than ephemeral chat. My open-source work and recent writing both pursue this
-question directly.
+can absorb substantial portions of the software development lifecycle, but only where
+human guidance in the form of prompts, context, and generated output are durable, reviewable, artifacts guided with an understanding of the tooling in the holisitic context of software engineering. My open-source work and recent writing pursue this
+effort directly.
 
 **Research software, analytics, and visualization.** Building the data, service, and
-interface layers that let a research group ask questions of a large, heterogeneous
-dataset — and rendering the answers so a non-specialist can act on them.
+interface layers that let a research group ask questions of large, heterogeneous
+datasets — and rendering the answers so a non-specialist users can act on them.
 
 **The software development lifecycle as collaborative practice.** Engineers, program
 and project managers, interface designers, subject-matter experts, and end users each
-hold part of a working system. Teaching that collaboration is as much of the work as
-teaching the code.
+take part in a working system. Teaching that collaboration is as much of the work as
+teaching the practice of programming.
 
 ---
 
@@ -38,8 +37,8 @@ teaching the code.
 
 **M.S., Computer Science** — Brooklyn College, City University of New York
 *Spring 2026 – present. Enrolled, in good standing.*
-Research focus: pedagogy of software engineering for mid-career professionals entering
-the field without a programming background.
+Research focus: pedagogy of software engineering for mid-career professionals
+transitioning to software engineering without a programming background.
 
 **B.S., Mathematics** — Rocky Mountain College, Billings, MT · 2011
 Coursework and independent study in calculus and discrete mathematics. Tutored
@@ -60,10 +59,10 @@ domain researchers do their own science.
 ## Academic and Teaching Appointments
 
 **Lead Instructor** — Code Fellows · March 2022 – June 2023
-Lead instructor for *Code 401: Advanced Software Development in Full Stack
-JavaScript*, an intensive career-change program for adult learners. Responsible for
+Lead instructor across the code fellows curriculium, an intensive career-change
+program for adult learners. Responsible for
 classroom instruction, curriculum development, student evaluation, and career
-coaching. Courses consistently earned a **100 net promoter score** on both weekly
+coaching. Courses consistently earned **above an 80 net promoter score** on both weekly
 surveys and end-of-course evaluations. Organized and led an instructor-wide project
 rebuilding the school's technical-whiteboarding process, spanning a rewritten guide,
 a formal grading rubric for whiteboards and technical interviews, and revised problem
@@ -75,14 +74,14 @@ Taught an undergraduate business course on the effects of technology in the 21st
 century, surveying technological topics at their intersection with business ethics.
 Students learned to apply computing to everyday professional needs while examining the
 implications of large-scale data collection, always-on connectivity, and the largely
-invisible ways engineering tools shape daily life. **A course taught to non-technical
-undergraduates, in a non-technical department.**
+invisible ways engineering tools shape daily life.
+**A technical course taught to non-technical undergraduates, in a non-technical department.**
 
 **Instructor** — Mount Holyoke College and Smith College, in partnership with Google ·
 November 2015 – January 2017
 Developed and taught January-term intensive courses in mobile software development and
 team software engineering. Materials covered test-driven development in Python and
-Android development on physical devices, and centered a substantial team project
+Android development on physical devices, centering a substantial team project
 component. Delivered with colleagues from Google as an industry-academic partnership.
 
 **Instructor (industry training)** — ProTech, via Third Cat LLC · 2014 – 2015
@@ -93,14 +92,18 @@ AngularJS stack.
 **Internal instruction** — Google · 2015 – 2017
 Taught internal courses on TypeScript and Angular to engineering teams, and delivered a
 two-week intensive on test-driven development and industry practices at Mount Holyoke
-College.
+College. Tought interview training courses for Google interviewers, and technical
+interviewing courses for prospective candidates and collegiate students.
 
 ---
 
 ## Curriculum Development
 
 **Code 401 curriculum** — Code Fellows, 2022–2023. Course material for a full-stack
-JavaScript program serving adult career-changers.
+TypeScript program serving adult career-changers. Materials focused on the range of
+full stack engineering including storage systems, api design, data structures &
+algorithms, HTML & React interfaces, user experience design, and collaborative
+software engineering tools.
 
 **Technical whiteboarding curriculum and rubric** — Code Fellows, 2022–2023. Rewrote
 the institutional whiteboarding guide, formalized an assessment rubric for whiteboard
@@ -108,15 +111,16 @@ and technical-interview evaluation, and revised problem sets and instructor trai
 materials for approximately twelve instructors across four languages. Published
 openly; see *Publications*.
 
-***Software Craftsmanship for the Lay Person*** — 2013–2021. A project-based
+***Software Craftsmanship for the Lay Person*** — 2013–present. A project-based
 introductory book for a first exposure to programming. The main text is
 language-agnostic; three companion workbooks give project-specific instruction in
 Python, TypeScript, and Rust.
 [github.com/DavidSouther/software_craftsmanship](https://github.com/DavidSouther/software_craftsmanship)
 
-**nand2tetris Web IDE** — 2021–present. Contributor to the browser-based IDE for the
-*nand2tetris* computer architecture and language course, removing local toolchain
-installation as a barrier to entry for students.
+**nand2tetris Web IDE** — 2021–present. Primary contributor to the browser-based IDE
+for the *nand2tetris* computer architecture and language course, removing local toolchain
+installation as a barrier to entry for students & generally modernizing the user
+interface.
 [github.com/nand2tetris/web-ide](https://github.com/nand2tetris/web-ide)
 
 **Code Explainer** — AWS TCX AI Lab, 2024. Prompt-engineered tooling generating
@@ -135,8 +139,8 @@ assistant layer: in-application help search, deep stateful project search, and
 application-state awareness. In connected modes, LLM-backed search supports free-form
 natural-language querying, and engineers can make natural-language edits to their own
 applications — **removing substantial engineering workload and improving reliability
-for domain experts performing software tasks they were never trained for.** Rust,
-Bevy, agentic AI.
+for domain experts performing software tasks they were never trained for.** Ground up
+design, implementation, and deployment of a complete information retrieval system, including hybrid lexical and semantic search ranking. Rust, Bevy, agentic AI.
 
 **Staff Software Engineer** — Apollo GraphQL · December 2025 – April 2026
 Apollo's MCP Gateway is a core network component for enterprise Model Context Protocol
@@ -297,10 +301,8 @@ mathematics; convened and sustained a peer study group among mathematics majors.
 
 Souther, D. "LLMs as a Model of Syntactic Space: The Document Manifold and a Lens for
 Agentic Workflows." *In preparation.* A synthesis and position paper framing large
-language models as machine-learned models over the syntactic space of language, and
-reading that model as a design recipe for agentic AI workflows. Written against a
-BibTeX bibliography with an automated evaluation harness verifying section coverage
-and citation resolution.
+language models as machine-learned trajectories over the syntactic space of language,
+and exploiting that frame as a design recipe for agentic AI workflows.
 
 ### Defensive Publication
 
@@ -328,9 +330,10 @@ approach behind the Cloud Topology work described above.
 ### Essays on Computing Education
 
 Souther, D. "Technical Whiteboarding." Series, 2024. A systematic approach to
-designing algorithmic solutions to problems encountered in software work. Best known
-from technical interviewing, but the method applies wherever there is a problem to
-solve with code.
+designing algorithmic solutions to problems encountered in software development. Best
+known from technical interviewing, but the method applies wherever there is a problem
+to solve with code.
+
 - Part 1: [Technical Whiteboarding](https://davidsouther.com/blog/interview_01_whiteboard)
 - Part 2: [Drawing Data Structures](https://davidsouther.com/blog/interview_02_drawing)
 - Part 3: [Tracing Algorithms](https://davidsouther.com/blog/interview_03_tracing)
@@ -360,10 +363,10 @@ systematic problem solving.
 
 Souther, D. "[Jeopardy! Search](https://davidsouther.com/blog/jeopardy_search)." 2026.
 A semantic search technique that inverts document expansion: rather than generating
-documents similar to source documents, it generates the *queries* a document would
-answer, moving semantic expansion into query space. Fixes inference cost to a known
-number of smaller generations and converts hallucination from a liability into an
-asset.
+a hypothetical document similar to source documents, it generates several hypothetical
+*queries* a document would answer, moving semantic expansion into query space. Multiple
+queries are run in parallel to cover a wider range of the document space, and
+converts hallucinations from a liability into an asset.
 
 Souther, D. "[Ailly OODA](https://davidsouther.com/blog/ailly_ooda)." 2026. Applies
 the Observe–Orient–Decide–Act framework to collaborative coding agents that work
