@@ -4,7 +4,7 @@ Brooklyn, New York
 davidsouther+resume@gmail.com · (650) 495-5402
 [davidsouther.com](https://davidsouther.com) · [github.com/davidsouther](https://github.com/davidsouther)
 
-*Draft CV — prepared for the Department of Pediatrics, SUNY Downstate Health Sciences University.*
+<p class="no-print"><em>Draft CV — prepared for the Department of Pediatrics, SUNY Downstate Health Sciences University.</em></p>
 
 ---
 
