@@ -375,14 +375,12 @@ section:has(img.float) + section {
  * ---------------------------------------------------------------------------
  * Print geometry, document-wide.
  *
- * `@page` cannot be element-scoped, so these margins also apply to the resume,
- * home, and blog printouts. Accepted: 0.6in vertical / 1in horizontal on US
- * Letter is a conventional document default and an improvement over the
- * browser's ~0.4in. The 1in side margins hold the measure near 6.5in, which is
- * what keeps a 10pt line readable; the tightened vertical margins buy density.
+ * `@page` cannot be element-scoped, so these margins reach every printout on
+ * the site, not just the CV. Anything page-scoped has to be expressed some
+ * other way.
  *
- * Unlayered, matching this file's convention that print rules sit outside the
- * @layer stack.
+ * The 1in side margins hold the measure near 6.5in, which is what keeps a 10pt
+ * line readable; the vertical margins are tightened from there to buy density.
  * ---------------------------------------------------------------------------
  */
 @page {
@@ -394,14 +392,14 @@ section:has(img.float) + section {
  * ---------------------------------------------------------------------------
  * Print stylesheet for /cv.
  *
- * pages/cv/page.ts renders its root as `.cv no-print-href`: `.cv` scopes every
- * rule below to the CV, and `no-print-href` (declared in the global print block
- * above) suppresses the blanket `a::after { content: " (" attr(href) ")" }`
- * that would otherwise trail a raw URL after each of the CV's 35 links.
+ * Contract with pages/cv/page.ts: it must render its root as
+ * `class="cv no-print-href"`. `.cv` scopes every rule below to the CV, and
+ * `no-print-href` (declared in the global print block above) suppresses the
+ * blanket `a::after { content: " (" attr(href) ")" }` that would otherwise
+ * trail a raw URL after every link. Neither file can enforce this; drop either
+ * class and this sheet silently stops applying.
  *
- * The result is a compact, black-on-white US Letter document: name over one
- * contact line, uppercase rule-under section heads, 10pt prose, no horizontal
- * rules, no URL tails, and no heading stranded at the foot of a page.
+ * Intent: /cv prints as an academic CV, not as a web page on paper.
  * ---------------------------------------------------------------------------
  */
 @media print {
@@ -424,12 +422,14 @@ section:has(img.float) + section {
   }
 
   /*
-   * jiffdown wraps the CV in 19 <section>s nested up to three deep, and the
-   * bundle treats every unroled section as a card: a 2pt border, side padding,
-   * vertical margins, and a surface fill. On paper those borders print as
-   * rules running down both page edges, and each nesting level takes ~52px out
-   * of the measure. Strip the card entirely; §4's heading rhythm carries the
-   * sectioning instead. Unlayered, so this beats the bundle's layered rules.
+   * The bundle cards every unroled <section> — border, side padding, vertical
+   * margins, surface fill — and jiffdown nests the CV's sections by heading
+   * level. On paper the borders print as rules running down both page edges,
+   * and every nesting level takes another bite out of the measure. Strip the
+   * card entirely; the h2 rule-under carries the sectioning instead.
+   *
+   * Must stay unlayered to outrank the bundle's layered card rules. Moving
+   * this into a @layer would need !important to do the same job.
    */
   .cv section {
     border: none;
@@ -442,9 +442,9 @@ section:has(img.float) + section {
   }
 
   /*
-   * A section heading is never the last thing on a page. `break-*` carries the
-   * modern property, `page-break-*` the legacy alias still honored by print
-   * engines that predate the fragmentation spec.
+   * A heading is never the last thing on a page. The `page-break-*` lines are
+   * not duplicates: they are the legacy aliases still honored by print engines
+   * that predate the fragmentation spec.
    */
   .cv h1,
   .cv h2,
@@ -464,9 +464,9 @@ section:has(img.float) + section {
   }
 
   /*
-   * The contact block is exactly `h1 + p`; the draft disclaimer is the `.cv
-   * .no-print` paragraph after it, so it never reaches paper and cannot be
-   * mistaken for the contact line.
+   * Positional selector: this styles the contact line only while it remains
+   * the first paragraph after the name. Reordering the CV's header, or
+   * inserting a paragraph above the contact line, silently retargets it.
    */
   .cv h1 + p {
     font-size: 9.5pt;
@@ -491,17 +491,17 @@ section:has(img.float) + section {
   }
 
   /*
-   * Interest and appointment paragraphs run six or seven lines, so forbidding a
-   * break inside them would open large gaps at page ends. Orphan/widow control
-   * gives the same protection without the gaps.
-   */
-  /*
    * Every block-level text element states its own size and leading rather than
    * inheriting from `.cv`. The bundle sets `address,blockquote,dl,figure,ol,p,
-   * pre,table,ul` from its own --base-font-size (an absolute 18px at desktop)
-   * and --base-line-height (1.6x), and a direct declaration always beats an
-   * inherited value however specific the ancestor's selector is. Left to
-   * inherit, the whole CV body printed at 13.5pt/1.6.
+   * pre,table,ul` from its own --base-font-size and --base-line-height, and a
+   * direct declaration always beats an inherited value however specific the
+   * ancestor's selector is. Left to inherit, the whole CV body printed at
+   * 13.5pt/1.6 instead of 10pt/1.35 — so these repeated sizes are load-bearing,
+   * not redundant with `.cv` above.
+   *
+   * Paragraphs stay breakable on purpose: they run long enough that
+   * `break-inside: avoid` would open large gaps at page ends. Orphan and widow
+   * control gives the same protection without them.
    */
   .cv p {
     font-size: 10pt;
@@ -519,7 +519,7 @@ section:has(img.float) + section {
     padding-left: 14pt;
   }
 
-  /* The essay bullets are one line each; keep them intact. */
+  /* List items here are short enough that a break inside one is never wanted. */
   .cv li {
     font-size: 10pt;
     line-height: 1.35;
@@ -529,9 +529,9 @@ section:has(img.float) + section {
   }
 
   /*
-   * On screen the twelve <hr>s separate sections. On paper the h2 rule-under
-   * and its leading space already do that job; keeping both doubles the ink and
-   * spends roughly a page of vertical space across the document.
+   * On screen the <hr>s separate sections. On paper the h2 rule-under and its
+   * leading space already do that job; keeping both doubles the ink and spends
+   * vertical space the document does not have.
    */
   .cv hr {
     display: none;
@@ -547,6 +547,11 @@ section:has(img.float) + section {
     text-decoration: none;
   }
 
+  /*
+   * Not redundant with `.cv { color: black }`: the bundle colors emphasis
+   * independently of inherited text color, and a direct declaration wins over
+   * inheritance. Deleting this lets tinted bold and italic back onto the page.
+   */
   .cv strong,
   .cv em {
     color: black;
