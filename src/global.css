@@ -405,10 +405,40 @@ section:has(img.float) + section {
  * ---------------------------------------------------------------------------
  */
 @media print {
+  /*
+   * The page canvas. `body` is an ancestor of the `.cv` root, so no `.cv `
+   * selector reaches it; `body:has(> .cv)` names the CV without leaking onto
+   * the resume, home, or blog printouts. The global print block above sets
+   * --color-surface, which does not touch --color-background — the site's
+   * tinted oklch page fill — so clear it here.
+   */
+  body:has(> .cv) {
+    background-color: white;
+    background-image: none;
+  }
+
   .cv {
     font-size: 10pt;
     line-height: 1.35;
     color: black;
+  }
+
+  /*
+   * jiffdown wraps the CV in 19 <section>s nested up to three deep, and the
+   * bundle treats every unroled section as a card: a 2pt border, side padding,
+   * vertical margins, and a surface fill. On paper those borders print as
+   * rules running down both page edges, and each nesting level takes ~52px out
+   * of the measure. Strip the card entirely; §4's heading rhythm carries the
+   * sectioning instead. Unlayered, so this beats the bundle's layered rules.
+   */
+  .cv section {
+    border: none;
+    padding: 0;
+    margin: 0;
+    background-color: transparent;
+    background-image: none;
+    box-shadow: none;
+    border-radius: 0;
   }
 
   /*
@@ -465,19 +495,34 @@ section:has(img.float) + section {
    * break inside them would open large gaps at page ends. Orphan/widow control
    * gives the same protection without the gaps.
    */
+  /*
+   * Every block-level text element states its own size and leading rather than
+   * inheriting from `.cv`. The bundle sets `address,blockquote,dl,figure,ol,p,
+   * pre,table,ul` from its own --base-font-size (an absolute 18px at desktop)
+   * and --base-line-height (1.6x), and a direct declaration always beats an
+   * inherited value however specific the ancestor's selector is. Left to
+   * inherit, the whole CV body printed at 13.5pt/1.6.
+   */
   .cv p {
+    font-size: 10pt;
+    line-height: 1.35;
     margin: 0 0 5pt;
     orphans: 3;
     widows: 3;
   }
 
-  .cv ul {
+  .cv ul,
+  .cv ol {
+    font-size: 10pt;
+    line-height: 1.35;
     margin: 0 0 5pt;
     padding-left: 14pt;
   }
 
   /* The essay bullets are one line each; keep them intact. */
   .cv li {
+    font-size: 10pt;
+    line-height: 1.35;
     margin: 0;
     break-inside: avoid;
     page-break-inside: avoid;

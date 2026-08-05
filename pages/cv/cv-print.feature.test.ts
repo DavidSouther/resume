@@ -80,6 +80,26 @@ function cvPrintValue(target: string, property: string): string {
 	return "";
 }
 
+/**
+ * Look up a declaration the CV print sheet makes about an *ancestor* of the CV
+ * root. No `.cv `-prefixed selector can reach `body`, so a rule that fixes the
+ * printed page canvas must select the ancestor while still naming `.cv`, e.g.
+ * `body:has(> .cv)`. Requiring `.cv` in the selector keeps the rule from
+ * leaking onto the resume, home, and blog printouts.
+ */
+function cvAncestorPrintValue(element: string, property: string): string {
+	for (const rule of printRules) {
+		for (const selector of rule.selectorText.split(",")) {
+			const trimmed = selector.trim();
+			if (!trimmed.startsWith(`${element}:`)) continue;
+			if (!trimmed.includes(".cv")) continue;
+			const value = rule.style.getPropertyValue(property);
+			if (value) return value;
+		}
+	}
+	return "";
+}
+
 describe("the CV page prints as a compact academic CV", () => {
 	it("scopes its print styling with a .cv root that opts out of href expansion", async () => {
 		const root = await renderCv();
@@ -140,5 +160,57 @@ describe("the CV page prints as a compact academic CV", () => {
 	it("prints links as plain black text rather than colored underlined runs", () => {
 		expect(cvPrintValue("a", "text-decoration")).toBe("none");
 		expect(cvPrintValue("a", "color")).not.toBe("");
+	});
+
+	// The three regressions below were invisible to the assertions above: each
+	// one is a bundle rule *winning*, not a `.cv` rule being absent, and jsdom
+	// never evaluates print media to notice. A Chrome PDF export of the served
+	// page ran to 17 pages for a ~3,700-word CV because of them.
+
+	it("pins body text size on the elements themselves, not by inheritance", () => {
+		// jiffies-css sets `address,blockquote,dl,figure,ol,p,pre,table,ul` from
+		// its own `--base-font-size` (an absolute 18px at desktop) and
+		// `--base-line-height` (1.6x that). Those tokens override whatever `.cv`
+		// declares, so the whole CV body printed at 13.5pt/1.6 rather than the
+		// design's 10pt/1.35. Every block-level text element must state its own
+		// size and leading.
+		for (const element of ["p", "li", "ul", "ol"]) {
+			expect(
+				cvPrintValue(element, "font-size"),
+				`.cv ${element} inherits its font-size and the bundle overrides it`,
+			).not.toBe("");
+			expect(
+				cvPrintValue(element, "line-height"),
+				`.cv ${element} inherits its line-height and the bundle overrides it`,
+			).not.toBe("");
+		}
+	});
+
+	it("strips the on-screen card chrome from the CV's nested sections", () => {
+		// jiffdown wraps the CV in 19 nested <section>s, and the bundle's
+		// `:is(article,section):not([role])` card treatment gives each one a 2px
+		// border, 16pt/24pt padding, 24px vertical margins, and a surface fill.
+		// Nested three deep that ate 52px of measure per level, and the borders
+		// printed as vertical rules running down both page edges.
+		expect(
+			cvPrintValue("section", "border"),
+			".cv section keeps its card border, which prints as a rule down the page edge",
+		).not.toBe("");
+		expect(cvPrintValue("section", "padding")).toBe("0px");
+		expect(cvPrintValue("section", "margin")).toBe("0px");
+		expect(
+			cvPrintValue("section", "background-color"),
+			".cv section keeps its card fill",
+		).not.toBe("");
+	});
+
+	it("prints on white paper rather than the site's tinted background", () => {
+		// `body` is an ancestor of the `.cv` root, so no `.cv `-scoped selector
+		// can reach it; the global print block's `--color-surface: white` does
+		// not touch `--color-background`, which is a tinted oklch value.
+		expect(
+			cvAncestorPrintValue("body", "background-color"),
+			"the CV print sheet never clears the tinted body background",
+		).not.toBe("");
 	});
 });
