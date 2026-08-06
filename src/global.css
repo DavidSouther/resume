@@ -68,6 +68,12 @@
     --color-surface: white;
   }
 
+  body {
+    background-color: white;
+    background-image: none;
+  }
+
+
   .no-print {
     display: none !important;
   }
@@ -404,47 +410,57 @@ section:has(img.float) + section {
  */
 @media print {
   /*
-   * The page canvas. `body` is an ancestor of the `.cv` root, so no `.cv `
-   * selector reaches it; `body:has(> .cv)` names the CV without leaking onto
-   * the resume, home, or blog printouts. The global print block above sets
-   * --color-surface, which does not touch --color-background — the site's
-   * tinted oklch page fill — so clear it here.
+   * Retune the bundle's tokens instead of overriding its properties.
+   *
+   * Which tokens can be retuned from here depends on where jiffies-css
+   * *consumes* them. Tokens it reads on the element itself — `--font-size-base:
+   * var(--base-font-size)` on every block element, `--_card-background-color:
+   * var(--card-background-color)` on every section — re-resolve against any
+   * ancestor that redefines the input, so setting them on `.cv` reaches every
+   * descendant.
+   *
+   * Tokens it *computes at :root* do not. `--font-size-h1: calc(var(
+   * --base-font-size) * pow(var(--font-scale), 6))` is declared on :root, so it
+   * resolves there against :root's 18px and inherits as a fixed length: the
+   * headings printed at 51pt and 41pt while body text correctly followed
+   * `--base-font-size` down to 10pt. Those tokens have to be set directly.
    */
-  body:has(> .cv) {
-    background-color: white;
-    background-image: none;
-  }
-
   .cv {
-    font-size: 10pt;
-    line-height: 1.35;
-    color: black;
+    /* Body type. Read per-element, so these reach every block. */
+    --base-font-size: 10pt;
+    --base-line-height: 1.35;
+    --spacing-block-vertical: 5pt;
+
+    /* Heading ladder. Set directly — see above. */
+    --font-size-h1: 15pt;
+    --font-size-h2: 10.5pt;
+    --font-size-h3: 10pt;
+
+    /*
+     * Flatten the section cards. jiffdown nests a <section> per heading level,
+     * and the bundle gives each one a surface fill, radius, and gutters; nested
+     * three deep those gutters eat the measure.
+     */
+    --card-background-color: transparent;
+    --border-radius-container: 0;
+    --size-medium: 0;
+    --size-large: 0;
   }
 
   /*
-   * The bundle cards every unroled <section> — border, side padding, vertical
-   * margins, surface fill — and jiffdown nests the CV's sections by heading
-   * level. On paper the borders print as rules running down both page edges,
-   * and every nesting level takes another bite out of the measure. Strip the
-   * card entirely; the h2 rule-under carries the sectioning instead.
-   *
-   * Must stay unlayered to outrank the bundle's layered card rules. Moving
-   * this into a @layer would need !important to do the same job.
+   * The one place a token does not reach. The card's 2px rule is not drawn from
+   * --card-border (already `none` here) nor from --base-border-size, so nothing
+   * inheritable turns it off; measured directly in print emulation. Nested three
+   * deep it prints as rules running down both page edges.
    */
   .cv section {
     border: none;
-    padding: 0;
-    margin: 0;
-    background-color: transparent;
-    background-image: none;
-    box-shadow: none;
-    border-radius: 0;
   }
 
   /*
-   * A heading is never the last thing on a page. The `page-break-*` lines are
-   * not duplicates: they are the legacy aliases still honored by print engines
-   * that predate the fragmentation spec.
+   * Keep every heading with the content it introduces. `page-break-*` are not
+   * duplicates: they are the legacy aliases still honored by print engines that
+   * predate the fragmentation spec.
    */
   .cv h1,
   .cv h2,
@@ -453,107 +469,68 @@ section:has(img.float) + section {
     page-break-after: avoid;
     break-inside: avoid;
     page-break-inside: avoid;
-    color: black;
   }
 
   .cv h1 {
-    font-size: 15pt;
-    line-height: 1.2;
-    text-align: center;
     margin: 0 0 2pt;
+    text-align: center;
   }
 
   /*
-   * Positional selector: this styles the contact line only while it remains
-   * the first paragraph after the name. Reordering the CV's header, or
-   * inserting a paragraph above the contact line, silently retargets it.
+   * Positional selector: this styles the contact line only while it remains the
+   * first paragraph after the name. Reordering the CV's header, or inserting a
+   * paragraph above the contact line, silently retargets it.
    */
   .cv h1 + p {
-    font-size: 9.5pt;
-    text-align: center;
+    --font-size-base: 9.5pt;
     margin: 0 0 6pt;
+    text-align: center;
   }
 
+  /*
+   * The rule-under is what separates sections on paper, so it replaces both the
+   * <hr>s below and the card edges zeroed above.
+   */
   .cv h2 {
-    font-size: 10.5pt;
-    font-weight: 700;
+    margin: 12pt 0 5pt;
+    border-bottom: 0.5pt solid currentcolor;
+    padding-bottom: 1pt;
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    border-bottom: 0.5pt solid black;
-    padding-bottom: 1pt;
-    margin: 12pt 0 5pt;
   }
 
   .cv h3 {
-    font-size: 10pt;
-    font-weight: 700;
     margin: 8pt 0 3pt;
   }
 
   /*
-   * Every block-level text element states its own size and leading rather than
-   * inheriting from `.cv`. The bundle sets `address,blockquote,dl,figure,ol,p,
-   * pre,table,ul` from its own --base-font-size and --base-line-height, and a
-   * direct declaration always beats an inherited value however specific the
-   * ancestor's selector is. Left to inherit, the whole CV body printed at
-   * 13.5pt/1.6 instead of 10pt/1.35 — so these repeated sizes are load-bearing,
-   * not redundant with `.cv` above.
-   *
    * Paragraphs stay breakable on purpose: they run long enough that
    * `break-inside: avoid` would open large gaps at page ends. Orphan and widow
    * control gives the same protection without them.
    */
   .cv p {
-    font-size: 10pt;
-    line-height: 1.35;
-    margin: 0 0 5pt;
     orphans: 3;
     widows: 3;
   }
 
-  .cv ul,
-  .cv ol {
-    font-size: 10pt;
-    line-height: 1.35;
-    margin: 0 0 5pt;
-    padding-left: 14pt;
-  }
-
   /* List items here are short enough that a break inside one is never wanted. */
   .cv li {
-    font-size: 10pt;
-    line-height: 1.35;
-    margin: 0;
     break-inside: avoid;
     page-break-inside: avoid;
   }
 
-  /*
-   * On screen the <hr>s separate sections. On paper the h2 rule-under and its
-   * leading space already do that job; keeping both doubles the ink and spends
-   * vertical space the document does not have.
-   */
+  /* On screen the <hr>s separate sections; on paper the h2 rule-under does. */
   .cv hr {
     display: none;
   }
 
   /*
-   * Anchors print as plain body text. A colored, underlined run inside a
-   * citation reads as a defect once it is not clickable; the href attribute
-   * survives untouched, so a PDF reader still exposes the link.
+   * `--color` is the variable the global print block above declares on anchors;
+   * feeding it black is enough, no `color` override needed. Underlines read as
+   * defects once they are not clickable, and the href survives either way.
    */
   .cv a {
-    color: black;
+    --color: black;
     text-decoration: none;
-  }
-
-  /*
-   * Not redundant with `.cv { color: black }`: the bundle colors emphasis
-   * independently of inherited text color, and a direct declaration wins over
-   * inheritance. Deleting this lets tinted bold and italic back onto the page.
-   */
-  .cv strong,
-  .cv em {
-    color: black;
   }
 }
