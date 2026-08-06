@@ -1,74 +1,98 @@
-## 6. What This Lens Predicts
+## 5. Applying the Lens to Agentic Harnesses
 
-A thesis that cannot fail is not doing any work.
-This section states seven conditions under which a steering operator should help, fail, or become too expensive to justify.
-Each condition names a way an operator can *reverse* from helpful to useless or harmful when its impulse, signal, or referent validation changes — a claim a flat "more prompting helps" account has no separate way to make — and each is already exercised by one of the worked analyses in Section 5.
+The value of the lens is whether it can separate mechanisms before their results are known.
+The cases below reconstruct that comparison retrospectively by pairing an anticipation from the operator description with a reported result.
+They show how a prospective test could be stated, but they are not new experiments or evidence that the predictions were recorded in advance.
 
-**Target observability.**
-Referent validation only works if that referent is actually observable: a compiler verdict, a passing test, a visible change.
-Where the target is unobservable, or only partly surfaced — a "created" claim against a tool that silently no-ops — decoupling follows: the document can report a state no tool has exposed.
-Section 5.1's false-completion case is this condition failing in production.
+### Execution feedback versus intrinsic self-correction
 
-**Feedback reliability.**
-The signal returned has to be trustworthy, not merely present.
-An external, verifiable signal (a runtime, a test suite) is a different thing from a model's own noisy self-critique.
-Where the "verifier" is itself model-generated with no ground truth, the move degrades to intrinsic self-correction and the improvement shrinks or reverses — Section 5.2's compiler-repair case, read against the external-vs-intrinsic split.
+**Anticipation.**
+A correction loop should be more reliable when it appends an external verdict than when it asks the model to judge the same document from its existing context.
+The verdict changes the available evidence; intrinsic critique may only resample the original uncertainty.
 
-**Search breadth.**
-Sampling, subagent, and tree-search operators help only when there are genuinely many distinct viable paths to explore.
-Where the branches share a start point and conditioning, breadth is illusory — Section 5.5's shared-prompt-bias collapse.
+**Reported result.**
+Self-debugging work reports improvements from execution results and code explanations in code repair [@chen2023].
+By contrast, Huang and coauthors find that language models struggle to self-correct reasoning without external feedback [@huang2023].
+Kamoi and coauthors' survey identifies external feedback as a central condition separating successful from unreliable self-correction [@kamoi2024].
 
-**Artifact inspectability.**
-Manufacturing stand-in points helps only when those stand-ins expose something checkable — real, retrievable documents nearby — rather than being consumed as their own answer.
-Where the target neighborhood is genuinely empty, the stand-in gets treated as fact instead of scaffolding — Section 5.4's fabrication-on-empty-search finding.
+**What remains untested.**
+These studies do not establish that every external signal is sound or that trajectory language explains the gain better than a standard feedback-loop account.
+The lens further anticipates that misleading tests or tool outputs will steer confidently in the wrong direction; the cited results do not test that claim generally.
 
-**Serial dependency.**
-Chain-of-thought and pause-token operators help only when the task is actually bottlenecked by sequential computation, not by breadth or observability.
-On a task that is not serially bottlenecked, extra thinking tokens have a flat return — Section 5.3.
+### Serial computation through intermediate tokens
 
-**Cost.**
-Search-based operators trade compute for a chance at a better trajectory.
-This trade only pays off when the referent validation guiding the search is both cheap and sound; when it is expensive, unsound, or merely a proxy, added breadth is a pure loss rather than a diminishing return — Section 5.6's tree-search cost-explosion case.
+**Anticipation.**
+Additional reasoning or pause tokens should help when a task requires more sequential computation than a fixed-depth pass provides.
+They should not repair missing evidence merely by making the trajectory longer.
 
-**Collapse onto shared prompt/context bias.**
-Branching operators whose branches share a start point do not expand the region actually explored.
-Adding more samples under one shared conditioning has near-zero marginal return; genuine gains return only when branches have distinct start points — different bindings, providers, or roles — restoring the search-breadth condition above rather than merely restating it.
+**Reported result.**
+Chain-of-thought increases transformer power on inherently serial problems [@li2024], and formal analyses relate additional intermediate steps to increased expressivity [@merrill2023].
+Pfau and coauthors show that filler tokens can support hidden computation even when the tokens carry little semantic content [@pfau2024].
 
-Read together, these seven conditions are the paper's demonstration of the thesis.
-If agentic workflows are steering operators, then changing the impulse, signal, referent validation, cost, or start-point diversity should change whether the operator works.
-Each condition names an axis along which the same operator should help in one regime and hurt in another.
-A prompt-engineering account of any single worked analysis in Section 5 can describe that one trace; it has no way to state, in advance, the condition under which the same technique would have failed instead.
+**What remains untested.**
+These results do not identify a universal stopping rule or measure movement in a document geometry.
+Nor do they show that more tokens help tasks whose limiting factor is retrieval or environment access.
 
-## 7. Alternative Views and Limitations
+### Retrieval expansion
 
-The steering-operator reading is one lens among several standing accounts of
-the same phenomena, offered as a complementary diagnostic vocabulary rather
-than a replacement for any of them.
+**Anticipation.**
+A generated stand-in can bridge lexical distance between a query and relevant evidence.
+It should help when the corpus contains useful material that the original query represents poorly, while offering no guarantee when the corpus lacks the answer.
 
-**Program synthesis.**
-Agent workflows that generate and repair code are already studied as search over program space, with a many-to-one map from programs to the functions they implement (Section 3 borrows exactly this framing).
-Program synthesis gives a mature account of *what* is being searched; the steering-operator lens adds an account of *how* an agentic workflow's specific impulses — prompting, retrieval, execution feedback — reposition that search over time.
-The two are compatible descriptions at different grain sizes, not competitors.
+**Reported result.**
+HyDE reports improved zero-shot dense retrieval by embedding a generated hypothetical document before retrieving real documents [@gao2023hyde].
+HyPE reports gains from indexing hypothetical questions associated with documents [@vake2025hype].
+Both results fit the prediction that an intermediate generated document can redirect the retrieval trajectory.
 
-**MDP / control.**
-An agent workflow can equally be modeled as a policy choosing actions to maximize an objective, with tool calls as actions and observations as state transitions — and for ReAct and LATS in particular, the underlying mechanics genuinely are search and control procedures.
-The steering-operator lens is a representation-space complement to that account: it describes what happens to the *document* the policy produces, not a replacement for the control-theoretic description of the policy itself.
+**What remains untested.**
+Neither result makes the stand-in evidence in its own right or proves that retrieval expansion handles an empty corpus safely.
+Neither measures the document-space interpretation proposed here.
 
-**Information geometry / statistical manifold.**
-The mathematical apparatus for treating a model's internal representations as a manifold, with a rigorous metric or curvature structure, already exists and is more precise than anything this paper introduces.
-This paper borrows the vocabulary, not the formalism, and defers any metric or curvature claim to that literature — the caveat carried throughout Section 3.
+### Shared-prompt branching and selection
 
-**Category theory.**
-Bradley, Terilla, and Vlassopoulos's `[0,1]`-enriched category of texts already formalizes a compositional, probability-weighted structure over language, and is the closest prior art to this paper's picture (Section 2).
-This paper does not extend that formalism; its claim sits at the workflow-diagnostic level, which that formalism does not itself address.
+**Anticipation.**
+Branching can improve an answer even from a shared prompt when stochastic samples follow meaningfully different reasoning paths and the selector extracts a correctness signal.
+Different prompts or models are one way to increase diversity, not a prerequisite for all gains.
 
-**"Just prompt engineering."**
-Section 6 is this paper's answer.
-If steering operators were merely a rebranding of prompting, none of that section's seven conditions would be falsifiable, because there would be nothing for a condition to reverse against.
-Each names a way an operator flips from helpful to useless or harmful, which a flat "more prompting helps" account cannot state.
+**Reported result.**
+Self-consistency samples multiple chain-of-thought paths from the same prompt and reports substantial accuracy improvements from answer aggregation [@wang2023selfconsistency].
+Multiagent debate and mixture-of-agents report further gains from interaction among roles or models [@du2023debate; @wang2024moa].
+These findings rule out the stronger claim that shared conditioning implies near-zero marginal value.
 
-**Limitations and submission fit.**
-This is a synthesis/position paper, not a paper reporting a new theorem, dataset, or benchmark result of its own; main-track NeurIPS/ICML/ICLR fit is correspondingly weaker, and a position track, workshop, TMLR/JAIR-style venue, or arXiv-first circulation is a better match unless a later project adds a genuine empirical or theoretical result.
-The mathematical vocabulary here is organizing language, not proof: every geometric or categorical term not grounded in a cited theorem is marked as author analogy in the claim ledger (Section 8).
-The Section 5.1 case, this paper's sharpest evidence, comes from hand-picked traces rather than a random sample; the lens's usefulness beyond that one case still has to survive a Lit Group transfer test on a workflow it has not seen (Section 8).
-And not every agentic improvement is "steering" in the same sense — Table 1's own prompting row has no internal referent validation, only an external user restart — so treating every operator as one mechanism risks flattening real differences the alternative views above take more seriously.
+**What remains untested.**
+The cited studies do not supply a general measure of trajectory diversity or isolate when shared biases defeat aggregation.
+The lens anticipates failure when branches make correlated errors and the selector has no independent signal, but that boundary requires direct measurement.
+
+### Tool interaction and tree search
+
+**Anticipation.**
+Repeated action and observation should help when each observation exposes task-relevant state.
+Tree search should add value when intermediate states can be scored well enough to retain promising branches and revisit poor decisions.
+
+**Reported result.**
+ReAct reports gains from interleaving reasoning with environment actions and observations [@yao2023react].
+LATS reports that combining tree search, acting, value estimates, and reflection improves performance on the environments it evaluates [@zhou2024lats].
+
+**What remains untested.**
+These results do not establish that every tool-interactive harness reads observations correctly or that value estimates remain calibrated outside the evaluated tasks.
+Nor do they establish that the added search cost is worthwhile under arbitrary budgets.
+The lens anticipates false completion when narration is not checked against environment state, but no prevalence claim is made here.
+
+## 6. Alternative Views and Limitations
+
+The trajectory lens complements simpler and more formal accounts.
+Program synthesis describes code generation as search over discrete programs and specifications.
+Markov decision processes and control theory describe an agent as a policy choosing actions from states and observations.
+Standard retrieval, inference-time compute, and search terminology already describes each operator's mechanics.
+Those accounts may be preferable when their formal variables are available.
+
+The present vocabulary instead keeps attention on the evolving document and on the evidence appended to it.
+That perspective makes different harnesses comparable, but it can also flatten important differences.
+A prompt, a compiler, and a learned value function are not three instances of the same causal mechanism merely because each redirects generation.
+
+The geometric language is deliberately limited.
+No global document metric, smooth manifold, curvature, or basin of attraction is established.
+Contextual-representation results do not automatically transfer to whole documents or workflows.
+The applications in Section 5 are retrospective readings of published results rather than prospective tests of the lens.
+A stronger empirical contribution would state operator-level predictions in advance and measure the relevant signals and branch diversity.
+It would compare the trajectory account with control, search, and compute-matched baselines.

@@ -1,4 +1,3 @@
-## 10. References
+## 8. References
 
-Rendered by pandoc `--citeproc` from `refs.bib` with `ieee.csl`.
-See `refs.bib`.
+The works cited in the text are listed below.
