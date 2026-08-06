@@ -394,39 +394,9 @@ section:has(img.float) + section {
   margin: 0.6in 1in;
 }
 
-/*
- * ---------------------------------------------------------------------------
- * Print stylesheet for /cv.
- *
- * Contract with pages/cv/page.ts: it must render its root as
- * `class="cv no-print-href"`. `.cv` scopes every rule below to the CV, and
- * `no-print-href` (declared in the global print block above) suppresses the
- * blanket `a::after { content: " (" attr(href) ")" }` that would otherwise
- * trail a raw URL after every link. Neither file can enforce this; drop either
- * class and this sheet silently stops applying.
- *
- * Intent: /cv prints as an academic CV, not as a web page on paper.
- * ---------------------------------------------------------------------------
- */
+/* Print styles for /cv.  */
 @media print {
-  /*
-   * Retune the bundle's tokens instead of overriding its properties.
-   *
-   * Which tokens can be retuned from here depends on where jiffies-css
-   * *consumes* them. Tokens it reads on the element itself — `--font-size-base:
-   * var(--base-font-size)` on every block element, `--_card-background-color:
-   * var(--card-background-color)` on every section — re-resolve against any
-   * ancestor that redefines the input, so setting them on `.cv` reaches every
-   * descendant.
-   *
-   * Tokens it *computes at :root* do not. `--font-size-h1: calc(var(
-   * --base-font-size) * pow(var(--font-scale), 6))` is declared on :root, so it
-   * resolves there against :root's 18px and inherits as a fixed length: the
-   * headings printed at 51pt and 41pt while body text correctly followed
-   * `--base-font-size` down to 10pt. Those tokens have to be set directly.
-   */
   .cv {
-    /* Body type. Read per-element, so these reach every block. */
     --base-font-size: 10pt;
     --base-line-height: 1.35;
     --spacing-block-vertical: 5pt;
@@ -446,21 +416,24 @@ section:has(img.float) + section {
     --size-medium: 0;
     --size-large: 0;
   }
-
-  /*
-   * The one place a token does not reach. The card's 2px rule is not drawn from
-   * --card-border (already `none` here) nor from --base-border-size, so nothing
-   * inheritable turns it off; measured directly in print emulation. Nested three
-   * deep it prints as rules running down both page edges.
-   */
+  
   .cv section {
     border: none;
   }
 
   /*
-   * Keep every heading with the content it introduces. `page-break-*` are not
-   * duplicates: they are the legacy aliases still honored by print engines that
-   * predate the fragmentation spec.
+   * Keep headings with their content.
+   *
+   * `break-after: avoid` says exactly this and is what Chromium honors. WebKit
+   * ignores it, and WebKit is the engine behind the macOS print pipeline that
+   * produced public/David_Souther_CV.pdf — where "ACADEMIC AND TEACHING
+   * APPOINTMENTS" stranded at the foot of page 1.
+   *
+   * WebKit does honor `break-inside`, so h2 and h3 below additionally carry a
+   * --keep-with-next padding deep enough to cover the first lines of the block
+   * beneath them, pulled back out by an equal negative margin. The taller box
+   * cannot be split, so a break can only land before the heading or after those
+   * lines. Both mechanisms are stated: whichever the engine implements wins.
    */
   .cv h1,
   .cv h2,
@@ -476,11 +449,7 @@ section:has(img.float) + section {
     text-align: center;
   }
 
-  /*
-   * Positional selector: this styles the contact line only while it remains the
-   * first paragraph after the name. Reordering the CV's header, or inserting a
-   * paragraph above the contact line, silently retargets it.
-   */
+  /* Positional selector for the contact details.  */
   .cv h1 + p {
     --font-size-base: 9.5pt;
     margin: 0 0 6pt;
@@ -488,32 +457,45 @@ section:has(img.float) + section {
   }
 
   /*
-   * The rule-under is what separates sections on paper, so it replaces both the
+   * The rule-under separates sections on paper, so it replaces both the
    * <hr>s below and the card edges zeroed above.
    */
   .cv h2 {
-    margin: 12pt 0 5pt;
-    border-bottom: 0.5pt solid currentcolor;
-    padding-bottom: 1pt;
+    /* Roughly three lines of 10pt/1.35 body text. */
+    --keep-with-next: 40pt;
+
+    position: relative;
+    margin: 12pt 0 calc(5pt - var(--keep-with-next));
+    padding-bottom: var(--keep-with-next);
     text-transform: uppercase;
     letter-spacing: 0.04em;
   }
 
-  .cv h3 {
-    margin: 8pt 0 3pt;
+  /*
+   * The rule-under is drawn by a positioned pseudo-element rather than
+   * border-bottom, which --keep-with-next would otherwise push down the page.
+   * It stays a border, so it prints even with background printing turned off.
+   */
+  .cv h2::after {
+    content: "";
+    position: absolute;
+    inset: auto 0 calc(var(--keep-with-next) - 2pt);
+    border-top: 0.5pt solid currentcolor;
   }
 
-  /*
-   * Paragraphs stay breakable on purpose: they run long enough that
-   * `break-inside: avoid` would open large gaps at page ends. Orphan and widow
-   * control gives the same protection without them.
-   */
+  .cv h3 {
+    --keep-with-next: 30pt;
+
+    margin: 8pt 0 calc(3pt - var(--keep-with-next));
+    padding-bottom: var(--keep-with-next);
+  }
+
   .cv p {
     orphans: 3;
     widows: 3;
   }
 
-  /* List items here are short enough that a break inside one is never wanted. */
+  /* List items are short enough that a break inside one is never wanted. */
   .cv li {
     break-inside: avoid;
     page-break-inside: avoid;
@@ -524,11 +506,6 @@ section:has(img.float) + section {
     display: none;
   }
 
-  /*
-   * `--color` is the variable the global print block above declares on anchors;
-   * feeding it black is enough, no `color` override needed. Underlines read as
-   * defects once they are not clickable, and the href survives either way.
-   */
   .cv a {
     --color: black;
     text-decoration: none;
