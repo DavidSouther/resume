@@ -1,26 +1,26 @@
 ## 1. Introduction
 
-Agentic LLM workflows can be understood as operators steering a document through syntactic space toward a target region of acceptable artifacts.
-Prompting fixes a start point.
-Large language models generate tokens following a trajectory along several manifolds defined by the learned structure from its training set.
-A retrieved document, compiler error, or tool observation changes the next move.
-A subagent fan-out explores several nearby starts.
-Tree search keeps several partial trajectories alive and backtracks when a value signal says one is worse.
-Read as if generation were moving through a document region, these are not an unrelated grab-bag of agent tricks.
-They are comparable steering operators with different impulses, signals, referent-validation paths, costs, and failure modes.
+Agentic language-model systems do more than ask a model for a likely continuation.
+They take actions to retrieve documents, execute code, preserve intermediate reasoning, branch across several candidates, and use observations or value estimates to decide what happens next.
+Some of these actions happen using language model continuation for text generation; other actions use deterministic and long established text computation techniques.
+The gestalt of these actions working in a single system delivers an "agentic system".
+This paper proposes one lens for comparing the effect and effectiveness of those actions.
 
-This is therefore a **synthesis and position paper**, not a new formalism.
-It borrows geometric vocabulary — manifold, trajectory, region, basin — from published prior art (Section 2), and applies it to a range of prompt engineering patterns.
-The paper's contribution is a **workflow-level reading**: a diagnostic vocabulary that turns familiar agentic techniques into steering operators with falsifiable conditions for when each technique should help, fail, or become too expensive (Section 6), grounded in several worked analyses (Section 5) and a reusable operator table (Section 4).
+In this paper, we consider agent systems' actions in two categories, generation and operators.
+Language model generation traces a sequence of document prefixes using stochastic continuation generators.
+An agentic harness applies operators as computational techniques that redirect, extend, branch, or select among those trajectories.
 
-<!-- **What this paper is not claiming.**
-It is not a new theorem, a new categorical formalism, or a claim that treating LLMs as manifolds is itself novel — Section 2 draws that boundary against the closest prior art explicitly.
-It does not claim a metric on document space, a proven basin-of-attraction structure for a single forward pass, or that "document space" is one smooth surface rather than a union of task-local regions (Section 3's caveats).
-Two extensions the author has explored elsewhere are deliberately out of scope here: an endofunctor fixed-point formalism for iterated generation [@souther2024], and an empirical bridge between the loss-landscape geometry of training and the document-space geometry of generation.
-Both would require engaging the closest prior art (Section 2) far more formally than a position paper's evidence standard supports, and are left as future work. -->
+The lens joins three existing ideas.
+Language-model generation is a stochastic process over prefixes.
+Contextual representations can have local low-dimensional structure.
+Code generation can be treated as search over program texts constrained by behavior.
+None of these establishes a single smooth manifold of documents.
+Together, however, they cautiously motivate a mental model of task-local document regions and trajectories through them.
 
-**Roadmap.**
-Section 2 provides a literature review of language as manifolds, providing a space for the operator analogy to work within.
-Section 3 introduces the specific geometry the rest of the paper needs.
-Sections 4 and 5 are the operator table and several worked analyses.
-Section 6 generalizes those analyses into falsifiable predictive conditions, and Section 7 compares these approaches against alternative frames an engineer would reasonably reach for.
+This is a synthesis and position paper for mentally evaluating agentic systems, and does not propose a new geometric formalism.
+Its contribution is a workflow-level vocabulary for asking how harness actions can alter generation trajectories, what signals guide those actions, and what external referent (if any) checks the resulting document.
+Section 2 reviews the three strands of prior art.
+Section 3 states the document-prefix model.
+Section 4 describes the steering operators.
+Section 5 applies the lens to results from recent agentic and inference-time harness research.
+Section 6 gives competing interpretations and limitations, and Section 7 concludes with a compact diagnostic.
