@@ -142,9 +142,11 @@ is the generation trajectory.
 This is a discrete trajectory through token-prefix states, not a continuous path through a proven smooth manifold.
 The Markov-chain account of autoregressive language models supplies the formal stochastic-process basis for this view [@zekri2024].
 
+<!-- Figure design alternatives live in posts/llm_manifold/figures/document_trajectory_alternatives.typ. The candidates show a trajectory through local continuation-likelihood contours, a valley/plain/ridge terrain profile, a discrete prefix-state flow, and disconnected task-local regions. -->
+
 A neighborhood in document space can be induced in several ways, and the choice matters.
 Two documents may be close because one is a high-probability continuation of the other under the model; because their contextual hidden-state summaries are near under a chosen embedding distance; because their program texts are close under edits or mutations; or because their denotations are observationally equivalent.
-There is no single global distance that all of these notions share.
+There is no single global distance that all of these notions share, but they are generally complementary descriptions of the notion of nearness.
 
 ### Programs as documents with denotations
 

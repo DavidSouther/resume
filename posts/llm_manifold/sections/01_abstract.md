@@ -1,5 +1,5 @@
 ---
-title: "Position: Agentic LLM Workflows as Trajectory-Steering on a Document Manifold"
+title: "Position: Agentic LLM Workflows as Trajectory-Steering on Manifolds in Document Spaces"
 author: David Souther
 date: 2026
 abstract: >
