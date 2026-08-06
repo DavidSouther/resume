@@ -32,7 +32,7 @@
     "src",
     "pages",
     "scripts"
-  ],
+, "posts/llm_manifold/scripts/compile-manifold-paper.feature.test.ts", "posts/llm_manifold/scripts/compile-manifold-paper.ts"  ],
   "exclude": [
     "node_modules"
   ]
