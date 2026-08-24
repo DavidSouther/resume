@@ -6,7 +6,8 @@ summary: Agentic LLM workflows can be understood as operators steering a documen
 image: "/fuzzy_llm.png"
 ---
 
-> **Draft.** This is the blog-tone response to the paper in `posts/llm_manifold/paper.md`.
+> **Draft.** This is the blog-tone response to the paper source in
+> `posts/llm_manifold/sections/`.
 > It is the successor to [Fuzzy Homomorphic Endofunctors](/fuzzy_homomorphic_endofunctor), the 2024 informal seed.
 > The diagrams below are planned as snapshot stills from one larger animation.
 
