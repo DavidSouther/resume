@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { mkdirSync } from "node:fs";
+import { copyFileSync, mkdirSync, readdirSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 
 /** `posts/llm_manifold`, the directory this script's own `scripts/` sits in. */
@@ -13,10 +13,9 @@ export type Command = {
 
 export type ManifoldPaperPdfPaths = {
 	paperDir: string;
-	composeScript: string;
-	paper: string;
+	sectionsDir: string;
 	bibliography: string;
-	csl: string;
+	buildBibliography: string;
 	typstSource: string;
 	buildDir: string;
 	outputPdf: string;
@@ -25,7 +24,6 @@ export type ManifoldPaperPdfPaths = {
 type CliOptions = {
 	output?: string;
 	paperDir: string;
-	skipCompose: boolean;
 };
 
 /**
@@ -41,15 +39,9 @@ export function createManifoldPaperPdfPaths(
 
 	return {
 		paperDir: resolvedPaperDir,
-		composeScript: join(
-			resolvedPaperDir,
-			"evals",
-			"scripts",
-			"compose_paper.py",
-		),
-		paper: join(resolvedPaperDir, "paper.md"),
+		sectionsDir: join(resolvedPaperDir, "sections"),
 		bibliography: join(resolvedPaperDir, "refs.bib"),
-		csl: join(resolvedPaperDir, "ieee.csl"),
+		buildBibliography: join(buildDir, "refs.bib"),
 		typstSource: join(buildDir, "manifold-paper.typ"),
 		buildDir,
 		outputPdf: outputPdf
@@ -58,32 +50,38 @@ export function createManifoldPaperPdfPaths(
 	};
 }
 
-export function buildComposeCommand(paths: ManifoldPaperPdfPaths): Command {
-	return {
-		cmd: "python3",
-		args: [paths.composeScript],
-	};
+export function listPaperSections(paths: ManifoldPaperPdfPaths): string[] {
+	const files = readdirSync(paths.sectionsDir)
+		.filter((file) => file.endsWith(".md"))
+		.sort()
+		.map((file) => join(paths.sectionsDir, file));
+
+	if (files.length === 0) {
+		throw new Error(`no Markdown sections found in ${paths.sectionsDir}`);
+	}
+	return files;
 }
 
 /**
- * Pandoc resolves citations before emitting Typst. This preserves the paper's
- * IEEE citation style without requiring BibTeX or a bibliography pass.
+ * Pandoc preserves citations as native Typst `@key` references. Typst reads
+ * refs.bib itself and formats the bibliography with its built-in IEEE style.
  */
 export function buildTypstPandocCommand(
 	paths: ManifoldPaperPdfPaths,
+	sections: string[],
 ): Command {
 	return {
 		cmd: "pandoc",
 		args: [
-			paths.paper,
+			...sections,
 			"--to=typst",
 			"--standalone",
-			"--citeproc",
 			"--shift-heading-level-by=-1",
-			`--bibliography=${paths.bibliography}`,
-			`--csl=${paths.csl}`,
+			"--bibliography=refs.bib",
+			"--metadata=csl:ieee",
 			`--output=${paths.typstSource}`,
 		],
+		cwd: paths.buildDir,
 	};
 }
 
@@ -120,14 +118,11 @@ function run(command: Command): void {
 function parseArgs(args: string[]): CliOptions {
 	const options: CliOptions = {
 		paperDir: DEFAULT_PAPER_DIR,
-		skipCompose: false,
 	};
 
 	for (let i = 0; i < args.length; i += 1) {
 		const arg = args[i];
-		if (arg === "--skip-compose") {
-			options.skipCompose = true;
-		} else if (arg === "--output") {
+		if (arg === "--output") {
 			i += 1;
 			options.output = requiredValue(args, i, arg);
 		} else if (arg === "--paper-dir") {
@@ -162,7 +157,6 @@ Options:
   --output <pdf>      Write the PDF to this path.
   --paper-dir <path>  The paper's directory. Defaults to the posts/llm_manifold
                       directory this script ships in.
-  --skip-compose      Do not regenerate paper.md before building the PDF.
 `);
 }
 
@@ -175,14 +169,11 @@ function main(): void {
 
 	mkdirSync(paths.buildDir, { recursive: true });
 	mkdirSync(dirname(paths.outputPdf), { recursive: true });
+	copyFileSync(paths.bibliography, paths.buildBibliography);
 
-	if (!options.skipCompose) {
-		console.log(`Composing ${paths.paper}...`);
-		run(buildComposeCommand(paths));
-	}
-
-	console.log(`Generating ${paths.typstSource}...`);
-	run(buildTypstPandocCommand(paths));
+	const sections = listPaperSections(paths);
+	console.log(`Generating ${paths.typstSource} from ${sections.length} sections...`);
+	run(buildTypstPandocCommand(paths, sections));
 
 	console.log(`Building ${paths.outputPdf} with Typst...`);
 	run(buildTypstCompileCommand(paths));
