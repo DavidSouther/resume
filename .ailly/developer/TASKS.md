@@ -20,11 +20,11 @@ Next-step queue for `developer:ailly` sessions in this repo.
 
 - **manifold paper: the abstract is still a placeholder** — `sections/01_abstract.md`
   still says "Write the rest _after_ the paper is complete", and that sentence
-  renders verbatim in the PDF. The PDF is now an arXiv-style preprint
-  (`scripts/templates/llm-manifold-preprint.tex`, stock `article` + `natbib`,
-  no venue style file) naming David Souther as sole author. The ICML 2026
-  template is gone; recover it from git history if the paper is ever submitted
-  there, and note that its style file anonymizes authors unless the build passes
+  renders verbatim in the PDF. The PDF is now an arXiv-style preprint generated
+  by Pandoc's Typst writer and `typst compile`, naming David Souther as sole
+  author. It has no venue style or TeX Live dependency. The ICML 2026 template
+  is gone; recover it from git history if the paper is ever submitted there,
+  and note that its style file anonymizes authors unless the build passes
   `[accepted]`.
 
 - **manifold paper + post (LLMs as a model of syntactic space)** — A **project**
