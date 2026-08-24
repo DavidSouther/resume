@@ -20,20 +20,28 @@ const ICML_STYLE_ASSETS = [
 	"fancyhdr.sty",
 ] as const;
 
+const TEX_JOB_NAME = "manifold-paper";
+const MAX_LATEX_PASSES = 4;
+
+/** `posts/llm_manifold`, the directory this script's own `scripts/` sits in. */
+const DEFAULT_PAPER_DIR = resolve(import.meta.dirname, "..");
+
 export type Command = {
 	cmd: string;
 	args: string[];
+	cwd?: string;
 	env?: NodeJS.ProcessEnv;
 };
 
 export type ManifoldPaperPdfPaths = {
-	root: string;
-	manifoldDir: string;
+	paperDir: string;
 	composeScript: string;
 	paper: string;
 	bibliography: string;
 	icmlMarkdown: string;
+	icmlTex: string;
 	icmlBibliography: string;
+	texJobName: string;
 	tableFilter: string;
 	template: string;
 	buildDir: string;
@@ -47,29 +55,44 @@ type CliOptions = {
 	icmlKit?: string;
 	noDownload: boolean;
 	output?: string;
-	root: string;
+	paperDir: string;
 	skipCompose: boolean;
 };
 
+/**
+ * `paperDir` is `posts/llm_manifold`, not the repo root: every path below hangs
+ * off the paper's own directory. It defaults to this script's parent so the
+ * command works from any working directory.
+ */
 export function createManifoldPaperPdfPaths(
-	root = process.cwd(),
+	paperDir = DEFAULT_PAPER_DIR,
 	outputPdf?: string,
 ): ManifoldPaperPdfPaths {
-	const resolvedRoot = resolve(root);
-	const manifoldDir = join(resolvedRoot);
-	const buildDir = join(resolvedRoot, "build", "llm_manifold");
+	const resolvedPaperDir = resolve(paperDir);
+	const buildDir = join(resolvedPaperDir, "build", "llm_manifold");
 
 	return {
-		root: resolvedRoot,
-		manifoldDir,
-		composeScript: join(manifoldDir, "evals", "scripts", "compose_paper.py"),
-		paper: join(manifoldDir, "paper.md"),
-		bibliography: join(manifoldDir, "refs.bib"),
+		paperDir: resolvedPaperDir,
+		composeScript: join(
+			resolvedPaperDir,
+			"evals",
+			"scripts",
+			"compose_paper.py",
+		),
+		paper: join(resolvedPaperDir, "paper.md"),
+		bibliography: join(resolvedPaperDir, "refs.bib"),
 		icmlMarkdown: join(buildDir, "paper.icml.md"),
+		icmlTex: join(buildDir, `${TEX_JOB_NAME}.tex`),
 		icmlBibliography: join(buildDir, "refs.icml.bib"),
-		tableFilter: join(resolvedRoot, "scripts", "filters", "icml-tables.lua"),
+		texJobName: TEX_JOB_NAME,
+		tableFilter: join(
+			resolvedPaperDir,
+			"scripts",
+			"filters",
+			"icml-tables.lua",
+		),
 		template: join(
-			resolvedRoot,
+			resolvedPaperDir,
 			"scripts",
 			"templates",
 			"llm-manifold-icml.tex",
@@ -78,7 +101,7 @@ export function createManifoldPaperPdfPaths(
 		styleDir: join(buildDir, ICML_STYLE),
 		icmlKitZip: join(buildDir, `${ICML_STYLE}.zip`),
 		outputPdf: outputPdf
-			? resolve(resolvedRoot, outputPdf)
+			? resolve(resolvedPaperDir, outputPdf)
 			: join(buildDir, `manifold-paper-${ICML_STYLE}.pdf`),
 	};
 }
@@ -100,14 +123,13 @@ export function buildIcmlPandocCommand(
 		"--syntax-highlighting=none",
 		"--shift-heading-level-by=-1",
 		"--natbib",
-		"--pdf-engine=pdflatex",
 		`--template=${paths.template}`,
 		`--lua-filter=${paths.tableFilter}`,
 		`--bibliography=${paths.icmlBibliography}`,
 		`--metadata=icml-style:${ICML_STYLE}`,
 		"--metadata=icml-running-title:Agentic LLM Workflows as Trajectory-Steering",
 		`--metadata=biblio-style:${ICML_STYLE}`,
-		`--output=${paths.outputPdf}`,
+		`--output=${paths.icmlTex}`,
 	];
 
 	if (options.accepted) {
@@ -117,8 +139,40 @@ export function buildIcmlPandocCommand(
 	return {
 		cmd: "pandoc",
 		args,
+	};
+}
+
+/**
+ * pandoc does not run bibtex for `--natbib`, so letting it drive `--pdf-engine`
+ * leaves every `\citep` undefined and renders it as "(?)". The LaTeX passes are
+ * therefore driven here: pdflatex, bibtex, then pdflatex twice more to settle
+ * the citation and cross-reference labels.
+ */
+export function buildPdfLatexCommand(paths: ManifoldPaperPdfPaths): Command {
+	return {
+		cmd: "pdflatex",
+		args: ["-interaction=nonstopmode", "-halt-on-error", paths.icmlTex],
+		cwd: paths.buildDir,
 		env: latexSearchEnv(paths),
 	};
+}
+
+export function buildBibtexCommand(paths: ManifoldPaperPdfPaths): Command {
+	return {
+		cmd: "bibtex",
+		args: [paths.texJobName],
+		cwd: paths.buildDir,
+		env: latexSearchEnv(paths),
+	};
+}
+
+/**
+ * How many passes it takes to settle depends on how far the inserted
+ * bibliography shifts the page breaks, so the count is read off the log rather
+ * than fixed. `MAX_LATEX_PASSES` only bounds a pathological oscillation.
+ */
+export function latexNeedsRerun(log: string): boolean {
+	return /Rerun to get|Rerun LaTeX/u.test(log);
 }
 
 function buildDownloadCommand(paths: ManifoldPaperPdfPaths): Command {
@@ -158,9 +212,28 @@ function prependSearchPath(path: string, existing: string | undefined): string {
 	return `${path}${separator}${existing ?? ""}`;
 }
 
+/**
+ * natbib emits the bibliography itself, so the markdown's own References
+ * heading would print an empty duplicate section above it. The section number
+ * is optional in the pattern because the outline has been renumbered once
+ * already and a pinned number silently stops matching.
+ */
 export function stripPandocReferencesSection(markdown: string): string {
-	const stripped = markdown.replace(/\n## 10\. References\n[\s\S]*$/u, "");
+	const stripped = markdown.replace(
+		/\n## (?:\d+\. )?References\n[\s\S]*$/u,
+		"",
+	);
 	return `${stripped.trimEnd()}\n`;
+}
+
+/**
+ * The markdown numbers its own headings ("## 5. ...") so that the composed
+ * paper.md reads correctly on its own and the eval scripts can address a
+ * section by number. LaTeX numbers sections too, which prints "5. 5. ..." in
+ * the PDF unless the hand-written number is dropped on the way in.
+ */
+export function stripSectionNumbers(markdown: string): string {
+	return markdown.replace(/^(#{1,6} )\d+\.\s+/gmu, "$1");
 }
 
 export function normalizeBibtexForClassicBibtex(bibtex: string): string {
@@ -186,7 +259,7 @@ function prepareIcmlInputs(paths: ManifoldPaperPdfPaths): void {
 	const markdown = readFileSync(paths.paper, "utf-8");
 	writeFileSync(
 		paths.icmlMarkdown,
-		stripPandocReferencesSection(markdown),
+		stripSectionNumbers(stripPandocReferencesSection(markdown)),
 		"utf-8",
 	);
 
@@ -200,6 +273,7 @@ function prepareIcmlInputs(paths: ManifoldPaperPdfPaths): void {
 
 function run(command: Command): void {
 	const proc = spawnSync(command.cmd, command.args, {
+		cwd: command.cwd,
 		env: command.env ? { ...process.env, ...command.env } : process.env,
 		stdio: "inherit",
 	});
@@ -218,7 +292,7 @@ function parseArgs(args: string[]): CliOptions {
 	const options: CliOptions = {
 		accepted: false,
 		noDownload: false,
-		root: process.cwd(),
+		paperDir: DEFAULT_PAPER_DIR,
 		skipCompose: false,
 	};
 
@@ -236,9 +310,9 @@ function parseArgs(args: string[]): CliOptions {
 		} else if (arg === "--output") {
 			i += 1;
 			options.output = requiredValue(args, i, arg);
-		} else if (arg === "--root") {
+		} else if (arg === "--paper-dir") {
 			i += 1;
-			options.root = requiredValue(args, i, arg);
+			options.paperDir = resolve(process.cwd(), requiredValue(args, i, arg));
 		} else if (arg === "--help" || arg === "-h") {
 			printUsage();
 			process.exit(0);
@@ -259,17 +333,19 @@ function requiredValue(args: string[], index: number, option: string): string {
 }
 
 function printUsage(): void {
-	console.log(`Usage: node scripts/compile-manifold-paper.ts [options]
+	console.log(`Usage: node posts/llm_manifold/scripts/compile-manifold-paper.ts [options]
 
 Compiles posts/llm_manifold/sections/*.md to an ICML-formatted PDF.
+Runs from any working directory.
 
 Options:
   --accepted          Use the ICML accepted/camera-ready notice.
-  --icml-kit <zip>   Use a local ${ICML_STYLE}.zip instead of downloading it.
-  --no-download      Fail if the ICML kit is not already present.
-  --output <pdf>     Write the PDF to this path.
-  --root <path>      Repo root. Defaults to the current working directory.
-  --skip-compose     Do not regenerate paper.md before building the PDF.
+  --icml-kit <zip>    Use a local ${ICML_STYLE}.zip instead of downloading it.
+  --no-download       Fail if the ICML kit is not already present.
+  --output <pdf>      Write the PDF to this path.
+  --paper-dir <path>  The paper's directory. Defaults to the posts/llm_manifold
+                      directory this script ships in.
+  --skip-compose      Do not regenerate paper.md before building the PDF.
 `);
 }
 
@@ -280,7 +356,7 @@ function ensureIcmlStyleAssets(
 	mkdirSync(paths.styleDir, { recursive: true });
 
 	if (options.icmlKit) {
-		const localKit = resolve(options.root, options.icmlKit);
+		const localKit = resolve(process.cwd(), options.icmlKit);
 		if (localKit !== paths.icmlKitZip) {
 			copyFileSync(localKit, paths.icmlKitZip);
 		}
@@ -307,12 +383,15 @@ function ensureIcmlStyleAssets(
 
 function main(): void {
 	const options = parseArgs(process.argv.slice(2));
-	const paths = createManifoldPaperPdfPaths(options.root, options.output);
+	const output = options.output
+		? resolve(process.cwd(), options.output)
+		: undefined;
+	const paths = createManifoldPaperPdfPaths(options.paperDir, output);
 
 	mkdirSync(dirname(paths.outputPdf), { recursive: true });
 
 	if (!options.skipCompose) {
-		console.log("Composing posts/llm_manifold/paper.md...");
+		console.log(`Composing ${paths.paper}...`);
 		run(buildComposeCommand(paths));
 	}
 
@@ -323,6 +402,22 @@ function main(): void {
 
 	console.log(`Building ${paths.outputPdf}...`);
 	run(buildIcmlPandocCommand(paths, options));
+
+	const latex = buildPdfLatexCommand(paths);
+	const latexLog = join(paths.buildDir, `${paths.texJobName}.log`);
+	run(latex);
+	run(buildBibtexCommand(paths));
+	for (let pass = 0; pass < MAX_LATEX_PASSES; pass += 1) {
+		run(latex);
+		if (!latexNeedsRerun(readFileSync(latexLog, "utf-8"))) {
+			break;
+		}
+	}
+
+	const builtPdf = join(paths.buildDir, `${paths.texJobName}.pdf`);
+	if (builtPdf !== paths.outputPdf) {
+		copyFileSync(builtPdf, paths.outputPdf);
+	}
 	console.log(`Wrote ${paths.outputPdf}`);
 }
 

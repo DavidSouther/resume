@@ -7,7 +7,16 @@ Lit Group transfer review; this half gates the mechanical contract.
 ## What it checks
 
 - **`scripts/check_sections.py`** — every required section heading from the outline
-  contract is present and non-empty in `paper.md`.
+  contract is present and non-empty in `paper.md`. `REQUIRED` is the shipped
+  eight-section outline; it replaced the earlier ten-section list when the claim
+  ledger was removed and Sections 2-5 were retitled.
+- **`scripts/test_operator_evaluation.py`** — Section 5's technique-evaluation
+  contract: the heading states the job; computation, evidence, and alternatives
+  are named; the five worked cases are present; a larger context window is
+  rejected as not an operator; composition inherits the weakest evidence
+  boundary; classification does not claim to measure or rank; and the citations
+  the rewrite kept (in §5 or §4) still resolve. This replaced the unused
+  August 6 design-patterns catalog (four questions + Table 2).
 - **`scripts/check_citations.py`** — every pandoc citation key (`@key`, whether in a
   single `[@key]` or a multi-citation `[@key1; @key2]` bracket) used in `paper.md`
   resolves to an entry in `refs.bib`, and every `refs.bib` entry carries a year and
@@ -17,13 +26,10 @@ Lit Group transfer review; this half gates the mechanical contract.
   Targets `-t latex` so it validates citation resolution without a full TeX install.
   Requires `ieee.csl` (present, fetched from the citation-style-language repo) and
   a local `pandoc` install.
-- **Claim-ledger judge** — an LLM-as-judge over the Section 8 ledger against the
-  six-field schema (Claim, Status, Support, Does not support, Section, Risk if
-  wrong): every load-bearing claim is tagged established/contested/author-analogy/
-  deferred and cited; every row's `Does not support` and `Risk if wrong` cells are
-  non-empty and specific (not "N/A"); the required caveats are present; novelty is
-  not overclaimed against Bradley et al. Lives in `manifold.yaml` as a `judge`
-  assertion, extended for ledger completeness during Step 7 of the plan.
+- **Claim-ledger judge** — leftover from the ten-section outline. `manifold.yaml`
+  still describes an LLM-as-judge over a Section 8 six-field ledger that commit
+  `1eda7e4` deleted. Until the standalone Ailly eval lands, this assertion is
+  documentation of intent, not a live gate.
 
 All three script checks and the pandoc build currently pass with **zero
 arguments** from the repo root — every script's default resolves to the actual
@@ -57,6 +63,7 @@ Standalone (no Ailly needed — works in this repo today), from the repo root:
 python posts/llm_manifold/evals/scripts/check_sections.py
 python posts/llm_manifold/evals/scripts/check_citations.py
 python posts/llm_manifold/evals/scripts/check_pandoc.py
+python posts/llm_manifold/evals/scripts/test_operator_evaluation.py
 ```
 
 Or with explicit paths, runnable from any working directory:

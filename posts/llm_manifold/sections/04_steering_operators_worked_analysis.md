@@ -1,6 +1,6 @@
 ## 4. Steering Operators
 
-An operator is characterized here by its **move**, its **signal**, and its **referent check**.
+An operator is characterized here by its **move**, its **signal**, and its **referent check**. These describe how a workflow moves through the task-local document space, not coordinates in a formal geometry.
 The move changes the generation process by adding tokens to the generation trajectory.
 The signal is the information available to the harness to direct tool calling or other processing to generate the move tokens.
 The referent check tests the generated document against something outside the current trajectory.
@@ -22,14 +22,13 @@ The referent check tests the generated document against something outside the cu
 
 Prompting changes the initial conditional distribution.
 An account of in-context learning as implicit Bayesian inference describes the prompt as evidence for a latent task concept [@xie2021].
-The spatial phrase “choose a starting point” is this paper's interpretation.
+The spatial phrase “choose a starting point” is a framing for the way a prompt selects an initial region of likely continuations.
 Prompting provides no new observation after generation begins, so it cannot by itself resolve a fact absent from the context.
 
 Chain-of-thought and pause tokens extend the trajectory before the final answer.
 Results on serial problems and transformer expressivity support the additional-computation account [@li2024; @merrill2023].
 Even content-free filler tokens can provide useful hidden computation [@pfau2024].
-These results do not show that longer reasoning is universally useful.
-They predict gains when serial depth is the bottleneck, not when the missing ingredient is evidence or an external state observation.
+These results do not show that longer reasoning is universally useful. Longer trajectories cover more of the available document space and can help when serial depth is the bottleneck; they cannot supply evidence or an external state observation that is missing.
 
 ### External observations and retrieval
 
@@ -40,7 +39,7 @@ The check is still partial: passing tests establish only what those tests cover,
 Retrieval expansion moves before the external evidence arrives.
 HyDE generates a hypothetical answer and retrieves real documents near its embedding [@gao2023hyde].
 HyPE generates hypothetical questions associated with documents and retrieves through those question representations [@vake2025hype].
-In the trajectory lens, both manufacture intermediate documents that redirect retrieval.
+Both methods manufacture intermediate documents that redirect retrieval through the task-local space.
 The corpus result, not the manufactured text, is the evidence.
 An empty or irrelevant retrieval result leaves the referent unresolved.
 
@@ -57,5 +56,5 @@ An observation can correct the model's account of the world, but only if the too
 
 Language Agent Tree Search combines language-model planning and acting with tree search, value estimates, and self-reflection [@zhou2024lats].
 Unlike independent sampling, it preserves a frontier and can revisit earlier decisions.
-The trajectory lens anticipates a benefit when intermediate states can be evaluated well enough to allocate search.
+Tree search should help when intermediate states can be evaluated well enough to allocate search.
 It also exposes the dependency: a weak value estimate can steer the tree toward fluent but incorrect branches, while broad search increases inference and environment-interaction cost.

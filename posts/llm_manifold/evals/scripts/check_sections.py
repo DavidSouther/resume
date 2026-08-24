@@ -11,13 +11,11 @@ from pathlib import Path
 
 REQUIRED = [
     "Introduction",
-    "Prior Art and Novelty Boundaries",
-    "The Document-Space Model",
-    "Steering Operators for Agentic Workflows",
-    "Worked Analyses",
-    "What This Lens Predicts",
+    "Prior Art",
+    "The Document-Prefix Model",
+    "Steering Operators",
+    "Evaluating a New Technique",
     "Alternative Views and Limitations",
-    "Evaluation and Claim Ledger",
     "Conclusion",
     "References",
 ]
