@@ -18,16 +18,14 @@ Next-step queue for `developer:ailly` sessions in this repo.
   `test_operator_evaluation.py` (retargeted at the shipped §5, not the unused
   August 6 Table 2 catalog) are the live green gate.
 
-- **manifold paper: the PDF title block still reports two ICML author errors** —
-  The built PDF's title footnote reads `AUTHORERR: Missing \icmlaffiliation.` and
-  `AUTHORERR: Missing \icmlcorrespondingauthor.`, because
-  `posts/llm_manifold/scripts/templates/llm-manifold-icml.tex` emits
-  `\icmlauthor{...}{}` with an empty affiliation key and never emits the two
-  companion macros the ICML style requires. Fixing it needs an affiliation label
-  and a corresponding-author email, which are the author's to supply, so it was
-  left alone rather than invented. Related: the abstract in
-  `sections/01_abstract.md` is still the placeholder ("Write the rest _after_ the
-  paper is complete"), and it renders verbatim in the PDF.
+- **manifold paper: the abstract is still a placeholder** — `sections/01_abstract.md`
+  still says "Write the rest _after_ the paper is complete", and that sentence
+  renders verbatim in the PDF. The PDF is now an arXiv-style preprint
+  (`scripts/templates/llm-manifold-preprint.tex`, stock `article` + `natbib`,
+  no venue style file) naming David Souther as sole author. The ICML 2026
+  template is gone; recover it from git history if the paper is ever submitted
+  there, and note that its style file anonymizes authors unless the build passes
+  `[accepted]`.
 
 - **manifold paper + post (LLMs as a model of syntactic space)** — A **project**
   (project loop; see [.ailly/developer/2026-06-25-C-manifold/design.md](2026-06-25-C-manifold/design.md),

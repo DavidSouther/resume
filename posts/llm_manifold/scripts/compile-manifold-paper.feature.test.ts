@@ -1,8 +1,9 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
 	buildBibtexCommand,
-	buildIcmlPandocCommand,
 	buildPdfLatexCommand,
+	buildPreprintPandocCommand,
 	createManifoldPaperPdfPaths,
 	latexNeedsRerun,
 	normalizeBibtexForClassicBibtex,
@@ -10,21 +11,24 @@ import {
 	stripSectionNumbers,
 } from "./compile-manifold-paper.ts";
 
-describe("manifold paper ICML PDF compiler", () => {
-	it("builds a pandoc command that uses the official ICML style surface", () => {
+describe("manifold paper preprint PDF compiler", () => {
+	it("builds a pandoc command that depends only on stock LaTeX", () => {
 		const paths = createManifoldPaperPdfPaths("/paper");
 
-		const command = buildIcmlPandocCommand(paths);
+		const command = buildPreprintPandocCommand(paths);
 
 		expect(command.cmd).toBe("pandoc");
-		expect(command.args).toContain(paths.icmlMarkdown);
+		expect(command.args).toContain(paths.preprintMarkdown);
 		expect(command.args).toContain("--standalone");
 		expect(command.args).toContain("--syntax-highlighting=none");
 		expect(command.args).toContain("--natbib");
 		expect(command.args).toContain(`--template=${paths.template}`);
 		expect(command.args).toContain(`--lua-filter=${paths.tableFilter}`);
-		expect(command.args).toContain(`--bibliography=${paths.icmlBibliography}`);
-		expect(command.args).toContain("--metadata=biblio-style:icml2026");
+		expect(command.args).toContain(
+			`--bibliography=${paths.preprintBibliography}`,
+		);
+		expect(command.args).toContain("--metadata=biblio-style:plainnat");
+		expect(command.args.join(" ")).not.toContain("icml");
 	});
 
 	it("hands pandoc the LaTeX source rather than asking it to make the PDF", () => {
@@ -33,9 +37,9 @@ describe("manifold paper ICML PDF compiler", () => {
 		// are driven explicitly below instead.
 		const paths = createManifoldPaperPdfPaths("/paper");
 
-		const command = buildIcmlPandocCommand(paths);
+		const command = buildPreprintPandocCommand(paths);
 
-		expect(command.args).toContain(`--output=${paths.icmlTex}`);
+		expect(command.args).toContain(`--output=${paths.texSource}`);
 		expect(command.args).not.toContain("--pdf-engine=pdflatex");
 		expect(command.args.join(" ")).not.toContain(paths.outputPdf);
 	});
@@ -48,7 +52,7 @@ describe("manifold paper ICML PDF compiler", () => {
 
 		expect(latex.cmd).toBe("pdflatex");
 		expect(latex.args).toContain("-interaction=nonstopmode");
-		expect(latex.args).toContain(paths.icmlTex);
+		expect(latex.args).toContain(paths.texSource);
 		expect(latex.cwd).toBe(paths.buildDir);
 
 		expect(bibtex.cmd).toBe("bibtex");
@@ -67,21 +71,25 @@ describe("manifold paper ICML PDF compiler", () => {
 		);
 	});
 
-	it("keeps generated PDFs and downloaded ICML assets under ignored build output", () => {
+	it("keeps every generated artifact under ignored build output", () => {
 		const paths = createManifoldPaperPdfPaths("/paper");
 
 		expect(paths.buildDir).toBe("/paper/build/llm_manifold");
 		expect(paths.outputPdf).toBe(
-			"/paper/build/llm_manifold/manifold-paper-icml2026.pdf",
+			"/paper/build/llm_manifold/manifold-paper-preprint.pdf",
 		);
-		expect(paths.icmlKitZip).toBe("/paper/build/llm_manifold/icml2026.zip");
-		expect(paths.styleDir).toBe("/paper/build/llm_manifold/icml2026");
-		expect(paths.icmlMarkdown).toBe("/paper/build/llm_manifold/paper.icml.md");
-		expect(paths.icmlTex).toBe("/paper/build/llm_manifold/manifold-paper.tex");
-		expect(paths.icmlBibliography).toBe(
-			"/paper/build/llm_manifold/refs.icml.bib",
+		expect(paths.preprintMarkdown).toBe(
+			"/paper/build/llm_manifold/paper.preprint.md",
 		);
-		expect(paths.tableFilter).toBe("/paper/scripts/filters/icml-tables.lua");
+		expect(paths.texSource).toBe(
+			"/paper/build/llm_manifold/manifold-paper.tex",
+		);
+		expect(paths.preprintBibliography).toBe(
+			"/paper/build/llm_manifold/refs.preprint.bib",
+		);
+		expect(paths.tableFilter).toBe(
+			"/paper/scripts/filters/preprint-tables.lua",
+		);
 	});
 
 	it("defaults the paper directory to the one this script ships in", () => {
@@ -137,6 +145,20 @@ describe("manifold paper ICML PDF compiler", () => {
 				"### Larger context windows",
 			].join("\n"),
 		);
+	});
+
+	it("names the author with affiliation and contact, never anonymizing", () => {
+		// The ICML style hid the author list unless the build passed [accepted],
+		// so the default PDF used to print "Anonymous Authors".
+		const template = readFileSync(
+			new URL("./templates/llm-manifold-preprint.tex", import.meta.url),
+			"utf-8",
+		);
+
+		expect(template).toContain("\\author{$for(author)$$author.name$");
+		expect(template).toContain("$author.affiliation$");
+		expect(template).toContain("mailto:$author.email$");
+		expect(template).not.toContain("icml");
 	});
 
 	it("normalizes known Unicode names for classic BibTeX", () => {
