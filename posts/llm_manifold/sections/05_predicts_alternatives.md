@@ -2,15 +2,12 @@
 
 The operators in Section 4 are not a closed taxonomy. They are a way to orient ourselves when a new technique arrives with a more specific name: a critique loop, a delegation scheme, a memory design, or a larger context window. The useful question is not whether the technique sounds agentic. It is what kind of movement it creates through task-local document space, and what can pull that movement toward an acceptable document.
 
-Three distinctions organize the comparison.
-
-First, a technique may add computation. More reasoning tokens extend the trajectory and allow the model to cover more of the available document space before committing to an answer. This can help when the task requires serial steps. It cannot provide a fact, a file, or an application state that never entered the context.
-
-Second, a technique may add evidence. Retrieval, execution, and interaction append material from outside the current trajectory. This can move generation toward a region that internal continuation alone would not reach. The gain is bounded by the quality and coverage of the observation: a retrieval result can be irrelevant, a test suite can be incomplete, and a tool can expose the wrong state.
-
-Third, a technique may add alternatives. Sampling, delegation, debate, and search can explore different paths through the space. Diversity is useful only when some selection rule can distinguish the better paths. A judge, vote, value estimate, or parent agent is still another generated process unless it is grounded in an external check.
-
-These mechanisms compose. A workflow may generate several plans, execute each one, and ask a model to select among the results. In that case, the relevant question is not which operator appears strongest in isolation. It is whether the evidence survives each boundary. A generated summary can become the parent's entire view of a test result; a self-written memory can become the source for a later prompt; a judge can select a fluent answer that every branch got wrong. The composition inherits the weakest point at which its evidence can be lost or misread.
+Operator selections compose.
+A workflow may generate several plans, execute each one, and ask a model to select among the results.
+In that case, the relevant question is not which operator appears strongest in isolation.
+It is whether the evidence each provides is appended back through each intermediate trajectory.
+A generated summary can become the parent's entire view of a test result; a self-written memory can become the source for a later prompt; a judge can select a fluent answer that every branch got wrong.
+The composition inherits the weakest point at which its evidence can be lost or misread.
 
 ### Self-critique and revision
 
