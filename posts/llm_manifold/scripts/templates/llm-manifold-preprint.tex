@@ -1,20 +1,17 @@
-\documentclass{article}
+\documentclass[11pt]{article}
 
+\usepackage[margin=1.25in]{geometry}
 \usepackage{microtype}
 \usepackage{graphicx}
 \usepackage{array}
 \usepackage{booktabs}
 \usepackage{tabularx}
-\usepackage{hyperref}
-
-\newcommand{\theHalgorithm}{\arabic{algorithm}}
-
-\usepackage$if(icml-style-options)$[$icml-style-options$]$endif${$if(icml-style)$$icml-style$$else$icml2026$endif$}
-
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{mathtools}
 \usepackage{amsthm}
+\usepackage[numbers]{natbib}
+\usepackage[hidelinks]{hyperref}
 
 \providecommand{\tightlist}{%
   \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
@@ -23,25 +20,19 @@ $if(biblio-style)$
 \bibliographystyle{$biblio-style$}
 $endif$
 
-\icmltitlerunning{$if(icml-running-title)$$icml-running-title$$else$$title$$endif$}
+\title{$title$}
+
+$if(author)$
+\author{$for(author)$$author.name$\thanks{$author.affiliation$. Correspondence to \href{mailto:$author.email$}{$author.email$}.}$sep$ \and $endfor$}
+$endif$
+
+$if(date)$
+\date{$date$}
+$endif$
 
 \begin{document}
 
-\twocolumn[
-\icmltitle{$title$}
-
-$if(author)$
-\begin{icmlauthorlist}
-$for(author)$
-\icmlauthor{$author$}{}
-$endfor$
-\end{icmlauthorlist}
-$endif$
-
-\vskip 0.3in
-]
-
-\printAffiliationsAndNotice{}
+\maketitle
 
 $if(abstract)$
 \begin{abstract}

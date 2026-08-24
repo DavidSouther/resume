@@ -14,6 +14,14 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parents[2]
 
 
+def strip_front_matter(paper_text: str) -> str:
+    """Drop the YAML metadata block, which is addresses and titles, not prose.
+
+    The author's email would otherwise be read as a citation of `@gmail`.
+    """
+    return re.sub(r"\A---\n.*?\n---\n", "", paper_text, count=1, flags=re.DOTALL)
+
+
 def bib_entries(bib_text: str) -> dict[str, str]:
     entries = {}
     for m in re.finditer(r"@\w+\s*\{\s*([^,]+)\s*,(.*?)\n\}", bib_text, flags=re.DOTALL):
@@ -25,7 +33,7 @@ def main() -> int:
     paper = Path(sys.argv[1]) if len(sys.argv) > 1 else HERE / "paper.md"
     bib = Path(sys.argv[2]) if len(sys.argv) > 2 else HERE / "refs.bib"
 
-    paper_text = paper.read_text(encoding="utf-8")
+    paper_text = strip_front_matter(paper.read_text(encoding="utf-8"))
     entries = bib_entries(bib.read_text(encoding="utf-8"))
 
     # Pandoc `@key` cites -- single `[@key]`, multi `[@key1; @key2]`, and bare

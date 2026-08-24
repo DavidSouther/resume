@@ -56,6 +56,26 @@ class CheckCitationsMultiKeyTest(unittest.TestCase):
         self.assertEqual(proc.returncode, 0, proc.stdout)
         self.assertIn("2 cited keys", proc.stdout)
 
+    def test_ignores_at_signs_in_the_yaml_front_matter(self):
+        # The author's contact email is metadata, not a citation of @gmail.
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_dir = Path(tmp)
+            paper = _write(
+                tmp_dir,
+                "paper.md",
+                "---\nauthor:\n  - email: someone@gmail.com\n---\n\n"
+                "Body citing [@key1].\n",
+            )
+            bib = _write(tmp_dir, "refs.bib", BIB_FIXTURE)
+
+            proc = subprocess.run(
+                [sys.executable, str(CHECK_CITATIONS), str(paper), str(bib)],
+                capture_output=True,
+                text=True,
+            )
+        self.assertEqual(proc.returncode, 0, proc.stdout)
+        self.assertIn("1 cited keys", proc.stdout)
+
     def test_still_flags_a_genuinely_undefined_key(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_dir = Path(tmp)
