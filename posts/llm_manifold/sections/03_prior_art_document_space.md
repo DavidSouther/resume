@@ -8,16 +8,15 @@ Their results constrain the analogy rather than proving it.
 DisCoCat composes grammatical structure with distributional word meanings through functorial maps [@coecke2010].
 Bradley, Terilla, and Vlassopoulos construct a `[0,1]`-enriched category whose objects are linguistic expressions and whose graded arrows describe relations among texts [@bradley2021].
 Their later work uses a language model's next-token probabilities to enrich a category of prefixes and continuations [@bradley2025].
-These accounts provide formal structures over texts, but they do not analyze multi-step agent workflows.
+These accounts provide formal structures over texts, but they do not analyze multi-step agent workflows. They make “document space” a useful framing question without supplying the single space or distance used by this paper.
 
 Zekri and coauthors model autoregressive generation as a Markov chain over text states [@zekri2024].
-That supplies a direct basis for calling the sequence of generated prefixes a trajectory.
-It does not establish a smooth dynamical system or basins of attraction.
+That supplies a direct basis for calling the sequence of generated prefixes a trajectory. It does not establish a smooth dynamical system or basins of attraction; here, trajectory names the evolving sequence of context that the harness can extend, branch, or redirect.
 
 ### Representation geometry
 
 Information geometry gives “manifold” a precise meaning for parametric statistical models equipped with the Fisher information metric [@amari1998].
-This paper does not claim such a metric for documents.
+This paper does not claim such a metric for documents. “Manifold” is retained because the framing helps explain why steering operators feel different: they move generation through task-local regions without requiring those regions to form a mathematically defined global surface.
 Evidence about transformer representations is narrower.
 Valeriani and coauthors find low intrinsic dimension in particular regimes of contextual hidden states [@valeriani2023].
 Tulchinskii and coauthors use intrinsic dimension in contextual token representations to distinguish human from generated text [@tulchinskii2023].
@@ -33,7 +32,7 @@ It is useful here only as a conceptual bounding that trajectories over certain r
 Transformer expressivity provides a computational account of trajectory length.
 Chain-of-thought tokens allow additional serial computation on problems that fixed-depth computation cannot solve directly [@li2024].
 Expressivity increases with the number of intermediate steps [@merrill2023].
-This supports treating intermediate tokens as computational steps, not as evidence of geometric curvature.
+This supports treating intermediate tokens as computational steps. In the framing used here, longer trajectories cover more of the available document space; they do not thereby acquire evidence from outside the trajectory.
 
 Program synthesis already treats code generation as search through a discrete space of programs constrained by examples, grammars, or specifications [@gulwani2017].
 Milner's full-abstraction result equates denotational equality with contextual equivalence for the typed calculus and semantic model he studies [@milner1977].
@@ -49,7 +48,7 @@ For a fixed language model, a prefix `d_t` determines a next-token distribution 
 Sampling or selecting `x_t` forms `d_{t+1} = d_t x_t`; the finite sequence `d_0, d_1, ..., d_T` is the generation trajectory.
 
 This trajectory is discrete.
-“Document space” names the prefixes and task-specific representations or relations used to compare them.
+“Document space” names the prefixes and task-specific representations or relations used to compare them. The manifold is a framing device for reasoning about local regions in that space, not a claim that the space has one smooth geometry.
 Two documents might be near because one is a probable continuation of the other or because their contextual summaries are close under a chosen embedding distance.
 They might instead be near because their source texts differ by a small edit or their observable behavior is equivalent.
 These notions are not interchangeable, and the model assumes no global distance shared by all of them.
@@ -59,6 +58,5 @@ For code, it may be the programs that satisfy a specification or pass a test sui
 For prose, it may be the documents that are faithful to sources and satisfy the requested form.
 Tests, compilers, retrieval results, application state, and human review are imperfect observations of membership in that set.
 
-An agentic harness changes the trajectory by adding context, spending more generation steps, branching, selecting, or incorporating an observation.
-Calling these changes steering operators is an analogy at the workflow level.
-It does not imply that all documents occupy one manifold, that local regions are basins of attraction, or that a named geometric metric exists.
+An agentic harness changes the trajectory by adding context, spending more generation steps, branching, selecting, or incorporating an observation. Calling these changes steering operators preserves the useful mental structure of the manifold framing: each operator changes how the workflow moves through task-local document space, and each has a different source of guidance.
+It remains an analogy at the workflow level. It does not imply that all documents occupy one manifold, that local regions are basins of attraction, or that a named geometric metric exists.

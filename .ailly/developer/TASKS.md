@@ -4,14 +4,45 @@ Next-step queue for `developer:ailly` sessions in this repo.
 
 ## Follow-ups
 
+- **manifold paper: legacy plan-step tests encode a superseded outline** — Seven
+  `posts/llm_manifold/evals/scripts/test_*.py` files (`test_abstract`,
+  `test_compose_paper`, `test_evaluation_and_ledger`,
+  `test_intro_conclusion_references`, `test_predicts_and_alternatives`,
+  `test_prior_art_and_document_space`, `test_worked_analyses`) assert the old
+  ten-section outline: a `06_evaluation_claim_ledger.md` that commit `1eda7e4`
+  deleted, section titles that `1eda7e4` renamed, and section *numbers* that
+  shifted. They have been red since that commit. Decide per file whether to
+  retarget it at the shipped eight-section outline or delete it as a spent
+  plan-step gate; `check_sections.py`, `check_citations.py`, `check_pandoc.py`,
+  `test_check_*.py`, `test_transfer_test_protocol.py`, and
+  `test_operator_evaluation.py` (retargeted at the shipped §5, not the unused
+  August 6 Table 2 catalog) are the live green gate.
+
+- **manifold paper: the PDF title block still reports two ICML author errors** —
+  The built PDF's title footnote reads `AUTHORERR: Missing \icmlaffiliation.` and
+  `AUTHORERR: Missing \icmlcorrespondingauthor.`, because
+  `posts/llm_manifold/scripts/templates/llm-manifold-icml.tex` emits
+  `\icmlauthor{...}{}` with an empty affiliation key and never emits the two
+  companion macros the ICML style requires. Fixing it needs an affiliation label
+  and a corresponding-author email, which are the author's to supply, so it was
+  left alone rather than invented. Related: the abstract in
+  `sections/01_abstract.md` is still the placeholder ("Write the rest _after_ the
+  paper is complete"), and it renders verbatim in the PDF.
+
 - **manifold paper + post (LLMs as a model of syntactic space)** — A **project**
   (project loop; see [.ailly/developer/2026-06-25-C-manifold/design.md](2026-06-25-C-manifold/design.md),
   phase: Implement). Next step: **project step N-1, holistic review** — read
   [posts/llm_manifold/paper.md](../../posts/llm_manifold/paper.md) end to end for
-  narrative coherence (not per-section correctness, already checked), confirm the
-  predictive (§6) and worked-analyses (§5) sections actually clear the "more than
-  relabeling prompt engineering" bar together rather than just section-by-section,
-  and pin the single sharpest statement of the thesis. See
+  narrative coherence (not per-section correctness, already checked), confirm §5
+  (now a three-mechanism evaluation: computation / evidence / alternatives, with
+  composition inheriting the weakest evidence boundary) and §6 clear the "more
+  than relabeling prompt engineering" bar together rather than just
+  section-by-section, and pin the single sharpest statement of the thesis. The
+  [2026-08-06-A-section5-design-patterns](2026-08-06-A-section5-design-patterns)
+  session (four questions + Table 2) is
+  [superseded](2026-08-06-A-section5-design-patterns/SUPERSEDED.md). The abstract
+  is still a placeholder ("Write the rest _after_ the paper is complete"), and
+  `post.md` still describes the old §5. See
   [.ailly/developer/2026-06-25-C-manifold/plan.md](2026-06-25-C-manifold/plan.md)'s
   now-complete 8-step build log for what each section already established, so the
   holistic review isn't re-litigating settled ground. After that: **project step N,
