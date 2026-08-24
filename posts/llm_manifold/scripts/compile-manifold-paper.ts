@@ -1,15 +1,6 @@
 import { spawnSync } from "node:child_process";
-import { copyFileSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
-
-/**
- * The paper is an arXiv-style preprint, not a submission to a venue with its
- * own style file, so the build depends only on what TeX Live ships.
- */
-const BIBLIO_STYLE = "plainnat";
-
-const TEX_JOB_NAME = "manifold-paper";
-const MAX_LATEX_PASSES = 4;
 
 /** `posts/llm_manifold`, the directory this script's own `scripts/` sits in. */
 const DEFAULT_PAPER_DIR = resolve(import.meta.dirname, "..");
@@ -18,7 +9,6 @@ export type Command = {
 	cmd: string;
 	args: string[];
 	cwd?: string;
-	env?: NodeJS.ProcessEnv;
 };
 
 export type ManifoldPaperPdfPaths = {
@@ -26,12 +16,8 @@ export type ManifoldPaperPdfPaths = {
 	composeScript: string;
 	paper: string;
 	bibliography: string;
-	preprintMarkdown: string;
-	texSource: string;
-	preprintBibliography: string;
-	texJobName: string;
-	tableFilter: string;
-	template: string;
+	csl: string;
+	typstSource: string;
 	buildDir: string;
 	outputPdf: string;
 };
@@ -43,9 +29,8 @@ type CliOptions = {
 };
 
 /**
- * `paperDir` is `posts/llm_manifold`, not the repo root: every path below hangs
- * off the paper's own directory. It defaults to this script's parent so the
- * command works from any working directory.
+ * Every generated artifact stays below the ignored paper build directory.
+ * The default is based on this script, so the command works from any cwd.
  */
 export function createManifoldPaperPdfPaths(
 	paperDir = DEFAULT_PAPER_DIR,
@@ -64,22 +49,8 @@ export function createManifoldPaperPdfPaths(
 		),
 		paper: join(resolvedPaperDir, "paper.md"),
 		bibliography: join(resolvedPaperDir, "refs.bib"),
-		preprintMarkdown: join(buildDir, "paper.preprint.md"),
-		texSource: join(buildDir, `${TEX_JOB_NAME}.tex`),
-		preprintBibliography: join(buildDir, "refs.preprint.bib"),
-		texJobName: TEX_JOB_NAME,
-		tableFilter: join(
-			resolvedPaperDir,
-			"scripts",
-			"filters",
-			"preprint-tables.lua",
-		),
-		template: join(
-			resolvedPaperDir,
-			"scripts",
-			"templates",
-			"llm-manifold-preprint.tex",
-		),
+		csl: join(resolvedPaperDir, "ieee.csl"),
+		typstSource: join(buildDir, "manifold-paper.typ"),
 		buildDir,
 		outputPdf: outputPdf
 			? resolve(resolvedPaperDir, outputPdf)
@@ -94,120 +65,45 @@ export function buildComposeCommand(paths: ManifoldPaperPdfPaths): Command {
 	};
 }
 
-export function buildPreprintPandocCommand(
+/**
+ * Pandoc resolves citations before emitting Typst. This preserves the paper's
+ * IEEE citation style without requiring BibTeX or a bibliography pass.
+ */
+export function buildTypstPandocCommand(
 	paths: ManifoldPaperPdfPaths,
 ): Command {
 	return {
 		cmd: "pandoc",
 		args: [
-			paths.preprintMarkdown,
+			paths.paper,
+			"--to=typst",
 			"--standalone",
-			"--syntax-highlighting=none",
+			"--citeproc",
 			"--shift-heading-level-by=-1",
-			"--natbib",
-			`--template=${paths.template}`,
-			`--lua-filter=${paths.tableFilter}`,
-			`--bibliography=${paths.preprintBibliography}`,
-			`--metadata=biblio-style:${BIBLIO_STYLE}`,
-			`--output=${paths.texSource}`,
+			`--bibliography=${paths.bibliography}`,
+			`--csl=${paths.csl}`,
+			`--output=${paths.typstSource}`,
 		],
 	};
 }
 
-/**
- * pandoc does not run bibtex for `--natbib`, so letting it drive `--pdf-engine`
- * leaves every `\citep` undefined and renders it as "(?)". The LaTeX passes are
- * therefore driven here: pdflatex, bibtex, then pdflatex twice more to settle
- * the citation and cross-reference labels.
- */
-export function buildPdfLatexCommand(paths: ManifoldPaperPdfPaths): Command {
+export function buildTypstCompileCommand(
+	paths: ManifoldPaperPdfPaths,
+): Command {
 	return {
-		cmd: "pdflatex",
-		args: ["-interaction=nonstopmode", "-halt-on-error", paths.texSource],
-		cwd: paths.buildDir,
+		cmd: "typst",
+		args: [
+			"compile",
+			`--root=${paths.paperDir}`,
+			paths.typstSource,
+			paths.outputPdf,
+		],
 	};
-}
-
-export function buildBibtexCommand(paths: ManifoldPaperPdfPaths): Command {
-	return {
-		cmd: "bibtex",
-		args: [paths.texJobName],
-		cwd: paths.buildDir,
-	};
-}
-
-/**
- * How many passes it takes to settle depends on how far the inserted
- * bibliography shifts the page breaks, so the count is read off the log rather
- * than fixed. `MAX_LATEX_PASSES` only bounds a pathological oscillation.
- */
-export function latexNeedsRerun(log: string): boolean {
-	return /Rerun to get|Rerun LaTeX/u.test(log);
-}
-
-/**
- * natbib emits the bibliography itself, so the markdown's own References
- * heading would print an empty duplicate section above it. The section number
- * is optional in the pattern because the outline has been renumbered once
- * already and a pinned number silently stops matching.
- */
-export function stripPandocReferencesSection(markdown: string): string {
-	const stripped = markdown.replace(
-		/\n## (?:\d+\. )?References\n[\s\S]*$/u,
-		"",
-	);
-	return `${stripped.trimEnd()}\n`;
-}
-
-/**
- * The markdown numbers its own headings ("## 5. ...") so that the composed
- * paper.md reads correctly on its own and the eval scripts can address a
- * section by number. LaTeX numbers sections too, which prints "5. 5. ..." in
- * the PDF unless the hand-written number is dropped on the way in.
- */
-export function stripSectionNumbers(markdown: string): string {
-	return markdown.replace(/^(#{1,6} )\d+\.\s+/gmu, "$1");
-}
-
-export function normalizeBibtexForClassicBibtex(bibtex: string): string {
-	const normalized = bibtex
-		.replaceAll("Vičič", "Vi{\\v{c}}i{\\v{c}}")
-		.replaceAll("Tošić", "To{\\v{s}}i{\\v{c}}");
-
-	const unknownUnicode = [...normalized].find(
-		(char) => char.charCodeAt(0) > 127,
-	);
-	if (unknownUnicode) {
-		throw new Error(
-			`refs.bib contains non-ASCII BibTeX text not normalized for classic BibTeX: ${unknownUnicode}`,
-		);
-	}
-
-	return normalized;
-}
-
-function preparePreprintInputs(paths: ManifoldPaperPdfPaths): void {
-	mkdirSync(paths.buildDir, { recursive: true });
-
-	const markdown = readFileSync(paths.paper, "utf-8");
-	writeFileSync(
-		paths.preprintMarkdown,
-		stripSectionNumbers(stripPandocReferencesSection(markdown)),
-		"utf-8",
-	);
-
-	const bibtex = readFileSync(paths.bibliography, "utf-8");
-	writeFileSync(
-		paths.preprintBibliography,
-		normalizeBibtexForClassicBibtex(bibtex),
-		"utf-8",
-	);
 }
 
 function run(command: Command): void {
 	const proc = spawnSync(command.cmd, command.args, {
 		cwd: command.cwd,
-		env: command.env ? { ...process.env, ...command.env } : process.env,
 		stdio: "inherit",
 	});
 
@@ -259,8 +155,8 @@ function requiredValue(args: string[], index: number, option: string): string {
 function printUsage(): void {
 	console.log(`Usage: node posts/llm_manifold/scripts/compile-manifold-paper.ts [options]
 
-Compiles posts/llm_manifold/sections/*.md to an arXiv-style preprint PDF.
-Runs from any working directory.
+Compiles posts/llm_manifold/sections/*.md to an arXiv-style preprint PDF
+using Pandoc and Typst. Runs from any working directory.
 
 Options:
   --output <pdf>      Write the PDF to this path.
@@ -277,6 +173,7 @@ function main(): void {
 		: undefined;
 	const paths = createManifoldPaperPdfPaths(options.paperDir, output);
 
+	mkdirSync(paths.buildDir, { recursive: true });
 	mkdirSync(dirname(paths.outputPdf), { recursive: true });
 
 	if (!options.skipCompose) {
@@ -284,27 +181,11 @@ function main(): void {
 		run(buildComposeCommand(paths));
 	}
 
-	console.log("Preparing LaTeX markdown and BibTeX inputs...");
-	preparePreprintInputs(paths);
+	console.log(`Generating ${paths.typstSource}...`);
+	run(buildTypstPandocCommand(paths));
 
-	console.log(`Building ${paths.outputPdf}...`);
-	run(buildPreprintPandocCommand(paths));
-
-	const latex = buildPdfLatexCommand(paths);
-	const latexLog = join(paths.buildDir, `${paths.texJobName}.log`);
-	run(latex);
-	run(buildBibtexCommand(paths));
-	for (let pass = 0; pass < MAX_LATEX_PASSES; pass += 1) {
-		run(latex);
-		if (!latexNeedsRerun(readFileSync(latexLog, "utf-8"))) {
-			break;
-		}
-	}
-
-	const builtPdf = join(paths.buildDir, `${paths.texJobName}.pdf`);
-	if (builtPdf !== paths.outputPdf) {
-		copyFileSync(builtPdf, paths.outputPdf);
-	}
+	console.log(`Building ${paths.outputPdf} with Typst...`);
+	run(buildTypstCompileCommand(paths));
 	console.log(`Wrote ${paths.outputPdf}`);
 }
 

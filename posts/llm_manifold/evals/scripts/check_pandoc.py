@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Check that the pandoc build resolves citations and exits 0.
+"""Check that Pandoc can generate the Typst preprint with resolved citations.
 
 Usage: check_pandoc.py [paper.md]
-Targets `-t latex` so citation resolution is validated without a full TeX install.
+Targets `-t typst`, matching the PDF compiler's intermediate format.
 Exit 0 = pandoc succeeded with no unresolved-citation warnings; exit 1 otherwise.
 Exit 1 (with a clear message) if pandoc is not installed.
 """
@@ -23,7 +23,7 @@ def main() -> int:
         print("pandoc not installed; cannot validate the build")
         return 1
 
-    cmd = ["pandoc", str(paper), "--citeproc", "--bibliography", str(bib), "-t", "latex"]
+    cmd = ["pandoc", str(paper), "--citeproc", "--bibliography", str(bib), "-t", "typst"]
     if csl.exists():
         cmd += ["--csl", str(csl)]
 
@@ -34,7 +34,7 @@ def main() -> int:
     if "[WARNING]" in proc.stderr and "citeproc" in proc.stderr.lower():
         print(f"pandoc reported citation warnings:\n{proc.stderr.strip()}")
         return 1
-    print("OK: pandoc build resolved citations and exited 0")
+    print("OK: pandoc generated Typst with resolved citations")
     return 0
 
 

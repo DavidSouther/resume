@@ -22,10 +22,10 @@ Lit Group transfer review; this half gates the mechanical contract.
   resolves to an entry in `refs.bib`, and every `refs.bib` entry carries a year and
   an arXiv/DOI/URL/venue anchor.
 - **`scripts/check_pandoc.py`** — the pandoc build resolves citations and exits 0
-  (`pandoc paper.md --citeproc --csl ieee.csl --bibliography refs.bib -t latex`).
-  Targets `-t latex` so it validates citation resolution without a full TeX install.
-  Requires `ieee.csl` (present, fetched from the citation-style-language repo) and
-  a local `pandoc` install.
+  (`pandoc paper.md --citeproc --csl ieee.csl --bibliography refs.bib -t typst`).
+  This matches the PDF compiler's intermediate format. The complete
+  `npm run paper:pdf` path then invokes `typst compile`; it never invokes TeX
+  Live, LaTeX, or BibTeX. Requires `ieee.csl` (present), Pandoc, and Typst.
 - **Claim-ledger judge** — leftover from the ten-section outline. `manifold.yaml`
   still describes an LLM-as-judge over a Section 8 six-field ledger that commit
   `1eda7e4` deleted. Until the standalone Ailly eval lands, this assertion is
