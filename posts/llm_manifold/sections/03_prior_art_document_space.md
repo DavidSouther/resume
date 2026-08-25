@@ -17,7 +17,7 @@ For code, it may be the programs that satisfy a specification or pass a test sui
 For prose, it may be the documents that are faithful to sources and satisfy the requested form.
 Tests, compilers, retrieval results, application state, and human review are imperfect observations of membership in those sets.
 
-An agentic harness changes a trajectory by spending more generation steps, adding context or incorporating an observation, or branching & selecting between alternatives.
+An agentic harness changes a trajectory by spending more generation steps, adding context or incorporating an observation, or branching and selecting between candidates.
 Calling these changes "steering operators" preserves the useful mental structure of the manifold framing: each operator changes how the workflow moves through task-local document space, and each has a different source of guidance.
 It remains an analogy at the workflow level.
 It does not imply that all documents occupy one manifold, that local regions are basins of attraction, or that a named geometric metric exists.
@@ -64,4 +64,4 @@ Their later work uses a language model's next-token probabilities to enrich a ca
 These accounts provide formal structures over texts, but they do not analyze multi-step agent workflows. They make “document space” a useful framing question without supplying any single space or distance used by this paper.
 
 Zekri and coauthors model autoregressive generation as a Markov chain over text states [@zekri2024].
-That supplies a direct basis for calling the sequence of generated prefixes a trajectory. It does not establish a smooth dynamical system or basins of attraction; here, trajectory describes the evolving sequence of context that the harness can extend, branch, or redirect.
+That supplies a direct basis for calling the sequence of generated prefixes a trajectory. It does not establish a smooth dynamical system or basins of attraction; here, trajectory describes the evolving sequence of context that the agentic harness can extend, branch, or redirect.
