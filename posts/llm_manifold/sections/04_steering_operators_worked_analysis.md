@@ -5,15 +5,15 @@ Steering operators add tokens to a trajectory. Their primary token kind is **gen
 **Table 1.**
 **Steering operators, signals, moves, and grounding.**
 
-| Operator | Signal | Move | Grounding |
-| --- | --- | --- | --- |
-| **Prompting**<br><em>Null</em> | Prompt tokens and examples | Conditions the initial trajectory | None within generation; a human or agentic harness may supply the prompt |
-| **Thinking Tokens**<br><em>Generative</em> | Intermediate generated states | Extends the trajectory before the final response | None unless another operator supplies it |
-| **Execution Feedback**<br><em>Evidence</em> | Compiler, test, runtime, or API output | Appends an outside verdict and regenerates | Direct, within the tool's coverage |
-| **Retrieval Expansion**<br><em>Generative + Evidence</em> | Generated query or stand-in document; retrieved corpus matches | Generates a retrieval representation, then appends returned material | Direct when returned corpus material is authoritative and relevant; the generated representation routes there, and relevance or coverage can fail |
-| **Multi-sample Branching**<br><em>Selection</em> | Votes, comparisons, or an aggregator | Samples several trajectories and selects or aggregates | Depends on the selector; branches may share biases |
-| **ReAct-style Interaction**<br><em>Evidence when the observation bears on the decision</em> | Observation after each action | Alternates reasoning, actions, and observations | Direct when the observation exposes the relevant state |
-| **Tree-search Agents**<br><em>Generative + Selection; Evidence with environment feedback</em> | Value estimates, reflections, and, when observed, environment feedback | Retains and revisits branches under a search policy | Depends on the evaluator; environment feedback is direct only within its coverage |
+| Technique | Token type | Signal | Move | Grounding |
+| --- | --- | --- | --- | --- |
+| **Prompting** | *Null* | Prompt tokens and examples | Conditions the initial trajectory | None within generation; a human or agentic harness may supply the prompt |
+| **Thinking Tokens** | *Generative* | Intermediate generated states | Extends the trajectory before the final response | None unless another operator supplies it |
+| **Execution Feedback** | *Evidence* | Compiler, test, runtime, or API output | Appends an outside verdict and regenerates | Direct, within the tool's coverage |
+| **Retrieval Expansion** | *Generative + Evidence* | Generated query or stand-in document; retrieved corpus matches | Generates a retrieval representation, then appends returned material | Direct when returned corpus material is authoritative and relevant; the generated representation routes there, and relevance or coverage can fail |
+| **Multi-sample Branching** | *Selection* | Votes, comparisons, or an aggregator | Samples several trajectories and selects or aggregates | Depends on the selector; branches may share biases |
+| **ReAct-style Interaction** | *Evidence when the observation bears on the decision* | Observation after each action | Alternates reasoning, actions, and observations | Direct when the observation exposes the relevant state |
+| **Tree-search Agents** | *Generative + Selection; Evidence with environment feedback* | Value estimates, reflections, and, when observed, environment feedback | Retains and revisits branches under a search policy | Depends on the evaluator; environment feedback is direct only within its coverage |
 
 ### Prompting and Thinking Tokens
 

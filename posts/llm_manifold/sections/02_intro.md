@@ -1,7 +1,7 @@
 ## 1. Introduction
 
 Agentic language systems do more than ask a model for a likely continuation.
-They take actions to retrieve documents, execute code, preserve intermediate reasoning, branch across several candidates, and use observations or value estimates to decide what happens next [citation to an overview of mid 2026 agent system features].
+They take actions to retrieve documents, execute code, preserve intermediate reasoning, branch across several candidates, and use observations or value estimates to decide what happens next [@li2025agentsurvey].
 Some of these actions happen using language model continuation for text generation; [the same?] other actions use deterministic and long established text computation techniques [the same?].
 The gestalt of these actions working in a single system delivers an "agentic system".
 Agentic workflows improve outputs over one-shot document generation through three broad mechanisms: adding generative tokens, adding external evidence, and selecting among candidate continuations.
