@@ -6,7 +6,7 @@
 **Steps:**
 - [x] Step 0: Fix the revised document, figure, and verification surface
 - [x] Step 1: Rebuild the notation introduction and named score definitions
-- [ ] Step 2: Teach the sensitivity of every scoring rule
+- [x] Step 2: Teach the sensitivity of every scoring rule
 - [ ] Step 3: Separate the shifted-log and base-log branches and preserve boundary analysis
 - [ ] Step 4: Build the sensitivity figure, integrate it, and verify the paper artifact
 
