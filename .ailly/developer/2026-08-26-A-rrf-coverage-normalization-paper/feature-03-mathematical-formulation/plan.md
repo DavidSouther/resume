@@ -428,3 +428,128 @@ compiler tests, compile the paper, and visually inspect the revised pages.
 Update the existing pure score functions and data series rather than adding a
 second figure. Regenerate the SVG, then perform focused tests, repository
 checks, generated-source inspection, PDF rendering, and visual verification.
+
+## Post-review revision: align Section 1 with the logarithmic RRF family
+
+**User story:** A reader encounters the same logarithmic RRF family, notation,
+and mathematical typography in Prior Art that the Mathematical Formulation
+later defines, without turning the literature review into a second derivation.
+
+**Steps:**
+- [x] Step 8: Extend the Section 1 verification contract
+- [x] Step 9: Align Prior Art terminology, formulation, and mathematical markup
+- [x] Step 10: Verify generated Typst and PDF typography
+
+### Step 8: Extend the Section 1 verification contract
+
+**Enables:** Markdown-level regression coverage for the exact family name,
+unified formula, singleton-normalized default, citations, and math markup.
+
+Extend the focused paper test to read
+`posts/rrf_coverage_normalization/sections/02_prior_art.md` and require the
+exact term “logarithmic RRF family” with
+`S_{\mathrm{log}}(d;b,B)=B S_{\mathrm{RRF}}(d)\ln(n(d)+b)`. Where Section 1
+mentions the practical default, require
+`S_1(d)=S_{\mathrm{RRF}}(d)\ln(n(d)+1)/\ln 2`. Assert that mathematical
+expressions use Pandoc inline or display math rather than code spans, and that
+the hidden commentary contains no stale candidate, two-branch, base-log, or
+“this paper” wording. Preserve the existing direct citations to RRF, RBC, ISR,
+logISR, and logN ISR sources.
+
+**Tests**
+
+Happy path: the Section 1 source test locates the Prior Art method blocks,
+checks the family terminology and formulas in their intended block, confirms
+the citation keys remain attached to the supported claims, and rejects
+code-formatted mathematics.
+
+- A formula exists elsewhere in the paper but not in Section 1.
+- `log` survives where the natural logarithm should be `\ln`.
+- The old `RRF(d) log(n(d)+b)` candidate or separate branch language survives
+  inside the hidden commentary.
+- A broad code-span rejection accidentally rejects ordinary prose identifiers
+  rather than only mathematical expressions.
+- Revising the commentary removes or misattributes `@cormack2009`,
+  `@bailey2017`, `@mourao2014`, `@robertson2009`, or `@fox1994`.
+
+**Implementation Outline**
+
+Add a Prior Art source path and block-specific assertions to the existing
+feature test. Match stable equations, exact terminology, and citation keys;
+avoid reproducing whole paragraphs or testing incidental line wrapping.
+
+### Step 9: Align Prior Art terminology, formulation, and mathematical markup
+
+**Enables:** Section 1 introduces the same mathematical object and renders its
+notation through the paper's embedded math fonts.
+
+Replace code-formatted equations and symbols throughout
+`02_prior_art.md` with Pandoc `$...$` or `$$...$$` mathematics, using `\ln`
+for natural logarithms. In the closest-analogue commentary, name the
+“logarithmic RRF family” exactly and state its general formulation before any
+specialization. Mention the singleton-normalized `b=1` form only as far as it
+helps distinguish the proposal from logN ISR; leave calibration, tuning,
+boundary proofs, and growth analysis to Mathematical Formulation.
+
+Update or remove the hidden candidate/two-branch language so it no longer
+describes `RRF(d) log(n(d)+b)` as a tentative standalone candidate or implies
+separate additive-shift and base-log proposals. Keep Section 1 scoped to
+provenance and comparison: standard RRF supplies the rank kernel, Mourao et
+al. supply the shifted-log ISR analogue, and BM25 and CombMNZ remain boundary
+comparators under their existing citations. Do not add a novelty claim.
+
+**Tests**
+
+Happy path: the revised prose moves from each cited prior method to the nearest
+analogue and then names the unified family without duplicating Section 2's full
+derivation.
+
+- Inline math punctuation or delimiters break Pandoc parsing.
+- `R_d`, `n(d)`, ranks, parameters, or score definitions remain code spans.
+- The prose calls `B` a shape parameter or `b` a global scale.
+- The `b=1` form omits `/\ln 2` and therefore fails singleton normalization.
+- The Prior Art discussion expands into boundary or asymptotic analysis already
+  owned by Mathematical Formulation.
+
+**Implementation Outline**
+
+Revise the section in reading order, converting notation mechanically first and
+then tightening the final comparison paragraph around the exact family name
+and formulas. Retain all supported literature claims and citations unchanged
+unless grammar requires moving a citation with its claim.
+
+### Step 10: Verify generated Typst and PDF typography
+
+**Enables:** The compiled Section 1 uses the same embedded mathematical fonts
+and notation treatment as Mathematical Formulation.
+
+Compile the real paper and inspect the Section 1 slice of generated
+`build/rrf-coverage-normalization.typ`. Require native Typst math nodes for the
+converted expressions, the unified family formula, the normalized `b=1`
+specialization where present, and preserved citations; reject monospaced
+raw/code rendering for mathematical expressions. Retain the compiler contract
+that supplies the paper-local font directory with `--ignore-system-fonts`.
+Render and visually inspect the Section 1 PDF pages beside the Mathematical
+Formulation pages for matching math glyphs, weights, subscripts, spacing, and
+line breaks.
+
+**Tests**
+
+Happy path: run the focused feature test and compiler test, compile the paper,
+inspect generated Typst, confirm the PDF is nonempty, and visually inspect all
+Section 1 pages containing mathematics.
+
+- Pandoc emits literal backticks or raw monospaced equations.
+- `S_log`, `S_RRF`, subscripts, or `\ln` render differently between sections.
+- A display equation overflows the column or creates an orphaned citation.
+- Embedded-font flags disappear even though the PDF happens to build with a
+  system font.
+- The source is correct but the generated Typst or PDF still contains stale
+  wording from an unrecompiled artifact.
+
+**Implementation Outline**
+
+Reuse the current compiler and paper-local fonts. Add generated-Typst
+assertions only where they prove conversion or font-path behavior, then perform
+the existing compile, render, and visual-verification loop without changing the
+template unless the source conversion exposes a genuine template defect.

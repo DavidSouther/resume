@@ -6,6 +6,7 @@ import { equalSupportScores } from "./generate-parameter-sensitivity-figure.ts";
 
 const paperDir = resolve(import.meta.dirname, "..");
 const section = resolve(paperDir, "sections", "03_mathematical_formulation.md");
+const priorArtSection = resolve(paperDir, "sections", "02_prior_art.md");
 const bibliography = resolve(paperDir, "refs.bib");
 const figure = resolve(paperDir, "figures", "parameter-sensitivity.svg");
 const figureGenerator = resolve(import.meta.dirname, "generate-parameter-sensitivity-figure.ts");
@@ -16,6 +17,10 @@ const compiler = resolve(import.meta.dirname, "compile-rrf-coverage-normalizatio
 
 function compact(value: string): string {
 	return value.replaceAll(/\s+/g, "");
+}
+
+function normalizePandocTypstMath(value: string): string {
+	return compact(value).replaceAll(/\\(?=[()[\],;])/g, "");
 }
 
 function blockBetween(markdown: string, heading: string, nextHeading?: string): string {
@@ -30,6 +35,60 @@ function blockBetween(markdown: string, heading: string, nextHeading?: string): 
 }
 
 describe("RRF mathematical formulation", () => {
+	it("aligns Prior Art with the logarithmic RRF family and native mathematical typography", () => {
+		// Arrange: isolate the cited method discussions and the hidden comparison commentary.
+		const priorArt = readFileSync(priorArtSection, "utf8");
+		const compactPriorArt = compact(priorArt);
+		const rrf = blockBetween(
+			priorArt,
+			"### Reciprocal-rank fusion and fixed weights",
+			"### Rank-Biased Centroid",
+		);
+		const rbc = blockBetween(priorArt, "### Rank-Biased Centroid", "### ISR, logISR, and logN ISR");
+		const isr = blockBetween(priorArt, "### ISR, logISR, and logN ISR");
+		const commentary = priorArt.match(
+			/<!--\s*### Within-paper commentary: closest analogues and search boundary[\s\S]*?-->/,
+		)?.[0] ?? "";
+
+		// Act: identify only code spans whose contents are mathematical notation.
+		const mathematicalCodeSpans = [...priorArt.matchAll(/`([^`\n]+)`/g)]
+			.map((match) => match[1])
+			.filter((value) =>
+				/^(?:R_d|d|n\(d\)|r|phi|sigma|i)$|(?:=|sum_|\^|\/[({]|\|R_d\|)/.test(value),
+			);
+
+		// Assert: terminology, equations, and provenance agree with Mathematical Formulation.
+		expect(commentary).not.toBe("");
+		expect(commentary).toContain("logarithmic RRF family");
+		expect(compact(commentary)).toContain(
+			"S_{\\mathrm{log}}(d;b,B)=BS_{\\mathrm{RRF}}(d)\\ln(n(d)+b)",
+		);
+		expect(compact(commentary)).toContain(
+			"S_1(d)=S_{\\mathrm{RRF}}(d)\\frac{\\ln(n(d)+1)}{\\ln2}",
+		);
+		expect(priorArt).not.toMatch(/\\log(?:\b|_)/);
+		expect(mathematicalCodeSpans).toEqual([]);
+		expect(priorArt).not.toMatch(/\bthis paper\b/i);
+		expect(commentary).not.toMatch(/\bcandidate\b|two[- ]branch|base[- ]log|separate additive[- ]shift/i);
+		expect(commentary).not.toMatch(/RRF\(d\)\s*(?:\\?log|\\?ln)\(n\(d\)\+b\)/);
+		expect(rrf).toContain("@cormack2009");
+		expect(rbc).toContain("@bailey2017");
+		expect(isr).toContain("@mourao2014");
+		expect(commentary).toContain("@robertson2009");
+		expect(commentary).toContain("@fox1994");
+		for (const citation of [
+			"@cormack2009",
+			"@bailey2017",
+			"@mourao2014",
+			"@robertson2009",
+			"@fox1994",
+		]) {
+			expect(priorArt).toContain(citation);
+		}
+		expect(compactPriorArt).toContain("$R_d$");
+		expect(compactPriorArt).toContain("$n(d)=|R_d|$");
+	});
+
 	it("teaches one logarithmic RRF family, its calibration, and its coverage-shape parameter", () => {
 		// Arrange: read the authored source once and partition it by stable method headings.
 		const markdown = readFileSync(section, "utf8");
@@ -320,8 +379,23 @@ describe("RRF mathematical formulation", () => {
 		expect(statSync(outputPdf).size).toBeGreaterThan(0);
 
 		const rendered = readFileSync(generatedTypst, "utf8");
+		const priorArtStart = rendered.indexOf("= Prior Art");
 		const mathematicalStart = rendered.indexOf("= Mathematical Formulation");
+		expect(priorArtStart).toBeGreaterThanOrEqual(0);
 		expect(mathematicalStart).toBeGreaterThanOrEqual(0);
+		const renderedPriorArt = rendered.slice(priorArtStart, mathematicalStart);
+		const normalizedPriorArtMath = normalizePandocTypstMath(renderedPriorArt);
+		expect(rendered).toContain('set text(font: "Libertinus Serif"');
+		expect(rendered).toContain('show raw: set text(font: "JetBrains Mono"');
+		expect(renderedPriorArt).not.toMatch(/`[^`\n]*(?:=|sum_|\^|\/[({])[^`\n]*`/);
+		expect(normalizedPriorArtMath).toContain(
+			"S_(upright(log))(d;b,B)=BS_(upright(RRF))(d)ln(n(d)+b)",
+		);
+		expect(normalizedPriorArtMath).toContain(
+			"S_1(d)=S_(upright(RRF))(d)frac(ln(n(d)+1),ln2)",
+		);
+		for (const citation of ["cormack2009", "bailey2017", "mourao2014", "robertson2009", "fox1994"])
+			expect(renderedPriorArt).toContain(`@${citation}`);
 		const renderedMathematics = rendered.slice(mathematicalStart);
 		const compactTypst = compact(renderedMathematics);
 		expect(renderedMathematics).not.toMatch(/Evidence tier/i);
