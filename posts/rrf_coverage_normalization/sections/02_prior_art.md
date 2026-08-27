@@ -1,11 +1,21 @@
-## Prior Art
+## Introduction & Prior Art
 
-The ranking operation begins with one heterogeneous input document collection.
-Distinct retrievers rank the documents eligible for them according to the
-representations each document provides, and RRF consumes the resulting
-intermediate rankings. Rank-fusion methods differ not only in how quickly rank
+In the field of document search, ranked retrieval is assigning an to order
+documents by their relevancy to a user's query. A variety of ranking
+operations have been developed and deployed, each having varying controls
+to tune and document types they best support. These include simple token
+matching, BM25 normalized token matching, or various vector embedding models
+using cosine similarity or distance. Many corpi have documents that are
+amenable to retrieval using sevearl, but not necessarily all, of these
+techniques. This leads to the ranked fusion family of algorithms, which
+aim to combine multiple disparate retrievers into a single rank.
+
+The ranking operation begins with one heterogeneous document collection and a user's query.
+Distinct retrievers rank eligible documents based on their deifnition of relevancy to the users query.
+Ranked fusion consumes the resulting intermediate rankings.
+Ranked fusion methods differ not only in how quickly rank
 contributions decay, but also in what they do when the same document appears in
-several but not all such rankings. A method can change the influence of a
+several such rankings. A method can change the influence of a
 retriever, reward agreement across rankings, or normalize a document's
 accumulated score. These operations are not interchangeable. We therefore
 separate the rank kernel from the treatment of coverage: $R_d$ is the set of
