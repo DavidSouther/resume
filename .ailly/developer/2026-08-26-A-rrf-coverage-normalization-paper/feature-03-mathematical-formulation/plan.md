@@ -1,106 +1,311 @@
-# Implementation Plan: Mathematical Formulation
+# Implementation Plan: Mathematical Formulation Revision
 
 **Feature test:** `posts/rrf_coverage_normalization/scripts/mathematical-formulation.feature.test.ts`
-**User story:** Given the validated Prior Art evidence, compiling the RRF paper produces one shared-notation mathematical section with five sourced definitions and a correct account of the shifted-log bias.
-**Libraries & Skills:** None. This feature uses the existing Markdown, Pandoc, and Typst pipeline. Apply Arrange-Act-Assert when changing or adding tests.
+**User story:** A retrieval researcher can decode every symbol, compare how rank and parameter changes affect each fusion rule, and distinguish the additive-shift and base-log coverage branches from their formulas, prose, citations, and sensitivity figure.
+**Libraries & Skills:** None. Use the existing Markdown, Pandoc, Typst, Node, and Vitest pipeline. Apply Arrange-Act-Assert when revising the feature test.
 **Steps:**
-- [x] Step 0: Fix the document and integration surface
-- [x] Step 1: Author the shared notation and five definition blocks
-- [x] Step 2: Author the boundary and coverage analysis
-- [x] Step 3: Integrate the section and prove the compiled artifact
+- [x] Step 0: Fix the revised document, figure, and verification surface
+- [ ] Step 1: Rebuild the notation introduction and named score definitions
+- [ ] Step 2: Teach the sensitivity of every scoring rule
+- [ ] Step 3: Separate the shifted-log and base-log branches and preserve boundary analysis
+- [ ] Step 4: Build the sensitivity figure, integrate it, and verify the paper artifact
 
-## Step 0: Fix the document and integration surface
+## Step 0: Fix the revised document, figure, and verification surface
 
-No new runtime types, public functions, or compiler abstractions are needed. Preserve the existing `PaperPdfPaths`, `listPaperSections`, and `compileRrfCoverageNormalizationPaper` signatures. The feature adds this document surface:
+No new public runtime API or compiler abstraction is needed. Preserve
+`PaperPdfPaths`, `listPaperSections`, and
+`compileRrfCoverageNormalizationPaper`. The revision changes these existing or
+paper-local surfaces:
 
 ```text
 posts/rrf_coverage_normalization/sections/03_mathematical_formulation.md
-
-## Mathematical Formulation
-### Plain RRF
-### Coverage division
-### Fixed retriever weights
-### Rank-Biased Centroid
-### Shifted-log candidate
-### Boundary and coverage analysis
+posts/rrf_coverage_normalization/scripts/mathematical-formulation.feature.test.ts
+posts/rrf_coverage_normalization/figures/parameter-sensitivity.svg
+posts/rrf_coverage_normalization/scripts/generate-parameter-sensitivity-figure.ts
 ```
 
-The integration surface is the existing ordered section array in `compile-rrf-coverage-normalization.test.ts`, which must eventually include:
+The figure path and generator name may be adjusted during Build if the existing
+compiler has a stricter paper-asset convention, but the artifact must remain
+paper-local, deterministic, vector-based, and reproducible without a network
+dependency. No domain-object, newtype, or type-state pattern applies: the public
+surface is mathematical prose and a compiled figure, not a software domain
+model.
 
-```text
-resolve(paths.sectionsDir, "03_mathematical_formulation.md")
-```
+Revise the feature-test contract before changing the section. Replace assertions
+that require `Evidence tier`, `this paper`, or generic `log` wording. Add
+assertions for symbol domains, all named score definitions, direct citations,
+the two distinct logarithmic branches, substantive sensitivity claims, the
+figure reference and file, generated Typst, and nonempty PDF. Avoid brittle
+whole-paragraph matching; keep exact assertions for formulas and mathematical
+invariants.
 
-The pattern-selection beat found no applicable domain-object, newtype, or type-state pressure because the deliverable is prose and formulas, not a new software model. Arrange-Act-Assert applies to the existing compiler regression test and feature test.
-
-**Tests**
-
-Happy path: inspect the existing red feature test and confirm that its paths, exact headings, notation strings, formula strings, citations, and conclusions match the cleared design before implementation starts.
-
-- Missing section file remains the expected initial red state.
-- Do not weaken exact strings or collapse definition-block boundaries.
-- Do not add a compiler API solely for this section.
-
-**Implementation Outline**
-
-Keep the existing compiler public surface unchanged. Add one Markdown section in Steps 1 and 2, then add it to the existing ordered compiler input in Step 3.
-
-## Step 1: Author the shared notation and five definition blocks
-
-**Enables:** The notation assertions, ordered-heading assertions, formula assertions, per-block evidence-tier assertions, and per-block citation assertions in the feature test.
-
-Create `03_mathematical_formulation.md`. Define `I`, `I_d`, `n(d)`, `r_i(d)`, `k`, `w_i`, `phi`, `b`, and natural `log` before use. Add the five exact level-three definition headings in the designed order. Keep each formula, evidence label, and required citation inside its own heading-delimited block. Use short ASD-STE100 sentences and distinguish this paper's two definitions from sourced methods.
+**Enables:** A red feature test that precisely describes every requested
+revision without weakening the existing formula, RBC endpoint, citation,
+boundary, large-shift, compiler, or PDF assertions.
 
 **Tests**
 
-Happy path: read the authored Markdown, locate each heading exactly once and in order, then assert that each block contains its formula, evidence tier, and bibliography-backed citation key.
+Happy path: arrange the authored section and bibliography, read and partition
+the section by its stable headings, and assert the revised contract in the
+proper block before compiling the real paper.
 
-- A symbol used before its definition.
-- A duplicate or reordered heading that breaks block ownership.
-- A citation present elsewhere in the file but absent from the definition block.
-- A coverage-division or shifted-log definition incorrectly presented as established prior art.
-- A logN ISR precedent incorrectly described as using the RRF kernel.
+- `\log` or prose saying “log denotes natural logarithm” remains anywhere in
+  the mathematical section or its generated Typst.
+- A removed tier label or “this paper” phrase survives in prose or generated
+  output.
+- A formula is present globally but absent from its owning method block.
+- Prose mentions the figure but the asset is absent, empty, or omitted from the
+  generated paper.
+- A test accidentally accepts the malformed identity
+  `ln(n+b) = B ln(n)`.
 
 **Implementation Outline**
 
-Write a short section introduction and shared notation paragraph. For each definition block, state the exact formula, its domain constraints, its source or paper-defined status, and its evidence tier. Reuse the existing keys `@cormack2009`, `@azureVectorWeighting`, `@bailey2017`, and `@mourao2014`; do not add bibliography records.
+Update the existing feature test in Arrange-Act-Assert order. Keep one source
+read, block-specific assertions, bibliography-key checks, one real compiler
+invocation, generated-Typst checks, and output-PDF checks. Assert semantic
+claims through compact stable fragments rather than reproducing all teaching
+prose verbatim.
 
-## Step 2: Author the boundary and coverage analysis
+## Step 1: Rebuild the notation introduction and named score definitions
 
-**Enables:** Every `requiredConclusions` assertion in the feature test while leaving compilation integration as the remaining red condition.
+**Enables:** The revised feature test's notation, domain, score-definition,
+natural-logarithm, phrasing, and citation assertions.
 
-Complete `### Boundary and coverage analysis` with the exact designed conclusions. Separate the returned-document domain from the finite zero-coverage extension. Cover `0 < b < 1`, `b = 1`, and `b > 1`; the limit as `b` approaches zero; the `b = 1` singleton; and the large-`b` finite-range behavior. Then distinguish the logarithmic multiplier's diminishing increments from the candidate's unbounded total coverage reward. State that fixed weights are independent of realized `n(d)` and are not coverage normalization.
+Replace the terse introduction with a compact symbol table or equivalent prose
+that explains every object and parameter before use. It must say exactly which
+quantities are integer-, natural-, and real-valued:
+
+- Let the finite retriever index set be
+  `I={1,...,m}` with `m in N_+` and hence `I subset Z`; define `d` as a document,
+  not a numeric variable.
+- Define `I_d subseteq I`, and define
+  `n(d)=|I_d| in {0,...,m} subset Z_{>=0}`. On the returned-document domain,
+  state `n(d) in {1,...,m} subset N_+`; reserve `n(d)=0` for the boundary
+  extension.
+- Define `r_i(d) in N_+` as a one-based rank.
+- Define `k in R_{>0}`, `w_i in R_{>=0}`,
+  `phi in [0,1) subset R`, additive shift `b_s in R_{>=0}`, base parameter
+  `b_l in R_{>1}`, and `B=1/ln(b_l) in R_{>0}`. Use distinct subscripts so one
+  glyph is not silently assigned two meanings.
+- State the codomains of `q_phi(r)` and each score as real-valued, with
+  nonnegativity on its stated domain.
+
+Use `\ln` in every formula and in prose; remove the standalone sentence that
+explains `log`. Explicitly introduce each named function, not only its displayed
+formula: `S_RRF`, `S_avg`, `S_w`, `S_RBC`, the additive shifted-log score
+`S_shift`, and the base-log/strength score `S_base`. If the final notation keeps
+`S_log` for continuity, assign it to exactly one branch and never use it
+ambiguously.
+
+Remove every `Evidence tier` line and all “this paper defines/proposes” or
+generic “this paper” phrasing. Attach the relevant source directly to the claim:
+RRF to `@cormack2009`, fixed weights to `@azureVectorWeighting`, RBC to
+`@bailey2017`, and the inverse-square logN ISR precedent to `@mourao2014` while
+clearly saying its rank kernel differs. Describe coverage division and the two
+candidate branches directly as comparators/proposals built from the cited RRF
+kernel; do not imply that an external source established them.
 
 **Tests**
 
-Happy path: isolate the analysis block and assert that all boundary, limiting, fixed-weight, equal-rank growth, and normalization conclusions occur there.
+Happy path: each symbol appears in the introduction with its meaning and exact
+domain, then each score name is introduced in its own block with its complete
+formula and local source citations.
 
-- Treating `n(d)=0` as part of the normative returned-document domain.
-- Silently strengthening `b > 0` to `b >= 1`.
-- Saying `log(n+b)` bounds or removes the total coverage reward.
-- Confusing diminishing increments of the multiplier with decreasing total score.
-- Introducing numerical examples, rank-order judgments, or the Feature 4 comparison table.
+- `n(d)=0` is incorrectly included in the returned-document domain.
+- `N` is used without saying whether it includes zero.
+- `b_s` and `b_l` are conflated, or `B` lacks its definition.
+- A score symbol is shown in a formula without prose explaining what it scores.
+- `ln` conversion misses prose, a subscript, a limit, a generated-output
+  assertion, or a figure label.
+- A direct citation becomes detached from the claim or formula it supports.
 
 **Implementation Outline**
 
-Use compact analytic prose in this order: domain and zero extension; singleton and bias regimes; finite-range large-`b` behavior; fixed-weight distinction; equal-rank growth comparison; explicit non-normalization conclusion. Preserve the exact conclusion sentences required by the feature test while adding only enough explanation to connect them.
+Write the intro in the reading order document, retriever set, coverage, rank,
+then real parameters. Follow it with stable method blocks containing the named
+function, formula, domain, and direct provenance. Keep the corrected
+piecewise-continuous RBC endpoint and “no interpretation of `0^0`” statement.
 
-## Step 3: Integrate the section and prove the compiled artifact
+## Step 2: Teach the sensitivity of every scoring rule
 
-**Enables:** The existing compiler unit test's ordered-section contract plus the feature test's successful compiler status, nonempty PDF, and generated-Typst assertions.
+**Enables:** The feature test's method-by-method rank, parameter, coverage, and
+justification assertions.
 
-Update only the expected ordered `sections` array in `compile-rrf-coverage-normalization.test.ts` so `03_mathematical_formulation.md` follows `02_prior_art.md`. The production compiler already discovers numbered sections and requires no change. Run the focused compiler unit test and feature test, then run the repository's proportionate check command. Inspect the generated Typst for the required content and confirm the PDF is nonempty.
+Substantially expand each method block so it teaches how its score changes,
+what can change an ordering, and why that behavior is useful or risky. Cover at
+least these exact relationships:
+
+- **Plain RRF:** better rank increases a contribution; increasing `k` lowers all
+  terms and compresses the contrast between early and late ranks; each extra
+  supporting retriever adds a positive term, so realized coverage can overcome
+  weaker ranks. Explain why `k` is a rank-damping constant rather than a
+  coverage normalizer.
+- **Coverage division:** retain the RRF response to `r_i` and `k`, but explain
+  that adding a retriever raises the mean only when its reciprocal-rank
+  contribution exceeds the current mean, lowers it when below, and leaves it
+  unchanged when equal. Under equal ranks, the score is invariant to `n`.
+  Explain the tradeoff: it removes the automatic reward for agreement but can
+  discard useful consensus evidence.
+- **Fixed retriever weights:** show linear sensitivity to `w_i`, reciprocal
+  sensitivity to rank and `k`, and additive sensitivity to support. A zero
+  weight removes a retriever; multiplying all weights by one positive constant
+  rescales scores without changing order, while relative weights can change
+  order. Explain why fixed priors are not realized-coverage normalization.
+- **RBC:** each one-rank descent multiplies the positive-`phi` contribution by
+  `phi`; `phi=0` retains only rank one; larger `phi` makes decay slower but
+  reduces the rank-one mass. For a fixed rank `r>1`, note the contribution is
+  not globally monotone in `phi` and peaks at `phi=(r-1)/r`; do not use the vague
+  claim that larger `phi` always raises every score. Additional supporting
+  retrievers still add nonnegative mass. Explain the geometric browsing-depth
+  interpretation and the corrected endpoint.
+- **Additive shifted log:** at fixed `n`, ranks and `k` act through `S_RRF`; at
+  fixed RRF score, increasing coverage or `b_s` increases the multiplier, while
+  marginal coverage increments diminish. Explain that changing `b_s` changes
+  cross-coverage comparisons, but for documents with the same `n` the positive
+  multiplier preserves their RRF order (apart from the `b_s=0,n=1` zero tie).
+- **Base-log/strength branch:** for `n>1`, rank and `k` act through `S_RRF`, and
+  increasing `n` raises `ln n`; every singleton scores zero. `B>0` only rescales
+  all documents when global, so it cannot change a ranking. Equivalently,
+  increasing the base `b_l` decreases `B=1/ln b_l`; this changes score magnitude,
+  not order. Explain why this branch is a qualitatively different singleton and
+  coverage policy from the additive shift.
+
+Tie every interpretation to the displayed mathematics. Do not merely list
+derivative signs: include the ranking consequence and design justification in
+plain language.
 
 **Tests**
 
-Happy path: arrange the paper-local paths and authored section, act by running the real compiler once, then assert ordered inputs, exit status zero, required generated Typst content, and a nonempty PDF.
+Happy path: each method block includes claims for all parameters that affect it,
+rank movement, coverage movement, ordering consequences, and the rationale for
+the design.
 
-- The new section appears before Prior Art or more than once.
-- Markdown passes but a citation key is unresolved during compilation.
-- The compiler exits successfully without producing a nonempty PDF.
-- Generated Typst drops a formula, tier label, citation, or analysis conclusion.
-- A focused test passes while the exact compiler section-list test still expects only two sections.
+- Saying that larger `phi` monotonically increases all RBC contributions.
+- Saying that global scaling by `B` or by all `w_i` changes order.
+- Saying coverage division always penalizes another supporting retriever.
+- Discussing `n` only as a multiplier and omitting its interaction with the RRF
+  sum.
+- Calling fixed weights or shifted log a normalization without qualification.
 
 **Implementation Outline**
 
-Extend the existing regression expectation by one ordered path. Do not modify shared compiler machinery. Run the focused tests through the repository's existing Node/Vitest scripts, compile through `compile-rrf-coverage-normalization.ts`, and retain generated build artifacts only according to the repository's current convention.
+For each block, move from term-level behavior, to parameter changes, to
+document-ordering consequences, to design rationale. Use a small analytic
+identity or ratio only where it makes a non-obvious claim precise; keep
+numerical simulation and empirical conclusions out of this section.
+
+## Step 3: Separate the shifted-log and base-log branches and preserve boundary analysis
+
+**Enables:** The feature test's two-branch identity, non-equivalence, boundary,
+limit, and coverage-growth assertions.
+
+Present the requested alternatives as two mathematically distinct branches:
+
+1. **Additive-shift branch:**
+   `S_shift(d;b_s)=S_RRF(d) ln(n(d)+b_s)` for `b_s>=0` and returned documents
+   `n(d)>=1`. At `b_s=0`, the formula is defined on returned documents, but a
+   singleton multiplier is zero and the `n=0` logarithm is undefined. For the
+   finite zero-coverage extension and its sign analysis, retain the existing
+   stricter condition `b_s>0`.
+2. **Base-log branch:**
+   `S_base(d;b_l)=S_RRF(d) log_{b_l}(n(d))` for `b_l>1`, then apply change of
+   base:
+   `S_base(d;b_l)=B S_RRF(d) ln(n(d))` with
+   `B=1/ln(b_l)>0`.
+
+State explicitly that `B S_RRF ln n` is **not** obtained by extracting a
+constant from `ln(n+b_s)`: generally
+`ln(n+b_s) != B ln n`. It is a reparameterization of `log_{b_l} n`, not an
+algebraic rewrite of the additive-shift formula. This distinction is required
+to avoid giving the two meanings of `b` one symbol.
+
+Preserve and translate the current additive-branch boundary analysis to `ln`:
+the `0<b_s<1`, `b_s=1`, and `b_s>1` zero-coverage signs; the zero empty-sum
+extension for `b_s>0`; `b_s -> 0`; the `b_s=1` singleton; the uniform finite
+coverage large-`b_s` limit after division by `ln b_s`; convergence of strict
+RRF comparisons; and finite-`b_s` differentiation of RRF ties. Preserve the
+fixed-finite-`I` qualification.
+
+Compare equal-rank growth explicitly. Plain RRF grows as `n`; coverage division
+is constant; additive shifted log grows as `n ln(n+b_s)`; and the base-log
+branch grows as `B n ln n`. Both logarithmic branches have diminishing
+multiplier increments but unbounded total growth over a growing-retriever
+family. For a fixed finite `I`, every score remains bounded. Keep fixed weights
+separate from coverage normalization.
+
+**Tests**
+
+Happy path: isolate the boundary-analysis block and assert both branch formulas,
+`B=1/ln(b_l)>0`, the explicit non-equivalence statement, every retained
+additive boundary/limit conclusion, and the four equal-rank growth laws.
+
+- Treating `0 * ln(0)` as a valid zero-coverage extension at `b_s=0`.
+- Requiring `b_s>0` for the returned-document formula and thereby losing the
+  requested `b_s=0` branch.
+- Claiming `ln(n+b_s)` factors into a constant times `ln n`.
+- Defining `B=ln b_l` instead of the change-of-base value `1/ln b_l`.
+- Losing the fixed-finite-range qualification from the large-shift limit.
+- Confusing diminishing increments in a multiplier with bounded total score.
+
+**Implementation Outline**
+
+Introduce the branch split before boundary analysis, use non-overloaded
+subscripts throughout, and give each equation its own domain. Analyze the
+additive branch first so the existing proof remains recognizable, then compare
+the base-log branch by singleton behavior, global scale, and equal-rank growth.
+
+## Step 4: Build the sensitivity figure, integrate it, and verify the paper artifact
+
+**Enables:** The feature test's figure-source, section-reference,
+generated-Typst, compiled-PDF, and full revised-content assertions.
+
+Create one legible multi-panel vector figure that shows how every parameter
+affects every applicable scoring rule. Use normalized illustrative values and
+label them as such; the graph teaches analytic behavior rather than reporting
+an experiment. Include:
+
+- a rank panel varying `r` for RRF-family terms and several `k` values, weighted
+  RRF for several `w_i`, and RBC for several `phi` values;
+- a coverage panel varying `n` at equal ranks for `S_RRF`, `S_avg`, additive
+  shifted log at several `b_s`, and base-log/strength at several `B` (or
+  equivalent bases `b_l`);
+- an adjacent sensitivity matrix or legend marking which of
+  `r`, `n`, `k`, `w_i`, `phi`, `b_s`, and `b_l/B` affects each of
+  `S_RRF`, `S_avg`, `S_w`, `S_RBC`, `S_shift`, and `S_base`, including “global
+  scale only” where a parameter changes magnitude but not ordering.
+
+The caption must state held-constant values, normalization used for visual
+comparison, and that curves illustrate the analytic discussion. Reference the
+figure from the section near the method-sensitivity discussion. Generate the
+SVG deterministically from a paper-local TypeScript script (or an already
+established equivalent discovered during Build), commit the source and output,
+and ensure the compiler resolves it without external files.
+
+Run the focused mathematical-formulation feature test, the paper compiler unit
+test, and the repository's proportionate check command. Compile the real paper,
+inspect generated Typst for all equations/citations/figure inclusion, confirm
+the PDF is nonempty, render the pages, and visually inspect the mathematical
+section and figure for clipping, unreadable labels, incorrect legends, or
+column-width problems.
+
+**Tests**
+
+Happy path: generate the figure, compile the paper, and assert the source SVG is
+nonempty and referenced once; generated Typst includes the image/caption and all
+revised formulas; the PDF exists and is visually correct.
+
+- A curve silently uses different held-constant values than its caption.
+- The matrix implies that `phi` affects RRF or that `B` changes base-log order.
+- The equal-rank plot shows `S_avg` growing with `n`.
+- The SVG is readable standalone but clipped or illegible in the paper column.
+- Citations, formulas, or boundary discussion disappear during Pandoc/Typst
+  conversion even though the Markdown source test passes.
+
+**Implementation Outline**
+
+Use small pure functions in the generator for the six displayed score families,
+sample fixed documented ranges, normalize only for cross-curve visibility, and
+write semantic labels into the SVG. Integrate through ordinary Markdown image
+syntax unless the existing compiler requires a paper-local alternative. Keep
+the section prose authoritative and the figure explanatory.
