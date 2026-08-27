@@ -20,7 +20,9 @@ function compact(value: string): string {
 }
 
 function normalizePandocTypstMath(value: string): string {
-	return compact(value).replaceAll(/\\(?=[()[\],;])/g, "");
+	return compact(value)
+		.replaceAll(/\\(?=[()[\],;])/g, "")
+		.replaceAll(/\.(?=\$)/g, "");
 }
 
 function blockBetween(markdown: string, heading: string, nextHeading?: string): string {
@@ -56,8 +58,18 @@ describe("RRF mathematical formulation", () => {
 			.filter((value) =>
 				/^(?:R_d|d|n\(d\)|r|phi|sigma|i)$|(?:=|sum_|\^|\/[({]|\|R_d\|)/.test(value),
 			);
+		const formulaSemantics = [
+			"S_{\\mathrm{RRF}}(d)=\\sum_{i\\inR_d}\\frac{1}{k+r_i(d)}",
+			"S_{\\mathrm{ISR}}(d)=n(d)\\sum_{i\\inR_d}\\frac{1}{r_i(d)^2}",
+			"S_{\\mathrm{logISR}}(d)=\\ln(n(d))\\sum_{i\\inR_d}\\frac{1}{r_i(d)^2}",
+			"S_{\\mathrm{logNISR}}(d;\\sigma)=\\ln(n(d)+\\sigma)\\sum_{i\\inR_d}\\frac{1}{r_i(d)^2}",
+			"S_{\\mathrm{log}}(d;b,B)=BS_{\\mathrm{RRF}}(d)\\ln(n(d)+b)",
+			"S_1(d)=S_{\\mathrm{RRF}}(d)\\frac{\\ln(n(d)+1)}{\\ln2}",
+		];
 
 		// Assert: terminology, equations, and provenance agree with Mathematical Formulation.
+		for (const formula of formulaSemantics) expect(compactPriorArt).toContain(formula);
+		expect(priorArt).not.toContain("$$");
 		expect(commentary).not.toBe("");
 		expect(commentary).toContain("logarithmic RRF family");
 		expect(compact(commentary)).toContain(
@@ -245,6 +257,10 @@ describe("RRF mathematical formulation", () => {
 		expect(logarithmic).toMatch(/global scale.*preserves.*order/is);
 		expect(logarithmic).toMatch(/threshold.*combined.*signals.*calibration/is);
 		expect(logarithmic).toMatch(/\$b\$.*singleton.*coverage levels.*marginal/is);
+		expect.soft(compactLogarithmic).toContain(
+			"B\\ln\\left(\\frac{n+1+b}{n+b}\\right)",
+		);
+		expect.soft(logarithmic).not.toContain("\\!");
 		expect(logarithmic).toMatch(/increasing and concave.*diminishing increments/is);
 		expect(compactLogarithmic).toContain("B=\\frac{1}{\\ln(1+b)}");
 		expect(logarithmic).toMatch(/singleton multiplier.*one.*additional coverage reward/is);
@@ -387,13 +403,17 @@ describe("RRF mathematical formulation", () => {
 		const normalizedPriorArtMath = normalizePandocTypstMath(renderedPriorArt);
 		expect(rendered).toContain('set text(font: "Libertinus Serif"');
 		expect(rendered).toContain('show raw: set text(font: "JetBrains Mono"');
-		expect(renderedPriorArt).not.toMatch(/`[^`\n]*(?:=|sum_|\^|\/[({])[^`\n]*`/);
-		expect(normalizedPriorArtMath).toContain(
-			"S_(upright(log))(d;b,B)=BS_(upright(RRF))(d)ln(n(d)+b)",
-		);
-		expect(normalizedPriorArtMath).toContain(
-			"S_1(d)=S_(upright(RRF))(d)frac(ln(n(d)+1),ln2)",
-		);
+		expect(renderedPriorArt).not.toContain("`");
+		for (const formula of [
+			"$S_(upright(RRF))(d)=sum_(iinR_d)frac(1,k+r_i(d))$",
+			"$S_(upright(ISR))(d)=n(d)sum_(iinR_d)frac(1,r_i(d)^2)$",
+			"$S_(upright(logISR))(d)=ln(n(d))sum_(iinR_d)frac(1,r_i(d)^2)$",
+			"$S_(upright(logNISR))(d;sigma)=ln(n(d)+sigma)sum_(iinR_d)frac(1,r_i(d)^2)$",
+			"$S_(upright(log))(d;b,B)=BS_(upright(RRF))(d)ln(n(d)+b)$",
+			"$S_1(d)=S_(upright(RRF))(d)frac(ln(n(d)+1),ln2)$",
+		])
+			expect(normalizedPriorArtMath).toContain(formula);
+		expect(renderedPriorArt).not.toMatch(/\n\n\$ [^\n]+ \$\n\n/);
 		for (const citation of ["cormack2009", "bailey2017", "mourao2014", "robertson2009", "fox1994"])
 			expect(renderedPriorArt).toContain(`@${citation}`);
 		const renderedMathematics = rendered.slice(mathematicalStart);
@@ -412,6 +432,8 @@ describe("RRF mathematical formulation", () => {
 		expect(compactTypst).toContain("S_(upright(log))");
 		expect(compactTypst).not.toContain("S_(upright(shift))");
 		expect(compactTypst).not.toContain("S_(upright(base))");
+		expect.soft(renderedMathematics).not.toContain("#h(-1em)");
+		expect.soft(compactTypst).toContain("Bln(frac(n+1+b,n+b))");
 		expect(renderedMathematics).toContain("parameter-sensitivity.svg");
 		expect(renderedMathematics.indexOf("pagebreak()")).toBeLessThan(renderedMathematics.indexOf("parameter-sensitivity.svg"));
 		for (const definition of definitions) {

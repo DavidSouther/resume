@@ -553,3 +553,158 @@ Reuse the current compiler and paper-local fonts. Add generated-Typst
 assertions only where they prove conversion or font-path behavior, then perform
 the existing compile, render, and visual-verification loop without changing the
 template unless the source conversion exposes a genuine template defect.
+
+**Steps:**
+- [x] Step 11: Require inline mathematics throughout Section 1
+- [x] Step 12: Rewrite every Section 1 formula as readable inline prose
+- [x] Step 13: Repair the logarithmic-increment rendering
+- [x] Step 14: Verify generated inline math and rendered page flow
+
+### Step 11: Require inline mathematics throughout Section 1
+
+**Enables:** The feature test fails while any display-math delimiter remains in
+numbered Section 1 or Pandoc emits its formulas as display mathematics.
+
+Extend the existing Prior Art assertions in
+`mathematical-formulation.feature.test.ts`. Check the complete
+`02_prior_art.md` source, including the hidden within-paper commentary, rather
+than only visible method blocks. Reject every `$$` display delimiter while
+retaining exact compact-form assertions for RRF, ISR, logISR, logN ISR, the
+general logarithmic RRF family, and the singleton-normalized specialization.
+After the real compiler runs, isolate the generated Prior Art slice and verify
+that those expressions are native inline Typst math, not raw/code spans or
+standalone display-math nodes. Keep the existing embedded-font assertions.
+
+**Tests**
+
+Happy path: arrange the full Markdown section and generated Prior Art slice,
+then assert zero display delimiters, all six formula semantics, and native
+inline math output.
+
+- A `$$` pair survives inside the HTML comment and escapes a visible-only scan.
+- Line wrapping changes whitespace without changing a formula.
+- A formula becomes inline Markdown but Pandoc emits raw or monospaced text.
+- The assertion rejects display math outside numbered Section 1.
+
+**Implementation Outline**
+
+Add narrow source and generated-output assertions to the existing Arrange-Act-
+Assert test. Normalize only insignificant whitespace and Pandoc punctuation
+escapes; continue matching operators, subscripts, parameters, denominators,
+and citation-bearing prose exactly enough to catch semantic drift.
+
+### Step 12: Rewrite every Section 1 formula as readable inline prose
+
+**Enables:** The source-level delimiter and formula assertions pass for visible
+Prior Art and hidden commentary.
+
+Convert all eight current display blocks in `02_prior_art.md` to `$...$` inline
+Pandoc math: plain RRF; ISR; logISR; logN ISR; the general logarithmic RRF
+family and its `S_1` specialization; and both repeated family formulas in
+hidden commentary. Preserve the
+exact score names, summation domains, kernels, parameters, normalization by
+`\ln 2`, citations, and explanatory claims. Integrate each equation into a
+grammatical sentence with its punctuation outside or adjacent to the math as
+Pandoc requires.
+
+If a complete expression is too wide for a paper column, split or reorder the
+surrounding prose so the same inline formula sits at a natural sentence
+boundary. Do not shorten the mathematics, change its semantics, remove its
+local citation, or restore display delimiters. Leave Mathematical Formulation
+and the paper template unchanged.
+
+**Tests**
+
+Happy path: every visible and commented formula is inline, reads naturally in
+its paragraph, and still satisfies the existing compact formula and citation
+assertions.
+
+- A multiline display block is mechanically collapsed but produces an
+  unreadably long sentence.
+- The ISR common factor or logarithmic-family scale factor is dropped.
+- `S_1` loses singleton normalization by `\ln 2`.
+- A citation is stranded from the method or empirical claim it supports.
+
+**Implementation Outline**
+
+Rewrite one formula-bearing paragraph at a time, beginning with its prose
+subject and following immediately with the inline definition. Use sentence
+boundaries and short lead-ins to control wrapping while retaining the exact
+mathematical expressions in both visible prose and hidden commentary.
+
+### Step 13: Repair the logarithmic-increment rendering
+
+**Enables:** Mathematical Formulation visibly retains the logarithm in the
+one-step coverage increment
+`B\ln\left(\frac{n+1+b}{n+b}\right)` instead of allowing Pandoc's Typst output
+to overlap and visually swallow `\ln`.
+
+Add a focused regression assertion for the authored increment and its generated
+Typst representation. Reject the unsupported LaTeX negative-thin-space command
+`\!` in this expression and reject the resulting negative `#h(-1em)` spacing in
+the generated Mathematical Formulation slice. Require the generated formula to
+contain a visible `ln` immediately before the parenthesized fraction, preserving
+the numerator, denominator, scale `B`, and claim of diminishing increments.
+
+Then remove only the unsupported spacing command from
+`03_mathematical_formulation.md`; do not change the equation, parameter names,
+or surrounding analysis.
+
+**Tests**
+
+Happy path: the focused feature test recognizes
+`B\ln\left(\frac{n+1+b}{n+b}\right)` in Markdown and native `B ln(...)` in the
+generated Typst, with neither `\!` nor a negative horizontal-space node.
+
+- The test passes because `ln` occurs elsewhere in the section while this
+  particular increment still loses it.
+- Removing spacing also removes parentheses or changes the fraction.
+- Generated Typst retains `#h(-1em)` despite the source appearing correct.
+- The equation is semantically correct in source but still visually overlaps.
+
+**Implementation Outline**
+
+First add an expression-local source assertion and a generated-output assertion
+that fails on the current `\!` translation. Remove the one unsupported spacing
+token, rebuild through the existing compiler, and keep the exact compact
+formula assertion green.
+
+### Step 14: Verify generated inline math and rendered page flow
+
+**Enables:** The focused feature test passes, compiled Section 1 uses the
+embedded math face with acceptable inline wrapping and spacing, and the
+repaired Mathematical Formulation increment visibly includes `\ln`.
+
+Run the focused mathematical-formulation feature test and compiler regression,
+then rebuild the paper. Inspect the generated Typst Prior Art slice for native
+inline representations of every converted formula, preserved citations, and
+the existing embedded text, code, and math font setup. Render and visually
+inspect every PDF page occupied by numbered Section 1, paying particular
+attention to line breaks around the long RRF, ISR-family, and logarithmic-family
+expressions and the transitions into citations.
+Also inspect the Mathematical Formulation page containing
+`B\ln\left(\frac{n+1+b}{n+b}\right)` and confirm that `B`, `\ln`, the
+parentheses, and the fraction are distinct and correctly spaced.
+
+If an expression creates overflow, an isolated fragment, or poor spacing,
+restructure only its sentence and repeat the focused build and visual check.
+Do not convert it back to display math or alter the formula to make it fit.
+
+**Tests**
+
+Happy path: focused checks are green, the PDF is nonempty, and visual inspection
+shows inline formulas using the same math glyphs as Mathematical Formulation
+without overflow, collisions, or distracting wraps; the repaired increment
+renders as `B\ln((n+1+b)/(n+b))`, not as `B((n+1+b)/(n+b))`.
+
+- Generated output is stale despite correct Markdown.
+- A long expression crosses the column edge or strands punctuation/citation.
+- Inline subscripts, summation limits, fractions, or `\ln` use a text/code face.
+- Improving Section 1 wrapping accidentally changes unrelated section layout.
+
+**Implementation Outline**
+
+Use the existing Node compiler, Typst output inspection, PDF renderer, and
+page-image review loop. Record focused test results and inspected page numbers;
+make source-only prose adjustments for any layout defect, then rebuild and
+inspect again.
