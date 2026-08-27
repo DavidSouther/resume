@@ -30,12 +30,7 @@ documents.
 ### Reciprocal-rank fusion and fixed weights
 
 Reciprocal Rank Fusion (RRF) assigns a document the sum of reciprocal-rank
-contributions
-
-$$
-S_{\mathrm{RRF}}(d)=\sum_{i\in R_d}\frac{1}{k+r_i(d)}
-$$
-
+contributions $S_{\mathrm{RRF}}(d)=\sum_{i\in R_d}\frac{1}{k+r_i(d)}$
 [@cormack2009]. It requires no calibration between retrievers' score scales:
 after each retriever has produced an intermediate ranking, only rank positions
 enter the fusion rule. At the same time, every additional retrieval ranking in
@@ -72,31 +67,19 @@ normalization by coverage.
 
 Mourao et al.'s Inverse Square Rank (ISR) family combines ranking coverage
 with a steeper rank-decay kernel [@mourao2014]. Its fusion rule is
-
-$$
-S_{\mathrm{ISR}}(d)
-=n(d)\sum_{i\in R_d}\frac{1}{r_i(d)^2}.
-$$
+$S_{\mathrm{ISR}}(d)=n(d)\sum_{i\in R_d}\frac{1}{r_i(d)^2}$.
 
 Each contributing rank decays by its inverse square, and the resulting sum is
 multiplied by the number of retrieval rankings containing the document. The
 logISR variant replaces that linear frequency factor with
-
-$$
-S_{\mathrm{logISR}}(d)
-=\ln(n(d))\sum_{i\in R_d}\frac{1}{r_i(d)^2}.
-$$
+$S_{\mathrm{logISR}}(d)=\ln(n(d))\sum_{i\in R_d}\frac{1}{r_i(d)^2}$.
 
 That logarithm creates a sharp boundary at one ranking. Because $\ln(1)=0$,
 logISR assigns zero to every document that appears in only one retrieval
 ranking, regardless of its rank. Such documents therefore require a secondary
 tie-breaking rule; Mourao et al. used a deterministic shuffle. Their logN ISR
 variant instead uses
-
-$$
-S_{\mathrm{logNISR}}(d;\sigma)
-=\ln(n(d)+\sigma)\sum_{i\in R_d}\frac{1}{r_i(d)^2}.
-$$
+$S_{\mathrm{logNISR}}(d;\sigma)=\ln(n(d)+\sigma)\sum_{i\in R_d}\frac{1}{r_i(d)^2}$.
 
 It preserves a positive score for a document seen in only one ranking whenever
 $\sigma>0$. The authors tested $\sigma$ over $[0,1]$ and used $\sigma=0.01$ in
@@ -114,19 +97,12 @@ retrieval and logN ISR placed second [@mourao2014].
 
 The closest formula-level precedent is logN ISR because it applies shifted
 logarithmic coverage to an inverse-square rank kernel. The logarithmic RRF
-family instead applies that coverage factor to the standard RRF kernel:
-
-$$
-S_{\mathrm{log}}(d;b,B)
-=B S_{\mathrm{RRF}}(d)\ln(n(d)+b).
-$$
+family instead applies that coverage factor to the standard RRF kernel as
+$S_{\mathrm{log}}(d;b,B)=B S_{\mathrm{RRF}}(d)\ln(n(d)+b)$.
 
 Here $b$ controls the coverage shape, while the common positive factor $B$
 sets the score scale. The singleton-normalized default $b=1$ is
-
-$$
-S_1(d)=S_{\mathrm{RRF}}(d)\frac{\ln(n(d)+1)}{\ln 2}.
-$$
+$S_1(d)=S_{\mathrm{RRF}}(d)\frac{\ln(n(d)+1)}{\ln 2}$.
 
 This specialization preserves the ordinary RRF score at $n(d)=1$ while
 retaining a concave coverage reward. Mathematical Formulation develops the
@@ -146,17 +122,11 @@ reciprocal-rank fusion nor a logarithmic transformation of ranking coverage.
 
 The closest formula-level precedent found is logN ISR because it uses a shifted
 logarithmic coverage factor with an inverse-square rank kernel. The logarithmic RRF family
-uses the standard RRF rank kernel instead:
-
-$$
-S_{\mathrm{log}}(d;b,B)=B S_{\mathrm{RRF}}(d)\ln(n(d)+b).
-$$
+uses the standard RRF rank kernel instead as
+$S_{\mathrm{log}}(d;b,B)=B S_{\mathrm{RRF}}(d)\ln(n(d)+b)$.
 
 The singleton-normalized default at $b=1$ is
-
-$$
-S_1(d)=S_{\mathrm{RRF}}(d)\frac{\ln(n(d)+1)}{\ln 2}.
-$$
+$S_1(d)=S_{\mathrm{RRF}}(d)\frac{\ln(n(d)+1)}{\ln 2}$.
 
 BM25 remains adjacent only by analogy because its logarithm is an
 inverse-document-frequency term [@robertson2009]. CombMNZ supplies a
