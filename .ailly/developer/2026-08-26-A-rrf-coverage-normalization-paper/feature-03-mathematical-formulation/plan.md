@@ -7,7 +7,7 @@
 - [x] Step 0: Fix the document and integration surface
 - [x] Step 1: Author the shared notation and five definition blocks
 - [x] Step 2: Author the boundary and coverage analysis
-- [ ] Step 3: Integrate the section and prove the compiled artifact
+- [x] Step 3: Integrate the section and prove the compiled artifact
 
 ## Step 0: Fix the document and integration surface
 
