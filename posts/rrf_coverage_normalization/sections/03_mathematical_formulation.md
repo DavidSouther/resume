@@ -198,19 +198,47 @@ positive singleton multiplier.
 
 ### Boundary and coverage analysis
 
-The returned-document domain is $n(d) \geq 1$.
-The singleton multiplier is positive for every $b_s > 0$.
-The zero-coverage logarithm $\ln(b_s)$ is finite for $b_s > 0$.
-The empty RRF sum makes the extended score zero.
-This finite extension is useful for boundary analysis, but it does not add an unreturned document to the normative domain.
+The two logarithmic rules are distinct branches. The additive-shift formula
 
-The shift controls the multiplier at the boundary.
-When $0 < b_s < 1$, $\ln(b_s)$ is negative.
-When $b_s = 1$, $\ln(b_s)$ is zero.
-When $b_s > 1$, $\ln(b_s)$ is positive.
-These zero-coverage signs do not change the extended score because the RRF factor is zero.
-As $b_s$ approaches zero, $\ln(1+b_s)$ approaches zero.
-At $b_s = 1$, the singleton multiplier is $\ln(2)$.
+$$
+S_{\mathrm{shift}}(d;b_s)
+=S_{\mathrm{RRF}}(d)\ln(n(d)+b_s)
+$$
+
+allows $b_s\geq0$ on the returned-document domain $n(d)\geq1$. At $b_s=0$,
+the singleton multiplier is zero, while the logarithm at $n(d)=0$ is undefined.
+The finite zero-coverage extension therefore requires $b_s>0$: then
+$\ln(b_s)$ is finite and the empty RRF sum makes the extended score zero. This
+extension supports boundary analysis; it does not add an unreturned document to
+the scoring domain.
+
+The base-log branch instead starts from $\log_{b_\ell}n$ for $b_\ell>1$ and
+uses the change-of-base identity
+
+$$
+S_{\mathrm{base}}(d;b_\ell)
+=B S_{\mathrm{RRF}}(d)\ln(n(d)),
+\qquad
+B=\frac{1}{\ln(b_\ell)}>0.
+$$
+
+This form is a reparameterization of $\log_{b_\ell}n$, not the result of
+extracting a constant from $\ln(n+b_s)$. In general,
+
+$$
+\ln(n+b_s)\neq B\ln n.
+$$
+
+The distinction matters: $b_s$ moves the additive branch's singleton value and
+changes relative multipliers across coverage levels, whereas global $B$ only
+rescales the base-log branch and leaves every ordering unchanged.
+
+For the additive branch, the shift controls the multiplier at the zero-coverage
+boundary. When $0<b_s<1$, $\ln(b_s)$ is negative; when $b_s=1$,
+$\ln(b_s)$ is zero; and when $b_s>1$, $\ln(b_s)$ is positive. These signs do
+not change the extended score because its empty RRF factor is zero. As
+$b_s\to0$, the singleton multiplier satisfies $\ln(1+b_s)\to0$. At $b_s=1$,
+the singleton multiplier is $\ln 2$.
 
 For fixed finite $I$, the large-shift limit is
 
@@ -222,19 +250,19 @@ $$
 $$
 
 uniformly over the fixed finite coverage range $1 \leq n(d) \leq |I|$.
-Consequently, finite-$b_s$ ordering converges to every strict, non-tied plain-RRF
-comparison. Documents tied by plain RRF can still be differentiated by coverage
-at finite $b_s$. This fixed-range statement does not claim that the logarithm is
-globally bounded.
+Consequently, finite-$b_s$ ordering converges to every strict, non-tied plain-RRF comparison.
+Documents tied by plain RRF can still be differentiated by coverage at finite $b_s$.
+This fixed-range statement does not claim that the logarithm is globally bounded.
 
-Fixed weights are independent of $n(d)$.
-Fixed weights do not normalize realized coverage.
-They encode prior retriever influence, while $n(d)$ records how many retrievers
-returned the document.
+To compare coverage growth, hold every supporting rank equal while allowing the
+number $n$ of supporting retrievers to grow. Plain RRF then grows in proportion to $n$;
+coverage division is constant; the additive branch grows in proportion to
+$n\ln(n+b_s)$; and the base-log branch grows in proportion to $B n\ln n$.
+Both logarithmic multipliers have diminishing increments, but multiplying them
+by the growing RRF sum makes their total scores unbounded over this
+growing-retriever family. For any fixed finite $I$, all four scores remain
+bounded because $n\leq|I|$.
 
-The logarithmic multiplier has diminishing increments.
-Across a family in which the number of supporting retrievers grows while their
-ranks remain equal, plain RRF grows in proportion to $n$, and the candidate
-grows in proportion to $n\ln(n+b_s)$. Thus the total coverage reward is unbounded
-across that growing-retriever family; for any fixed finite $I$, it is bounded.
-This is not a division-style normalization.
+Fixed weights remain a separate design choice: they are independent of
+$n(d)$, encode prior retriever influence, and do not normalize realized
+coverage.
