@@ -1,20 +1,20 @@
 ## Mathematical Formulation
 
-A common notation separates three kinds of quantities. Retriever indices and
+For a common notation, we separate three kinds of quantities. Retriever indices and
 coverage counts are integers: $I=\{1,\ldots,m\}$ is the finite
 retriever-index set, $m\in\mathbb{N}_{+}$, $I\subset\mathbb{Z}$, and
 
 $$
-I_d = \{i \in I : i \text{ ranks } d\}, \qquad
-n(d) = |I_d| \in \{0,\ldots,m\}\subset\mathbb{Z}_{\geq 0}.
+I_d = \{i \in I : i \text{ ranks } d\} \\
+n(d) = |I_d| \in \{0,\ldots,m\}\subset\mathbb{Z}_{\geq 0}
 $$
 
-Here $d$ is a document, not a numeric variable. On the returned-document
-domain, $n(d)\in\{1,\ldots,m\}\subset\mathbb{N}_{+}$; $n(d)=0$ is used only
-for the boundary extension. Ranks are positive natural numbers:
+Here $d$ is a document, not a numeric variable. On the returned document
+domain, $n(d)\in\{1,\ldots,m\}\subset\mathbb{N}_{+}$; $n(d)=0$ is used
+for a boundary extension. Ranks are positive natural numbers:
 $r_i(d)\in\mathbb{N}_{+}$ is the one-based rank of $d$ under each
 $i\in I_d$. Thus $I$ and $I_d$ are sets of integer indices, $n(d)$ is a
-nonnegative integer count, and every realized $r_i(d)$ is a positive natural
+nonnegative integer count, and every $r_i(d)$ is a positive natural
 number.
 
 All tunable parameters are real. The RRF rank-damping constant is
@@ -24,17 +24,18 @@ $\phi\in[0,1)\subset\mathbb{R}$. The ISR-family offset is
 $\sigma\in[0,1]\subset\mathbb{R}$. In the logarithmic RRF family,
 $b\in\mathbb{R}_{\geq0}$ shifts coverage and
 $B\in\mathbb{R}_{>0}$ scales the resulting score.
-
-The notation $S_{\mathrm{RRF}}$, $S_{\mathrm{avg}}$, $S_w$,
-$S_{\mathrm{RBC}}$, $S_{\mathrm{ISR}}$, $S_{\mathrm{logISR}}$,
-$S_{\mathrm{logNISR}}$, and $S_{\mathrm{log}}$ name the document score
-produced by each rule. The rank kernel
+The rank kernel
 $q_\phi:\mathbb{N}_{+}\to\mathbb{R}_{\geq0}$ and all eight scores are
 real-valued and nonnegative on their stated domains.
 
+$S_{\mathrm{RRF}}$, $S_{\mathrm{avg}}$, $S_w$,
+$S_{\mathrm{RBC}}$, $S_{\mathrm{ISR}}$, $S_{\mathrm{logISR}}$,
+$S_{\mathrm{logNISR}}$, and $S_{\mathrm{log}}$ are the document scores
+produced by each rule.
+
 ### Plain RRF
 
-Reciprocal Rank Fusion is
+The plain Reciprocal Rank Fusion kernel is
 
 $$
 S_{\mathrm{RRF}}(d) = \sum_{i \in I_d} \frac{1}{k + r_i(d)}.
@@ -44,13 +45,13 @@ Cormack, Clarke, and Buettcher define the score as the sum of one
 reciprocal-rank contribution from each ranking that contains the document
 [@cormack2009]. A better rank means a smaller $r_i(d)$, which makes its
 denominator smaller and increases that retriever's contribution. Moving from rank 2 to rank 1 matters more than
-moving from rank 102 to 101 because the reciprocal curve is steepest near its
-head.
+moving from rank 102 to 101 because the reciprocal curve is steepest
+at the top of the ranking (lowest rank values).
 
 Increasing $k$ lowers every contribution and compresses the contrast between
 early and late ranks. When $k$ is large relative to the observed ranks, the
 denominators are similar and rank position matters less; when $k$ is small,
-head-rank differences have greater leverage. Coverage enters only through the
+top-ranked differences have greater leverage. Retriever coverage enters only through the
 sum: every extra supporting retriever adds a positive term. A document with
 several mediocre ranks can therefore overtake one with a single excellent
 rank. Thus $k$ is a rank-damping constant, not a coverage normalizer: it does
@@ -74,7 +75,7 @@ quality of the evidence being added.
 
 At equal ranks, the score is invariant to $n$: every term is identical and
 $S_{\mathrm{avg}}=1/(k+r)$ for every $n\geq1$. This invariance makes average
-rank quality comparable across different realized coverages, but it also
+rank quality comparable across different coverages, but it also
 erases the distinction between one retriever and many retrievers repeating the
 same evidence. It removes the automatic reward for agreement and can discard
 useful consensus evidence. Coverage division is useful when duplicate support
@@ -103,7 +104,7 @@ rank and the retriever's prior weight. Multiplying every weight by one positive
 constant rescales every document equally and preserves their ordering.
 Changing weights relative to one another can change the ordering by deciding
 which retriever's evidence counts more. Fixed weights encode prior trust or
-importance, not realized-coverage normalization, because they do not adapt to
+importance, not coverage normalization, because they do not adapt to
 how many retrievers returned a particular document.
 
 ### Rank-Biased Centroid
@@ -312,13 +313,19 @@ because $n\leq|I|$.
 #set page(columns: 1)
 ```
 
-![Parameter sensitivity of the eight scoring rules. Rank-response panels vary
-$k$, $w_i$, and $\phi$; coverage panels add identical rank-5 supporters and
-vary $n$, $\sigma$, $b$, and the global scale $B$. The $b$ curves use
-$B=1/\ln(1+b)$, including the default $b=1$, $B=1/\ln2$, so they share the
-same singleton RRF score; the separate $B$ panel fixes $b=1$. A common maximum
-normalizes every curve within each panel; curves are analytic, not empirical
-measurements.](../figures/parameter-sensitivity.svg){#fig-parameter-sensitivity width=100%}
+### Simulation
+
+```{=typst}
+#import "../figures/ranking-figures.typ": ranking-figure
+#counter(figure.where(kind: image)).update(1)
+#figure(
+  ranking-figure(),
+  kind: image,
+  supplement: [Figure],
+  alt: "Analytic decision boundaries for a one-support document A and a two-support document B, an added-support threshold, and coverage-policy curves.",
+  caption: [Analytic—not empirical—comparisons over integer display ranks 1--20: document A has one supporting rank and document B has two equal-rank supports. Dark zero contours mark equal score; blue and orange regions indicate whether A or B ranks first. Panel B fixes $k=20$ and identifies the added reciprocal term's current-mean threshold; Panel C shows singleton-normalized logarithmic multipliers at $b=0.5$, $1$ (default), and $4$, alongside the logN-ISR singleton repair.],
+)
+```
 
 ```{=typst}
 #pagebreak()
