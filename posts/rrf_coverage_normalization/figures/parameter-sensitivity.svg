@@ -1,0 +1,122 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="1140" viewBox="0 0 880 1140" role="img" aria-labelledby="title description">
+	<title id="title">Parameter sensitivity of six rank-fusion scores</title><desc id="description">Rank-response curves, equal-rank coverage curves, and a matrix mapping r, n, k, w_i, phi, b_s, and b_l or B to S_RRF, S_avg, S_w, S_RBC, S_shift, and S_base.</desc>
+	<style>text{font-family:"Libertinus Serif",Georgia,serif;fill:#17212b;font-size:17px}.figure-title{font-size:25px;font-weight:700}.panel-title{font-size:21px;font-weight:700}.chart-title,.matrix-head,.matrix-row{font-size:17px;font-weight:700}.tick,.axis-label,.note,.legend-text{font-size:15px}.matrix-cell{font-size:23px;font-weight:700}.axis{stroke:#17212b;stroke-width:1.5}.grid{stroke:#c8d0d8;stroke-width:1}</style>
+	<rect width="880" height="1140" fill="#fff"/><text id="figure-heading" class="figure-title" x="440" y="36" text-anchor="middle">How parameters reshape rank-fusion scores</text>
+	<text class="note" x="440" y="62" text-anchor="middle">Illustrative curves; vertical scales normalized within each small plot</text><text class="panel-title" x="28" y="91">A  Rank response (n=1; unvaried parameters held at reference values)</text>
+	<g class="chart"><text class="chart-title" x="163" y="120" text-anchor="middle">S_RRF: rank damping</text>
+		<line class="grid" x1="62" y1="138" x2="286" y2="138"/><line class="grid" x1="62" y1="232" x2="286" y2="232"/>
+		<line class="axis" x1="62" y1="138" x2="62" y2="326"/><line class="axis" x1="62" y1="326" x2="286" y2="326"/>
+		<text class="tick" x="55" y="142" text-anchor="end">1</text><text class="tick" x="55" y="236" text-anchor="end">.5</text><text class="tick" x="55" y="330" text-anchor="end">0</text>
+		<text class="tick" x="62" y="343" text-anchor="middle">1</text><text class="tick" x="286" y="343" text-anchor="middle">12</text><text class="axis-label" x="174" y="362" text-anchor="middle">rank r</text>
+		<polyline points="62.0,138.0 82.4,164.9 102.7,185.0 123.1,200.7 143.5,213.2 163.8,223.5 184.2,232.0 204.5,239.2 224.9,245.4 245.3,250.8 265.6,255.5 286.0,259.6" fill="none" stroke="#006d77" stroke-width="3"/>
+<polyline points="62.0,272.3 82.4,274.7 102.7,277.0 123.1,279.0 143.5,280.9 163.8,282.6 184.2,284.2 204.5,285.7 224.9,287.1 245.3,288.4 265.6,289.6 286.0,290.8" fill="none" stroke="#d1495b" stroke-width="3" stroke-dasharray="8 5"/>
+<polyline points="62.0,307.5 82.4,307.8 102.7,308.1 123.1,308.4 143.5,308.6 163.8,308.9 184.2,309.2 204.5,309.4 224.9,309.7 245.3,309.9 265.6,310.1 286.0,310.3" fill="none" stroke="#edae49" stroke-width="3" stroke-dasharray="3 4"/><line x1="62" y1="373" x2="86" y2="373" stroke="#006d77" stroke-width="3"/><text x="92" y="378">k=5</text>
+<line x1="174" y1="373" x2="198" y2="373" stroke="#d1495b" stroke-width="3" stroke-dasharray="8 5"/><text x="204" y="378">k=20</text>
+<line x1="62" y1="391" x2="86" y2="391" stroke="#edae49" stroke-width="3" stroke-dasharray="3 4"/><text x="92" y="396">k=60</text></g>
+<g class="chart"><text class="chart-title" x="440" y="120" text-anchor="middle">S_w: fixed weight</text>
+		<line class="grid" x1="339" y1="138" x2="563" y2="138"/><line class="grid" x1="339" y1="232" x2="563" y2="232"/>
+		<line class="axis" x1="339" y1="138" x2="339" y2="326"/><line class="axis" x1="339" y1="326" x2="563" y2="326"/>
+		<text class="tick" x="332" y="142" text-anchor="end">1</text><text class="tick" x="332" y="236" text-anchor="end">.5</text><text class="tick" x="332" y="330" text-anchor="end">0</text>
+		<text class="tick" x="339" y="343" text-anchor="middle">1</text><text class="tick" x="563" y="343" text-anchor="middle">12</text><text class="axis-label" x="451" y="362" text-anchor="middle">rank r (k=20)</text>
+		<polyline points="339.0,279.0 359.4,281.1 379.7,283.1 400.1,284.9 420.5,286.5 440.8,288.0 461.2,289.4 481.5,290.8 501.9,292.0 522.3,293.1 542.6,294.2 563.0,295.2" fill="none" stroke="#006d77" stroke-width="3"/>
+<polyline points="339.0,232.0 359.4,236.3 379.7,240.2 400.1,243.8 420.5,247.0 440.8,250.1 461.2,252.9 481.5,255.5 501.9,257.9 522.3,260.2 542.6,262.3 563.0,264.3" fill="none" stroke="#d1495b" stroke-width="3" stroke-dasharray="8 5"/>
+<polyline points="339.0,138.0 359.4,146.5 379.7,154.3 400.1,161.5 420.5,168.1 440.8,174.2 461.2,179.8 481.5,185.0 501.9,189.9 522.3,194.4 542.6,198.6 563.0,202.6" fill="none" stroke="#edae49" stroke-width="3" stroke-dasharray="3 4"/><line x1="339" y1="373" x2="363" y2="373" stroke="#006d77" stroke-width="3"/><text x="369" y="378">w_i=0.5</text>
+<line x1="451" y1="373" x2="475" y2="373" stroke="#d1495b" stroke-width="3" stroke-dasharray="8 5"/><text x="481" y="378">w_i=1</text>
+<line x1="339" y1="391" x2="363" y2="391" stroke="#edae49" stroke-width="3" stroke-dasharray="3 4"/><text x="369" y="396">w_i=2</text></g>
+<g class="chart"><text class="chart-title" x="717" y="120" text-anchor="middle">S_RBC: persistence</text>
+		<line class="grid" x1="616" y1="138" x2="840" y2="138"/><line class="grid" x1="616" y1="232" x2="840" y2="232"/>
+		<line class="axis" x1="616" y1="138" x2="616" y2="326"/><line class="axis" x1="616" y1="326" x2="840" y2="326"/>
+		<text class="tick" x="609" y="142" text-anchor="end">1</text><text class="tick" x="609" y="236" text-anchor="end">.5</text><text class="tick" x="609" y="330" text-anchor="end">0</text>
+		<text class="tick" x="616" y="343" text-anchor="middle">1</text><text class="tick" x="840" y="343" text-anchor="middle">12</text><text class="axis-label" x="728" y="362" text-anchor="middle">rank r</text>
+		<polyline points="616.0,138.0 636.4,288.4 656.7,318.5 677.1,324.5 697.5,325.7 717.8,325.9 738.2,326.0 758.5,326.0 778.9,326.0 799.3,326.0 819.6,326.0 840.0,326.0" fill="none" stroke="#006d77" stroke-width="3"/>
+<polyline points="616.0,208.5 636.4,267.3 656.7,296.6 677.1,311.3 697.5,318.7 717.8,322.3 738.2,324.2 758.5,325.1 778.9,325.5 799.3,325.8 819.6,325.9 840.0,325.9" fill="none" stroke="#d1495b" stroke-width="3" stroke-dasharray="8 5"/>
+<polyline points="616.0,279.0 636.4,288.4 656.7,295.9 677.1,301.9 697.5,306.7 717.8,310.6 738.2,313.7 758.5,316.1 778.9,318.1 799.3,319.7 819.6,321.0 840.0,322.0" fill="none" stroke="#edae49" stroke-width="3" stroke-dasharray="3 4"/><line x1="616" y1="373" x2="640" y2="373" stroke="#006d77" stroke-width="3"/><text x="646" y="378">φ=0.2</text>
+<line x1="728" y1="373" x2="752" y2="373" stroke="#d1495b" stroke-width="3" stroke-dasharray="8 5"/><text x="758" y="378">φ=0.5</text>
+<line x1="616" y1="391" x2="640" y2="391" stroke="#edae49" stroke-width="3" stroke-dasharray="3 4"/><text x="646" y="396">φ=0.8</text></g><text class="panel-title" x="28" y="425">B  Coverage response (equal rank r=5, k=20)</text><g class="chart"><text class="chart-title" x="163" y="463" text-anchor="middle">Equal-rank growth</text>
+		<line class="grid" x1="62" y1="481" x2="286" y2="481"/><line class="grid" x1="62" y1="575" x2="286" y2="575"/>
+		<line class="axis" x1="62" y1="481" x2="62" y2="669"/><line class="axis" x1="62" y1="669" x2="286" y2="669"/>
+		<text class="tick" x="55" y="485" text-anchor="end">1</text><text class="tick" x="55" y="579" text-anchor="end">.5</text><text class="tick" x="55" y="673" text-anchor="end">0</text>
+		<text class="tick" x="62" y="686" text-anchor="middle">1</text><text class="tick" x="286" y="686" text-anchor="middle">10</text><text class="axis-label" x="174" y="705" text-anchor="middle">coverage n</text>
+		<polyline points="62.0,650.2 86.9,631.4 111.8,612.6 136.7,593.8 161.6,575.0 186.4,556.2 211.3,537.4 236.2,518.6 261.1,499.8 286.0,481.0" fill="none" stroke="#006d77" stroke-width="3"/>
+<polyline points="62.0,481.0 86.9,481.0 111.8,481.0 136.7,481.0 161.6,481.0 186.4,481.0 211.3,481.0 236.2,481.0 261.1,481.0 286.0,481.0" fill="none" stroke="#d1495b" stroke-width="3" stroke-dasharray="8 5"/>
+<polyline points="62.0,663.6 86.9,651.8 111.8,636.4 136.7,618.5 161.6,598.8 186.4,577.5 211.3,554.9 236.2,531.2 261.1,506.5 286.0,481.0" fill="none" stroke="#edae49" stroke-width="3" stroke-dasharray="3 4"/>
+<polyline points="62.0,669.0 86.9,657.7 111.8,642.1 136.7,623.7 161.6,603.3 186.4,581.2 211.3,557.8 236.2,533.2 261.1,507.5 286.0,481.0" fill="none" stroke="#3d5a80" stroke-width="3" stroke-dasharray="10 4 2 4"/><line x1="62" y1="716" x2="86" y2="716" stroke="#006d77" stroke-width="3"/><text x="92" y="721">S_RRF</text>
+<line x1="174" y1="716" x2="198" y2="716" stroke="#d1495b" stroke-width="3" stroke-dasharray="8 5"/><text x="204" y="721">S_avg</text>
+<line x1="62" y1="734" x2="86" y2="734" stroke="#edae49" stroke-width="3" stroke-dasharray="3 4"/><text x="92" y="739">S_shift</text>
+<line x1="174" y1="734" x2="198" y2="734" stroke="#3d5a80" stroke-width="3" stroke-dasharray="10 4 2 4"/><text x="204" y="739">S_base</text></g>
+<g class="chart"><text class="chart-title" x="440" y="463" text-anchor="middle">S_shift: additive shift</text>
+		<line class="grid" x1="339" y1="481" x2="563" y2="481"/><line class="grid" x1="339" y1="575" x2="563" y2="575"/>
+		<line class="axis" x1="339" y1="481" x2="339" y2="669"/><line class="axis" x1="339" y1="669" x2="563" y2="669"/>
+		<text class="tick" x="332" y="485" text-anchor="end">1</text><text class="tick" x="332" y="579" text-anchor="end">.5</text><text class="tick" x="332" y="673" text-anchor="end">0</text>
+		<text class="tick" x="339" y="686" text-anchor="middle">1</text><text class="tick" x="563" y="686" text-anchor="middle">10</text><text class="axis-label" x="451" y="705" text-anchor="middle">coverage n</text>
+		<polyline points="339.0,669.0 363.9,659.1 388.8,645.5 413.7,629.5 438.6,611.7 463.4,592.4 488.3,572.0 513.2,550.5 538.1,528.1 563.0,505.0" fill="none" stroke="#006d77" stroke-width="3"/>
+<polyline points="339.0,664.1 363.9,653.3 388.8,639.4 413.7,623.1 438.6,605.2 463.4,585.8 488.3,565.3 513.2,543.8 538.1,521.4 563.0,498.2" fill="none" stroke="#d1495b" stroke-width="3" stroke-dasharray="8 5"/>
+<polyline points="339.0,657.5 363.9,643.5 388.8,627.4 413.7,609.7 438.6,590.7 463.4,570.6 488.3,549.4 513.2,527.4 538.1,504.6 563.0,481.0" fill="none" stroke="#edae49" stroke-width="3" stroke-dasharray="3 4"/><line x1="339" y1="716" x2="363" y2="716" stroke="#006d77" stroke-width="3"/><text x="369" y="721">b_s=0</text>
+<line x1="451" y1="716" x2="475" y2="716" stroke="#d1495b" stroke-width="3" stroke-dasharray="8 5"/><text x="481" y="721">b_s=1</text>
+<line x1="339" y1="734" x2="363" y2="734" stroke="#edae49" stroke-width="3" stroke-dasharray="3 4"/><text x="369" y="739">b_s=4</text></g>
+<g class="chart"><text class="chart-title" x="717" y="463" text-anchor="middle">S_base: global scale</text>
+		<line class="grid" x1="616" y1="481" x2="840" y2="481"/><line class="grid" x1="616" y1="575" x2="840" y2="575"/>
+		<line class="axis" x1="616" y1="481" x2="616" y2="669"/><line class="axis" x1="616" y1="669" x2="840" y2="669"/>
+		<text class="tick" x="609" y="485" text-anchor="end">1</text><text class="tick" x="609" y="579" text-anchor="end">.5</text><text class="tick" x="609" y="673" text-anchor="end">0</text>
+		<text class="tick" x="616" y="686" text-anchor="middle">1</text><text class="tick" x="840" y="686" text-anchor="middle">10</text><text class="axis-label" x="728" y="705" text-anchor="middle">coverage n</text>
+		<polyline points="616.0,669.0 640.9,666.2 665.8,662.3 690.7,657.7 715.6,652.6 740.4,647.1 765.3,641.2 790.2,635.0 815.1,628.6 840.0,622.0" fill="none" stroke="#006d77" stroke-width="3"/>
+<polyline points="616.0,669.0 640.9,663.3 665.8,655.5 690.7,646.4 715.6,636.1 740.4,625.1 765.3,613.4 790.2,601.1 815.1,588.3 840.0,575.0" fill="none" stroke="#d1495b" stroke-width="3" stroke-dasharray="8 5"/>
+<polyline points="616.0,669.0 640.9,657.7 665.8,642.1 690.7,623.7 715.6,603.3 740.4,581.2 765.3,557.8 790.2,533.2 815.1,507.5 840.0,481.0" fill="none" stroke="#edae49" stroke-width="3" stroke-dasharray="3 4"/><line x1="616" y1="716" x2="640" y2="716" stroke="#006d77" stroke-width="3"/><text x="646" y="721">B=0.5</text>
+<line x1="728" y1="716" x2="752" y2="716" stroke="#d1495b" stroke-width="3" stroke-dasharray="8 5"/><text x="758" y="721">B=1</text>
+<line x1="616" y1="734" x2="640" y2="734" stroke="#edae49" stroke-width="3" stroke-dasharray="3 4"/><text x="646" y="739">B=2</text></g><g id="sensitivity-matrix"><text class="panel-title" x="28" y="758">C  Parameter-to-score sensitivity map</text>
+		<text class="note" x="28" y="782">Marks describe ranking behavior, not merely whether a symbol appears in a formula.</text><text class="matrix-head" x="205" y="802" text-anchor="middle">r</text>
+<text class="matrix-head" x="293" y="802" text-anchor="middle">n</text>
+<text class="matrix-head" x="381" y="802" text-anchor="middle">k</text>
+<text class="matrix-head" x="469" y="802" text-anchor="middle">w_i</text>
+<text class="matrix-head" x="557" y="802" text-anchor="middle">φ</text>
+<text class="matrix-head" x="645" y="802" text-anchor="middle">b_s</text>
+<text class="matrix-head" x="733" y="802" text-anchor="middle">b_ℓ / B</text><text class="matrix-row" x="138" y="849" text-anchor="end">S_RRF</text>
+<text class="matrix-cell" data-score="S_RRF" data-parameter="r" x="205" y="849" text-anchor="middle">●</text>
+<text class="matrix-cell" data-score="S_RRF" data-parameter="n" x="293" y="849" text-anchor="middle">◐</text>
+<text class="matrix-cell" data-score="S_RRF" data-parameter="k" x="381" y="849" text-anchor="middle">●</text>
+<text class="matrix-cell" data-score="S_RRF" data-parameter="w_i" x="469" y="849" text-anchor="middle">—</text>
+<text class="matrix-cell" data-score="S_RRF" data-parameter="φ" x="557" y="849" text-anchor="middle">—</text>
+<text class="matrix-cell" data-score="S_RRF" data-parameter="b_s" x="645" y="849" text-anchor="middle">—</text>
+<text class="matrix-cell" data-score="S_RRF" data-parameter="b_ℓ / B" x="733" y="849" text-anchor="middle">—</text>
+<text class="matrix-row" x="138" y="891" text-anchor="end">S_avg</text>
+<text class="matrix-cell" data-score="S_avg" data-parameter="r" x="205" y="891" text-anchor="middle">●</text>
+<text class="matrix-cell" data-score="S_avg" data-parameter="n" x="293" y="891" text-anchor="middle">◐</text>
+<text class="matrix-cell" data-score="S_avg" data-parameter="k" x="381" y="891" text-anchor="middle">●</text>
+<text class="matrix-cell" data-score="S_avg" data-parameter="w_i" x="469" y="891" text-anchor="middle">—</text>
+<text class="matrix-cell" data-score="S_avg" data-parameter="φ" x="557" y="891" text-anchor="middle">—</text>
+<text class="matrix-cell" data-score="S_avg" data-parameter="b_s" x="645" y="891" text-anchor="middle">—</text>
+<text class="matrix-cell" data-score="S_avg" data-parameter="b_ℓ / B" x="733" y="891" text-anchor="middle">—</text>
+<text class="matrix-row" x="138" y="933" text-anchor="end">S_w</text>
+<text class="matrix-cell" data-score="S_w" data-parameter="r" x="205" y="933" text-anchor="middle">●</text>
+<text class="matrix-cell" data-score="S_w" data-parameter="n" x="293" y="933" text-anchor="middle">◐</text>
+<text class="matrix-cell" data-score="S_w" data-parameter="k" x="381" y="933" text-anchor="middle">●</text>
+<text class="matrix-cell" data-score="S_w" data-parameter="w_i" x="469" y="933" text-anchor="middle">●</text>
+<text class="matrix-cell" data-score="S_w" data-parameter="φ" x="557" y="933" text-anchor="middle">—</text>
+<text class="matrix-cell" data-score="S_w" data-parameter="b_s" x="645" y="933" text-anchor="middle">—</text>
+<text class="matrix-cell" data-score="S_w" data-parameter="b_ℓ / B" x="733" y="933" text-anchor="middle">—</text>
+<text class="matrix-row" x="138" y="975" text-anchor="end">S_RBC</text>
+<text class="matrix-cell" data-score="S_RBC" data-parameter="r" x="205" y="975" text-anchor="middle">●</text>
+<text class="matrix-cell" data-score="S_RBC" data-parameter="n" x="293" y="975" text-anchor="middle">◐</text>
+<text class="matrix-cell" data-score="S_RBC" data-parameter="k" x="381" y="975" text-anchor="middle">—</text>
+<text class="matrix-cell" data-score="S_RBC" data-parameter="w_i" x="469" y="975" text-anchor="middle">—</text>
+<text class="matrix-cell" data-score="S_RBC" data-parameter="φ" x="557" y="975" text-anchor="middle">●</text>
+<text class="matrix-cell" data-score="S_RBC" data-parameter="b_s" x="645" y="975" text-anchor="middle">—</text>
+<text class="matrix-cell" data-score="S_RBC" data-parameter="b_ℓ / B" x="733" y="975" text-anchor="middle">—</text>
+<text class="matrix-row" x="138" y="1017" text-anchor="end">S_shift</text>
+<text class="matrix-cell" data-score="S_shift" data-parameter="r" x="205" y="1017" text-anchor="middle">●</text>
+<text class="matrix-cell" data-score="S_shift" data-parameter="n" x="293" y="1017" text-anchor="middle">●</text>
+<text class="matrix-cell" data-score="S_shift" data-parameter="k" x="381" y="1017" text-anchor="middle">●</text>
+<text class="matrix-cell" data-score="S_shift" data-parameter="w_i" x="469" y="1017" text-anchor="middle">—</text>
+<text class="matrix-cell" data-score="S_shift" data-parameter="φ" x="557" y="1017" text-anchor="middle">—</text>
+<text class="matrix-cell" data-score="S_shift" data-parameter="b_s" x="645" y="1017" text-anchor="middle">●</text>
+<text class="matrix-cell" data-score="S_shift" data-parameter="b_ℓ / B" x="733" y="1017" text-anchor="middle">—</text>
+<text class="matrix-row" x="138" y="1059" text-anchor="end">S_base</text>
+<text class="matrix-cell" data-score="S_base" data-parameter="r" x="205" y="1059" text-anchor="middle">●</text>
+<text class="matrix-cell" data-score="S_base" data-parameter="n" x="293" y="1059" text-anchor="middle">●</text>
+<text class="matrix-cell" data-score="S_base" data-parameter="k" x="381" y="1059" text-anchor="middle">●</text>
+<text class="matrix-cell" data-score="S_base" data-parameter="w_i" x="469" y="1059" text-anchor="middle">—</text>
+<text class="matrix-cell" data-score="S_base" data-parameter="φ" x="557" y="1059" text-anchor="middle">—</text>
+<text class="matrix-cell" data-score="S_base" data-parameter="b_s" x="645" y="1059" text-anchor="middle">—</text>
+<text class="matrix-cell" data-score="S_base" data-parameter="b_ℓ / B" x="733" y="1059" text-anchor="middle">○</text>
+		<text class="legend-text" x="42" y="1090">● can change relative scores/order or response shape</text><text class="legend-text" x="430" y="1090">◐ depends on added support/composition</text>
+		<text class="legend-text" x="42" y="1116">○ global scale only; order unchanged</text><text class="legend-text" x="430" y="1116">— parameter has no role</text></g></svg>
