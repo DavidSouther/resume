@@ -13,6 +13,7 @@
     "prebuild": "npm run check",
     "build": "npm run css:bundle && node scripts/sitemap.ts && node node_modules/@davidsouther/jiffies/lib/esm/ssg/main.js --out docs",
     "paper:pdf": "node posts/llm_manifold/scripts/compile-manifold-paper.ts",
+    "papers": "node posts/llm_manifold/scripts/compile-manifold-paper.ts && node posts/rrf_coverage_normalization/scripts/compile-rrf-coverage-normalization.ts",
     "start": "node scripts/serve.ts --watch",
     "test": "vitest run",
     "posttest": "npm run check",

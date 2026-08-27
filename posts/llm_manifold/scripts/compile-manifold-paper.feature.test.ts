@@ -41,13 +41,15 @@ describe("manifold paper Typst compiler", () => {
 	it("compiles the generated source directly with Typst", () => {
 		const paths = createManifoldPaperPdfPaths("/paper");
 
-		expect(buildTypstCompileCommand(paths)).toEqual({
-			cmd: "typst",
-			args: [
-				"compile",
-				"--root=/paper",
-				"/paper/build/llm_manifold/manifold-paper.typ",
-				"/paper/build/llm_manifold/manifold-paper-preprint.pdf",
+			expect(buildTypstCompileCommand(paths)).toEqual({
+				cmd: "typst",
+				args: [
+					"compile",
+					"--root=/paper",
+					"--font-path=/paper/fonts",
+					"--ignore-system-fonts",
+					"/paper/build/llm_manifold/manifold-paper.typ",
+				"/paper/build/llm_manifold/manifold-paper.pdf",
 			],
 		});
 	});
@@ -63,7 +65,7 @@ describe("manifold paper Typst compiler", () => {
 			"/paper/build/llm_manifold/manifold-paper.typ",
 		);
 		expect(paths.outputPdf).toBe(
-			"/paper/build/llm_manifold/manifold-paper-preprint.pdf",
+			"/paper/build/llm_manifold/manifold-paper.pdf",
 		);
 	});
 

@@ -1,0 +1,1 @@
+Reciprocal-rank fusion coverage normalization makes retrieval scores comparable when candidate lists have unequal support, preserving the rank-sensitive behavior that makes RRF useful for heterogeneous retrieval systems.

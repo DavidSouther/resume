@@ -15,6 +15,9 @@ run = "npm run build"
 [tasks."paper:pdf"]
 run = "npm run paper:pdf"
 
+[tasks.papers]
+run = "npm run papers"
+
 [tasks.start]
 run = "npm start"
 
