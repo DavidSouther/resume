@@ -58,3 +58,31 @@ inverse-square rank kernel. It does not use the RRF kernel.
 Evidence tier: this paper's proposal.
 
 ### Boundary and coverage analysis
+
+The returned-document domain is n(d) >= 1.
+The singleton multiplier is positive for every b > 0.
+The zero-coverage logarithm log(b) is finite for b > 0.
+The empty RRF sum makes the extended score zero.
+This finite extension is useful for boundary analysis, but it does not add an unreturned document to the normative domain.
+
+The shift controls the multiplier at the boundary.
+When 0 < b < 1, log(b) is negative.
+When b = 1, log(b) is zero.
+When b > 1, log(b) is positive.
+These zero-coverage signs do not change the extended score because the RRF factor is zero.
+As b approaches zero, log(1+b) approaches zero.
+At b = 1, the singleton multiplier is log(2).
+
+Over a fixed finite coverage range, the multiplier becomes nearly constant.
+As b increases, ordering approaches scaled plain RRF.
+This statement concerns a fixed finite range of n(d); it does not claim that the logarithm is globally bounded.
+
+Fixed weights are independent of n(d).
+Fixed weights do not normalize realized coverage.
+They encode prior retriever influence, while n(d) records how many retrievers returned the document.
+
+The logarithmic multiplier has diminishing increments.
+At equal ranks, plain RRF grows in proportion to n.
+At equal ranks, the candidate grows in proportion to n log(n+b).
+The total coverage reward is unbounded.
+This is not a division-style normalization.
