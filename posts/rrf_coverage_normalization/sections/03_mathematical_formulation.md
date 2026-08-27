@@ -224,7 +224,7 @@ $S_{\mathrm{RRF}}$ fixed, the increment in its multiplier from coverage $n$
 to $n+1$ is
 
 $$
-B\ln\!\left(\frac{n+1+b}{n+b}\right),
+B\ln\left(\frac{n+1+b}{n+b}\right),
 $$
 
 which is positive and decreases with $n$: $\ln$ is increasing and concave, so
