@@ -266,3 +266,18 @@ bounded because $n\leq|I|$.
 Fixed weights remain a separate design choice: they are independent of
 $n(d)$, encode prior retriever influence, and do not normalize realized
 coverage.
+
+![Parameter sensitivity of the six scoring rules. Rank-response curves vary
+$r$, $k$, $w_i$, and $\phi$; equal-rank coverage curves vary $n$, $b_s$, and
+$B=1/\ln(b_\ell)$. In the coverage panels, rank $r=5$ and $k=20$ are held constant,
+while unvaried rank-panel parameters use the values printed in the subplot.
+Scores are normalized within each small plot for visual comparison, and the
+curves illustrate the analytic discussion rather than empirical
+measurements.](../figures/parameter-sensitivity.svg){#fig-parameter-sensitivity width=86%}
+
+The parameter-sensitivity figure gathers the term-level effects and ordering
+consequences discussed above. In its matrix, a filled circle marks a parameter
+that can change relative scores, ordering, or response shape; a half-filled
+circle marks an effect that depends on which retriever joins the support set; an
+open circle marks global rescaling without an ordering change; and a dash means
+that the parameter has no role in that score.

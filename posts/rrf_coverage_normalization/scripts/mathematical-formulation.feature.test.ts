@@ -208,6 +208,13 @@ describe("RRF mathematical formulation", () => {
 		expect(generatedFigure.status).toBe(0);
 		expect(existsSync(figure)).toBe(true);
 		expect(statSync(figure).size).toBeGreaterThan(0);
+		const svg = readFileSync(figure, "utf8");
+		for (const score of ["S_RRF", "S_avg", "S_w", "S_RBC", "S_shift", "S_base"])
+			expect(svg).toContain(`data-score="${score}"`);
+		for (const parameter of ["r", "n", "k", "w_i", "φ", "b_s", "b_ℓ / B"])
+			expect(svg).toContain(`data-parameter="${parameter}"`);
+		expect(svg).toContain("Equal-rank growth");
+		expect(svg).toContain("global scale only; order unchanged");
 
 		rmSync(outputPdf, { force: true });
 		const compiledPaper = spawnSync(process.execPath, [compiler], {
@@ -218,19 +225,23 @@ describe("RRF mathematical formulation", () => {
 		expect(statSync(outputPdf).size).toBeGreaterThan(0);
 
 		const rendered = readFileSync(generatedTypst, "utf8");
-		const compactTypst = compact(rendered);
-		expect(rendered).not.toMatch(/Evidence tier/i);
-		expect(rendered).not.toMatch(/\bthis paper\b/i);
-		expect(compactTypst).not.toMatch(/\blog(?!_)/);
-		expect(compactTypst).toContain("S_\\(upright\\(RRF\\)\\)");
-		expect(compactTypst).toContain("S_\\(upright\\(avg\\)\\)");
+		const mathematicalStart = rendered.indexOf("= Mathematical Formulation");
+		expect(mathematicalStart).toBeGreaterThanOrEqual(0);
+		const renderedMathematics = rendered.slice(mathematicalStart);
+		const compactTypst = compact(renderedMathematics);
+		expect(renderedMathematics).not.toMatch(/Evidence tier/i);
+		expect(renderedMathematics).not.toMatch(/\bthis paper\b/i);
+		// Generated prose may contain "logarithm"; only an unbased math log is forbidden.
+		expect(compactTypst).not.toMatch(/\blog\\\(/);
+		expect(compactTypst).toContain("S_(upright(RRF))");
+		expect(compactTypst).toContain("S_(upright(avg))");
 		expect(compactTypst).toContain("S_w");
-		expect(compactTypst).toContain("S_\\(upright\\(RBC\\)\\)");
-		expect(compactTypst).toContain("S_\\(upright\\(shift\\)\\)");
-		expect(compactTypst).toContain("S_\\(upright\\(base\\)\\)");
-		expect(rendered).toContain("parameter-sensitivity.svg");
+		expect(compactTypst).toContain("S_(upright(RBC))");
+		expect(compactTypst).toContain("S_(upright(shift))");
+		expect(compactTypst).toContain("S_(upright(base))");
+		expect(renderedMathematics).toContain("parameter-sensitivity.svg");
 		for (const definition of definitions) {
-			for (const citation of definition.citations) expect(rendered).toContain(citation);
+			for (const citation of definition.citations) expect(renderedMathematics).toContain(citation);
 		}
 	});
 });

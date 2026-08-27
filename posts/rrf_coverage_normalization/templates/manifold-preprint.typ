@@ -48,6 +48,10 @@
     place(top, float: true, scope: "parent", clearance: 3mm, block(width: 100%)[#it])
   }
   show figure.where(kind: table): set figure.caption(position: bottom)
+  // Analytical figures span both columns so curve labels remain print-legible.
+  show figure.where(kind: image): it => {
+    place(top, float: true, scope: "parent", clearance: 3mm, block(width: 100%)[#it])
+  }
 
   if title != none {
     place(top, float: true, scope: "parent", clearance: 4mm, block(below: 1.4em, width: 100%)[
