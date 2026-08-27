@@ -309,3 +309,122 @@ sample fixed documented ranges, normalize only for cross-curve visibility, and
 write semantic labels into the SVG. Integrate through ordinary Markdown image
 syntax unless the existing compiler requires a paper-local alternative. Keep
 the section prose authoritative and the figure explanatory.
+
+## Post-review revision: collapse the logarithmic branches
+
+**User story:** A reader encounters one general logarithmic RRF family, can
+separate global score calibration from coverage-shape tuning, and understands
+why the normalized `b=1` specialization is a useful default.
+
+**Steps:**
+- [x] Step 5: Replace the two-branch verification contract
+- [x] Step 6: Develop one logarithmic family through `B`, `b`, and `b=1`
+- [x] Step 7: Align the sensitivity figure and verify the compiled section
+
+### Step 5: Replace the two-branch verification contract
+
+**Enables:** The feature test requires one general family and rejects obsolete
+claims that additive-shift and base-log are separate proposals.
+
+Revise the existing feature-test expectations around
+`S_log(d;b,B)=B S_RRF(d) ln(n(d)+b)`, with `B>0`, `b>=0`, and returned-document
+coverage `n(d)>=1`. Require the short calibration treatment of `B`, the longer
+shape-and-boundary treatment of `b`, and the normalized `b=1` specialization.
+Keep assertions that the ISR family precedes this proposal and that the
+existing valid boundary, finite-range limit, and equal-rank growth conclusions
+remain present.
+
+**Tests**
+
+Happy path: block-specific assertions find the general definition first, then
+the `B`, `b`, and `b=1` developments in order.
+
+- Reject separate `S_shift` and `S_base` definitions or a base-log branch.
+- Reject an assertion that a global positive `B` changes document order.
+- Reject singleton normalization stated without `B=1/ln(1+b)`, or its
+  `b=1` value `B=1/ln 2`.
+- Preserve the `b=0`, zero-coverage-extension, and fixed-finite-`I` edge cases.
+
+**Implementation Outline**
+
+Update only stable mathematical invariants and section ordering in the focused
+feature test; avoid matching whole explanatory paragraphs. Carry the same
+terminology into generated-Typst assertions.
+
+### Step 6: Develop one logarithmic family through `B`, `b`, and `b=1`
+
+**Enables:** The section teaches the collapsed proposal without losing ISR
+context or mathematically valid boundary analysis.
+
+After the complete ISR, logISR, and logN ISR treatment, lead with
+`S_log(d;b,B)=B S_RRF(d) ln(n(d)+b)`. Develop its parameters separately:
+
+- Give `B>0` a short but substantive paragraph: it is a common global scale,
+  so it preserves within-family order, but it matters when the score feeds a
+  threshold, is combined with differently scaled signals, or must satisfy a
+  downstream calibration contract.
+- Give `b>=0` the longer treatment. Explain how it changes singleton weight,
+  relative rewards between coverage levels, marginal logarithmic increments,
+  cross-coverage ordering, and the large-`b` approach to scaled RRF over a fixed
+  finite coverage range. Retain the returned-domain and zero-coverage boundary
+  distinctions, including the degeneracy at `b=0`.
+- Introduce singleton normalization as
+  `B=1/ln(1+b)` for `b>0`, which makes the multiplier one at `n(d)=1` and lets
+  `b` control only the additional coverage reward. Then specialize to `b=1`
+  and select `B=1/ln 2`, yielding
+  `S_1(d)=S_RRF(d) ln(n(d)+1)/ln 2` as the simple default with a finite
+  zero-coverage logarithm and unchanged singleton RRF scores.
+
+Retain the distinction between a concave multiplier and unbounded total
+equal-rank growth: the normalized family still grows proportionally to
+`n ln(n+b)` as the retriever family grows, while all scores are bounded for a
+fixed finite `I`. Remove the old non-equivalence argument and every leftover
+claim that the shift and logarithm base define two proposal branches.
+
+**Tests**
+
+Happy path: the section defines the general family before interpreting either
+parameter and derives the normalized `b=1` form algebraically.
+
+- `B<=0` invalidates the stated ordering and calibration interpretation.
+- `b=0` makes singleton normalization undefined even though the returned-score
+  family itself remains defined.
+- Changing `b` is incorrectly described as global rescaling.
+- The `b=1` specialization omits `/ln 2` and therefore fails to preserve the
+  singleton RRF score.
+- ISR or logN ISR is moved after the proposal.
+
+**Implementation Outline**
+
+Reuse the current notation, citations, ISR ordering, and boundary derivations.
+Replace the two proposal subsections with one reading sequence: general form,
+scale calibration, shift tuning, singleton-normalized subfamily, `b=1`
+default, then boundary and growth analysis.
+
+### Step 7: Align the sensitivity figure and verify the compiled section
+
+**Enables:** The graph, sensitivity matrix, Markdown, generated Typst, and PDF
+all present the same single-family parameter story.
+
+Replace separate shifted-log and base-log curves/rows with one `S_log` family.
+Show `B` as global scale only and `b` as the coverage-shape parameter; include
+the singleton-normalized `b=1, B=1/ln 2` default in the coverage panel. Update
+labels, caption, legend, and matrix so no obsolete branch names or implications
+remain, while preserving the earlier algorithms and ISR-family context.
+
+**Tests**
+
+Happy path: regenerate the deterministic SVG, run the focused feature and
+compiler tests, compile the paper, and visually inspect the revised pages.
+
+- The matrix marks `B` as changing within-family ordering.
+- Curves compare `b` values while silently changing normalization.
+- Any `S_shift`, `S_base`, base-log, or two-branch label survives.
+- The `b=1` curve or its caption uses `B=1` instead of `1/ln 2`.
+- Figure labels clip or become illegible in the paper column.
+
+**Implementation Outline**
+
+Update the existing pure score functions and data series rather than adding a
+second figure. Regenerate the SVG, then perform focused tests, repository
+checks, generated-source inspection, PDF rendering, and visual verification.
