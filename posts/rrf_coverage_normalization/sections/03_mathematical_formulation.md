@@ -5,15 +5,17 @@ coverage counts are integers: $I=\{1,\ldots,m\}$ is the finite
 retriever-index set, $m\in\mathbb{N}_{+}$, $I\subset\mathbb{Z}$, and
 
 $$
-I_d = \{i \in I : i \text{ ranks } d\} \\
-n(d) = |I_d| \in \{0,\ldots,m\}\subset\mathbb{Z}_{\geq 0}
+\begin{aligned}
+I_d &= \{i \in I : i \text{ ranks } d\} \\
+|R_d| &= |I_d| \in \{0,\ldots,m\}\subset\mathbb{Z}_{\geq 0}
+\end{aligned}
 $$
 
 Here $d$ is a document, not a numeric variable. On the returned document
-domain, $n(d)\in\{1,\ldots,m\}\subset\mathbb{N}_{+}$; $n(d)=0$ is used
+domain, $|R_d|\in\{1,\ldots,m\}\subset\mathbb{N}_{+}$; $|R_d|=0$ is used
 for a boundary extension. Ranks are positive natural numbers:
 $r_i(d)\in\mathbb{N}_{+}$ is the one-based rank of $d$ under each
-$i\in I_d$. Thus $I$ and $I_d$ are sets of integer indices, $n(d)$ is a
+$i\in I_d$. Thus $I$ and $I_d$ are sets of integer indices, $|R_d|$ is a
 nonnegative integer count, and every $r_i(d)$ is a positive natural
 number.
 
@@ -59,10 +61,10 @@ not remove the reward for coverage.
 
 ### Coverage division
 
-For $n(d)\geq1$, coverage division is
+For $|R_d|\geq1$, coverage division is
 
 $$
-S_{\mathrm{avg}}(d) = \frac{S_{\mathrm{RRF}}(d)}{n(d)}.
+S_{\mathrm{avg}}(d) = \frac{S_{\mathrm{RRF}}(d)}{|R_d|}.
 $$
 
 This comparator takes the mean of the RRF reciprocal-rank contributions
@@ -157,14 +159,14 @@ $$
 Q_{\mathrm{ISR}}(d)=\sum_{i\in I_d}\frac{1}{r_i(d)^2}.
 $$
 
-On $n(d)\geq1$ and $\sigma\in[0,1]$, its three named scores are
+On $|R_d|\geq1$ and $\sigma\in[0,1]$, its three named scores are
 
 $$
 \begin{aligned}
-S_{\mathrm{ISR}}(d) &= n(d)Q_{\mathrm{ISR}}(d), \\
-S_{\mathrm{logISR}}(d) &= \ln(n(d))Q_{\mathrm{ISR}}(d), \\
+S_{\mathrm{ISR}}(d) &= |R_d|Q_{\mathrm{ISR}}(d), \\
+S_{\mathrm{logISR}}(d) &= \ln(|R_d|)Q_{\mathrm{ISR}}(d), \\
 S_{\mathrm{logNISR}}(d;\sigma)
-&= \ln(n(d)+\sigma)Q_{\mathrm{ISR}}(d).
+&= \ln(|R_d|+\sigma)Q_{\mathrm{ISR}}(d).
 \end{aligned}
 $$
 
@@ -199,12 +201,12 @@ the inverse-square rank kernel with RRF.
 
 ### Logarithmic RRF family
 
-For $b\geq0$, $B>0$, and returned documents with $n(d)\geq1$, define the
+For $b\geq0$, $B>0$, and returned documents with $|R_d|\geq1$, define the
 logarithmic RRF score
 
 $$
 S_{\mathrm{log}}(d; b, B)
-= B S_{\mathrm{RRF}}(d)\ln(n(d) + b).
+= B S_{\mathrm{RRF}}(d)\ln(|R_d| + b).
 $$
 
 This family combines Cormack, Clarke, and Buettcher's RRF kernel
@@ -237,7 +239,7 @@ rescaling every score. A small $b$ makes early coverage differences
 comparatively strong; a large $b$ makes the multipliers for different finite
 coverage levels more similar. Among documents with the same coverage and a
 positive multiplier, the common factor preserves their RRF order. At
-$b=0,n(d)=1$, however, $\ln1=0$ erases every singleton rank and $k$
+$b=0,|R_d|=1$, however, $\ln1=0$ erases every singleton rank and $k$
 distinction.
 
 For $b>0$, a useful subfamily normalizes the singleton multiplier to one by
@@ -253,7 +255,7 @@ undefined at $b=0$, precisely where the unnormalized family has the singleton
 degeneracy. Setting $b=1$ gives $B=\frac{1}{\ln2}$ and the simple default
 
 $$
-S_1(d)=S_{\mathrm{RRF}}(d)\frac{\ln(n(d)+1)}{\ln2}.
+S_1(d)=S_{\mathrm{RRF}}(d)\frac{\ln(|R_d|+1)}{\ln2}.
 $$
 
 The default has a finite logarithm at zero coverage, preserves every
@@ -266,11 +268,11 @@ The general family
 
 $$
 S_{\mathrm{log}}(d;b,B)
-=B S_{\mathrm{RRF}}(d)\ln(n(d)+b)
+=B S_{\mathrm{RRF}}(d)\ln(|R_d|+b)
 $$
 
-allows $b\geq0$ on $n(d)\geq1$. At $b=0$, the singleton multiplier is
-zero, while the expression at $n(d)=0$ is undefined. A finite zero-coverage
+allows $b\geq0$ on $|R_d|\geq1$. At $b=0$, the singleton multiplier is
+zero, while the expression at $|R_d|=0$ is undefined. A finite zero-coverage
 extension therefore requires $b>0$: $\ln(b)$ is finite and the empty RRF
 sum makes the extended score zero. This extension supports boundary analysis;
 it does not add an unreturned document to the scoring domain.
@@ -285,13 +287,13 @@ For fixed finite $I$, the large-shift limit is
 
 $$
 \frac{S_{\mathrm{log}}(d; b, B)}{B\ln b}
-= S_{\mathrm{RRF}}(d)\frac{\ln(n(d)+b)}{\ln b}
+= S_{\mathrm{RRF}}(d)\frac{\ln(|R_d|+b)}{\ln b}
 \longrightarrow S_{\mathrm{RRF}}(d)
 \qquad (b \to \infty),
 $$
 
 uniformly over the fixed finite coverage range
-$1\leq n(d)\leq|I|$. With any fixed positive $B$, finite-$b$ ordering
+$1\leq |R_d|\leq|I|$. With any fixed positive $B$, finite-$b$ ordering
 therefore converges
 to every strict, non-tied plain-RRF comparison. Documents tied by plain RRF can
 still be differentiated by coverage at finite $b$. This fixed-range result
@@ -308,22 +310,69 @@ but its product with the growing rank sum remains unbounded over this hypothetic
 growing-retriever family. For fixed finite $I$, every score remains bounded
 because $n\leq|I|$.
 
+Table: Provenance and boundary behavior for the four scoring rules used in the worked example. {#tbl:scoring-rule-provenance}
+
+| Method | Rank kernel | Formula | Nonzero at $|R_d|=1$ | Bounded coverage bonus | Source |
+| --- | --- | --- | --- | --- | --- |
+| $S_{\mathrm{RRF}}$ | reciprocal | $\sum_{i \in I_d} 1 / (60 + r_i(d))$ | Yes | No | RRF [@cormack2009] |
+| $S_w$ | reciprocal | $\sum_{i \in I_d} w_i / (60 + r_i(d))$ | Yes | No | Azure weighted vector queries [@azureVectorWeighting] |
+| $S_{\mathrm{ISR}}$ | inverse square | $|R_d|\sum_{i \in I_d} 1 / r_i(d)^2$ | Yes | No | ISR [@mourao2014] |
+| $S_1$ | reciprocal | $S_{\mathrm{RRF}}\ln(|R_d| + 1) / \ln(2)$ | Yes | No | Singleton-normalized specialization |
+
+### Comparisons
+
+The main comparison asks what the default logarithmic RRF rule does when
+several retrievers return the same candidate at different depths. Figure 1
+uses a document with a single retriever scoring it at rank, as a common baseline.
+A document with a single rank 100 score is weak, but agreement changes the result: two rank 100 scores already rank slightly higher than the sigle rank 1 document.
+Three mixed occurrences at ranks $(100,500,1000)$ also narrowly beat the single
+retriever rank one document. Logarithmic RRF therefore does more than preserve
+evidence from several retrievers. It explicitly favors candidates corroborated
+across retrievers, even when no single retriever places the candidate at the head
+of its list.
+
+Figure 2 explores the same rank profiles across the fusion methods.
+For all graphs, the x axis is the ratio for each document's score relative to the
+single retriever rank 1 score.  Panel (a) presents Figure 1 rescaled to this
+logarithmic ratio. Panel (b) shows that Rank-Biased Centroid at $\phi=0.7$ is
+effectively controlled by the shallowest rank: evidence at ranks 300--1000 adds
+almost nothing to a rank-100 match, only somewhat mixing multiple retriever
+mid-rank documents.  Panel (c) shows that ISR rewards additional retrievers, but its
+inverse-square kernel still lets a rank-1 singleton dominate every mid-to-deep
+profile shown. Panel (d) exposes logISR's singleton degeneracy: every singleton
+receives score zero, so any candidate returned by two retrievers beats every candidate returned by
+only one, regardless of the singleton's rank. Among multi-retriever candidates,
+inverse-square rank quality again dominates.
+
+Together the panels separate two choices that are easy to conflate. The rank
+kernel decides how much evidence survives at depth; the coverage factor decides
+how strongly independent retriever agreement changes the final order. At the
+suggested $k=60$, $b=1$ defaults, logarithmic RRF is the only rule in this
+comparison that both retains substantial mid-rank evidence and strongly
+promotes cross-retriever agreement without erasing singletons.
+
 ```{=typst}
 #pagebreak()
 #set page(columns: 1)
 ```
 
-### Simulation
-
 ```{=typst}
-#import "../figures/ranking-figures.typ": ranking-figure
-#counter(figure.where(kind: image)).update(1)
+#import "../sections/03_diagram_examples/rank-profile-comparison.typ": rank-profile-comparison-figure
+#import "../sections/03_diagram_examples/rank-profile-comparison-grid.typ": rank-profile-comparison-grid-figure
+#counter(figure.where(kind: image)).update(0)
 #figure(
-  ranking-figure(),
+  rank-profile-comparison-figure(),
   kind: image,
   supplement: [Figure],
-  alt: "Analytic decision boundaries for a one-support document A and a two-support document B, an added-support threshold, and coverage-policy curves.",
-  caption: [Analytic—not empirical—comparisons over integer display ranks 1--20: document A has one supporting rank and document B has two equal-rank supports. Dark zero contours mark equal score; blue and orange regions indicate whether A or B ranks first. Panel B fixes $k=20$ and identifies the added reciprocal term's current-mean threshold; Panel C shows singleton-normalized logarithmic multipliers at $b=0.5$, $1$ (default), and $4$, alongside the logN-ISR singleton repair.],
+  alt: "Horizontal bars compare seven logarithmic-RRF rank profiles with a candidate appearing once at rank 1. Profiles with one, two, three, and five supporting lists show how both support count and the individual ranks determine which candidate wins.",
+  caption: [How to read logarithmic RRF at the suggested defaults $k=60$, $b=1$. Each row lists one candidate's ranks across distinct retrievers; bar length is its final score divided by the score of a candidate returned once at rank 1. The dashed line is the pairwise tie. Two rank-100 retrievers agree strongly enough to win, while the uneven pair $(100,500)$ loses. The mixed triple $(100,500,1000)$ barely wins, whereas three rank-100 occurrences and five broad mid-to-deep occurrences win decisively. Logarithmic RRF therefore strongly incentivizes agreement among retrievers. These are analytic score comparisons, not relevance judgments.],
+)
+#figure(
+  rank-profile-comparison-grid-figure(),
+  kind: image,
+  supplement: [Figure],
+  alt: "A compact two-by-two grid compares the same seven retriever-rank profiles under logarithmic RRF, Rank-Biased Centroid, ISR, and logISR. Every panel is a base-10 score ratio with a dashed tie line.",
+  caption: [The Figure 1 rank profiles under four fusion rules. Panel (a) shows logarithmic RRF at $k=60$, $b=1$: mid-rank evidence survives, and agreement across retrievers can overcome a rank-1 singleton. Panel (b) shows Rank-Biased Centroid at $phi=0.7$: geometric decay makes the shallowest retriever dominate and renders deeper agreement negligible. Panel (c) shows ISR: coverage helps, but inverse-square decay leaves every displayed mid-to-deep profile below the rank-1 singleton. Panel (d) shows logISR: every singleton is erased by $ln 1=0$, so any multi-retriever result wins before rank quality distinguishes the remaining candidates. Panels (a)--(c) use a rank-1 singleton baseline; panel (d) uses ranks $(1,1)$.],
 )
 ```
 
