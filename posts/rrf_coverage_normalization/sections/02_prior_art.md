@@ -19,7 +19,7 @@ several such rankings. A method can change the influence of a
 retriever, reward agreement across rankings, or normalize a document's
 accumulated score. These operations are not interchangeable. We therefore
 separate the rank kernel from the treatment of coverage: $R_d$ is the set of
-retrieval rankings in which document $d$ appears, and $n(d)=|R_d|$ is its
+retrieval rankings in which document $d$ appears, and $|R_d|$ is its
 ranking coverage.
 
 For example, consider one input collection containing text and image
@@ -47,7 +47,7 @@ enter the fusion rule. At the same time, every additional retrieval ranking in
 which $d$ appears contributes another positive term. The score therefore
 combines two signals: how highly the document ranks and its ranking coverage.
 
-Dividing the accumulated score by $n(d)$ separates those signals in the
+Dividing the accumulated score by $|R_d|$ separates those signals in the
 simplest possible way. The resulting quantity is the mean reciprocal-rank
 contribution among retrieval rankings in which the document appears. We use
 this *coverage division* as a comparator, not as a canonical variant of RRF,
@@ -57,7 +57,7 @@ Fixed per-retriever weights address a different problem. Weighted RRF replaces
 each contribution with $w_i/(k+r_i(d))$; for example, Azure AI Search exposes a
 query-time weight for individual vector queries [@azureVectorWeighting]. The
 weight expresses the prior influence of retriever $i$. It remains fixed across
-documents and is independent of the realized coverage $n(d)$, so weighting a
+documents and is independent of the realized coverage $|R_d|$, so weighting a
 trusted retriever does not by itself normalize unequal document support.
 
 ### Rank-Biased Centroid
@@ -69,7 +69,7 @@ $(1-p)p^{x-1}$ [@bailey2017]. With persistence parameter $\phi$, the
 contribution at rank $r$ is $(1-\phi)\phi^{r-1}$, and the fused score sums that
 contribution over the retrieval rankings in which the document appears.
 $\phi$ controls rank persistence; it is not the document coverage count
-$n(d)$. RBC can consequently accumulate support across several retrieval
+$|R_d|$. RBC can consequently accumulate support across several retrieval
 rankings, but its geometric decay is neither a logarithm of coverage nor a
 normalization by coverage.
 
@@ -77,19 +77,19 @@ normalization by coverage.
 
 Mourao et al.'s Inverse Square Rank (ISR) family combines ranking coverage
 with a steeper rank-decay kernel [@mourao2014]. Its fusion rule is
-$S_{\mathrm{ISR}}(d)=n(d)\sum_{i\in R_d}\frac{1}{r_i(d)^2}$.
+$S_{\mathrm{ISR}}(d)=|R_d|\sum_{i\in R_d}\frac{1}{r_i(d)^2}$.
 
 Each contributing rank decays by its inverse square, and the resulting sum is
 multiplied by the number of retrieval rankings containing the document. The
 logISR variant replaces that linear frequency factor with
-$S_{\mathrm{logISR}}(d)=\ln(n(d))\sum_{i\in R_d}\frac{1}{r_i(d)^2}$.
+$S_{\mathrm{logISR}}(d)=\ln(|R_d|)\sum_{i\in R_d}\frac{1}{r_i(d)^2}$.
 
 That logarithm creates a sharp boundary at one ranking. Because $\ln(1)=0$,
 logISR assigns zero to every document that appears in only one retrieval
 ranking, regardless of its rank. Such documents therefore require a secondary
 tie-breaking rule; Mourao et al. used a deterministic shuffle. Their logN ISR
 variant instead uses
-$S_{\mathrm{logNISR}}(d;\sigma)=\ln(n(d)+\sigma)\sum_{i\in R_d}\frac{1}{r_i(d)^2}$.
+$S_{\mathrm{logNISR}}(d;\sigma)=\ln(|R_d|+\sigma)\sum_{i\in R_d}\frac{1}{r_i(d)^2}$.
 
 It preserves a positive score for a document seen in only one ranking whenever
 $\sigma>0$. The authors tested $\sigma$ over $[0,1]$ and used $\sigma=0.01$ in
@@ -101,20 +101,20 @@ These empirical observations are specific to Mourao et al.'s experiments,
 which used two modality-specific rankings per multimodal query: one image-search
 rank and one text-search rank. logISR performed poorly in those tasks; the
 authors attributed this result to the method being unstable with few rankings
-and collapsing all $n(d)=1$ scores to zero. logN ISR was more balanced: it
+and collapsing all $|R_d|=1$ scores to zero. logN ISR was more balanced: it
 marginally improved upon RRF for case retrieval, while RRF slightly led image
 retrieval and logN ISR placed second [@mourao2014].
 
 The closest formula-level precedent is logN ISR because it applies shifted
 logarithmic coverage to an inverse-square rank kernel. The logarithmic RRF
 family instead applies that coverage factor to the standard RRF kernel as
-$S_{\mathrm{log}}(d;b,B)=B S_{\mathrm{RRF}}(d)\ln(n(d)+b)$.
+$S_{\mathrm{log}}(d;b,B)=B S_{\mathrm{RRF}}(d)\ln(|R_d|+b)$.
 
 Here $b$ controls the coverage shape, while the common positive factor $B$
 sets the score scale. The singleton-normalized default $b=1$ is
-$S_1(d)=S_{\mathrm{RRF}}(d)\frac{\ln(n(d)+1)}{\ln 2}$.
+$S_1(d)=S_{\mathrm{RRF}}(d)\frac{\ln(|R_d|+1)}{\ln 2}$.
 
-This specialization preserves the ordinary RRF score at $n(d)=1$ while
+This specialization preserves the ordinary RRF score at $|R_d|=1$ while
 retaining a concave coverage reward. Mathematical Formulation develops the
 parameters and boundary behavior; the relevant provenance here is the
 combination of RRF's rank kernel [@cormack2009] with logN ISR's shifted
@@ -133,10 +133,10 @@ reciprocal-rank fusion nor a logarithmic transformation of ranking coverage.
 The closest formula-level precedent found is logN ISR because it uses a shifted
 logarithmic coverage factor with an inverse-square rank kernel. The logarithmic RRF family
 uses the standard RRF rank kernel instead as
-$S_{\mathrm{log}}(d;b,B)=B S_{\mathrm{RRF}}(d)\ln(n(d)+b)$.
+$S_{\mathrm{log}}(d;b,B)=B S_{\mathrm{RRF}}(d)\ln(|R_d|+b)$.
 
 The singleton-normalized default at $b=1$ is
-$S_1(d)=S_{\mathrm{RRF}}(d)\frac{\ln(n(d)+1)}{\ln 2}$.
+$S_1(d)=S_{\mathrm{RRF}}(d)\frac{\ln(|R_d|+1)}{\ln 2}$.
 
 BM25 remains adjacent only by analogy because its logarithm is an
 inverse-document-frequency term [@robertson2009]. CombMNZ supplies a
