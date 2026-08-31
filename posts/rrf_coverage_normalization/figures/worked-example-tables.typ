@@ -7,7 +7,7 @@
     column-gutter: 10pt,
     align: top,
     block(width: 100%)[
-      #text(size: 7pt, weight: "bold")[Document evidence and scores]
+      #text(size: 7pt, weight: "bold")[Document rank positions and scores]
       #v(3pt)
       #table(
         columns: (0.22fr, 0.84fr, 0.64fr, 0.3fr, 0.26fr, 0.46fr, 0.54fr, 0.38fr, 0.52fr, 0.34fr, 0.48fr),

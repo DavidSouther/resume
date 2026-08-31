@@ -35,6 +35,17 @@ $S_{\mathrm{RBC}}$, $S_{\mathrm{ISR}}$, $S_{\mathrm{logISR}}$,
 $S_{\mathrm{logNISR}}$, $S_{\mathrm{log}}$, and $S_{\mathrm{sat}}$ are the
 document scores produced by each rule.
 
+Coverage normalization makes its outer coverage policy explicit while retaining
+the RRF rank kernel:
+
+$$
+S_C(d)=S_{\mathrm{RRF}}(d)C(R_d).
+$$
+
+The three policies below name their multipliers as $C_{\mathrm{inv}}$,
+$C_{\mathrm{log}}$, and $C_{\mathrm{sat}}$. The score names remain useful
+when referring to their complete scoring rules.
+
 ### Plain RRF
 
 The plain Reciprocal Rank Fusion kernel is
@@ -59,31 +70,6 @@ several mediocre ranks can therefore overtake one with a single excellent
 rank. Thus $k$ is a rank-damping constant, not a coverage normalizer: it does
 not remove the reward for coverage.
 
-### Coverage division
-
-For $|R_d|\geq1$, coverage division is
-
-$$
-S_{\mathrm{avg}}(d) = \frac{S_{\mathrm{RRF}}(d)}{|R_d|}.
-$$
-
-This comparator takes the mean of the RRF reciprocal-rank contributions
-[@cormack2009]. Ranks and $k$ change each term exactly as in RRF, but division
-changes how another supporting retriever is interpreted. If its contribution
-$x=1/(k+r)$ exceeds the current mean, it raises the score; if it is below the
-mean, it lowers the score; and if it equals the mean, the score is unchanged.
-Coverage is therefore not intrinsically beneficial: its effect depends on the
-quality of the evidence being added.
-
-At equal ranks, the score is invariant to $n$: every term is identical and
-$S_{\mathrm{avg}}=1/(k+r)$ for every $n\geq1$. This invariance makes average
-rank quality comparable across different coverages, but it also
-erases the distinction between one retriever and many retrievers repeating the
-same evidence. It removes the automatic reward for agreement and can discard
-useful consensus evidence. Coverage division is useful when duplicate support
-should not accumulate; it is undesirable when independent agreement is itself
-evidence.
-
 ### Fixed retriever weights
 
 The fixed-retriever-weight score is
@@ -105,7 +91,7 @@ $w_i>0$ raises the score, but the size of the increase depends on both the new
 rank and the retriever's prior weight. Multiplying every weight by one positive
 constant rescales every document equally and preserves their ordering.
 Changing weights relative to one another can change the ordering by deciding
-which retriever's evidence counts more. Fixed weights encode prior trust or
+which retriever's contribution receives more weight. Fixed weights encode prior trust or
 importance, not coverage normalization, because they do not adapt to
 how many retrievers returned a particular document.
 
@@ -182,12 +168,12 @@ ISR rewards coverage twice. Adding an equal-rank supporter both adds another
 term to $Q_{\mathrm{ISR}}$ and increases the outer factor $n$. Consequently,
 equal-rank support grows as $n^2/r^2$, more aggressively than RRF's $n/(k+r)$.
 logISR replaces the linear outer factor with $\ln n$, so equal-rank support
-grows as $n\ln n/r^2$. Its one-retriever boundary is severe: $\ln1=0$ erases all
-rank evidence when $n=1$, so every document returned by one retriever ties at zero regardless of rank.
+grows as $n\ln n/r^2$. Its one-retriever boundary is severe: $\ln1=0$ removes all
+rank-dependent distinction when $n=1$, so every document returned by one retriever ties at zero regardless of rank.
 
 logN ISR shifts that boundary. At $\sigma=0$ it is logISR. For
 $\sigma>0$, a document returned by one retriever receives the positive multiplier $\ln(1+\sigma)$, so
-its inverse-square rank evidence survives. Raising $\sigma$ raises every
+its inverse-square contribution remains rank-dependent. Raising $\sigma$ raises every
 multiplier, but it proportionally favors low coverage: the relative separation
 between adjacent coverage levels becomes less pronounced as the common shift
 grows. Mourao et al. report using $\sigma=0.01$ to give one-retriever documents a
@@ -200,21 +186,72 @@ RRF. The logarithmic RRF family below is the direct RRF-kernel analogue of
 logN ISR: it retains the shifted logarithmic coverage factor while replacing
 the inverse-square rank kernel with RRF.
 
-### Logarithmic RRF
+### Coverage normalization
 
-For $b\geq0$, $B>0$, and returned documents with $|R_d|\geq1$, define the
-logarithmic RRF score
+Coverage normalization is the family of techniques introduced here for a
+multiplier that changes how retriever coverage affects an RRF score:
+$S_{\mathrm{technique}}(d)=S_{\mathrm{RRF}}(d) C_{\mathrm{technique}}(R_d)$.
+
+Coverage division is the simplest coverage normalization: it removes the
+automatic reward for repeated support by averaging rank contributions.
+
+Define
 
 $$
-S_{\mathrm{log}}(d; b, B)
-= B S_{\mathrm{RRF}}(d)\ln(|R_d| + b).
+C_{\mathrm{inv}}(R_d)=\frac{1}{|R_d|},
+$$
+
+on returned documents with $|R_d|\geq1$. Its complete score is
+
+$$
+S_{\mathrm{avg}}(d) = S_{\mathrm{RRF}}(d)C_{\mathrm{inv}}(R_d).
+$$
+
+This comparator takes the mean of the RRF reciprocal-rank contributions.
+The Division changes how additional supporting retrievers are interpreted.
+With current coverage $n\geq1$, the score changes only according to whether
+its contribution $x=1/(k+r)$ exceeds the current mean: it raises the score if
+it does; if it is below the mean, it lowers the score; and if it equals the mean,
+the score is unchanged.
+
+Coverage is therefore not intrinsically beneficial: its effect depends on the
+added reciprocal-rank contribution.
+
+At equal ranks, the score is invariant to $n$: every term is identical and
+$S_{\mathrm{avg}}=1/(k+r)$ for every $n\geq1$. This invariance makes average
+rank quality comparable across different coverages, but it also
+erases the distinction between one retriever and many retrievers returning the
+document at the same rank. It removes the automatic reward for agreement.
+Coverage division is useful when repeated retriever outputs should not
+accumulate; it is undesirable when retriever agreement should affect the score.
+
+It converts the RRF sum to the mean reciprocal-rank contribution among the
+retrieval rankings that returned the document. Fox and Shaw's CombANZ similarly
+averages a document's nonzero input scores, making it the closest prior
+comparator for coverage division [@fox1994].
+
+### Logarithmic RRF
+
+Logarithmic normalization retains a positive reward for agreement while making
+each successive multiplier increment smaller.
+
+Define
+
+$$
+C_{\mathrm{log}}(R_d;b,B)=B\ln(|R_d|+b),
+$$
+
+for $b\geq0$, $B>0$, and returned documents with $|R_d|\geq1$. Therefore
+
+$$
+S_{\mathrm{log}}(d; b, B)=S_{\mathrm{RRF}}(d)C_{\mathrm{log}}(R_d;b,B).
 $$
 
 This family combines Cormack, Clarke, and Buettcher's RRF kernel
 [@cormack2009] with the shifted coverage factor used by Mourao et al.'s logN
 ISR [@mourao2014]. The different kernel matters: RRF contributes
-$1/(k+r)$ rather than $1/r^2$, so $k$ can control how quickly rank evidence
-flattens.
+$1/(k+r)$ rather than $1/r^2$, so $k$ controls how strongly the contribution
+changes with rank.
 
 A common global scale is supplied by $B$. Because it is positive and applies equally to
 every document, it preserves every within-family order. It still matters when
@@ -224,10 +261,12 @@ set the numerical score scale without changing what the family ranks first.
 
 $b$ controls one-retriever weight, relative rewards between coverage levels, and
 the marginal gain from one more supporting retriever. Holding
-$S_{\mathrm{RRF}}$ fixed, the increment from coverage $n$ to $n + 1$ is
+$S_{\mathrm{RRF}}$ fixed, the multiplier increment from coverage $n$ to
+$n + 1$ is
 
 $$
-\delta_n=B\ln\left(\frac{n+1+b}{n+b}\right),
+\delta_n=C_{\mathrm{log}}(n+1;b,B)-C_{\mathrm{log}}(n;b,B)
+=B\ln\left(\frac{n+1+b}{n+b}\right),
 $$
 
 which is positive and decreases with $n$: $\ln$ is increasing and concave, so
@@ -264,25 +303,26 @@ introducing a freely tuned shift.
 
 ### Saturating RRF
 
-Logarithmic RRF has two potential drawbacks. First, it does not have a mechanism
-to deemphasize single retreiver responses. If a retrieval system is expected to
-have multiple retrievers for most documents, allowing to tune down documents
-that are ranked by only a single retriever. Second, it does not have a mechanism
-to tamp a high number of retrievers. While the log family of functions are convex,
-and in practice $|R_d|$ is small, it still alows unbounded contributions from
-additional retrievers. A saturating RRF will penalize $|R_d| = 1$, while maintaining
-$S(d) < RRF(d) * Α$, that is, the coverage multiplier is bounded.
+Saturating normalization can deemphasize single-retriever responses and place a
+ceiling on the coverage multiplier. It is useful when agreement should matter
+without its outer multiplier growing without bound.
 
-Define
+For the small retriever families considered here, define
 
 $$
-S_{\mathrm{sat}}(d;a,b,t)=S_{\mathrm{RRF}}(d)\operatorname{Sat}(|R_d|;a,b,t),
+C_{\mathrm{sat}}(R_d;a,b,t)=\operatorname{Sat}(|R_d|;a,b,t),
 $$
 
-where, for the small retriever families considered here ($|R_d|\geq3$),
+where
 
 $$
 \operatorname{Sat}(n;a,b,t)=1+a(1-\exp((1+b-n)/t)).
+$$
+
+The complete score is
+
+$$
+S_{\mathrm{sat}}(d;a,b,t)=S_{\mathrm{RRF}}(d)C_{\mathrm{sat}}(R_d;a,b,t).
 $$
 
 Here the admissible parameters are restricted to $a>0$, $b\geq0$,
@@ -313,12 +353,16 @@ for penalizing 2, 3, or more retrievers. The parameters $a$, $b$, and $t$ jointl
 the size of this one-retriever penalty and should be chosen against relevance judgments
 rather than interpreted independently.
 
-The increment from coverage $n$ to $n + 1$ is
+The multiplier increment from coverage $n$ to $n + 1$ is
 
 $$
-\Delta_n=ae^{(b-n)/t}(e^{1/t}-1),
-\qquad
-\frac{\Delta_{n+1}}{\Delta_n}=e^{-1/t}<1.
+\begin{aligned}
+\Delta_n
+&=C_{\mathrm{sat}}(n+1;a,b,t)-C_{\mathrm{sat}}(n;a,b,t) \\
+&=ae^{(b-n)/t}(e^{1/t}-1), \\
+\frac{\Delta_{n+1}}{\Delta_n}
+&=e^{-1/t}<1.
+\end{aligned}
 $$
 
 Every increment is positive and successive increments diminish. Smaller $t$
@@ -326,8 +370,8 @@ front-loads the reward into the first few supporting retrievers; larger $t$
 spreads the reward over more support. With $b>0$, increasing $t$ weakens the
 single retriever handicap but lowers the multiplier $n\geq2$ retrievers.
 
-This multiplier does not convert weak evidence into a penalty. If the current
-RRF sum is $R>0$ and an additional retriever contributes $x>0$, then, choosing
+This multiplier does not turn an added positive rank contribution into a score
+decrease. If the current RRF sum is $R>0$ and an additional retriever contributes $x>0$, then, choosing
 b such that a single retriever remains positive, both factors strictly increase:
 
 $$
@@ -340,8 +384,9 @@ $$
 \frac{n}{k+r}\operatorname{Sat}(n;a,b,t).
 $$
 
-As in all RRF families, agreement among rankings is not proof of
-independent corroboration. Correlated retrievers can rely on overlapping evidence.
+As in all RRF families, agreement among rankings does not establish retriever
+independence. Correlated retrievers can share documents, training data,
+representations, or query transformations.
 For small retriever families, $a=1$ when $|R_d|=3$ and $a=2$ when $|R_d|>3$ are
 reasonable corpus- and task-specific starting points. Use $b=0$ to preserve
 single retriever scores, or make the small shift to $b=0.1$ when a slight
@@ -407,8 +452,8 @@ $$
 \frac{n}{k+r}h(n)>\frac{1}{k+1}h(1),
 $$
 
-where $h(n)=B\ln(n+b)$ for logarithmic RRF and
-$h(n)=\operatorname{Sat}(n;a,b,t)$ for saturated RRF. For the logarithmic default
+where $h(n)=C_{\mathrm{log}}(n;b,B)$ for logarithmic RRF and
+$h(n)=C_{\mathrm{sat}}(n;a,b,t)$ for saturated RRF. For the logarithmic default
 $S_log(d;1,B)$ this becomes
 
 $$
@@ -426,9 +471,10 @@ rank-one match. Logarithmic RRF becomes more coverage-aggressive as $n$ grows
 because it retains the additional $\ln(n+1)$ factor; saturation moderates that
 effect but cannot remove it while the underlying RRF sum remains additive.
 
-The pathological cases are evidence-policy failures rather than arithmetic
-errors. Correlated or duplicate retrievers can be counted as independent
-corroboration. A large $k$ flattens the reciprocal-rank kernel, making shallow
+The pathological cases are coverage-policy failures rather than arithmetic
+errors. Correlated or duplicate retrievers can be counted separately despite
+not being independent.
+A large $k$ flattens the reciprocal-rank kernel, making shallow
 and deep returned ranks more similar and allowing coverage to dominate sooner.
 For logarithmic RRF, $b=0$ erases every single-retriever score, and as $b\to0^+$
 the normalized ratio $\ln(n+b)/\ln(1+b)$ can strongly favor multi-retriever
