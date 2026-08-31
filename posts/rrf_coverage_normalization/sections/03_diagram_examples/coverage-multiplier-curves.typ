@@ -15,7 +15,7 @@
 #let green-dark = rgb("#31A354")
 
 #let coverage-multiplier-curves-figure() = block(width: 100%)[
-  #text(size: 8pt, weight: "bold")[Bounded saturation changes the shape, not the evidence being summed]#linebreak()
+  #text(size: 8pt, weight: "bold")[Bounded saturation changes the multiplier, not the rank contributions being summed]#linebreak()
   #text(size: 7pt)[Dotted red curves are logarithmic RRF with $B=1/ln(1+b)$, dashed blue curves are saturated RRF with $b=0$, and solid green curves isolate the one-retriever penalty from $b$ at $a=2$, $t=2$. Every saturated curve approaches the asymptote $1+a$; smaller $t$ front-loads the reward and larger $t$ spreads it. The vertical axis begins at zero; returned documents begin at one supporting retriever.]
   #v(3pt)
   #lq.diagram(

@@ -18,8 +18,8 @@ $S_{\mathrm{ISR}}(B)=S_{\mathrm{ISR}}(C)=1$.
 
 The input rankings already contain a reversal. The text embedding ranks D
 ahead of F, while the multimodal embedding ranks F ahead of D. Fusion cannot
-make those representations interchangeable; it can only state how their
-evidence should combine. Fixed weighting then exchanges C and F because the
+make those representations interchangeable; it can only combine their ranked
+outputs. Fixed weighting then exchanges C and F because the
 plain-RRF margin between them is less than $10^{-5}$ and the lexical channel
 has the largest declared weight. Documents A through G are all visible here,
 but the construction is illustrative, not a benchmark.
@@ -46,21 +46,22 @@ likely to fit tasks where deep ranks should vanish rapidly.
 The inverse-square families make rank position sharper. $S_{\mathrm{ISR}}$
 grows as $n^2/r^2$, $S_{\mathrm{logISR}}$ as $n\ln n/r^2$, and
 $S_{\mathrm{logNISR}}$ as $n\ln(n+\sigma)/r^2$. They can suit tasks where
-head-rank evidence should dominate, although logISR's zero singleton score is
+head-rank contributions should dominate, although logISR's zero singleton score is
 a strong boundary policy.
 
-The logarithmic RRF family $S_{\mathrm{log}}$ grows as
-$Bn\ln(n+b)/(k+r)$. Its singleton-normalized logRRF member $S_1$ retains RRF
-at one supporter, but its unbounded multiplier keeps growing with coverage.
-Saturated RRF ($S_{\mathrm{sat}}$) instead uses a bounded multiplier while retaining every
+The logarithmic RRF family uses $C_{\mathrm{log}}(R_d;b,B)$; at equal ranks,
+its complete score grows as $Bn\ln(n+b)/(k+r)$. Its singleton-normalized logRRF
+member $S_1$ retains RRF at one supporter, but its unbounded multiplier keeps
+growing with coverage. Saturated RRF ($S_{\mathrm{sat}}$) instead uses the
+bounded multiplier $C_{\mathrm{sat}}(R_d;a,b,t)$ while retaining every
 positive RRF term: an additional positive match always increases the score.
 It therefore appears to fit a small retriever family where agreement should be
 promoted but its extra multiplier should approach a declared ceiling.
 Saturation moderates agreement promotion rather than removing it.
 
-These comparisons count agreement among retrievers, not independent evidence.
-Retriever outputs can be correlated because they share documents, training
-data, representations, or query transformations.
+These comparisons count agreement among retrievers; they do not establish that
+the retrievers are independent. Outputs can be correlated because retrievers
+share documents, training data, representations, or query transformations.
 
 ### Next steps
 
@@ -74,15 +75,14 @@ mechanism.
 
 ## Conclusion
 
-Reciprocal ranked fusion (RRF) allows normalizing several ranking retrievers without
-needing their scores to be directly comparable. However, simple RRF does not
-provide any mechnisms to control how each  retriever contributes to the overall
-ranking. Prior techniques focused on manually weighting each retriever, or changing the
-overall shape of the rankings. This paper proposes two families of functions that
-allow finely tuning _concurrence_ between retrievers. Documents that are found by
-a single retriever can be deemphasized in the final rankings, while documents that
-are found by several retrievers can be promoted as their ranks have more agreement.
+Reciprocal Rank Fusion (RRF) combines several ranked retriever outputs without
+requiring their score scales to be comparable. Plain RRF sums the returned
+reciprocal-rank contributions. Fixed weights change the influence of individual
+retrievers, while other methods change the rank kernel. The coverage
+normalizations keep the RRF kernel and instead control how
+retriever coverage changes the final score.
 
-By exploring analytically and in simulations, we have identified several behaviors
-that these families of functions contribute to the ranked fusion solution. Our future
-work will refine these values against production data sets at scales of several rankers over hundreds of thousands of document chunks.
+The analysis and simulations show how logarithmic and saturating multipliers
+change the treatment of singleton returns and agreement among retrievers. Their
+parameters require evaluation against relevance judgments on the intended
+corpus and task; the illustrative fixture does not select an optimum.

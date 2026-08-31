@@ -42,13 +42,7 @@ contributions $S_{\mathrm{RRF}}(d)=\sum_{i\in R_d}\frac{1}{k+r_i(d)}$
 after each retriever has produced an intermediate ranking, only rank positions
 enter the fusion rule. At the same time, every additional retrieval ranking in
 which $d$ appears contributes another positive term. The score therefore
-combines two signals: how highly the document ranks and its ranking coverage.
-
-Dividing the accumulated score by $|R_d|$ separates those signals in the
-simplest possible way. The resulting quantity is the mean reciprocal-rank
-contribution among retrieval rankings in which the document appears. We use
-this *coverage division* as a comparator, not as a canonical variant of RRF,
-and do not claim that the literature presents it as one.
+combines rank position and ranking coverage.
 
 Fixed per-retriever weights address a different problem. Weighted RRF replaces
 each contribution with $w_i/(k+r_i(d))$; for example, Azure AI Search exposes a

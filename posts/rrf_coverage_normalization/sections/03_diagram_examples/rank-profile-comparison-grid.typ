@@ -133,7 +133,7 @@
 ]
 
 #let rank-profile-comparison-grid-figure() = block(width: 100%)[
-  #text(size: 8pt, weight: "bold")[The same retriever evidence produces five qualitatively different rankings]
+  #text(size: 8pt, weight: "bold")[The same rank profiles produce five qualitatively different rankings]
   #text(size: 7pt)[Every panel uses the Figure 1 profiles. Panels (a)--(c) and (e) compare with one rank-1 appearance; logISR cannot use a singleton baseline, so panel (d) compares with ranks $(1,1)$.]
   #v(3pt)
   #grid(
