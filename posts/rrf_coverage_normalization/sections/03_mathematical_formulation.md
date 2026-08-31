@@ -27,13 +27,13 @@ $\sigma\in[0,1]\subset\mathbb{R}$. In the logarithmic RRF family,
 $b\in\mathbb{R}_{\geq0}$ shifts coverage and
 $B\in\mathbb{R}_{>0}$ scales the resulting score.
 The rank kernel
-$q_\phi:\mathbb{N}_{+}\to\mathbb{R}_{\geq0}$ and all eight scores are
+$q_\phi:\mathbb{N}_{+}\to\mathbb{R}_{\geq0}$ and all nine scores are
 real-valued and nonnegative on their stated domains.
 
 $S_{\mathrm{RRF}}$, $S_{\mathrm{avg}}$, $S_w$,
 $S_{\mathrm{RBC}}$, $S_{\mathrm{ISR}}$, $S_{\mathrm{logISR}}$,
-$S_{\mathrm{logNISR}}$, and $S_{\mathrm{log}}$ are the document scores
-produced by each rule.
+$S_{\mathrm{logNISR}}$, $S_{\mathrm{log}}$, and $S_{\mathrm{sat}}$ are the
+document scores produced by each rule.
 
 ### Plain RRF
 
@@ -143,7 +143,8 @@ $$
 \phi=\frac{r-1}{r},
 $$
 
-and decreases thereafter; its response is not globally monotone. The parameter redistributes attention from the head
+and decreases thereafter; its response is not globally monotone. The parameter
+redistributes attention from the head
 toward greater depth rather than acting as a score multiplier. RBC has no $k$:
 $\phi$ replaces reciprocal damping with a geometrically interpretable depth
 profile. Each additional supporting retriever still adds nonnegative mass, so
@@ -181,15 +182,15 @@ ISR rewards coverage twice. Adding an equal-rank supporter both adds another
 term to $Q_{\mathrm{ISR}}$ and increases the outer factor $n$. Consequently,
 equal-rank support grows as $n^2/r^2$, more aggressively than RRF's $n/(k+r)$.
 logISR replaces the linear outer factor with $\ln n$, so equal-rank support
-grows as $n\ln n/r^2$. Its singleton boundary is severe: $\ln1=0$ erases all
-rank evidence when $n=1$, so every singleton ties at zero regardless of rank.
+grows as $n\ln n/r^2$. Its one-retriever boundary is severe: $\ln1=0$ erases all
+rank evidence when $n=1$, so every document returned by one retriever ties at zero regardless of rank.
 
 logN ISR shifts that boundary. At $\sigma=0$ it is logISR. For
-$\sigma>0$, a singleton receives the positive multiplier $\ln(1+\sigma)$, so
+$\sigma>0$, a document returned by one retriever receives the positive multiplier $\ln(1+\sigma)$, so
 its inverse-square rank evidence survives. Raising $\sigma$ raises every
 multiplier, but it proportionally favors low coverage: the relative separation
 between adjacent coverage levels becomes less pronounced as the common shift
-grows. Mourao et al. report using $\sigma=0.01$ to give singleton documents a
+grows. Mourao et al. report using $\sigma=0.01$ to give one-retriever documents a
 small nonzero weight, while $\sigma=1$ compressed the distinction between low
 and high coverage [@mourao2014].
 
@@ -199,7 +200,7 @@ RRF. The logarithmic RRF family below is the direct RRF-kernel analogue of
 logN ISR: it retains the shifted logarithmic coverage factor while replacing
 the inverse-square rank kernel with RRF.
 
-### Logarithmic RRF family
+### Logarithmic RRF
 
 For $b\geq0$, $B>0$, and returned documents with $|R_d|\geq1$, define the
 logarithmic RRF score
@@ -221,13 +222,12 @@ the score is compared with a fixed threshold, combined with signals on other
 scales, or required to satisfy a downstream calibration contract. Those uses
 set the numerical score scale without changing what the family ranks first.
 
-$b$ controls singleton weight, relative rewards between coverage levels, and
+$b$ controls one-retriever weight, relative rewards between coverage levels, and
 the marginal gain from one more supporting retriever. Holding
-$S_{\mathrm{RRF}}$ fixed, the increment in its multiplier from coverage $n$
-to $n+1$ is
+$S_{\mathrm{RRF}}$ fixed, the increment from coverage $n$ to $n + 1$ is
 
 $$
-B\ln\left(\frac{n+1+b}{n+b}\right),
+\delta_n=B\ln\left(\frac{n+1+b}{n+b}\right),
 $$
 
 which is positive and decreases with $n$: $\ln$ is increasing and concave, so
@@ -239,19 +239,19 @@ rescaling every score. A small $b$ makes early coverage differences
 comparatively strong; a large $b$ makes the multipliers for different finite
 coverage levels more similar. Among documents with the same coverage and a
 positive multiplier, the common factor preserves their RRF order. At
-$b=0,|R_d|=1$, however, $\ln1=0$ erases every singleton rank and $k$
+$b=0,|R_d|=1$, however, $\ln1=0$ erases every one-retriever rank and $k$
 distinction.
 
-For $b>0$, a useful subfamily normalizes the singleton multiplier to one by
+For $b>0$, a useful subfamily normalizes the one-retriever multiplier to one by
 choosing
 
 $$
 B=\frac{1}{\ln(1+b)}.
 $$
 
-Then a singleton receives exactly its plain RRF score, and $b$ controls only
+Then a document returned by one retriever receives exactly its plain RRF score, and $b$ controls only
 the additional coverage reward beyond that baseline. This normalization is
-undefined at $b=0$, precisely where the unnormalized family has the singleton
+undefined at $b=0$, precisely where the unnormalized family has the one-retriever
 degeneracy. Setting $b=1$ gives $B=\frac{1}{\ln2}$ and the simple default
 
 $$
@@ -259,19 +259,105 @@ S_1(d)=S_{\mathrm{RRF}}(d)\frac{\ln(|R_d|+1)}{\ln2}.
 $$
 
 The default has a finite logarithm at zero coverage, preserves every
-singleton's RRF score, and gives additional agreement a concave reward without
+one-retriever RRF score, and gives additional agreement a concave reward without
 introducing a freely tuned shift.
+
+### Saturating RRF
+
+Logarithmic RRF has two potential drawbacks. First, it does not have a mechanism
+to deemphasize single retreiver responses. If a retrieval system is expected to
+have multiple retrievers for most documents, allowing to tune down documents
+that are ranked by only a single retriever. Second, it does not have a mechanism
+to tamp a high number of retrievers. While the log family of functions are convex,
+and in practice $|R_d|$ is small, it still alows unbounded contributions from
+additional retrievers. A saturating RRF will penalize $|R_d| = 1$, while maintaining
+$S(d) < RRF(d) * Α$, that is, the coverage multiplier is bounded.
+
+Define
+
+$$
+S_{\mathrm{sat}}(d;a,b,t)=S_{\mathrm{RRF}}(d)\operatorname{Sat}(|R_d|;a,b,t),
+$$
+
+where, for the small retriever families considered here ($|R_d|\geq3$),
+
+$$
+\operatorname{Sat}(n;a,b,t)=1+a(1-\exp((1+b-n)/t)).
+$$
+
+Here the admissible parameters are restricted to $a>0$, $b\geq0$,
+$t>0$, and
+
+$$
+a(e^{b/t}-1)<1,
+$$
+
+so every single retriever multiplier, and therefore every single retriever score, remains
+positive.
+
+The scale $a$ sets the asymptotic multiplier:
+$\operatorname{Sat}(n)\to1+a$ as $n\to\infty$. This bounds the coverage bonus
+above by 1 + a; the complete score is not globally bounded when the retriever
+family itself is allowed to grow as $S_{\mathrm{RRF}}$ continues accumulating positive terms.
+
+For a document returned by one retriever, $|R_d|=1$ and
+
+$$
+\operatorname{Sat}(1)=1-a(e^{b/t}-1).
+$$
+
+Thus for a document with a single retriever, $b=0$ preserves its RRF score, while 
+$b>0$ applies increasing handicaps. At $b=t\ln(1+1/a)$ ($b=2\ln2$ for $a=1$ and $t=2$)
+a single retriever becomes a liability to the final score. Increasing $b$ finds similar
+for penalizing 2, 3, or more retrievers. The parameters $a$, $b$, and $t$ jointly set
+the size of this one-retriever penalty and should be chosen against relevance judgments
+rather than interpreted independently.
+
+The increment from coverage $n$ to $n + 1$ is
+
+$$
+\Delta_n=ae^{(b-n)/t}(e^{1/t}-1),
+\qquad
+\frac{\Delta_{n+1}}{\Delta_n}=e^{-1/t}<1.
+$$
+
+Every increment is positive and successive increments diminish. Smaller $t$
+front-loads the reward into the first few supporting retrievers; larger $t$
+spreads the reward over more support. With $b>0$, increasing $t$ weakens the
+single retriever handicap but lowers the multiplier $n\geq2$ retrievers.
+
+This multiplier does not convert weak evidence into a penalty. If the current
+RRF sum is $R>0$ and an additional retriever contributes $x>0$, then, choosing
+b such that a single retriever remains positive, both factors strictly increase:
+
+$$
+(R+x)\operatorname{Sat}(n+1)>R\operatorname{Sat}(n).
+$$
+
+For equal ranks $r$, the score becomes
+
+$$
+\frac{n}{k+r}\operatorname{Sat}(n;a,b,t).
+$$
+
+As in all RRF families, agreement among rankings is not proof of
+independent corroboration. Correlated retrievers can rely on overlapping evidence.
+For small retriever families, $a=1$ when $|R_d|=3$ and $a=2$ when $|R_d|>3$ are
+reasonable corpus- and task-specific starting points. Use $b=0$ to preserve
+single retriever scores, or make the small shift to $b=0.1$ when a slight
+single retriever penalty is desired. These starting points use $t=2$; $a$,
+$b$, and $t$ should be tuned against relevance judgments.
 
 ### Boundary and coverage analysis
 
-The general family
+The general logarithmic family
 
 $$
 S_{\mathrm{log}}(d;b,B)
 =B S_{\mathrm{RRF}}(d)\ln(|R_d|+b)
 $$
 
-allows $b\geq0$ on $|R_d|\geq1$. At $b=0$, the singleton multiplier is
+allows $b\geq0$ on $|R_d|\geq1$. At $b=0$, the one-retriever multiplier is
 zero, while the expression at $|R_d|=0$ is undefined. A finite zero-coverage
 extension therefore requires $b>0$: $\ln(b)$ is finite and the empty RRF
 sum makes the extended score zero. This extension supports boundary analysis;
@@ -279,8 +365,8 @@ it does not add an unreturned document to the scoring domain.
 
 At that boundary, $0<b<1$ gives $\ln(b)<0$, $b=1$ gives $\ln(b)=0$,
 and $b>1$ gives $\ln(b)>0$. These signs do not change the extended score
-because its empty RRF factor is zero. As $b\to0$, the singleton multiplier
-satisfies $\ln(1+b)\to0$; at $b=1$, it is $\ln2$ before singleton
+because its empty RRF factor is zero. As $b\to0$, the one-retriever multiplier
+satisfies $\ln(1+b)\to0$; at $b=1$, it is $\ln2$ before one-retriever
 normalization and one after multiplication by $B=1/\ln2$.
 
 For fixed finite $I$, the large-shift limit is
@@ -307,49 +393,79 @@ $nq_\phi(r)$. ISR grows as $n^2/r^2$, logISR as $n\ln n/r^2$, and logN ISR as
 $n\ln(n+\sigma)/r^2$. The logarithmic RRF family grows as
 $Bn\ln(n+b)/(k+r)$. Its logarithmic multiplier has diminishing increments,
 but its product with the growing rank sum remains unbounded over this hypothetical
-growing-retriever family. For fixed finite $I$, every score remains bounded
-because $n\leq|I|$.
+growing-retriever family. Saturated RRF instead grows as
+$n\operatorname{Sat}(n;a,b,t)/(k+r)$, which is $O(n)$ because its multiplier
+approaches $1+a$. For fixed finite $I$, every score remains bounded because
+$n\leq|I|$.
 
-Table: Provenance and boundary behavior for the four scoring rules used in the worked example. {#tbl:scoring-rule-provenance}
+The bounded multiplier does not give saturated RRF a rank-dominance guarantee.
+To compare the two families directly, let $H$ be returned once at rank $1$ and
+let $L$ be returned by $n$ retrievers, each at rank $r$. For either family,
+$L$ outranks $H$ when
 
-| Method | Rank kernel | Formula | Nonzero at $|R_d|=1$ | Bounded coverage bonus | Source |
-| --- | --- | --- | --- | --- | --- |
-| $S_{\mathrm{RRF}}$ | reciprocal | $\sum_{i \in I_d} 1 / (60 + r_i(d))$ | Yes | No | RRF [@cormack2009] |
-| $S_w$ | reciprocal | $\sum_{i \in I_d} w_i / (60 + r_i(d))$ | Yes | No | Azure weighted vector queries [@azureVectorWeighting] |
-| $S_{\mathrm{ISR}}$ | inverse square | $|R_d|\sum_{i \in I_d} 1 / r_i(d)^2$ | Yes | No | ISR [@mourao2014] |
-| $S_1$ | reciprocal | $S_{\mathrm{RRF}}\ln(|R_d| + 1) / \ln(2)$ | Yes | No | Singleton-normalized specialization |
+$$
+\frac{n}{k+r}h(n)>\frac{1}{k+1}h(1),
+$$
 
-### Comparisons
+where $h(n)=B\ln(n+b)$ for logarithmic RRF and
+$h(n)=\operatorname{Sat}(n;a,b,t)$ for saturated RRF. For the logarithmic default
+$S_log(d;1,B)$ this becomes
 
-The main comparison asks what the default logarithmic RRF rule does when
-several retrievers return the same candidate at different depths. Figure 1
-uses a document with a single retriever scoring it at rank, as a common baseline.
-A document with a single rank 100 score is weak, but agreement changes the result: two rank 100 scores already rank slightly higher than the sigle rank 1 document.
-Three mixed occurrences at ranks $(100,500,1000)$ also narrowly beat the single
-retriever rank one document. Logarithmic RRF therefore does more than preserve
-evidence from several retrievers. It explicitly favors candidates corroborated
-across retrievers, even when no single retriever places the candidate at the head
-of its list.
+$$
+r<n(k+1)\frac{\ln(n+1)}{\ln2}-k.
+$$
 
-Figure 2 explores the same rank profiles across the fusion methods.
-For all graphs, the x axis is the ratio for each document's score relative to the
-single retriever rank 1 score.  Panel (a) presents Figure 1 rescaled to this
-logarithmic ratio. Panel (b) shows that Rank-Biased Centroid at $\phi=0.7$ is
-effectively controlled by the shallowest rank: evidence at ranks 300--1000 adds
-almost nothing to a rank-100 match, only somewhat mixing multiple retriever
-mid-rank documents.  Panel (c) shows that ISR rewards additional retrievers, but its
-inverse-square kernel still lets a rank-1 singleton dominate every mid-to-deep
-profile shown. Panel (d) exposes logISR's singleton degeneracy: every singleton
-receives score zero, so any candidate returned by two retrievers beats every candidate returned by
-only one, regardless of the singleton's rank. Among multi-retriever candidates,
-inverse-square rank quality again dominates.
+At the saturated starting point $S_sat(d;1,02)$, it becomes
 
-Together the panels separate two choices that are easy to conflate. The rank
-kernel decides how much evidence survives at depth; the coverage factor decides
-how strongly independent retriever agreement changes the final order. At the
-suggested $k=60$, $b=1$ defaults, logarithmic RRF is the only rule in this
-comparison that both retains substantial mid-rank evidence and strongly
-promotes cross-retriever agreement without erasing singletons.
+$$
+r<n(k+1)\left(2-e^{-(n-1)/2}\right)-k.
+$$
+
+Both rules therefore permit several low-ranked retriever matches to overtake a
+rank-one match. Logarithmic RRF becomes more coverage-aggressive as $n$ grows
+because it retains the additional $\ln(n+1)$ factor; saturation moderates that
+effect but cannot remove it while the underlying RRF sum remains additive.
+
+The pathological cases are evidence-policy failures rather than arithmetic
+errors. Correlated or duplicate retrievers can be counted as independent
+corroboration. A large $k$ flattens the reciprocal-rank kernel, making shallow
+and deep returned ranks more similar and allowing coverage to dominate sooner.
+For logarithmic RRF, $b=0$ erases every single-retriever score, and as $b\to0^+$
+the normalized ratio $\ln(n+b)/\ln(1+b)$ can strongly favor multi-retriever
+documents. For saturated RRF, $b>0$ down-weights one-retriever documents; near
+the positive-one-retriever boundary, its multiplier can approach zero even
+though the multi-retriever multiplier remains bounded. Neither behavior proves
+relevance, so dependent retrievers and parameter choices require empirical
+evaluation.
+
+```{=typst}
+#pagebreak()
+#set page(columns: 1)
+```
+
+```{=typst}
+#import "../figures/scoring-rule-provenance-table.typ": scoring-rule-provenance-table
+#scoring-rule-provenance-table() <tbl:scoring-rule-provenance>
+```
+
+Table: Illustrative saturated-multiplier settings for small retriever families. Values are $\operatorname{Sat}(n)$, not complete document scores. {#tbl:saturated-tuning}
+
+| $a$ | $b$ | $t$ | Asymptote | $|R_d|=1$ | $|R_d|=2$ | $|R_d|=3$ | $|R_d|=4$ | $|R_d|=5$ |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 1 | 0 | 2 | 2 | 1.000 | 1.393 | 1.632 | 1.777 | 1.865 |
+| 1 | 0.1 | 2 | 2 | 0.949 | 1.362 | 1.613 | 1.765 | 1.858 |
+| 2 | 0 | 2 | 3 | 1.000 | 1.787 | 2.264 | 2.554 | 2.729 |
+
+```{=typst}
+#import "../sections/03_diagram_examples/coverage-multiplier-curves.typ": coverage-multiplier-curves-figure
+#figure(
+  coverage-multiplier-curves-figure(),
+  kind: "coverage-policy",
+  supplement: [Coverage plot],
+  alt: "Eight coverage multiplier curves compare two dotted red logarithmic settings with six saturated settings. Dashed blue curves vary a and t at b equals zero, while solid green curves vary b at a equals two and t equals two. The vertical axis begins at zero; plotted coverage begins at one.",
+  caption: [Coverage multipliers for $|R_d|=1$ through $7$, with the vertical axis beginning at zero and the plotted coverage beginning at one. Dotted red curves are logarithmic RRF, normalized at one retriever, for $b=1$ and $b=2$; they remain unbounded. Dashed blue curves show saturated RRF with $b=0$ as $a$ and $t$ vary. Solid green curves hold $a=2$ and $t=2$ while varying $b$, exposing the one-retriever penalty. Saturated curves approach $1+a$.],
+)
+```
 
 ```{=typst}
 #pagebreak()
@@ -364,15 +480,15 @@ promotes cross-retriever agreement without erasing singletons.
   rank-profile-comparison-figure(),
   kind: image,
   supplement: [Figure],
-  alt: "Horizontal bars compare seven logarithmic-RRF rank profiles with a candidate appearing once at rank 1. Profiles with one, two, three, and five supporting lists show how both support count and the individual ranks determine which candidate wins.",
-  caption: [How to read logarithmic RRF at the suggested defaults $k=60$, $b=1$. Each row lists one candidate's ranks across distinct retrievers; bar length is its final score divided by the score of a candidate returned once at rank 1. The dashed line is the pairwise tie. Two rank-100 retrievers agree strongly enough to win, while the uneven pair $(100,500)$ loses. The mixed triple $(100,500,1000)$ barely wins, whereas three rank-100 occurrences and five broad mid-to-deep occurrences win decisively. Logarithmic RRF therefore strongly incentivizes agreement among retrievers. These are analytic score comparisons, not relevance judgments.],
+  alt: "Touching equal-height red logRRF and blue saturated-RRF bars compare seven rank profiles. Clear vertical whitespace separates profile pairs; the ColorBrewer Set1 colors remain distinguishable when printed in black and white.",
+  caption: [LogRRF at $k=60$, $b=1$ beside $S_"sat"(d;3,0.1,2)$. Each touching pair is one candidate's ranks across distinct retrievers, normalized to that method's rank-1 singleton; whitespace separates cases. The positive $b$ slightly penalizes singleton coverage, while the saturation multiplier is bounded and approaches four. These are analytic score comparisons, not relevance judgments.],
 )
 #figure(
   rank-profile-comparison-grid-figure(),
   kind: image,
   supplement: [Figure],
-  alt: "A compact two-by-two grid compares the same seven retriever-rank profiles under logarithmic RRF, Rank-Biased Centroid, ISR, and logISR. Every panel is a base-10 score ratio with a dashed tie line.",
-  caption: [The Figure 1 rank profiles under four fusion rules. Panel (a) shows logarithmic RRF at $k=60$, $b=1$: mid-rank evidence survives, and agreement across retrievers can overcome a rank-1 singleton. Panel (b) shows Rank-Biased Centroid at $phi=0.7$: geometric decay makes the shallowest retriever dominate and renders deeper agreement negligible. Panel (c) shows ISR: coverage helps, but inverse-square decay leaves every displayed mid-to-deep profile below the rank-1 singleton. Panel (d) shows logISR: every singleton is erased by $ln 1=0$, so any multi-retriever result wins before rank quality distinguishes the remaining candidates. Panels (a)--(c) use a rank-1 singleton baseline; panel (d) uses ranks $(1,1)$.],
+  alt: "Five distinct small-multiple panels compare logRRF, RBC, ISR, logISR, and saturated RRF across the same seven rank profiles. logISR uses its distinct two-rank-one baseline.",
+  caption: [The Figure 1 profiles in five panels, one for each fusion rule: logRRF, RBC, ISR, logISR, and $S_"sat"(d;3,0.1,2)$. Panel (e) adds saturated RRF to the four original rule-family panels. Bars encode base-10 score ratios; logISR is normalized to $(1,1)$ because its singleton score is zero, while the other rules use $(1)$. The figure compares scoring behavior, not retrieval effectiveness.],
 )
 ```
 
