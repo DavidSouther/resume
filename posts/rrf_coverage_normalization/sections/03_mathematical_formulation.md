@@ -508,8 +508,8 @@ Table: Illustrative saturated-multiplier settings for small retriever families. 
   coverage-multiplier-curves-figure(),
   kind: "coverage-policy",
   supplement: [Coverage plot],
-  alt: "Eight coverage multiplier curves compare two dotted red logarithmic settings with six saturated settings. Dashed blue curves vary a and t at b equals zero, while solid green curves vary b at a equals two and t equals two. The vertical axis begins at zero; plotted coverage begins at one.",
-  caption: [Coverage multipliers for $|R_d|=1$ through $7$, with the vertical axis beginning at zero and the plotted coverage beginning at one. Dotted red curves are logarithmic RRF, normalized at one retriever, for $b=1$ and $b=2$; they remain unbounded. Dashed blue curves show saturated RRF with $b=0$ as $a$ and $t$ vary. Solid green curves hold $a=2$ and $t=2$ while varying $b$, exposing the one-retriever penalty. Saturated curves approach $1+a$.],
+  alt: "Nine coverage multiplier curves compare black coverage division, two dotted red logarithmic settings, and six saturated settings. Dashed blue curves vary a and t at b equals zero, while solid green curves vary b at a equals two and t equals two. The vertical axis begins at zero; plotted coverage begins at one.",
+  caption: [Coverage multipliers for $|R_d|=1$ through $7$, with the vertical axis beginning at zero and the plotted coverage beginning at one. The black curve is coverage division, $C_"inv"(n)=1/n$. Dotted red curves are logarithmic RRF, normalized at one retriever, for $b=1$ and $b=2$; they remain unbounded. Dashed blue curves show saturated RRF with $b=0$ as $a$ and $t$ vary. Solid green curves hold $a=2$ and $t=2$ while varying $b$, exposing the one-retriever penalty. Saturated curves approach $1+a$.],
 )
 ```
 
