@@ -10,13 +10,13 @@
 #let rows = (1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0)
 #let fills = (violet, green, green, blue, blue, grey, ink)
 #let profile-ticks = (
-  (1, [5 lists: ranks 100, 300, 500, 700, 900]),
-  (2, [3 lists: ranks 100, 500, 1000]),
-  (3, [3 lists: ranks 100, 100, 100]),
-  (4, [2 lists: ranks 100, 500]),
-  (5, [2 lists: ranks 100, 100]),
-  (6, [1 list: rank 100]),
-  (7, [1 list: rank 1]),
+  (1, [5 retrievers, ranks 100, 300, 500, 700, 900]),
+  (2, [3 retrievers, ranks 100, 500, 1000]),
+  (3, [3 retrievers, ranks 100, 100, 100]),
+  (4, [2 retrievers, ranks 100, 500]),
+  (5, [2 retrievers, ranks 100, 100]),
+  (6, [1 retriever, rank 100]),
+  (7, [1 retriever, rank 1]),
 )
 
 #let comparison-chart(

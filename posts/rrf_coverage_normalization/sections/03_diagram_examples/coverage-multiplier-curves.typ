@@ -1,6 +1,7 @@
 #import "@preview/lilaq:0.6.0" as lq
 
 #let coverage = (1, 2, 3, 4, 5, 6, 7)
+#let inverse-multiplier(n) = 1 / n
 // The logarithmic series use B = 1 / ln(1 + b), making their one-retriever multiplier one.
 #let log-multiplier(n, b) = calc.ln(n + b) / calc.ln(1 + b)
 #let saturated-multiplier(n, a, b, t) = 1 + a * (1 - calc.exp((1 + b - n) / t))
@@ -16,7 +17,7 @@
 
 #let coverage-multiplier-curves-figure() = block(width: 100%)[
   #text(size: 8pt, weight: "bold")[Bounded saturation changes the multiplier, not the rank contributions being summed]#linebreak()
-  #text(size: 7pt)[Dotted red curves are logarithmic RRF with $B=1/ln(1+b)$, dashed blue curves are saturated RRF with $b=0$, and solid green curves isolate the one-retriever penalty from $b$ at $a=2$, $t=2$. Every saturated curve approaches the asymptote $1+a$; smaller $t$ front-loads the reward and larger $t$ spreads it. The vertical axis begins at zero; returned documents begin at one supporting retriever.]
+  #text(size: 7pt)[The black curve is coverage division. Dotted red curves are logarithmic RRF with $B=1/ln(1+b)$, dashed blue curves are saturated RRF with $b=0$, and solid green curves isolate the one-retriever penalty from $b$ at $a=2$, $t=2$. Every saturated curve approaches the asymptote $1+a$; smaller $t$ front-loads the reward and larger $t$ spreads it. The vertical axis begins at zero; returned documents begin at one supporting retriever.]
   #v(3pt)
   #lq.diagram(
     width: 14.5cm,
@@ -29,13 +30,14 @@
     yaxis: (ticks: ((0, [0]), (1, [1]), (2, [2]), (3, [3]))),
     grid: (stroke: 0.25pt + luma(225)),
     legend: (position: bottom + right),
-    lq.plot(coverage, coverage.map(n => log-multiplier(n, 1)), label: [log b = 1], color: red-dark, stroke: (paint: red-dark, thickness: 1.5pt, dash: "dotted"), mark: "o", mark-size: 2.7pt),
-    lq.plot(coverage, coverage.map(n => log-multiplier(n, 2)), label: [log b = 2], color: red-light, stroke: (paint: red-light, thickness: 1.5pt, dash: "dotted"), mark: "o", mark-size: 2.7pt),
-    lq.plot(coverage, coverage.map(n => saturated-multiplier(n, 1, 0, 1)), label: [sat a = 1, t = 1, b = 0], color: blue-light, stroke: (paint: blue-light, thickness: 1.4pt, dash: "dashed"), mark: "o", mark-size: 2.6pt),
-    lq.plot(coverage, coverage.map(n => saturated-multiplier(n, 1, 0, 2)), label: [sat a = 1, t = 2, b = 0], color: blue-medium, stroke: (paint: blue-medium, thickness: 1.4pt, dash: "dashed"), mark: "o", mark-size: 2.6pt),
-    lq.plot(coverage, coverage.map(n => saturated-multiplier(n, 2, 0, 1)), label: [sat a = 2, t = 1, b = 0], color: blue-dark, stroke: (paint: blue-dark, thickness: 1.4pt, dash: "dashed"), mark: "o", mark-size: 2.6pt),
-    lq.plot(coverage, coverage.map(n => saturated-multiplier(n, 2, 0, 2)), label: [sat a = 2, t = 2, b = 0], color: green-light, stroke: 1.4pt + green-light, mark: "o", mark-size: 2.6pt),
-    lq.plot(coverage, coverage.map(n => saturated-multiplier(n, 2, 0.1, 2)), label: [sat a = 2, t = 2, b = 0.1], color: green-medium, stroke: 1.4pt + green-medium, mark: "o", mark-size: 2.6pt),
-    lq.plot(coverage, coverage.map(n => saturated-multiplier(n, 2, 0.3, 2)), label: [sat a = 2, t = 2, b = 0.3], color: green-dark, stroke: 1.4pt + green-dark, mark: "o", mark-size: 2.6pt),
+    lq.plot(coverage, coverage.map(n => inverse-multiplier(n)), label: [$C_"inv"(n)$], color: black, stroke: 1.4pt + black, mark: "o", mark-size: 2.6pt),
+    lq.plot(coverage, coverage.map(n => log-multiplier(n, 1)), label: [$C_"log"(n; 1, 1/ln 2)$], color: red-dark, stroke: (paint: red-dark, thickness: 1.5pt, dash: "dotted"), mark: "o", mark-size: 2.7pt),
+    lq.plot(coverage, coverage.map(n => log-multiplier(n, 2)), label: [$C_"log"(n; 2, 1/ln 3)$], color: red-light, stroke: (paint: red-light, thickness: 1.5pt, dash: "dotted"), mark: "o", mark-size: 2.7pt),
+    lq.plot(coverage, coverage.map(n => saturated-multiplier(n, 1, 0, 1)), label: [$C_"sat"(n; 1, 0, 1)$], color: blue-light, stroke: (paint: blue-light, thickness: 1.4pt, dash: "dashed"), mark: "o", mark-size: 2.6pt),
+    lq.plot(coverage, coverage.map(n => saturated-multiplier(n, 1, 0, 2)), label: [$C_"sat"(n; 1, 0, 2)$], color: blue-medium, stroke: (paint: blue-medium, thickness: 1.4pt, dash: "dashed"), mark: "o", mark-size: 2.6pt),
+    lq.plot(coverage, coverage.map(n => saturated-multiplier(n, 2, 0, 1)), label: [$C_"sat"(n; 2, 0, 1)$], color: blue-dark, stroke: (paint: blue-dark, thickness: 1.4pt, dash: "dashed"), mark: "o", mark-size: 2.6pt),
+    lq.plot(coverage, coverage.map(n => saturated-multiplier(n, 2, 0, 2)), label: [$C_"sat"(n; 2, 0, 2)$], color: green-light, stroke: 1.4pt + green-light, mark: "o", mark-size: 2.6pt),
+    lq.plot(coverage, coverage.map(n => saturated-multiplier(n, 2, 0.1, 2)), label: [$C_"sat"(n; 2, 0.1, 2)$], color: green-medium, stroke: 1.4pt + green-medium, mark: "o", mark-size: 2.6pt),
+    lq.plot(coverage, coverage.map(n => saturated-multiplier(n, 2, 0.3, 2)), label: [$C_"sat"(n; 2, 0.3, 2)$], color: green-dark, stroke: 1.4pt + green-dark, mark: "o", mark-size: 2.6pt),
   )
 ]
