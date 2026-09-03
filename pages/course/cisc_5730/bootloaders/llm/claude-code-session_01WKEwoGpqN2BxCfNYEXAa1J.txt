@@ -1,0 +1,472 @@
+https://claude.ai/code/session_01WKEwoGpqN2BxCfNYEXAa1J
+
+Mandelbrot in an x86 real mode bootloader.
+
+BIT 16 ORG 0x7a00 and all that.
+
+Map the graph region to a 1024x1024 block. Start SI at -128*1024, etc. apply a scaling factor to remain in an integer regime as much as possible, so that at the widest zoom level we cover the graph region (-2, 0.5) and whatever the equivalent aspect ration for rendering -1.5, 1.5. Keeping scaling factors in mind, add polling interface- wasd to move around, qe to zoom in and out. Aim for under 510 bytes compiled.
+I'll start by loading the Ailly skill as your preferences require.
+
+Ran 8 commands (1 failed), used a tool
+
+Ran skill
+/ailly
+
+skill: ailly
+Launching skill: ailly
+Ran
+a command
+
+ls && echo "--- git ---" && git status --short && git branch -a | head -20
+AGENTS.md
+ARCHITECTURE.md
+CLAUDE.md
+CODE_OF_CONDUCT.md
+CONTRIBUTING.md
+DESIGN.md
+LICENSE
+README.md
+SPECIFICATION.md
+biome.json
+content
+mise.toml
+package-lock.json
+package.json
+pages
+posts
+public
+scripts
+src
+tsconfig.json
+vitest.config.ts
+--- git ---
+* claude/mandelbrot-x86-bootloader-nj2j8h
+  main
+  remotes/origin/claude/mandelbrot-x86-bootloader-nj2j8h
+  remotes/origin/main
+Ran
+a command
+
+which nasm qemu-system-i386 qemu-system-x86_64 ndisasm 2>&1; echo "---"; ls /home/user/resume/src 2>/dev/null | head -40
+---
+components
+global.css
+lib
+migration.feature.test.ts
+resume.toml
+Ran
+a command
+
+git log --oneline -5 && echo "--- diff vs main ---" && git log --oneline main..HEAD && echo "--- posts ---" && ls posts && echo "--- content ---" && ls content && echo "--- pages ---" && ls pages
+75cb6ce docs(cv): academic CV (#6)
+b4ebf16 feat(posts): posts in folders (#5)
+c595692 Remove trips from main resume page. (#4)
+d164439 feat(astrolabe): persist controls drawer state to localStorage (#2)
+682b923 feat(astrolabe): Ptolemaic mode
+--- diff vs main ---
+--- posts ---
+ailly_ooda.md
+arrow_of_maturity.md
+behavioral_interviewing.md
+fielding-rest.md
+forward_backward_method.md
+fuzzy_homomorphic_endofunctor.md
+ilities.md
+interview_01_whiteboard.md
+interview_02_drawing.md
+interview_03_tracing.md
+interview_04_forward_backward.md
+interview_05_analyzing.md
+interview_06_glossary.md
+jeopardy_search.md
+knowledge_that_by_of.md
+llm_manifold
+llm_review_is_not_human_review.md
+revenge.md
+--- content ---
+cv-suny-downstate.md
+knowledge_that_of_by.md
+llm_homomorphic_endofunctor.md
+--- pages ---
+astrolabe
+blog
+cv
+page.ts
+Ran
+a command
+
+(apt-get install -y nasm 2>&1 | tail -3) ; echo "=== try2 ==="; (sudo apt-get install -y nasm 2>&1 | tail -3)
+Preparing to unpack .../nasm_2.16.01-1build1_amd64.deb ...
+Unpacking nasm (2.16.01-1build1) ...
+Setting up nasm (2.16.01-1build1) ...
+=== try2 ===
+Reading state information...
+nasm is already the newest version (2.16.01-1build1).
+0 upgraded, 0 newly installed, 0 to remove and 1 not upgraded.
+Failed to run
+a command
+
+(apt-get install -y qemu-system-x86 2>&1 | tail -2); which qemu-system-i386
+Exit code 1
+E: Failed to fetch http://security.ubuntu.com/ubuntu/pool/main/q/qemu/qemu-system-modules-spice_8.2.2%2bds-0ubuntu1.13_amd64.deb  404  Not Found [IP: 185.125.190.81 80]
+E: Unable to fetch some archives, maybe run apt-get update or try with --fix-missing?
+Ran
+a command
+
+ls pages/astrolabe && echo "--- blog ---" && ls pages/blog && echo "--- llm_manifold ---" && ls posts/llm_manifold && echo "--- scripts ---" && ls scripts && echo "--- package ---" && cat package.json
+page.ts
+--- blog ---
+[id]
+page.ts
+--- llm_manifold ---
+evals
+paper.md
+post.md
+refs.bib
+--- scripts ---
+mise-node.feature.test.ts
+serve.ts
+sitemap.feature.test.ts
+sitemap.ts
+--- package ---
+{
+  "name": "@davidsouther/resume",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "npm run css:bundle && node node_modules/@davidsouther/jiffies/lib/esm/ssg/main.js --out docs --no-clean",
+    "css:bundle": "lightningcss src/global.css -o public/global.css",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run typecheck && biome check src pages scripts vitest.config.ts",
+    "format": "biome format --write src pages scripts vitest.config.ts",
+    "lint": "biome lint --write src pages scripts vitest.config.ts",
+    "prebuild": "npm run check",
+    "build": "npm run css:bundle && node scripts/sitemap.ts && node node_modules/@davidsouther/jiffies/lib/esm/ssg/main.js --out docs",
+    "start": "node scripts/serve.ts --watch",
+    "test": "vitest run",
+    "posttest": "npm run check",
+    "test:watch": "vitest"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "devDependencies": {
+    "@davidsouther/jiffdown": "^2026.24.0",
+    "@davidsouther/jiffies": "^2026.25.0",
+    "@testing-library/dom": "^10.4.1",
+    "@types/node": "^24.12.4",
+    "gray-matter": "4.0.3",
+    "jsdom": "^29.1.1",
+    "lightningcss-cli": "^1.30.2",
+    "smol-toml": "^1.6.1",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.8",
+    "yaml": "^2.9.0"
+  },
+  "dependencies": {
+    "@biomejs/biome": "^2.4.16"
+  }
+}
+
+Background task failed
+(apt-get install -y qemu-system-x86 2>&1 | tail -2); which qemu-system-i386
+Ran
+a command
+
+apt-get update -qq 2>&1 | tail -2 && apt-get install -y --no-install-recommends qemu-system-x86 2>&1 | tail -3; which qemu-system-i386 qemu-system-x86_64
+Command running in background with ID: baotbf6h3. Output is being written to: /tmp/claude-0/-home-user-resume/86958a0a-4336-5248-a1dc-adc92980c323/tasks/baotbf6h3.output. You will be notified when it completes. To check interim output, use Read on that file path.
+Ran
+a command
+
+cat ARCHITECTURE.md | head -60; echo "=== sitemap/post discovery ==="; grep -rn "posts" scripts/sitemap.ts pages/blog/page.ts 2>/dev/null | head -20
+# David Souther's Publishing Platform
+
+My authoring approach is text-based.
+My writing style builds from bullet points.
+I want to write prose that is minimally annotated, yet expressive across media.
+I can use generative AI tooling to augment my writing style.
+
+This authoring tool will allow me trivial static content publishing (including interactive material).
+Content will be version controlled.
+It will use the content to tune generative AI on my voice, and I will edit generative AI's suggestions to expand content.
+
+This project will showcase "good", and it is "cheap" in that I'll do it myself on my own time.
+The codebase aims for usable for myself, with the deployed site being broadly accessible.
+This project will be extensible, and I intend to release the generative AI portion as a standalone utility at a future date.
+The website is static content, and will be deployed to a scalable provider.
+
+I am the sole author & driver, but the content is globally available. Readers of this site will see it as a reflection of myself.
+I may seek help for UX design, but I will retain overall architecture and software design.
+I am building it on my own. If colleagues want to contribute to portions beyond ideas and encouragement, I will fork the library portions.
+I am paying hosting and related costs myself.
+
+## Constraints
+
+I have no deadline for this project.
+I will contribute to this as a lower priority for my time.
+For the forseeable timeframe, the code will be run only via next.js. I may add a CLI in the future, and any folder structure details will be specified in a way that is amenable to a Python or other CLI implementation.
+
+## Context & Scope
+
+Adam Owada's Prompt Engineering site is an inspiration, and I'm sure we'll remain in contact.
+I'll probably ask Gabo for help & feedback on design issues.
+Several colleagues will provide additional feedback on the software and content, as requested.
+At this time I will use OpenAI's GPT family of models for generative ai features. I may try to move this to a local llama based model at some point.
+This starts with no dependents, though I do anticipate releasing the tooling around content generation and voice learning.
+
+## Solution Strategy
+
+The content will be plaintext markdown files in a version controlled folder structure.
+Next.js will orchestrate tooling.
+Tooling for the authoring experience will be dev only, will load content files as necessary, and will use NextJS's server side execution environment to call OpenAI APIs.
+Publishing will use NextJS static site generation utilities to build & export files appropriate for deploying using GitHub Pages.
+
+## Containers
+
+### Authoring
+
+The NextJS dev environment will have protected pages that are only exposed during development.
+These routes will have access to the project's local file system.
+It will read and write files directly, and will have some git awareness to block operations when the repo is dirty.
+Authoring proper will happen using text editors of choice.
+
+Generative AI features will use OpenAI APIs.
+The project will use a base model, and will fine tune that model using version controlled prompts and responses.
+The responses are the markdown content that will get published to the site.
+The prompts are stored adjacent their generated content, and can be edited same as content.
+Fine-tuning will happen when requested, and be tied to a specific git commit of the project's content.
+A section of content will get generated from appropriate prompt text & that file written to the local disk.
+It can then be edited by the author, before making a git commit with that content.
+
+### Publishing
+=== sitemap/post discovery ===
+scripts/sitemap.ts:2:import { getPostPaths } from "../src/lib/posts.ts";
+pages/blog/page.ts:4:import { getSortedPosts } from "../../src/lib/posts.ts";
+Nothing in the existing codebase will help you.
+Read
+baotbf6h3.output
+
+/tmp/claude-0/-home-user-resume/86958a0a-4336-5248-a1dc-adc92980c323/tasks/
+baotbf6h3.output
+1
+2
+3
+4
+5
+6
+7
+8
+9
+W: Failed to fetch https://ppa.launchpadcontent.net/ondrej/php/ubuntu/dists/noble/InRelease  Invalid response from proxy: HTTP/1.1 403 Forbidden  Content-Type: text/plain; charset=utf-8  X-Content-Type-Options: nosniff  Content-Length: 82  Connection: close     [IP: 127.0.0.1 34775]
+W: Some index files failed to download. They have been ignored, or old ones used instead.
+Setting up qemu-system-x86 (1:8.2.2+ds-0ubuntu1.18) ...
+Processing triggers for libc-bin (2.39-0ubuntu8.7) ...
+Processing triggers for hicolor-icon-theme (0.17-2) ...
+/usr/bin/qemu-system-i386
+/usr/bin/qemu-system-x86_64
+[exited with code 0]
+
+Background command completed
+apt-get update -qq 2&gt;&amp;1 | tail -2 &amp;&amp; apt-get install -y --no-install-recommends qemu-system-x86 2&gt;&amp;1 | tail -3; which qemu-system-i386 qemu-system-x86_64
+QEMU and NASM are both installed. Writing the bootloader now.
+
+Ran 2 commands
+
+Ran
+a command
+
+mkdir -p /home/user/resume/bootloader && cat > /home/user/resume/bootloader/mandelbrot.asm <<'EOF'
+; ---------------------------------------------------------------------------
+; mandelbrot.asm - Mandelbrot explorer in a 512-byte x86 real-mode boot sector.
+;
+; Build:  nasm -f bin mandelbrot.asm -o mandelbrot.img
+; Run:    qemu-system-i386 -drive format=raw,file=mandelbrot.img
+;
+; Controls:  w a s d  pan by 64 pixels
+;            q        zoom out
+;            e        zoom in
+;
+; ---------------------------------------------------------------------------
+; Numeric model
+;
+; Everything is signed Q16.16 fixed point held in 32-bit registers: 1.0 is
+; 65536.  A pixel is a BLOCK x BLOCK square of that grid, BLOCK = 1024 at the
+; widest zoom, so one pixel is 1024/65536 = 1/64 of a unit.
+;
+;   x0 = -128 * 1024 = -2.0        320 px * 1024 = 5.0     -> re in [-2.0,  3.0]
+;   y0 = -100 * 1024 = -1.5625     200 px * 1024 = 3.125   -> im in [-1.5625, 1.5625]
+;
+; which covers the requested (-2, 0.5) x (-1.5, 1.5) region.  Zoom halves or
+; doubles the per-pixel step about the centre of the screen, so the reachable
+; range is BLOCK = 1024 down to 1, a 1024x magnification, at which point one
+; pixel is one Q16.16 ulp and the fixed-point grid is exhausted.
+;
+; Products are formed with the one-operand IMUL (EDX:EAX = EAX * r/m32) and
+; renormalised with SHRD, so each multiply is exact to 64 bits before the
+; shift.  That is what keeps the iteration honest: at the top of the loop the
+; escape test guarantees |z| < 2, but z' = z^2 + c can reach |z'| ~ 7.25 before
+; the *next* test sees it, and 7.25 * 65536 squared is 2.3e11 - well past 32
+; bits, comfortably inside 64.
+; ---------------------------------------------------------------------------
+
+BITS 16
+ORG 0x7C00
+
+W       equ 320                 ; mode 13h dimensions
+H       equ 200
+SH      equ 16                  ; fixed point fraction bits
+BLOCK   equ 1024                ; widest-zoom step, Q16.16 units per pixel
+MAXIT   equ 128                 ; iteration cap
+PAN     equ 6                   ; pan distance, log2(pixels)
+
+start:
+        xor     ax, ax
+        mov     ds, ax
+        mov     ss, ax
+        mov     sp, 0x7C00
+        cld
+        mov     ax, 0x0013      ; VGA 320x200x256
+        int     0x10
+        push    0xA000
+        pop     es
+
+; --- draw one frame -------------------------------------------------------
+frame:
+        xor     di, di
+        mov     ebp, [y0]       ; ebp = c.im for this row
+.row:
+        mov     esi, [x0]       ; esi = c.re for this column
+        mov     word [col], W
+.col:
+        call    mandel
+        stosb
+        add     esi, [step]
+        dec     word [col]
+        jnz     .col
+        add     ebp, [step]
+        cmp     di, W*H
+        jb      .row
+
+; --- poll the keyboard ----------------------------------------------------
+key:
+        xor     ah, ah
+        int     0x16
+        mov     edx, [step]
+        shl     edx, PAN        ; pan delta = 64 * step
+        cmp     al, 'a'
+        je      .left
+        cmp     al, 'd'
+        je      .right
+        cmp     al, 'w'
+        je      .up
+        cmp     al, 's'
+        je      .down
+        cmp     al, 'e'
+        je      .zin
+        cmp     al, 'q'
+        jne     key
+.zout:
+        mov     eax, [step]
+        shl     eax, 1
+        cmp     eax, BLOCK
+        ja      key             ; already at the widest view
+        jmp     short .zoom
+.zin:
+        mov     eax, [step]
+        shr     eax, 1
+        jz      key             ; already at one ulp per pixel
+.zoom:
+        mov     ecx, [step]
+        sub     ecx, eax        ; d = step_old - step_new
+        mov     [step], eax
+        imul    edx, ecx, W/4
+        shl     edx, 1          ; (W/2) * d
+        add     [x0], edx
+        imul    edx, ecx, H/2
+        add     [y0], edx       ; corner moves, centre stays put
+        jmp     frame
+.left:
+        sub     [x0], edx
+        jmp     frame
+.right:
+        add     [x0], edx
+        jmp     frame
+.up:
+        sub     [y0], edx
+        jmp     frame
+.down:
+        add     [y0], edx
+        jmp     frame
+
+; --- escape-time iteration ------------------------------------------------
+; in:  esi = c.re, ebp = c.im    out: al = colour    clobbers eax ebx ecx edx
+mandel:
+        xor     ebx, ebx        ; z.re
+        xor     ecx, ecx        ; z.im
+        mov     byte [it], MAXIT
+.iter:
+        mov     eax, ebx
+        imul    ebx             ; edx:eax = z.re^2
+        shrd    eax, edx, SH
+        mov     [zr2], eax
+        mov     eax, ecx
+        imul    ecx             ; edx:eax = z.im^2
+        shrd    eax, edx, SH
+        mov     [zi2], eax
+        add     eax, [zr2]
+        cmp     eax, 4 << SH    ; |z|^2 >= 4 ?
+        jge     .out
+        mov     eax, ebx
+        imul    ecx             ; edx:eax = z.re * z.im
+        shrd    eax, edx, SH-1  ; 2 * z.re * z.im
+        add     eax, ebp
+        mov     ebx, [zr2]
+        sub     ebx, [zi2]
+        add     ebx, esi        ; z.re' = z.re^2 - z.im^2 + c.re
+        mov     ecx, eax        ; z.im' = 2 z.re z.im + c.im
+        dec     byte [it]
+        jnz     .iter
+        xor     al, al          ; inside the set: black
+        ret
+.out:
+        mov     al, [it]
+        and     al, 31
+        add     al, 32          ; escaped: one of the 32 hue entries
+        ret
+
+; --- state ----------------------------------------------------------------
+x0      dd      -128 * BLOCK    ; re of the top-left pixel
+y0      dd      -100 * BLOCK    ; im of the top-left pixel
+step    dd      BLOCK           ; Q16.16 units per pixel
+col     dw      0
+it      db      0
+zr2     dd      0
+zi2     dd      0
+
+%if ($ - $$) > 510
+%error "boot sector overflows 510 bytes"
+%endif
+
+        times   510 - ($ - $$) db 0
+        dw      0xAA55
+EOF
+cd /home/user/resume/bootloader && nasm -f bin mandelbrot.asm -o mandelbrot.img && ls -l mandelbrot.img && echo "code bytes:" && nasm -f bin mandelbrot.asm -o /dev/null -l /dev/stdout | tail -5
+-rw-r--r-- 1 root root 512 Sep  3 02:55 mandelbrot.img
+code bytes:
+Ran
+a command
+
+python3 -c "
+d=open('mandelbrot.img','rb').read()
+body=d[:510].rstrip(b'\x00')
+print('total image :',len(d))
+print('code+data   :',len(body),'bytes')
+print('free        :',510-len(body),'bytes')
+print('signature   :',hex(d[510]|d[511]<<8))
+"
+total image : 512
+code+data   : 305 bytes
+free        : 205 bytes
+signature   : 0xaa55
+
