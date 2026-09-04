@@ -48,9 +48,10 @@
     place(top, float: true, scope: "parent", clearance: 3mm, block(width: 100%)[#it])
   }
   show figure.where(kind: table): set figure.caption(position: bottom)
-  // Analytical figures span both columns so curve labels remain print-legible.
+  // Analytical figures stay in source order. Sections that need page-width
+  // artwork explicitly switch to one column around the figure.
   show figure.where(kind: image): it => {
-    place(top, float: true, scope: "parent", clearance: 3mm, block(width: 100%)[#it])
+    block(above: 3mm, below: 3mm, width: 100%)[#it]
   }
 
   if title != none {

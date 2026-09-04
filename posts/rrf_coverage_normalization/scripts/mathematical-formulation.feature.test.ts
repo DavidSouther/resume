@@ -2,14 +2,15 @@ import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync, rmSync, statSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { equalSupportScores } from "./generate-parameter-sensitivity-figure.ts";
 
 const paperDir = resolve(import.meta.dirname, "..");
 const section = resolve(paperDir, "sections", "03_mathematical_formulation.md");
 const priorArtSection = resolve(paperDir, "sections", "02_prior_art.md");
 const bibliography = resolve(paperDir, "refs.bib");
-const figure = resolve(paperDir, "figures", "parameter-sensitivity.svg");
-const figureGenerator = resolve(import.meta.dirname, "generate-parameter-sensitivity-figure.ts");
+const provenanceTableModule = resolve(paperDir, "figures", "scoring-rule-provenance-table.typ");
+const diagramExamples = ["order-ledger.typ", "pairwise-casebook.typ", "rank-ballot.typ"].map((name) =>
+	resolve(paperDir, "sections", "03_diagram_examples", "archival", name),
+);
 const template = resolve(paperDir, "templates", "manifold-preprint.typ");
 const generatedTypst = resolve(paperDir, "build", "rrf-coverage-normalization.typ");
 const outputPdf = resolve(paperDir, "build", "rrf-coverage-normalization.pdf");
@@ -17,6 +18,10 @@ const compiler = resolve(import.meta.dirname, "compile-rrf-coverage-normalizatio
 
 function compact(value: string): string {
 	return value.replaceAll(/\s+/g, "");
+}
+
+function withoutTypstBlockComments(value: string): string {
+	return value.replaceAll(/\/\*[\s\S]*?\*\//g, "");
 }
 
 function normalizePandocTypstMath(value: string): string {
@@ -37,6 +42,60 @@ function blockBetween(markdown: string, heading: string, nextHeading?: string): 
 }
 
 describe("RRF mathematical formulation", () => {
+	it("uses named coverage multipliers with consistent provenance and discussion order", () => {
+		// Arrange: read the authored policy descriptions and their downstream uses.
+		const mathematical = readFileSync(section, "utf8");
+		const simulation = readFileSync(resolve(paperDir, "sections", "04_simulation.md"), "utf8");
+		const discussion = readFileSync(resolve(paperDir, "sections", "05_discussion_conclusion.md"), "utf8");
+		const priorArt = readFileSync(priorArtSection, "utf8");
+		const provenanceTable = readFileSync(provenanceTableModule, "utf8");
+		const headings = [
+			"### Coverage division",
+			"### Fixed retriever weights",
+			"### Logarithmic RRF",
+			"### Saturating RRF",
+			"### Boundary and coverage analysis",
+		];
+
+		// Act: partition each coverage policy at its stable section boundary.
+		const coverageDivision = blockBetween(mathematical, headings[0], headings[1]);
+		const logarithmic = blockBetween(mathematical, headings[2], headings[3]);
+		const saturating = blockBetween(mathematical, headings[3], headings[4]);
+
+		// Assert: the shared score form gives each policy a named outer multiplier.
+		expect(compact(mathematical)).toContain(
+			"S_C(d)=S_{\\mathrm{RRF}}(d)C(R_d)",
+		);
+		expect(compact(coverageDivision)).toContain("C_{\\mathrm{inv}}(R_d)=\\frac{1}{|R_d|}");
+		expect(compact(logarithmic)).toContain(
+			"C_{\\mathrm{log}}(R_d;b,B)=B\\ln(|R_d|+b)",
+		);
+		expect(compact(saturating)).toContain(
+			"C_{\\mathrm{sat}}(R_d;a,b,t)=\\operatorname{Sat}(|R_d|;a,b,t)",
+		);
+
+		for (const block of [coverageDivision, logarithmic, saturating]) {
+			const intention = block.search(/(?:simplest|retains|can deemphasize)/i);
+			const definition = block.search(/C_\{\\mathrm\{(?:inv|log|sat)\}\}/);
+			const constraints = block.search(/(?:returned documents with \$\|R_d\|\\geq1|b\\geq0|admissible parameters)/i);
+			const incrementalCoverage = block.search(/(?:current mean|increment from coverage|increment.*coverage)/i);
+			expect(intention).toBeGreaterThanOrEqual(0);
+			expect(definition).toBeGreaterThan(intention);
+			expect(constraints).toBeGreaterThan(definition);
+			expect(incrementalCoverage).toBeGreaterThan(constraints);
+		}
+
+		expect(coverageDivision).toMatch(/exceeds the current mean.*raises.*below.*lowers.*equal.*unchanged/is);
+		expect(logarithmic).toMatch(/C_\{\\mathrm\{log\}\}.*positive.*diminish/is);
+		expect(saturating).toMatch(/C_\{\\mathrm\{sat\}\}.*positive.*diminish/is);
+		for (const downstream of [simulation, discussion]) {
+			expect(downstream).toContain("C_{\\mathrm{log}}");
+			expect(downstream).toContain("C_{\\mathrm{sat}}");
+		}
+		expect(priorArt).toMatch(/coverage division[\s\S]*?@fox1994/i);
+		expect(provenanceTable).toMatch(/coverage division[\s\S]*?@fox1994/i);
+	});
+
 	it("aligns Prior Art with the logarithmic RRF family and native mathematical typography", () => {
 		// Arrange: isolate the cited method discussions and the hidden comparison commentary.
 		const priorArt = readFileSync(priorArtSection, "utf8");
@@ -45,6 +104,11 @@ describe("RRF mathematical formulation", () => {
 			priorArt,
 			"### Reciprocal-rank fusion and fixed weights",
 			"### Rank-Biased Centroid",
+		);
+		const coverageNormalization = blockBetween(
+			priorArt,
+			"### Coverage normalization",
+			"### Reciprocal-rank fusion and fixed weights",
 		);
 		const rbc = blockBetween(priorArt, "### Rank-Biased Centroid", "### ISR, logISR, and logN ISR");
 		const isr = blockBetween(priorArt, "### ISR, logISR, and logN ISR");
@@ -60,11 +124,11 @@ describe("RRF mathematical formulation", () => {
 			);
 		const formulaSemantics = [
 			"S_{\\mathrm{RRF}}(d)=\\sum_{i\\inR_d}\\frac{1}{k+r_i(d)}",
-			"S_{\\mathrm{ISR}}(d)=n(d)\\sum_{i\\inR_d}\\frac{1}{r_i(d)^2}",
-			"S_{\\mathrm{logISR}}(d)=\\ln(n(d))\\sum_{i\\inR_d}\\frac{1}{r_i(d)^2}",
-			"S_{\\mathrm{logNISR}}(d;\\sigma)=\\ln(n(d)+\\sigma)\\sum_{i\\inR_d}\\frac{1}{r_i(d)^2}",
-			"S_{\\mathrm{log}}(d;b,B)=BS_{\\mathrm{RRF}}(d)\\ln(n(d)+b)",
-			"S_1(d)=S_{\\mathrm{RRF}}(d)\\frac{\\ln(n(d)+1)}{\\ln2}",
+			"S_{\\mathrm{ISR}}(d)=|R_d|\\sum_{i\\inR_d}\\frac{1}{r_i(d)^2}",
+			"S_{\\mathrm{logISR}}(d)=\\ln(|R_d|)\\sum_{i\\inR_d}\\frac{1}{r_i(d)^2}",
+			"S_{\\mathrm{logNISR}}(d;\\sigma)=\\ln(|R_d|+\\sigma)\\sum_{i\\inR_d}\\frac{1}{r_i(d)^2}",
+			"S_{\\mathrm{log}}(d;b,B)=BS_{\\mathrm{RRF}}(d)\\ln(|R_d|+b)",
+			"S_1(d)=S_{\\mathrm{RRF}}(d)\\frac{\\ln(|R_d|+1)}{\\ln2}",
 		];
 
 		// Assert: terminology, equations, and provenance agree with Mathematical Formulation.
@@ -73,10 +137,10 @@ describe("RRF mathematical formulation", () => {
 		expect(commentary).not.toBe("");
 		expect(commentary).toContain("logarithmic RRF family");
 		expect(compact(commentary)).toContain(
-			"S_{\\mathrm{log}}(d;b,B)=BS_{\\mathrm{RRF}}(d)\\ln(n(d)+b)",
+			"S_{\\mathrm{log}}(d;b,B)=BS_{\\mathrm{RRF}}(d)\\ln(|R_d|+b)",
 		);
 		expect(compact(commentary)).toContain(
-			"S_1(d)=S_{\\mathrm{RRF}}(d)\\frac{\\ln(n(d)+1)}{\\ln2}",
+			"S_1(d)=S_{\\mathrm{RRF}}(d)\\frac{\\ln(|R_d|+1)}{\\ln2}",
 		);
 		expect(priorArt).not.toMatch(/\\log(?:\b|_)/);
 		expect(mathematicalCodeSpans).toEqual([]);
@@ -84,6 +148,14 @@ describe("RRF mathematical formulation", () => {
 		expect(commentary).not.toMatch(/\bcandidate\b|two[- ]branch|base[- ]log|separate additive[- ]shift/i);
 		expect(commentary).not.toMatch(/RRF\(d\)\s*(?:\\?log|\\?ln)\(n\(d\)\+b\)/);
 		expect(rrf).toContain("@cormack2009");
+		expect(compact(coverageNormalization)).toContain(
+			"S_{\\mathrm{technique}}(d)=S_{\\mathrm{RRF}}(d)C_{\\mathrm{technique}}(R_d)",
+		);
+		expect(compact(coverageNormalization)).toContain(
+			"C_{\\mathrm{inv}}(R_d)=\\frac{1}{|R_d|}",
+		);
+		expect(coverageNormalization).toContain("@fox1994");
+		expect(coverageNormalization).toMatch(/notation.*introduced here.*not.*attributed/is);
 		expect(rbc).toContain("@bailey2017");
 		expect(isr).toContain("@mourao2014");
 		expect(commentary).toContain("@robertson2009");
@@ -98,13 +170,15 @@ describe("RRF mathematical formulation", () => {
 			expect(priorArt).toContain(citation);
 		}
 		expect(compactPriorArt).toContain("$R_d$");
-		expect(compactPriorArt).toContain("$n(d)=|R_d|$");
+		expect(compactPriorArt).toContain("$|R_d|$");
 	});
 
 	it("teaches one logarithmic RRF family, its calibration, and its coverage-shape parameter", () => {
 		// Arrange: read the authored source once and partition it by stable method headings.
 		const markdown = readFileSync(section, "utf8");
+		const activeMarkdown = withoutTypstBlockComments(markdown);
 		const references = readFileSync(bibliography, "utf8");
+		const provenanceTable = readFileSync(provenanceTableModule, "utf8");
 		const compactSource = compact(markdown);
 		const headings = [
 			"### Plain RRF",
@@ -112,7 +186,8 @@ describe("RRF mathematical formulation", () => {
 			"### Fixed retriever weights",
 			"### Rank-Biased Centroid",
 			"### ISR, logISR, and logN ISR",
-			"### Logarithmic RRF family",
+			"### Logarithmic RRF",
+			"### Saturating RRF",
 			"### Boundary and coverage analysis",
 		];
 		const blocks = new Map(
@@ -135,11 +210,11 @@ describe("RRF mathematical formulation", () => {
 		expect(compactSource).toContain("m\\in\\mathbb{N}_{+}");
 		expect(compactSource).toContain("I\\subset\\mathbb{Z}");
 		expect(markdown).toMatch(/\$d\$ is a document/i);
-		expect(compactSource).toContain("I_d=\\{i\\inI:i\\text{ranks}d\\}");
-		expect(compactSource).toContain("n(d)=|I_d|\\in\\{0,\\ldots,m\\}");
+		expect(compactSource).toContain("I_d&=\\{i\\inI:i\\text{ranks}d\\}");
+		expect(compactSource).toContain("|R_d|&=|I_d|\\in\\{0,\\ldots,m\\}");
 		expect(compactSource).toContain("\\subset\\mathbb{Z}_{\\geq0}");
-		expect(compactSource).toContain("n(d)\\in\\{1,\\ldots,m\\}\\subset\\mathbb{N}_{+}");
-		expect(markdown).toMatch(/\$n\(d\)=0\$.*boundary extension/is);
+		expect(compactSource).toContain("|R_d|\\in\\{1,\\ldots,m\\}\\subset\\mathbb{N}_{+}");
+		expect(markdown).toMatch(/\$\|R_d\|=0\$.*boundary extension/is);
 		expect(compactSource).toContain("r_i(d)\\in\\mathbb{N}_{+}");
 		expect(compactSource).toContain("k\\in\\mathbb{R}_{>0}");
 		expect(compactSource).toContain("w_i\\in\\mathbb{R}_{\\geq0}");
@@ -147,11 +222,25 @@ describe("RRF mathematical formulation", () => {
 		expect(compactSource).toContain("\\sigma\\in[0,1]\\subset\\mathbb{R}");
 		expect(compactSource).toContain("b\\in\\mathbb{R}_{\\geq0}");
 		expect(compactSource).toContain("B\\in\\mathbb{R}_{>0}");
-		expect(markdown).toMatch(/all eight scores.*real-valued.*nonnegative/is);
+		expect(markdown).toMatch(/all nine scores.*real-valued.*nonnegative/is);
 		expect(markdown).toMatch(/indices.*integers.*ranks.*positive natural.*parameters.*real/is);
-		for (const score of ["RRF", "avg", "RBC", "ISR", "logISR", "logNISR", "log"])
+		for (const score of ["RRF", "avg", "RBC", "ISR", "logISR", "logNISR", "log", "sat"])
 			expect(compactSource).toContain(`S_{\\mathrm{${score}}}`);
 		expect(compactSource).toContain("S_w");
+		expect(markdown).toContain('scoring-rule-provenance-table.typ": scoring-rule-provenance-table');
+		expect(markdown).toContain("#scoring-rule-provenance-table() <tbl:scoring-rule-provenance>");
+		expect(markdown).not.toContain("Table: Provenance and boundary behavior");
+		expect(provenanceTable.match(/caption:\s*\[Provenance and boundary behavior/g)).toHaveLength(1);
+		expect(provenanceTable.match(/math\.equation\(\s*block:\s*true/g)).toHaveLength(1);
+		expect(provenanceTable.match(/formula-cell\(\$/g)).toHaveLength(7);
+		expect(provenanceTable).not.toContain("#linebreak()");
+		for (const method of ["RRF", "coverage division", "S_w", "ISR", "logISR", "S_1", "sat"])
+			expect(provenanceTable).toContain(method);
+		for (const citation of ["cormack2009", "fox1994", "azureVectorWeighting", "mourao2014"])
+			expect(provenanceTable).toContain(`@${citation}`);
+		expect(compact(provenanceTable)).toContain(
+			"ln(|R_d|)sum_(iinI_d)frac(1,r_i(d)^2)",
+		);
 
 		const definitions = [
 			{
@@ -163,7 +252,7 @@ describe("RRF mathematical formulation", () => {
 			{
 				heading: "### Coverage division",
 				formula:
-					/S_\{\\mathrm\{avg\}\}\(d\)\s*=\s*\\frac\{S_\{\\mathrm\{RRF\}\}\(d\)\}\{n\(d\)\}/,
+					/S_\{\\mathrm\{avg\}\}\(d\)\s*=\s*S_\{\\mathrm\{RRF\}\}\(d\)C_\{\\mathrm\{inv\}\}\(R_d\)/,
 				citations: ["@cormack2009"],
 			},
 			{
@@ -181,13 +270,13 @@ describe("RRF mathematical formulation", () => {
 			{
 				heading: "### ISR, logISR, and logN ISR",
 				formula:
-					/S_\{\\mathrm\{ISR\}\}\(d\)\s*&=\s*n\(d\)Q_\{\\mathrm\{ISR\}\}\(d\)[\s\S]*S_\{\\mathrm\{logISR\}\}\(d\)\s*&=\s*\\ln\(n\(d\)\)Q_\{\\mathrm\{ISR\}\}\(d\)[\s\S]*S_\{\\mathrm\{logNISR\}\}\(d;\\sigma\)\s*&=\s*\\ln\(n\(d\)\+\\sigma\)Q_\{\\mathrm\{ISR\}\}\(d\)/,
+					/S_\{\\mathrm\{ISR\}\}\(d\)\s*&=\s*\|R_d\|Q_\{\\mathrm\{ISR\}\}\(d\)[\s\S]*S_\{\\mathrm\{logISR\}\}\(d\)\s*&=\s*\\ln\(\|R_d\|\)Q_\{\\mathrm\{ISR\}\}\(d\)[\s\S]*S_\{\\mathrm\{logNISR\}\}\(d;\\sigma\)\s*&=\s*\\ln\(\|R_d\|\+\\sigma\)Q_\{\\mathrm\{ISR\}\}\(d\)/,
 				citations: ["@mourao2014"],
 			},
 			{
-				heading: "### Logarithmic RRF family",
+				heading: "### Logarithmic RRF",
 				formula:
-					/S_\{\\mathrm\{log\}\}\(d; b, B\)\s*=\s*B S_\{\\mathrm\{RRF\}\}\(d\)\\ln\(n\(d\) \+ b\)/,
+					/S_\{\\mathrm\{log\}\}\(d; b, B\)\s*=\s*S_\{\\mathrm\{RRF\}\}\(d\)C_\{\\mathrm\{log\}\}\(R_d;b,B\)/,
 				citations: ["@cormack2009", "@mourao2014"],
 			},
 		];
@@ -213,7 +302,9 @@ describe("RRF mathematical formulation", () => {
 		expect(average).toMatch(/below.*lowers/is);
 		expect(average).toMatch(/equal.*unchanged/is);
 		expect(average).toMatch(/equal ranks.*invariant.*\$n/is);
-		expect(average).toMatch(/removes.*automatic reward for agreement.*discard.*consensus/is);
+		expect(average).toMatch(/removes.*automatic reward for agreement/is);
+		expect(average).toMatch(/repeated retriever outputs.*not\s+accumulate/is);
+		expect(average).not.toMatch(/\b(evidence|corroborat)\b/i);
 
 		const weighted = blocks.get("### Fixed retriever weights") ?? "";
 		expect(weighted).toMatch(/linear.*\$w_i\$/is);
@@ -221,7 +312,7 @@ describe("RRF mathematical formulation", () => {
 		expect(weighted).toMatch(/Multiplying every weight by one positive\s+constant/is);
 		expect(weighted).toMatch(/rescales every document equally and preserves their ordering/is);
 		expect(weighted).toMatch(/changing weights relative.*change.*order/is);
-		expect(weighted).toMatch(/not.*realized-coverage normalization/is);
+		expect(weighted).toMatch(/not.*coverage normalization/is);
 		expect(weighted).toMatch(/Azure.*positive.*weights/is);
 		expect(weighted).toMatch(/\$w_i=0\$.*mathematical endpoint.*not a claim.*Azure/is);
 
@@ -241,37 +332,38 @@ describe("RRF mathematical formulation", () => {
 		expect(isr).toMatch(/inverse square.*head-heavy.*rank 1 to 2.*four/is);
 		expect(isr).toMatch(/equal-rank support grows as \$n\^2\/r\^2\$/is);
 		expect(compact(isr)).toContain("logISRreplacesthelinearouterfactorwith$\\lnn$");
-		expect(compact(isr)).toContain("$\\ln1=0$erasesallrankevidencewhen$n=1$");
-		expect(isr).toMatch(/\$\\sigma=0\$.*logISR.*\$\\sigma>0\$.*singleton.*positive multiplier/is);
+		expect(compact(isr)).toContain("$\\ln1=0$removesallrank-dependentdistinctionwhen$n=1$");
+		expect(isr).not.toMatch(/\b(evidence|corroborat)\b/i);
+		expect(isr).toMatch(/\$\\sigma=0\$.*logISR.*\$\\sigma>0\$.*one retriever.*positive multiplier/is);
 		expect(isr).toMatch(/\$\\sigma=1\$.*compressed.*low.*high coverage/is);
 		expect(isr).toMatch(/logarithmic RRF family.*RRF-kernel analogue.*logN ISR/is);
 
-		const logarithmic = blocks.get("### Logarithmic RRF family") ?? "";
+		const logarithmic = blocks.get("### Logarithmic RRF") ?? "";
 		const compactLogarithmic = compact(logarithmic);
 		expect(compactLogarithmic).toContain(
-			"S_{\\mathrm{log}}(d;b,B)=BS_{\\mathrm{RRF}}(d)\\ln(n(d)+b)",
+			"S_{\\mathrm{log}}(d;b,B)=S_{\\mathrm{RRF}}(d)C_{\\mathrm{log}}(R_d;b,B)",
 		);
 		expect(compactLogarithmic).toContain("B>0");
 		expect(compactLogarithmic).toContain("b\\geq0");
-		expect(compactLogarithmic).toContain("n(d)\\geq1");
+		expect(compactLogarithmic).toContain("|R_d|\\geq1");
 		expect(logarithmic).toMatch(/global scale.*preserves.*order/is);
 		expect(logarithmic).toMatch(/threshold.*combined.*signals.*calibration/is);
-		expect(logarithmic).toMatch(/\$b\$.*singleton.*coverage levels.*marginal/is);
+		expect(logarithmic).toMatch(/\$b\$.*one-retriever.*coverage levels.*marginal/is);
 		expect.soft(compactLogarithmic).toContain(
-			"B\\ln\\left(\\frac{n+1+b}{n+b}\\right)",
+			"C_{\\mathrm{log}}(n+1;b,B)-C_{\\mathrm{log}}(n;b,B)=B\\ln\\left(\\frac{n+1+b}{n+b}\\right)",
 		);
 		expect.soft(logarithmic).not.toContain("\\!");
 		expect(logarithmic).toMatch(/increasing and concave.*diminishing increments/is);
 		expect(compactLogarithmic).toContain("B=\\frac{1}{\\ln(1+b)}");
-		expect(logarithmic).toMatch(/singleton multiplier.*one.*additional coverage reward/is);
+		expect(logarithmic).toMatch(/one-retriever multiplier.*one.*additional coverage reward/is);
 		expect(compactLogarithmic).toContain("B=\\frac{1}{\\ln2}");
 		expect(compactLogarithmic).toContain(
-			"S_1(d)=S_{\\mathrm{RRF}}(d)\\frac{\\ln(n(d)+1)}{\\ln2}",
+			"S_1(d)=S_{\\mathrm{RRF}}(d)\\frac{\\ln(|R_d|+1)}{\\ln2}",
 		);
-		expect(logarithmic).toMatch(/simple default.*singleton.*RRF/is);
+		expect(logarithmic).toMatch(/simple default.*one-retriever.*RRF/is);
 		const generalDefinition = logarithmic.indexOf("S_{\\mathrm{log}}");
 		const scaleDiscussion = logarithmic.indexOf("global scale");
-		const shapeDiscussion = logarithmic.search(/\$b\$.*singleton.*coverage levels.*marginal/is);
+		const shapeDiscussion = logarithmic.search(/\$b\$.*one-retriever.*coverage levels.*marginal/is);
 		const normalizedSubfamily = logarithmic.indexOf("B=\\frac{1}{\\ln(1+b)}");
 		const defaultSpecialization = logarithmic.indexOf("S_1(d)");
 		expect(generalDefinition).toBeGreaterThanOrEqual(0);
@@ -283,9 +375,9 @@ describe("RRF mathematical formulation", () => {
 		const analysis = blocks.get("### Boundary and coverage analysis") ?? "";
 		const compactAnalysis = compact(analysis);
 		expect(compactAnalysis).toContain("b\\geq0");
-		expect(compactAnalysis).toContain("n(d)\\geq1");
-		expect(analysis).toMatch(/\$b=0\$.*singleton multiplier.*zero/is);
-		expect(analysis).toMatch(/\$n\(d\)=0\$.*undefined/is);
+		expect(compactAnalysis).toContain("|R_d|\\geq1");
+		expect(analysis).toMatch(/\$b=0\$.*one-retriever multiplier.*zero/is);
+		expect(analysis).toMatch(/\$\|R_d\|=0\$.*undefined/is);
 		expect(analysis).toMatch(/zero-coverage\s+extension.*\$b>0\$/is);
 		expect(compactAnalysis).toContain("$0<b<1$gives$\\ln(b)<0$");
 		expect(compactAnalysis).toContain("$b=1$gives$\\ln(b)=0$");
@@ -295,7 +387,7 @@ describe("RRF mathematical formulation", () => {
 		expect(compactAnalysis).toContain("\\ln2");
 		expect(analysis).toContain("uniformly over the fixed finite coverage range");
 		expect(compactAnalysis).toContain(
-			"\\frac{S_{\\mathrm{log}}(d;b,B)}{B\\lnb}=S_{\\mathrm{RRF}}(d)\\frac{\\ln(n(d)+b)}{\\lnb}\\longrightarrowS_{\\mathrm{RRF}}(d)",
+			"\\frac{S_{\\mathrm{log}}(d;b,B)}{B\\lnb}=S_{\\mathrm{RRF}}(d)\\frac{\\ln(|R_d|+b)}{\\lnb}\\longrightarrowS_{\\mathrm{RRF}}(d)",
 		);
 		expect(analysis).toMatch(/strict, non-tied plain-RRF comparison/is);
 		expect(analysis).toMatch(/tied by plain RRF.*differentiated.*finite \$b\$/is);
@@ -308,83 +400,25 @@ describe("RRF mathematical formulation", () => {
 		expect(analysis).toMatch(/unbounded.*growing-retriever family/is);
 		expect(analysis).toMatch(/fixed finite \$I\$.*bounded/is);
 
-		expect(markdown).toMatch(/!\[[^\]]*parameter sensitivity[^\]]*\]\([^)]*parameter-sensitivity\.svg\)/i);
-		expect(markdown).toMatch(/common\s+maximum\s+normalizes every curve within each panel.*analytic/is);
-		expect(markdown).toMatch(/eight scoring rules.*\$b\$ curves use\s+\$B=1\/\\ln\(1\+b\)\$/is);
-		expect(markdown).toMatch(/default \$b=1\$, \$B=1\/\\ln2\$.*same singleton RRF score/is);
-
-		const singletonDefault = equalSupportScores(1, {
-			k: 20,
-			rank: 5,
-			weight: 1,
-			phi: 0.5,
-			sigma: 0.01,
-			b: 1,
-			B: 1 / Math.log(2),
-		});
-		expect(singletonDefault.S_log).toBeCloseTo(singletonDefault.S_RRF);
-		const doubledScale = equalSupportScores(4, {
-			k: 20,
-			rank: 5,
-			weight: 1,
-			phi: 0.5,
-			sigma: 0.01,
-			b: 1,
-			B: 2 / Math.log(2),
-		});
-		expect(doubledScale.S_log).toBeCloseTo(
-			2 * equalSupportScores(4, {
-				k: 20,
-				rank: 5,
-				weight: 1,
-				phi: 0.5,
-				sigma: 0.01,
-				b: 1,
-				B: 1 / Math.log(2),
-			}).S_log,
-		);
-
-		const generatedFigure = spawnSync(process.execPath, [figureGenerator], {
-			cwd: resolve(paperDir, "..", ".."),
-		});
-		expect(generatedFigure.status).toBe(0);
-		expect(existsSync(figure)).toBe(true);
-		expect(statSync(figure).size).toBeGreaterThan(0);
-		const svg = readFileSync(figure, "utf8");
-		const regeneratedFigure = spawnSync(process.execPath, [figureGenerator], {
-			cwd: resolve(paperDir, "..", ".."),
-		});
-		expect(regeneratedFigure.status).toBe(0);
-		expect(readFileSync(figure, "utf8")).toBe(svg);
-		for (const score of ["S_RRF", "S_avg", "S_w", "S_RBC", "S_ISR", "S_logISR", "S_logNISR", "S_log"])
-			expect(svg).toContain(`data-score="${score}"`);
-		for (const parameter of ["r", "n / support", "k", "w_i", "φ", "σ", "b", "B"])
-			expect(svg).toContain(`data-parameter="${parameter}"`);
-		expect(svg).not.toMatch(/S_(?:shift|base)|base-log|two-branch|b_s|b_ℓ/i);
-		expect(svg).toContain('data-normalization-policy="one-common-maximum-per-panel"');
-		expect(svg).toContain('data-coverage-perturbation="append-identical-rank-5-supporter"');
-		expect(svg).toContain('data-n-semantics="add-one-supporting-retriever"');
-		expect(svg.match(/data-normalization="panel-common-max"/g)).toHaveLength(7);
-		expect(svg).toMatch(/data-score="S_w" data-parameter="n \/ support"[^>]*>●<\/text>/);
-		expect(svg).toMatch(/data-score="S_avg" data-parameter="n \/ support"[^>]*>◐<\/text>/);
-		expect(svg).toContain("an arbitrary added rank makes only the average effect directional");
-		expect(svg).toContain("ISR-family growth");
-		expect(svg).toContain("append an identical rank-5 supporter");
-		expect(svg).toContain("global scale only; order unchanged");
-		expect(svg).toContain("Shape b (all B=1/ln(1+b))");
-		expect(svg).toContain("S_log b=1 (default)");
-		expect(svg).toMatch(/data-score="S_log" data-parameter="b"[^>]*>●<\/text>/);
-		expect(svg).toMatch(/data-score="S_log" data-parameter="B"[^>]*>○<\/text>/);
+		expect(activeMarkdown).toContain("rank-profile-comparison.typ");
+		expect(activeMarkdown).toContain("rank-profile-comparison-grid.typ");
+		expect(activeMarkdown).toContain("rank-profile-comparison-figure()");
+		expect(activeMarkdown).toContain("rank-profile-comparison-grid-figure()");
+		expect(activeMarkdown.match(/#figure\(/g)).toHaveLength(3);
+		expect(activeMarkdown).toContain("counter(figure.where(kind: image)).update(0)");
+		expect(activeMarkdown).not.toContain("parameter-sensitivity.svg");
+		for (const diagram of diagramExamples)
+			expect(readFileSync(diagram, "utf8")).toContain("#let ranking-figure");
 		const templateSource = readFileSync(template, "utf8");
 		const imageRule = templateSource.match(/show figure\.where\(kind: image\): it => \{[\s\S]*?\n  \}/)?.[0] ?? "";
 		expect(imageRule).not.toBe("");
 		expect(imageRule).not.toContain("float: true");
-		const pageBoundary = markdown.indexOf("#pagebreak()");
-		const figureAnchor = markdown.indexOf("![Parameter sensitivity");
-		expect(pageBoundary).toBeGreaterThan(markdown.lastIndexOf("\\ln(n(d)+b)"));
+		const pageBoundary = activeMarkdown.indexOf("#pagebreak()");
+		const figureAnchor = activeMarkdown.indexOf("rank-profile-comparison-figure()");
+		expect(pageBoundary).toBeGreaterThan(markdown.lastIndexOf("\\ln(|R_d|+b)"));
 		expect(figureAnchor).toBeGreaterThan(pageBoundary);
-		expect(markdown.slice(pageBoundary, figureAnchor)).toContain("#set page(columns: 1)");
-		expect(markdown.indexOf("#set page(columns: 2)")).toBeGreaterThan(figureAnchor);
+		expect(activeMarkdown.slice(pageBoundary, figureAnchor)).toContain("#set page(columns: 1)");
+		expect(activeMarkdown.indexOf("#set page(columns: 2)", figureAnchor)).toBeGreaterThan(figureAnchor);
 
 		rmSync(outputPdf, { force: true });
 		const compiledPaper = spawnSync(process.execPath, [compiler], {
@@ -395,7 +429,7 @@ describe("RRF mathematical formulation", () => {
 		expect(statSync(outputPdf).size).toBeGreaterThan(0);
 
 		const rendered = readFileSync(generatedTypst, "utf8");
-		const priorArtStart = rendered.indexOf("= Prior Art");
+		const priorArtStart = rendered.indexOf("= Introduction & Prior Art");
 		const mathematicalStart = rendered.indexOf("= Mathematical Formulation");
 		expect(priorArtStart).toBeGreaterThanOrEqual(0);
 		expect(mathematicalStart).toBeGreaterThanOrEqual(0);
@@ -406,17 +440,18 @@ describe("RRF mathematical formulation", () => {
 		expect(renderedPriorArt).not.toContain("`");
 		for (const formula of [
 			"$S_(upright(RRF))(d)=sum_(iinR_d)frac(1,k+r_i(d))$",
-			"$S_(upright(ISR))(d)=n(d)sum_(iinR_d)frac(1,r_i(d)^2)$",
-			"$S_(upright(logISR))(d)=ln(n(d))sum_(iinR_d)frac(1,r_i(d)^2)$",
-			"$S_(upright(logNISR))(d;sigma)=ln(n(d)+sigma)sum_(iinR_d)frac(1,r_i(d)^2)$",
-			"$S_(upright(log))(d;b,B)=BS_(upright(RRF))(d)ln(n(d)+b)$",
-			"$S_1(d)=S_(upright(RRF))(d)frac(ln(n(d)+1),ln2)$",
+			"$S_(upright(ISR))(d)=\\|R_d\\|sum_(iinR_d)frac(1,r_i(d)^2)$",
+			"$S_(upright(logISR))(d)=ln(\\|R_d\\|)sum_(iinR_d)frac(1,r_i(d)^2)$",
+			"$S_(upright(logNISR))(d;sigma)=ln(\\|R_d\\|+sigma)sum_(iinR_d)frac(1,r_i(d)^2)$",
+			"$S_(upright(log))(d;b,B)=BS_(upright(RRF))(d)ln(\\|R_d\\|+b)$",
+			"$S_1(d)=S_(upright(RRF))(d)frac(ln(\\|R_d\\|+1),ln2)$",
 		])
 			expect(normalizedPriorArtMath).toContain(formula);
 		expect(renderedPriorArt).not.toMatch(/\n\n\$ [^\n]+ \$\n\n/);
 		for (const citation of ["cormack2009", "bailey2017", "mourao2014", "robertson2009", "fox1994"])
 			expect(renderedPriorArt).toContain(`@${citation}`);
 		const renderedMathematics = rendered.slice(mathematicalStart);
+		const activeRenderedMathematics = withoutTypstBlockComments(renderedMathematics);
 		const compactTypst = compact(renderedMathematics);
 		expect(renderedMathematics).not.toMatch(/Evidence tier/i);
 		expect(renderedMathematics).not.toMatch(/\bthis paper\b/i);
@@ -434,8 +469,13 @@ describe("RRF mathematical formulation", () => {
 		expect(compactTypst).not.toContain("S_(upright(base))");
 		expect.soft(renderedMathematics).not.toContain("#h(-1em)");
 		expect.soft(compactTypst).toContain("Bln(frac(n+1+b,n+b))");
-		expect(renderedMathematics).toContain("parameter-sensitivity.svg");
-		expect(renderedMathematics.indexOf("pagebreak()")).toBeLessThan(renderedMathematics.indexOf("parameter-sensitivity.svg"));
+		expect(activeRenderedMathematics).toContain("rank-profile-comparison.typ");
+		expect(activeRenderedMathematics).toContain("rank-profile-comparison-grid.typ");
+		expect(activeRenderedMathematics).not.toContain("parameter-sensitivity.svg");
+		expect(rendered.match(/scoring-rule-provenance-table\(\)/g)).toHaveLength(1);
+		expect(renderedMathematics).toContain("scoring-rule-provenance-table.typ");
+		expect(activeRenderedMathematics.indexOf("pagebreak()"))
+			.toBeLessThan(activeRenderedMathematics.indexOf("rank-profile-comparison-figure()"));
 		for (const definition of definitions) {
 			for (const citation of definition.citations) expect(renderedMathematics).toContain(citation);
 		}
