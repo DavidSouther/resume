@@ -1,5 +1,5 @@
-import { readFileSync } from "node:fs";
 import { link, meta, script, title } from "@davidsouther/jiffies/dom/html.ts";
+import { JIFFIES_CSS_BUNDLE } from "./jiffies-css-bundle.ts";
 
 // GA4 measurement ID for davidsouther.com. Embedded inline in every page head.
 const GA_MEASUREMENT_ID = "G-6X1Z1L95D8";
@@ -14,22 +14,6 @@ const THEME_PICKER = `(()=>{const r=document.documentElement;if(r.dataset.theme)
 
 // Standard GA4 gtag bootstrap, paired with the async loader script below.
 const GA_INIT = `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_MEASUREMENT_ID}');`;
-
-// The jiffies-css bundle, linked from unpkg pinned at the published version.
-// Both the version and the filename come from the installed devDependency's
-// own package.json (name/version/unpkg), not a literal here, so bumping
-// `@davidsouther/jiffies-css` (package.json + npm install) is the only step
-// needed to move the pin — including across a filename change like the
-// jiffies-css-v2-bundle.* -> jiffies-css-bundle.* rename. Pinning the full
-// resolved path (not a bare `@davidsouther/jiffies-css` unpkg URL) avoids a
-// redirect per load and locks the exact bundle this build was tested against.
-const JIFFIES_CSS_PACKAGE = JSON.parse(
-	readFileSync(
-		new URL(import.meta.resolve("@davidsouther/jiffies-css/package.json")),
-		"utf-8",
-	),
-) as { name: string; version: string; unpkg: string };
-const JIFFIES_CSS_BUNDLE = `https://unpkg.com/${JIFFIES_CSS_PACKAGE.name}@${JIFFIES_CSS_PACKAGE.version}/${JIFFIES_CSS_PACKAGE.unpkg}`;
 
 /**
  * Shared <head> content for every page: title, the unpkg jiffies-css bundle

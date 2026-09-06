@@ -2,20 +2,10 @@ import { spawnSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
+import { JIFFIES_CSS_BUNDLE as UNPKG_JIFFIES_CSS } from "./lib/jiffies-css-bundle.ts";
 import { getPostPaths } from "./lib/posts.ts";
 
 const ROOT = join(import.meta.dirname, "..");
-
-// Derived from the installed devDependency's own package.json, the same way
-// page-head.ts derives it, so this expectation tracks whatever version is
-// actually installed rather than a literal that can drift from it.
-const JIFFIES_CSS_PACKAGE = JSON.parse(
-	readFileSync(
-		new URL(import.meta.resolve("@davidsouther/jiffies-css/package.json")),
-		"utf-8",
-	),
-);
-const UNPKG_JIFFIES_CSS = `https://unpkg.com/${JIFFIES_CSS_PACKAGE.name}@${JIFFIES_CSS_PACKAGE.version}/${JIFFIES_CSS_PACKAGE.unpkg}`;
 
 describe("Next.js → Jiffies migration", () => {
 	beforeAll(() => {

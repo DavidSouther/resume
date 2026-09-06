@@ -4,18 +4,11 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { mount, resetDom } from "../components/test-dom.ts";
+import {
+	JIFFIES_CSS_UNPKG_FILENAME,
+	JIFFIES_CSS_BUNDLE as UNPKG_JIFFIES_CSS,
+} from "./jiffies-css-bundle.ts";
 import { pageHead } from "./page-head.ts";
-
-// Derived from the installed devDependency's own package.json, the same way
-// page-head.ts derives it — so this test can only drift from the source by
-// installing a different jiffies-css version, never by editing a literal.
-const JIFFIES_CSS_PACKAGE = JSON.parse(
-	readFileSync(
-		new URL(import.meta.resolve("@davidsouther/jiffies-css/package.json")),
-		"utf-8",
-	),
-);
-const UNPKG_JIFFIES_CSS = `https://unpkg.com/${JIFFIES_CSS_PACKAGE.name}@${JIFFIES_CSS_PACKAGE.version}/${JIFFIES_CSS_PACKAGE.unpkg}`;
 
 function stylesheetHrefs(): string[] {
 	const container = mount(pageHead("Test Title"));
@@ -35,7 +28,7 @@ describe("published deps: page head links jiffies-css from unpkg", () => {
 	it("no longer links the bundle as a local path", () => {
 		// The bundle filename still appears inside the pinned unpkg URL, so
 		// assert the exact root-relative local href is absent, not the substring.
-		expect(stylesheetHrefs()).not.toContain(`/${JIFFIES_CSS_PACKAGE.unpkg}`);
+		expect(stylesheetHrefs()).not.toContain(`/${JIFFIES_CSS_UNPKG_FILENAME}`);
 	});
 
 	it("still links the built /global.css", () => {
