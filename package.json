@@ -25,6 +25,7 @@
   "devDependencies": {
     "@davidsouther/jiffdown": "^2026.24.0",
     "@davidsouther/jiffies": "^2026.25.0",
+    "@davidsouther/jiffies-css": "^2.0.0",
     "@testing-library/dom": "^10.4.1",
     "@types/node": "^24.12.4",
     "gray-matter": "4.0.3",

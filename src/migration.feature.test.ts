@@ -6,6 +6,17 @@ import { getPostPaths } from "./lib/posts.ts";
 
 const ROOT = join(import.meta.dirname, "..");
 
+// Derived from the installed devDependency's own package.json, the same way
+// page-head.ts derives it, so this expectation tracks whatever version is
+// actually installed rather than a literal that can drift from it.
+const JIFFIES_CSS_PACKAGE = JSON.parse(
+	readFileSync(
+		new URL(import.meta.resolve("@davidsouther/jiffies-css/package.json")),
+		"utf-8",
+	),
+);
+const UNPKG_JIFFIES_CSS = `https://unpkg.com/${JIFFIES_CSS_PACKAGE.name}@${JIFFIES_CSS_PACKAGE.version}/${JIFFIES_CSS_PACKAGE.unpkg}`;
+
 describe("Next.js → Jiffies migration", () => {
 	beforeAll(() => {
 		const result = spawnSync("npm", ["run", "build"], {
@@ -67,9 +78,7 @@ describe("Next.js → Jiffies migration", () => {
 		expect(existsSync(join(ROOT, "docs/index.html"))).toBe(true);
 		const html = readFileSync(join(ROOT, "docs/index.html"), "utf-8");
 		expect(html).toContain("David Souther");
-		expect(html).toContain(
-			"https://unpkg.com/@davidsouther/jiffies-css@2.0.0/jiffies-css-v2-bundle.min.css",
-		);
+		expect(html).toContain(UNPKG_JIFFIES_CSS);
 	});
 
 	it("docs/index.html has the millisecond-modulo theme picker", () => {

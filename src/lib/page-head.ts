@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { link, meta, script, title } from "@davidsouther/jiffies/dom/html.ts";
 
 // GA4 measurement ID for davidsouther.com. Embedded inline in every page head.
@@ -14,14 +15,24 @@ const THEME_PICKER = `(()=>{const r=document.documentElement;if(r.dataset.theme)
 // Standard GA4 gtag bootstrap, paired with the async loader script below.
 const GA_INIT = `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_MEASUREMENT_ID}');`;
 
-// The jiffies-css v2 bundle, linked from unpkg pinned at the published version
-// (the package's `unpkg` field resolves to this filename). Pinning the full path
-// avoids a redirect per load and locks the exact bundle.
-const JIFFIES_CSS_BUNDLE =
-	"https://unpkg.com/@davidsouther/jiffies-css@2.0.0/jiffies-css-v2-bundle.min.css";
+// The jiffies-css bundle, linked from unpkg pinned at the published version.
+// Both the version and the filename come from the installed devDependency's
+// own package.json (name/version/unpkg), not a literal here, so bumping
+// `@davidsouther/jiffies-css` (package.json + npm install) is the only step
+// needed to move the pin — including across a filename change like the
+// jiffies-css-v2-bundle.* -> jiffies-css-bundle.* rename. Pinning the full
+// resolved path (not a bare `@davidsouther/jiffies-css` unpkg URL) avoids a
+// redirect per load and locks the exact bundle this build was tested against.
+const JIFFIES_CSS_PACKAGE = JSON.parse(
+	readFileSync(
+		new URL(import.meta.resolve("@davidsouther/jiffies-css/package.json")),
+		"utf-8",
+	),
+) as { name: string; version: string; unpkg: string };
+const JIFFIES_CSS_BUNDLE = `https://unpkg.com/${JIFFIES_CSS_PACKAGE.name}@${JIFFIES_CSS_PACKAGE.version}/${JIFFIES_CSS_PACKAGE.unpkg}`;
 
 /**
- * Shared <head> content for every page: title, the unpkg jiffies-css v2 bundle
+ * Shared <head> content for every page: title, the unpkg jiffies-css bundle
  * and built global.css stylesheets, the millisecond-modulo theme picker, and the
  * GA4 analytics snippet. Returned as a Node[] for the SSG `head` hook.
  */
