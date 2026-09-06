@@ -1,0 +1,29 @@
+-- Question: Who purchased productid=24 prior to July 4th, 2020?
+-- Query:
+select distinct c.customerid, c.name from customer as c join purchase as p on p.customerid = c.customerid join purchase_items as pi on pi.purchaseid = p.purchaseid where pi.productid = 24 and p.purchasetimestamp < '2020-07-04';
+
+                                                                        QUERY PLAN                                                                         
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+ Unique  (cost=24.99..25.00 rows=1 width=18) (actual time=0.015..0.015 rows=0 loops=1)
+   Buffers: shared hit=8
+   ->  Sort  (cost=24.99..24.99 rows=1 width=18) (actual time=0.014..0.015 rows=0 loops=1)
+         Sort Key: c.customerid, c.name
+         Sort Method: quicksort  Memory: 25kB
+         Buffers: shared hit=8
+         ->  Nested Loop  (cost=0.87..24.98 rows=1 width=18) (actual time=0.002..0.002 rows=0 loops=1)
+               Buffers: shared hit=2
+               ->  Nested Loop  (cost=0.58..16.61 rows=1 width=22) (actual time=0.001..0.001 rows=0 loops=1)
+                     Buffers: shared hit=2
+                     ->  Index Scan using idx_purchase_timestamp on purchase p  (cost=0.29..8.31 rows=1 width=8) (actual time=0.001..0.001 rows=0 loops=1)
+                           Index Cond: (purchasetimestamp < '2020-07-04 00:00:00+00'::timestamp with time zone)
+                           Buffers: shared hit=2
+                     ->  Index Scan using customer_pkey on customer c  (cost=0.29..8.30 rows=1 width=18) (never executed)
+                           Index Cond: (customerid = p.customerid)
+               ->  Index Scan using idx_purchase_items_purchaseid on purchase_items pi  (cost=0.29..8.35 rows=1 width=4) (never executed)
+                     Index Cond: (purchaseid = p.purchaseid)
+                     Filter: (productid = 24)
+ Planning:
+   Buffers: shared hit=279 read=1
+ Planning Time: 0.381 ms
+ Execution Time: 0.040 ms
+(22 rows)

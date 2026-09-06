@@ -1,0 +1,37 @@
+-- Question: For each customer, find all products from their last 10 purchases.
+-- Query:
+with ranked_purchases as (select purchaseid, customerid, purchasetimestamp, row_number() over (partition by customerid order by purchasetimestamp desc) as rn from purchase) select c.customerid, pi.productid, rp.purchasetimestamp from customer as c join ranked_purchases as rp on rp.customerid = c.customerid and rp.rn <= 10 join purchase_items as pi on pi.purchaseid = rp.purchaseid;
+
+                                                                                 QUERY PLAN                                                                                 
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Hash Join  (cost=5470.72..9278.77 rows=122402 width=16) (actual time=24.762..41.357 rows=122402 loops=1)
+   Hash Cond: (pi.purchaseid = purchase.purchaseid)
+   Buffers: shared hit=40366 read=83
+   ->  Seq Scan on purchase_items pi  (cost=0.00..2125.02 rows=122402 width=8) (actual time=0.002..4.914 rows=122402 loops=1)
+         Buffers: shared hit=901
+   ->  Hash  (cost=4960.76..4960.76 rows=40797 width=16) (actual time=24.694..24.696 rows=40797 loops=1)
+         Buckets: 65536  Batches: 1  Memory Usage: 2584kB
+         Buffers: shared hit=39465 read=83
+         ->  Hash Join  (cost=674.43..4960.76 rows=40797 width=16) (actual time=2.246..21.879 rows=40797 loops=1)
+               Hash Cond: (purchase.customerid = c.customerid)
+               Buffers: shared hit=39465 read=83
+               ->  WindowAgg  (cost=0.43..3771.67 rows=40797 width=24) (actual time=0.036..16.256 rows=40797 loops=1)
+                     Run Condition: (row_number() OVER (?) <= 10)
+                     Buffers: shared hit=39241 read=83
+                     ->  Incremental Sort  (cost=0.43..3057.73 rows=40797 width=16) (actual time=0.033..10.004 rows=40797 loops=1)
+                           Sort Key: purchase.customerid, purchase.purchasetimestamp DESC
+                           Presorted Key: purchase.customerid
+                           Full-sort Groups: 1240  Sort Method: quicksort  Average Memory: 26kB  Peak Memory: 26kB
+                           Buffers: shared hit=39241 read=83
+                           ->  Index Scan using idx_purchase_customerid on purchase  (cost=0.29..1952.19 rows=40797 width=16) (actual time=0.006..5.943 rows=40797 loops=1)
+                                 Buffers: shared hit=39235 read=83
+               ->  Hash  (cost=424.00..424.00 rows=20000 width=4) (actual time=2.176..2.176 rows=20000 loops=1)
+                     Buckets: 32768  Batches: 1  Memory Usage: 960kB
+                     Buffers: shared hit=224
+                     ->  Seq Scan on customer c  (cost=0.00..424.00 rows=20000 width=4) (actual time=0.001..1.167 rows=20000 loops=1)
+                           Buffers: shared hit=224
+ Planning:
+   Buffers: shared hit=258
+ Planning Time: 0.318 ms
+ Execution Time: 43.903 ms
+(30 rows)

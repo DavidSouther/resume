@@ -1,0 +1,7 @@
+-- Question: What products were purchased by customers with zip code 10001?
+-- Query:
+select unique(pi.productid) from purchase_items as pi left join purchase as p on pi.purchaseid = p.purchaseid left join customer as c on c.customerid = p.customerid where c.zip = '10001';
+
+ERROR:  syntax error at or near "pi"
+LINE 1: ...ain (analyze, buffers, format text) select unique(pi.product...
+                                                             ^

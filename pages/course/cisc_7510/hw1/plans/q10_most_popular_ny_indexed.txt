@@ -1,0 +1,44 @@
+-- Question: What is the most popular (purchased most often) product in NY state?
+-- Query:
+select pi.productid, count(*) as purchases from purchase_items as pi join purchase as p on p.purchaseid = pi.purchaseid join customer as c on c.customerid = p.customerid where c.state = 'NY' group by pi.productid order by purchases desc limit 1;
+
+                                                                                 QUERY PLAN                                                                                 
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=4214.58..4214.58 rows=1 width=12) (actual time=18.980..18.982 rows=1 loops=1)
+   Buffers: shared hit=1388 read=6
+   ->  Sort  (cost=4214.58..4217.08 rows=1000 width=12) (actual time=18.979..18.981 rows=1 loops=1)
+         Sort Key: (count(*)) DESC
+         Sort Method: top-N heapsort  Memory: 25kB
+         Buffers: shared hit=1388 read=6
+         ->  HashAggregate  (cost=4199.58..4209.58 rows=1000 width=12) (actual time=18.862..18.923 rows=1000 loops=1)
+               Group Key: pi.productid
+               Batches: 1  Memory Usage: 129kB
+               Buffers: shared hit=1385 read=6
+               ->  Hash Join  (cost=1248.36..4077.18 rows=24480 width=4) (actual time=5.267..17.101 rows=24587 loops=1)
+                     Hash Cond: (pi.purchaseid = p.purchaseid)
+                     Buffers: shared hit=1385 read=6
+                     ->  Seq Scan on purchase_items pi  (cost=0.00..2125.02 rows=122402 width=8) (actual time=0.002..5.033 rows=122402 loops=1)
+                           Buffers: shared hit=901
+                     ->  Hash  (cost=1146.37..1146.37 rows=8159 width=4) (actual time=5.254..5.256 rows=8185 loops=1)
+                           Buckets: 8192  Batches: 1  Memory Usage: 352kB
+                           Buffers: shared hit=484 read=6
+                           ->  Hash Join  (cost=371.29..1146.37 rows=8159 width=4) (actual time=0.830..4.828 rows=8185 loops=1)
+                                 Hash Cond: (p.customerid = c.customerid)
+                                 Buffers: shared hit=484 read=6
+                                 ->  Seq Scan on purchase p  (cost=0.00..667.97 rows=40797 width=8) (actual time=0.002..1.661 rows=40797 loops=1)
+                                       Buffers: shared hit=260
+                                 ->  Hash  (cost=321.29..321.29 rows=4000 width=4) (actual time=0.822..0.822 rows=4000 loops=1)
+                                       Buckets: 4096  Batches: 1  Memory Usage: 173kB
+                                       Buffers: shared hit=224 read=6
+                                       ->  Bitmap Heap Scan on customer c  (cost=47.29..321.29 rows=4000 width=4) (actual time=0.112..0.626 rows=4000 loops=1)
+                                             Recheck Cond: ((state)::text = 'NY'::text)
+                                             Heap Blocks: exact=224
+                                             Buffers: shared hit=224 read=6
+                                             ->  Bitmap Index Scan on idx_customer_state  (cost=0.00..46.29 rows=4000 width=0) (actual time=0.098..0.098 rows=4000 loops=1)
+                                                   Index Cond: ((state)::text = 'NY'::text)
+                                                   Buffers: shared read=6
+ Planning:
+   Buffers: shared hit=282
+ Planning Time: 0.380 ms
+ Execution Time: 19.020 ms
+(37 rows)

@@ -1,0 +1,16 @@
+query,indexed_planning_ms,indexed_execution_ms,noindex_planning_ms,noindex_execution_ms,speedup
+q01_product_description,0.130,0.019,0.131,0.019,1.0x
+q02_customer_name_address,0.140,0.020,0.168,0.027,1.3x
+q03_products_by_customer,0.332,0.073,0.268,11.097,152.0x
+q04_customers_by_product,0.375,12.950,0.349,16.659,1.3x
+q05_never_purchased_customers,0.349,7.108,0.237,7.132,1.0x
+q06_never_purchased_products,0.300,1.044,0.217,11.975,11.5x
+q07_products_by_zip,ERROR,ERROR,ERROR,ERROR,n/a
+q08_pct_purchased_42,0.655,20.932,0.270,20.328,1.0x
+q09_pct_42_also_24,0.319,24.133,0.286,29.461,1.2x
+q10_most_popular_ny,0.380,19.020,0.240,19.176,1.0x
+q11_most_popular_tristate,0.379,37.711,0.316,38.757,1.0x
+q12_bought_24_before_20200704,0.381,0.040,0.241,1.179,29.5x
+q13_last_purchase_products,0.457,45.080,0.326,35.898,0.8x
+q14_last_10_purchases_products,0.318,43.903,0.221,41.113,0.9x
+q15_names_bought_42_last_3mo,0.459,6.390,0.303,9.996,1.6x

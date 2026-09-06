@@ -1,0 +1,14 @@
+-- Question: What is the description of productid=42?
+-- Query:
+select p.description from product as p where p.productid = 42;
+
+                                                       QUERY PLAN                                                        
+-------------------------------------------------------------------------------------------------------------------------
+ Index Scan using product_pkey on product p  (cost=0.28..8.29 rows=1 width=11) (actual time=0.004..0.004 rows=1 loops=1)
+   Index Cond: (productid = 42)
+   Buffers: shared hit=3
+ Planning:
+   Buffers: shared hit=64
+ Planning Time: 0.131 ms
+ Execution Time: 0.019 ms
+(7 rows)

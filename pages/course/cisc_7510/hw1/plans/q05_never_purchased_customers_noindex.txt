@@ -1,0 +1,23 @@
+-- Question: List customer names who have never puchased anything.
+-- Query:
+select c.name from customer as c left join purchase as p on p.customerid = c.customerid where p.purchaseid is null;
+
+                                                        QUERY PLAN                                                         
+---------------------------------------------------------------------------------------------------------------------------
+ Hash Right Join  (cost=674.00..1449.08 rows=1 width=14) (actual time=6.638..7.020 rows=3468 loops=1)
+   Hash Cond: (p.customerid = c.customerid)
+   Filter: (p.purchaseid IS NULL)
+   Rows Removed by Filter: 40797
+   Buffers: shared hit=484
+   ->  Seq Scan on purchase p  (cost=0.00..667.97 rows=40797 width=8) (actual time=0.002..1.578 rows=40797 loops=1)
+         Buffers: shared hit=260
+   ->  Hash  (cost=424.00..424.00 rows=20000 width=18) (actual time=2.403..2.403 rows=20000 loops=1)
+         Buckets: 32768  Batches: 1  Memory Usage: 1272kB
+         Buffers: shared hit=224
+         ->  Seq Scan on customer c  (cost=0.00..424.00 rows=20000 width=18) (actual time=0.003..1.123 rows=20000 loops=1)
+               Buffers: shared hit=224
+ Planning:
+   Buffers: shared hit=204
+ Planning Time: 0.237 ms
+ Execution Time: 7.132 ms
+(16 rows)
