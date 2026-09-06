@@ -37,6 +37,7 @@ export function buildFlashTile(card: CardTemplate): HTMLDivElement {
 	tile.dataset.cardId = card.cardId;
 	tile.dataset.deck = card.deckName;
 	tile.dataset.search = searchIndex;
+	tile.dataset.due = "true";
 	return tile;
 }
 

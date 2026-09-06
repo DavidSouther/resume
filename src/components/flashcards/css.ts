@@ -22,8 +22,40 @@ export const FLASHCARDS_CSS = /* css */ `
     position: sticky;
     top: 0;
     z-index: 5;
-    padding-block: var(--size-base, 0.5rem);
+    flex-wrap: wrap;
+    justify-content: space-between;
+    column-gap: var(--size-medium, 1rem);
+    row-gap: var(--size-small, 0.25rem);
+    padding-block: var(--size-medium, 1rem);
     background: var(--color-surface, canvas);
+    border-bottom: 1px solid var(--color-outline-variant, currentcolor);
+  }
+  .flashcards-filters {
+    flex: 1 1 22rem;
+    flex-wrap: wrap;
+    gap: var(--size-small, 0.25rem) var(--size-base, 0.5rem);
+    min-width: 0;
+  }
+  .flashcards-search {
+    flex: 1 1 12rem;
+    min-width: 0;
+  }
+  .flashcards-deck-select {
+    flex: 1 1 10rem;
+  }
+  .flashcards-status {
+    flex: 0 1 auto;
+    flex-wrap: wrap;
+    gap: var(--size-small, 0.25rem) var(--size-base, 0.5rem);
+  }
+  .flashcards-status label {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--size-small, 0.25rem);
+    white-space: nowrap;
+  }
+  .flashcards-summary {
+    white-space: nowrap;
   }
 
   /*
@@ -49,7 +81,37 @@ export const FLASHCARDS_CSS = /* css */ `
     border: 1px solid var(--color-success, currentcolor);
   }
 
+  small[data-variant] {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25em 0.6em;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 500;
+  }
+  small[data-variant="neutral"] {
+    background: var(--color-surface-variant, #e2e1ec);
+    color: var(--color-on-surface-variant, currentcolor);
+  }
+
   /* ---------------------------------------------------------------- Browse */
+
+  .browse-group > header {
+    padding-block: var(--size-small, 0.25rem);
+  }
+  .browse-group > header h2 {
+    margin-block: 0;
+    font-size: 1.25rem;
+  }
+  .browse-section h3 {
+    margin-block: var(--size-base, 0.5rem) var(--size-small, 0.25rem);
+    font-family: var(--brand-body-font-family, sans-serif);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--color-on-surface-variant, currentcolor);
+  }
 
   .card-grid {
     display: grid;
@@ -61,6 +123,7 @@ export const FLASHCARDS_CSS = /* css */ `
    * shadow, padding) comes from jiffies-css's Card component
    * (article:not([role])), which these rules deliberately do not redeclare. */
   .flash-tile {
+    position: relative;
     perspective: 60rem;
     min-height: 7rem;
 
@@ -69,6 +132,19 @@ export const FLASHCARDS_CSS = /* css */ `
     }
     &.flipped .flash-tile-inner {
       transform: rotateY(180deg);
+    }
+
+    &[data-due="true"]::after {
+      content: "";
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      z-index: 1;
+      width: 0.5rem;
+      height: 0.5rem;
+      border-radius: 50%;
+      background: var(--color-primary, currentcolor);
+      pointer-events: none;
     }
   }
   .flash-tile-inner {
@@ -80,11 +156,9 @@ export const FLASHCARDS_CSS = /* css */ `
     transition: transform 0.5s;
     transform-style: preserve-3d;
   }
-  .flash-face {
+  .flash-tile .flash-face {
     position: absolute;
     inset: 0;
-    /* Card sets its own margin for a document-flow card; pinned absolutely
-     * here for the flip stack, it doesn't want one. */
     margin: 0;
     overflow: auto;
     backface-visibility: hidden;
@@ -104,12 +178,18 @@ export const FLASHCARDS_CSS = /* css */ `
 
   /* ---------------------------------------------------------------- Review */
 
+  .review-view {
+    display: flex;
+    flex-direction: column;
+    gap: var(--size-base, 0.5rem);
+    max-width: 32rem;
+    margin-inline: auto;
+  }
+
   .review-card {
     perspective: 80rem;
     width: 100%;
-    max-width: 32rem;
     min-height: 14rem;
-    margin-inline: auto;
 
     &.flipped .review-card-inner {
       transform: rotateY(180deg);
@@ -123,25 +203,56 @@ export const FLASHCARDS_CSS = /* css */ `
     transition: transform 0.4s;
     transform-style: preserve-3d;
   }
-  .review-face {
+  .review-card .review-face {
     position: absolute;
     inset: 0;
     margin: 0;
-    overflow: auto;
+    overflow-y: auto;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
     text-align: center;
     backface-visibility: hidden;
+    padding-block: var(--size-base, 0.5rem);
     font-size: 1.05em;
+
+    & > main {
+      width: 100%;
+    }
+    pre {
+      text-align: left;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+    code, pre {
+      font-family: var(--mono, ui-monospace, monospace);
+    }
   }
   .review-back {
     transform: rotateY(180deg);
   }
 
+  @media (max-width: 32rem) {
+    .review-card {
+      min-height: 20rem;
+    }
+  }
+
   .review-progress {
-    max-width: 32rem;
-    margin-inline: auto;
+    width: 100%;
+  }
+
+  .review-grades button[data-grade="1"] {
+    --_button-fill: var(--color-error-container, #f8d7da);
+    --_button-label: var(--color-on-error-container, #842029);
+  }
+  .review-grades button[data-grade="2"] {
+    --_button-fill: var(--color-warning-container, #fff3cd);
+    --_button-label: var(--color-on-warning-container, #664d03);
+  }
+  .review-grades button[data-grade="4"] {
+    --_button-fill: var(--color-success-container, #d1e7dd);
+    --_button-label: var(--color-on-success-container, #0f5132);
   }
 
   @media (prefers-reduced-motion: reduce) {

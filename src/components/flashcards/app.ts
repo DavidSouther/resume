@@ -1,5 +1,5 @@
 import { Chip } from "@davidsouther/jiffies/components/index.ts";
-import { Checkbox } from "@davidsouther/jiffies/dom/form/form.ts";
+import { Switch } from "@davidsouther/jiffies/dom/form/form.ts";
 import { button, div, input } from "@davidsouther/jiffies/dom/html.ts";
 import type { CardTemplate } from "../../lib/flashcards/anki-types.ts";
 import { buildBrowseView } from "./browse.ts";
@@ -22,7 +22,7 @@ function buildTab(label: string, selected: boolean): HTMLButtonElement {
 	return tab;
 }
 
-function buildToolbar(): HTMLDivElement {
+function buildToolbar(cardCount: number): HTMLDivElement {
 	const search = input({
 		class: "flashcards-search",
 		type: "search",
@@ -30,19 +30,28 @@ function buildToolbar(): HTMLDivElement {
 	});
 	search.setAttribute("aria-label", "Search cards");
 
-	// Checkbox() wraps the input in its label per the jiffies-css labelled-
-	// control pattern and forwards attrs to the <input> itself, so the class
-	// client.ts queries for lands on the checkbox, not the wrapping label.
-	const dueOnly = Checkbox("Due only", { class: "due-only-checkbox" });
+	const dueOnly = Switch("Due only", { class: "due-only-checkbox" });
 
-	const summary = Chip({ variant: "neutral", class: "flashcards-summary" }, "");
+	const summary = Chip(
+		{ variant: "neutral", class: "flashcards-summary" },
+		`${cardCount} of ${cardCount} cards · ${cardCount} due`,
+	);
+
+	const filters = div(
+		{ class: "flashcards-filters flex row" },
+		search,
+		buildDeckSelect("flashcards-deck-select", "All decks"),
+	);
+	const status = div(
+		{ class: "flashcards-status flex row align-center" },
+		dueOnly,
+		summary,
+	);
 
 	return div(
 		{ class: "flashcards-toolbar flex row align-center" },
-		search,
-		buildDeckSelect("flashcards-deck-select", "All decks"),
-		dueOnly,
-		summary,
+		filters,
+		status,
 	);
 }
 
@@ -57,7 +66,7 @@ export function buildFlashcardsApp(cards: CardTemplate[]): HTMLDivElement {
 
 	const browsePanel = div(
 		{ class: "browse-panel" },
-		buildToolbar(),
+		buildToolbar(cards.length),
 		buildBrowseView(cards),
 	);
 	browsePanel.setAttribute("role", "tabpanel");
