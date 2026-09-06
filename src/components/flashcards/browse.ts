@@ -37,6 +37,14 @@ export function buildFlashTile(card: CardTemplate): HTMLDivElement {
 	tile.dataset.cardId = card.cardId;
 	tile.dataset.deck = card.deckName;
 	tile.dataset.search = searchIndex;
+	// Seeded "due", not left unset: a card with no stored progress IS due
+	// (scheduler.ts's initialProgress/isDue — a fresh CardProgress's due: 0 is
+	// always <= now), so this is the correct first-visit state, not a
+	// placeholder. client.ts's refreshDueDots() overwrites it against real
+	// localStorage progress once it runs; seeding it here means the dot is
+	// already right for a first-time visitor instead of popping in after
+	// load, matching the toolbar summary's same fix.
+	tile.dataset.due = "true";
 	return tile;
 }
 

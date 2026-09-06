@@ -1,5 +1,5 @@
 import { Chip } from "@davidsouther/jiffies/components/index.ts";
-import { Checkbox } from "@davidsouther/jiffies/dom/form/form.ts";
+import { Switch } from "@davidsouther/jiffies/dom/form/form.ts";
 import { button, div, input } from "@davidsouther/jiffies/dom/html.ts";
 import type { CardTemplate } from "../../lib/flashcards/anki-types.ts";
 import { buildBrowseView } from "./browse.ts";
@@ -22,7 +22,7 @@ function buildTab(label: string, selected: boolean): HTMLButtonElement {
 	return tab;
 }
 
-function buildToolbar(): HTMLDivElement {
+function buildToolbar(cardCount: number): HTMLDivElement {
 	const search = input({
 		class: "flashcards-search",
 		type: "search",
@@ -30,19 +30,51 @@ function buildToolbar(): HTMLDivElement {
 	});
 	search.setAttribute("aria-label", "Search cards");
 
-	// Checkbox() wraps the input in its label per the jiffies-css labelled-
+	// Switch() wraps the input in its label per the jiffies-css labelled-
 	// control pattern and forwards attrs to the <input> itself, so the class
-	// client.ts queries for lands on the checkbox, not the wrapping label.
-	const dueOnly = Checkbox("Due only", { class: "due-only-checkbox" });
+	// client.ts queries for lands on the checkbox, not the wrapping label. It's
+	// a switch, not a bare Checkbox, because "Due only" filters the grid the
+	// instant it's toggled — no submit, no other options in a group — which is
+	// exactly what jiffies-css's switch affordance (and its fully-styled pill
+	// track, unlike an unstyled native checkbox) communicates.
+	const dueOnly = Switch("Due only", { class: "due-only-checkbox" });
 
-	const summary = Chip({ variant: "neutral", class: "flashcards-summary" }, "");
+	// Seeded with the true first-visit state, not left empty: a card with no
+	// stored progress is due by definition (see scheduler.ts's
+	// initialProgress/isDue — a fresh CardProgress has due: 0, which is always
+	// <= now), so "every card, all due" is the correct count until client.ts's
+	// localStorage-aware applyFilters() runs, not just a placeholder. Leaving
+	// this blank server-side and filling it in from JS produced a visible
+	// pop-in flash (blank, or a stale "0 of 0", jumping to the real count) on
+	// every load; a returning visitor now sees one brief, plausible number
+	// settle into their real one instead of an empty-to-full jump.
+	const summary = Chip(
+		{ variant: "neutral", class: "flashcards-summary" },
+		`${cardCount} of ${cardCount} cards · ${cardCount} due`,
+	);
+
+	// Two grouped children, not four flat ones: letting flex-wrap reflow each
+	// control independently produces a different, unplanned line count at
+	// every in-between width (search+deck together, then the switch stranded
+	// alone, then the chip stranded alone — three ragged lines instead of a
+	// deliberate two). Grouping the filters and the status readout each into
+	// one flex item means the toolbar has exactly two wrap candidates, so it
+	// only ever resolves to one clean line or two.
+	const filters = div(
+		{ class: "flashcards-filters flex row" },
+		search,
+		buildDeckSelect("flashcards-deck-select", "All decks"),
+	);
+	const status = div(
+		{ class: "flashcards-status flex row align-center" },
+		dueOnly,
+		summary,
+	);
 
 	return div(
 		{ class: "flashcards-toolbar flex row align-center" },
-		search,
-		buildDeckSelect("flashcards-deck-select", "All decks"),
-		dueOnly,
-		summary,
+		filters,
+		status,
 	);
 }
 
@@ -57,7 +89,7 @@ export function buildFlashcardsApp(cards: CardTemplate[]): HTMLDivElement {
 
 	const browsePanel = div(
 		{ class: "browse-panel" },
-		buildToolbar(),
+		buildToolbar(cards.length),
 		buildBrowseView(cards),
 	);
 	browsePanel.setAttribute("role", "tabpanel");
