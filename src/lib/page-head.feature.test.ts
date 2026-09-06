@@ -4,10 +4,11 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { mount, resetDom } from "../components/test-dom.ts";
+import {
+	JIFFIES_CSS_UNPKG_FILENAME,
+	JIFFIES_CSS_BUNDLE as UNPKG_JIFFIES_CSS,
+} from "./jiffies-css-bundle.ts";
 import { pageHead } from "./page-head.ts";
-
-const UNPKG_JIFFIES_CSS =
-	"https://unpkg.com/@davidsouther/jiffies-css@2.0.0/jiffies-css-v2-bundle.min.css";
 
 function stylesheetHrefs(): string[] {
 	const container = mount(pageHead("Test Title"));
@@ -20,14 +21,14 @@ function stylesheetHrefs(): string[] {
 }
 
 describe("published deps: page head links jiffies-css from unpkg", () => {
-	it("links the jiffies-css v2 bundle from the pinned unpkg URL", () => {
+	it("links the jiffies-css bundle from the pinned unpkg URL", () => {
 		expect(stylesheetHrefs()).toContain(UNPKG_JIFFIES_CSS);
 	});
 
-	it("no longer links the local /jiffies-css-v2-bundle.min.css path", () => {
-		// The substring `jiffies-css-v2-bundle.min.css` still appears inside the
-		// unpkg URL, so assert the exact local href is absent, not the substring.
-		expect(stylesheetHrefs()).not.toContain("/jiffies-css-v2-bundle.min.css");
+	it("no longer links the bundle as a local path", () => {
+		// The bundle filename still appears inside the pinned unpkg URL, so
+		// assert the exact root-relative local href is absent, not the substring.
+		expect(stylesheetHrefs()).not.toContain(`/${JIFFIES_CSS_UNPKG_FILENAME}`);
 	});
 
 	it("still links the built /global.css", () => {

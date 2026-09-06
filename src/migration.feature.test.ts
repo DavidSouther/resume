@@ -2,6 +2,7 @@ import { spawnSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
+import { JIFFIES_CSS_BUNDLE as UNPKG_JIFFIES_CSS } from "./lib/jiffies-css-bundle.ts";
 import { getPostPaths } from "./lib/posts.ts";
 
 const ROOT = join(import.meta.dirname, "..");
@@ -67,9 +68,7 @@ describe("Next.js → Jiffies migration", () => {
 		expect(existsSync(join(ROOT, "docs/index.html"))).toBe(true);
 		const html = readFileSync(join(ROOT, "docs/index.html"), "utf-8");
 		expect(html).toContain("David Souther");
-		expect(html).toContain(
-			"https://unpkg.com/@davidsouther/jiffies-css@2.0.0/jiffies-css-v2-bundle.min.css",
-		);
+		expect(html).toContain(UNPKG_JIFFIES_CSS);
 	});
 
 	it("docs/index.html has the millisecond-modulo theme picker", () => {

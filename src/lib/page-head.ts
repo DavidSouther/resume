@@ -1,4 +1,5 @@
 import { link, meta, script, title } from "@davidsouther/jiffies/dom/html.ts";
+import { JIFFIES_CSS_BUNDLE } from "./jiffies-css-bundle.ts";
 
 // GA4 measurement ID for davidsouther.com. Embedded inline in every page head.
 const GA_MEASUREMENT_ID = "G-6X1Z1L95D8";
@@ -14,14 +15,8 @@ const THEME_PICKER = `(()=>{const r=document.documentElement;if(r.dataset.theme)
 // Standard GA4 gtag bootstrap, paired with the async loader script below.
 const GA_INIT = `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_MEASUREMENT_ID}');`;
 
-// The jiffies-css v2 bundle, linked from unpkg pinned at the published version
-// (the package's `unpkg` field resolves to this filename). Pinning the full path
-// avoids a redirect per load and locks the exact bundle.
-const JIFFIES_CSS_BUNDLE =
-	"https://unpkg.com/@davidsouther/jiffies-css@2.0.0/jiffies-css-v2-bundle.min.css";
-
 /**
- * Shared <head> content for every page: title, the unpkg jiffies-css v2 bundle
+ * Shared <head> content for every page: title, the unpkg jiffies-css bundle
  * and built global.css stylesheets, the millisecond-modulo theme picker, and the
  * GA4 analytics snippet. Returned as a Node[] for the SSG `head` hook.
  */
