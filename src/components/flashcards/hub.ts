@@ -120,12 +120,12 @@ function buildResources(): HTMLElement {
 			li(
 				{},
 				a(
-					{ href: "https://foosoft.net/projects/anki-connect/" },
+					{ href: "https://ankiweb.net/shared/info/2055492159" },
 					"AnkiConnect",
 				),
-				" — run its ",
+				" (an Anki add-on) — install it, run its ",
 				"notesInfo",
-				" action against a local Anki deck, save the result as JSON, ",
+				" action against a local deck, save the result as JSON, ",
 				"and host it somewhere with CORS enabled (a GitHub Gist's ",
 				"raw URL or a raw.githubusercontent.com link both work).",
 			),
