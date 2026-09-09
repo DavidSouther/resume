@@ -18,6 +18,47 @@
 // processor), so native nesting is exactly what parses here.
 export const FLASHCARDS_CSS = /* css */ `
 @layer component {
+  /* ------------------------------------------------------------------ Hub */
+
+  .hub-view {
+    /* This div is a direct child of <body>, which jiffies-css's page spine
+     * (layout.css) makes a flex column — an explicit width is required
+     * alongside max-width/margin-inline:auto here. Flexbox's stretch
+     * alignment doesn't apply to an item with an auto cross-axis margin, so
+     * without it this would shrink to its content's width instead of
+     * filling up to max-width and centering. .browse-view/.review-view
+     * don't need this: they're nested inside .flashcards, an ordinary block
+     * box, not a flex item of body. */
+    width: 100%;
+    max-width: 48rem;
+    margin-inline: auto;
+  }
+  .hub-intro {
+    color: var(--color-on-surface-variant, currentcolor);
+  }
+  .hub-grid {
+    display: grid;
+    /* auto-fit (not auto-fill, see the card-grid below) so a handful of
+     * decks stretch to fill the row instead of hugging the left edge. */
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+    gap: var(--size-base, 0.5rem);
+  }
+  .hub-deck-link {
+    display: block;
+    color: inherit;
+    text-decoration: none;
+  }
+  .hub-deck-card h2 {
+    margin-block-start: 0;
+    font-size: 1.15rem;
+  }
+
+  .flashcards-back {
+    display: inline-block;
+    margin-block-end: var(--size-small, 0.25rem);
+    font-size: 0.9rem;
+  }
+
   .flashcards-toolbar {
     position: sticky;
     top: 0;

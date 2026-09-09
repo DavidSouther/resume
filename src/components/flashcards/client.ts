@@ -4,7 +4,7 @@ import {
 	type CardAnnotation,
 	createAnnotationStore,
 } from "../../lib/flashcards/annotations.ts";
-import { loadAllDecks } from "../../lib/flashcards/decks/load-client.ts";
+import { loadDeck } from "../../lib/flashcards/decks/load-client.ts";
 import { Rating } from "../../lib/flashcards/fsrs.ts";
 import { cardsForNotes } from "../../lib/flashcards/models.ts";
 import {
@@ -98,26 +98,42 @@ function wireAnnotationControl(
 }
 
 function main(): void {
+	// One deck per page (see app.ts) — the slug is stamped onto the root
+	// element server-side so this bundle, shared across every /flashcards/
+	// <slug>/ page, knows which deck it's for without a build-time param.
+	const slug = one<HTMLElement>(".flashcards").dataset.deckSlug;
+	if (!slug) throw new Error("flashcards: root element missing data-deck-slug");
+
 	// Kicked off immediately but not awaited here: browse mode is fully
 	// interactive from server-rendered markup with no need for the deck data
 	// itself, so it shouldn't wait on a network round-trip. Review mode does
 	// need it and awaits this same promise (see startSession) — by the time
 	// someone's read the toolbar and clicked "Start review" it's typically
 	// already resolved.
-	const decksPromise = loadAllDecks();
+	const deckPromise = loadDeck(slug);
 	let cardsCache: CardTemplate[] | null = null;
 	async function getAllCards(): Promise<CardTemplate[]> {
 		if (!cardsCache) {
-			const decks = await decksPromise;
-			cardsCache = cardsForNotes(decks.flatMap((d) => d.notes));
+			const deck = await deckPromise;
+			cardsCache = cardsForNotes(deck.notes);
 		}
 		return cardsCache;
 	}
 
-	const store = createProgressStore(window.localStorage);
+	// Namespaced per deck: cards from different decks never collide (noteIds
+	// are deck-prefixed already), but keeping progress/annotations under
+	// separate keys per deck means "reset this deck" or inspecting one
+	// deck's storage blob stays simple as more decks ship.
+	const store = createProgressStore(
+		window.localStorage,
+		`flashcards:progress:v1:${slug}`,
+	);
 	const progressFor = (cardId: string): CardProgress =>
 		store.get(cardId) ?? initialProgress();
-	const annotationStore = createAnnotationStore(window.localStorage);
+	const annotationStore = createAnnotationStore(
+		window.localStorage,
+		`flashcards:annotations:v1:${slug}`,
+	);
 
 	// ---------------------------------------------------------------- Mode switch
 	// Pure jiffies-css tabs: tabs.css shows the panel adjacent to whichever

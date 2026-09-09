@@ -22,6 +22,17 @@ async function loadDeckNotes(url: string) {
 	return parseDeckNotes(parseYaml(raw), url);
 }
 
+/** Loads the one manifest entry matching `slug` — used by pages/flashcards/[slug]/page.ts, which only ever needs its own deck's notes. */
+export async function loadDeck(slug: string): Promise<DeckSource> {
+	const entry = DECK_MANIFEST.find((d) => d.slug === slug);
+	if (!entry) throw new Error(`No deck registered with slug "${slug}"`);
+	return {
+		slug: entry.slug,
+		title: entry.title,
+		notes: await loadDeckNotes(entry.url),
+	};
+}
+
 export async function loadAllDecks(): Promise<DeckSource[]> {
 	return Promise.all(
 		DECK_MANIFEST.map(async (d) => ({

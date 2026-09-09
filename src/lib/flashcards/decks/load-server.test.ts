@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { loadAllDecks } from "./load-server.ts";
+import { loadAllDecks, loadDeck } from "./load-server.ts";
 import { DECK_MANIFEST } from "./manifest.ts";
 
 describe("loadAllDecks (server)", () => {
@@ -14,9 +14,25 @@ describe("loadAllDecks (server)", () => {
 	});
 
 	it("every loaded note sits under its own deck's expected root", async () => {
-		const [rust] = await loadAllDecks();
-		for (const note of rust.notes) {
-			expect(note.deckName.startsWith("Rust Cheat Sheet::")).toBe(true);
+		for (const deck of await loadAllDecks()) {
+			for (const note of deck.notes) {
+				expect(note.deckName.startsWith(`${deck.title}::`)).toBe(true);
+			}
 		}
+	});
+});
+
+describe("loadDeck (server)", () => {
+	it("loads only the matching manifest entry", async () => {
+		for (const entry of DECK_MANIFEST) {
+			const deck = await loadDeck(entry.slug);
+			expect(deck.slug).toBe(entry.slug);
+			expect(deck.title).toBe(entry.title);
+			expect(deck.notes.length).toBeGreaterThan(0);
+		}
+	});
+
+	it("throws for a slug not in the manifest", async () => {
+		await expect(loadDeck("nope")).rejects.toThrow(/nope/);
 	});
 });

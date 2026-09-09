@@ -1,0 +1,85 @@
+- noteId: psql-connecting-basic
+  deckName: SQL Cheat Sheet::Connecting
+  fields:
+    Front: Connect to a Postgres server
+    Back: psql -U username
+  tags:
+    - psql
+    - connection
+- noteId: psql-connecting-host-password
+  deckName: SQL Cheat Sheet::Connecting
+  fields:
+    Front: Connect to a Postgres server, with a specific host and database
+    Back: psql -U username -h host_name -d database
+  tags:
+    - psql
+    - connection
+- noteId: psql-docker-start
+  deckName: SQL Cheat Sheet::Connecting
+  fields:
+    Front: Start a Postgres instance in Docker, with a persistent database file
+    Back: |
+      docker run --rm --name postgres-dev \
+        -e POSTGRES_PASSWORD=dev-password \
+        -p 5432:5432 \
+        -v postgres_data:/var/lib/postgresql \
+        -d postgres:18
+  tags:
+    - psql
+    - connection
+- noteId: psql-docker-connect
+  deckName: SQL Cheat Sheet::Connecting
+  fields:
+    Front: Connect to a Postgres server running in a local Docker instance
+    Back: docker exec -it postgres-dev psql -U postgres
+  tags:
+    - psql
+    - connection
+- noteId: psql-exit
+  deckName: SQL Cheat Sheet::Connecting
+  fields:
+    Front: Command to exit psql shell
+    Back: \q or Ctrl-d
+  tags:
+    - psql
+    - connection
+- noteId: psql-docker-stop
+  deckName: SQL Cheat Sheet::Connecting
+  fields:
+    Front: Stop a running Docker postgres instance
+    Back: docker stop postgres-dev
+  tags:
+    - psql
+    - connection
+- noteId: psql-help-sql
+  deckName: SQL Cheat Sheet::Connecting
+  fields:
+    Front: Get help for SQL commands
+    Back: \?
+  tags:
+    - psql
+    - connection
+- noteId: psql-help-internals
+  deckName: SQL Cheat Sheet::Connecting
+  fields:
+    Front: Get help for PSQL builtins
+    Back: \h
+  tags:
+    - psql
+    - connection
+- noteId: psql-dump-data
+  deckName: SQL Cheat Sheet::Connecting
+  fields:
+    Front: Export all data from a postgres database
+    Back: pg_dump -U username -h hostname  -d database_name > backup.sql
+  tags:
+    - psql
+    - connection
+- noteId: psql-docker-dump-data
+  deckName: SQL Cheat Sheet::Connecting
+  fields:
+    Front: Export all data from a postgres database running in Docker
+    Back: docker exec -it postgres-dev pg_dump -U username -h hostname  -d database_name > backup.sql
+  tags:
+    - psql
+    - connection

@@ -26,15 +26,20 @@ served from the same place as any other deck.
 - `manifest.ts` — `DECK_MANIFEST`: the list of decks this app knows about,
   each just `{ slug, title, url }`. This is the only place a new deck gets
   registered.
-- `load-server.ts` — used by `pages/flashcards/page.ts` at SSG build time.
-  Reads each deck's YAML straight off disk (the build already has
-  `public/`'s contents locally, so there's no reason to loop back over the
-  network for them) and parses it with `yaml`'s `parse`.
-- `load-client.ts` — used by `components/flashcards/client.ts` in the
-  browser. `fetch`es the same `url` over the network — same-origin by
-  default, but nothing stops a manifest entry pointing at a different
-  origin, CORS permitting — and parses the response text with the same
-  `yaml` package, bundled into the client build.
+- `load-server.ts` — used at SSG build time: `loadAllDecks` by
+  `pages/flashcards/page.ts` (the deck-picker hub, which needs every deck's
+  card count) and `loadDeck(slug)` by `pages/flashcards/[slug]/page.ts` (one
+  deck's own Browse/Review page, which needs only its own notes). Reads each
+  deck's YAML straight off disk (the build already has `public/`'s contents
+  locally, so there's no reason to loop back over the network for them) and
+  parses it with `yaml`'s `parse`.
+- `load-client.ts` — the browser-side counterpart, used by
+  `components/flashcards/client.ts`. Its `loadDeck(slug)` `fetch`es that one
+  deck's `url` over the network — same-origin by default, but nothing stops
+  a manifest entry pointing at a different origin, CORS permitting — and
+  parses the response text with the same `yaml` package, bundled into the
+  client build. `loadAllDecks` also exists here for symmetry but has no
+  current caller: the browser only ever needs the one deck its page is for.
 - `parse.ts` — both loaders run parsed YAML through `parseDeckNotes`, which
   parses each entry into a `Note` (defaulting `modelName` to `"Basic"` when
   absent) and drops (with a warning) whatever doesn't parse, instead of
@@ -47,6 +52,18 @@ try to) resolve; the client one uses `fetch`, which doesn't exist at SSG
 build time. Never import `load-server.ts` from client-side code or vice
 versa.
 
+## Routing
+
+Each deck gets its own static page at `/flashcards/<slug>/`
+(`pages/flashcards/[slug]/page.ts`, a dynamic SSG route whose
+`generateStaticParams` enumerates `DECK_MANIFEST`) — Browse and Review
+scoped to exactly that deck's cards, never several decks merged into one
+pool. `/flashcards/` itself (`pages/flashcards/page.ts`) is a deck picker:
+one tile per manifest entry, linking to its page. See
+`../deck-outline.ts` for how each deck's own group/section reading order is
+determined (an authored fixed order for decks that want one, like Rust's;
+derived from the data itself otherwise).
+
 ## Adding a deck
 
 1. Produce a `Note[]` — by hand, by script, or converted from an Anki
@@ -54,8 +71,11 @@ versa.
 2. Add one entry to `DECK_MANIFEST` in `manifest.ts`:
    `{ slug, title, url: "/_flashcards/<slug>.yaml" }`.
 
-`slug` becomes part of the deck's localStorage keys — keep it stable once a
-deck ships, so people's review history doesn't reset.
+That's it — the deck gets its own `/flashcards/<slug>/` page and a tile on
+the `/flashcards/` hub automatically (see "Routing" above); nothing else
+names a specific deck. `slug` becomes part of the deck's localStorage keys
+(`flashcards:progress:v1:<slug>`, `flashcards:annotations:v1:<slug>`) — keep
+it stable once a deck ships, so people's review history doesn't reset.
 
 ## `rust-cheat-sheet.yaml`
 
