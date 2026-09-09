@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { stringify as toYaml } from "yaml";
-import { loadAllDecks } from "./load-client.ts";
+import { loadAllDecks, loadDeck } from "./load-client.ts";
 import { DECK_MANIFEST } from "./manifest.ts";
 
 const GOOD_NOTE = {
@@ -39,5 +39,29 @@ describe("loadAllDecks (client)", () => {
 		);
 
 		await expect(loadAllDecks()).rejects.toThrow(/404/);
+	});
+});
+
+describe("loadDeck (client)", () => {
+	it("fetches only the matching manifest entry's url", async () => {
+		const fetchMock = vi.fn(async () => ({
+			ok: true,
+			status: 200,
+			statusText: "OK",
+			text: async () => toYaml([GOOD_NOTE]),
+		}));
+		vi.stubGlobal("fetch", fetchMock);
+
+		const target = DECK_MANIFEST[0];
+		const deck = await loadDeck(target.slug);
+		expect(deck.slug).toBe(target.slug);
+		expect(deck.title).toBe(target.title);
+		expect(deck.notes).toEqual([GOOD_NOTE]);
+		expect(fetchMock).toHaveBeenCalledTimes(1);
+		expect(fetchMock).toHaveBeenCalledWith(target.url);
+	});
+
+	it("throws for a slug not in the manifest", async () => {
+		await expect(loadDeck("nope")).rejects.toThrow(/nope/);
 	});
 });

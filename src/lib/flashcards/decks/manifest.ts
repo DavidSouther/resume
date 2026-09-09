@@ -18,11 +18,22 @@ export interface DeckSource {
 	notes: Note[];
 }
 
-/** Every deck this app ships with, by reference — not the data itself. Add a deck by adding an entry here and a YAML file under public/_flashcards/. */
+/**
+ * Every deck this app ships with, by reference — not the data itself. Add a
+ * deck by adding an entry here and a YAML file under public/_flashcards/
+ * (see decks/README.md's "Adding a deck"); it then gets its own
+ * /flashcards/<slug>/ page automatically (see pages/flashcards/[slug]/) and
+ * a tile on the /flashcards/ deck-picker hub.
+ */
 export const DECK_MANIFEST: DeckManifestEntry[] = [
 	{
-		slug: "rust-cheat-sheet",
+		slug: "rust",
 		title: "Rust Cheat Sheet",
 		url: "/_flashcards/rust-cheat-sheet.yaml",
+	},
+	{
+		slug: "sql",
+		title: "SQL Cheat Sheet",
+		url: "/_flashcards/sql-cheat-sheet.yaml",
 	},
 ];

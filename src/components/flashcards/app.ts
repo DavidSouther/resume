@@ -1,7 +1,11 @@
 import { Chip } from "@davidsouther/jiffies/components/index.ts";
 import { Switch } from "@davidsouther/jiffies/dom/form/form.ts";
-import { button, div, input } from "@davidsouther/jiffies/dom/html.ts";
+import { a, button, div, input } from "@davidsouther/jiffies/dom/html.ts";
 import type { CardTemplate } from "../../lib/flashcards/anki-types.ts";
+import {
+	type DeckOutline,
+	outlineFor,
+} from "../../lib/flashcards/deck-outline.ts";
 import { buildBrowseView } from "./browse.ts";
 import { buildDeckSelect } from "./deck-select.ts";
 import { buildReviewView } from "./review.ts";
@@ -22,7 +26,7 @@ function buildTab(label: string, selected: boolean): HTMLButtonElement {
 	return tab;
 }
 
-function buildToolbar(cardCount: number): HTMLDivElement {
+function buildToolbar(cardCount: number, outline: DeckOutline): HTMLDivElement {
 	const search = input({
 		class: "flashcards-search",
 		type: "search",
@@ -43,7 +47,7 @@ function buildToolbar(cardCount: number): HTMLDivElement {
 	const filters = div(
 		{ class: "flashcards-filters flex row" },
 		search,
-		buildDeckSelect("flashcards-deck-select", "All decks"),
+		buildDeckSelect("flashcards-deck-select", "All sections", outline),
 	);
 	const status = div(
 		{ class: "flashcards-status flex row align-center" },
@@ -60,22 +64,45 @@ function buildToolbar(cardCount: number): HTMLDivElement {
 }
 
 /**
- * Builds the whole /flashcards page body: a Browse/Review tab strip, each
+ * Builds one deck's Browse/Review app body: a Browse/Review tab strip, each
  * tab's panel holding that mode's content (Browse: toolbar + the
  * server-rendered casual grid; Review: the review panel shell).
+ * `deck.slug` is stamped onto the root element so client.ts/app-runtime.ts
+ * know which localStorage keys to use — this holds one deck's cards, never
+ * several at once.
+ *
+ * Two callers, two contexts: pages/flashcards/[slug]/page.ts builds this
+ * server-side for one of `DECK_MANIFEST`'s own decks (`showBackLink: true`,
+ * a link up to the deck picker makes sense); hub-client.ts builds this
+ * client-side for a "bring your own URL" deck mounted inline on the picker
+ * page itself (`showBackLink: false` — a link back to the page you're
+ * already on would be circular).
  */
-export function buildFlashcardsApp(cards: CardTemplate[]): HTMLDivElement {
+export function buildFlashcardsApp(
+	deck: { slug: string; title: string },
+	cards: CardTemplate[],
+	{ showBackLink = true }: { showBackLink?: boolean } = {},
+): HTMLDivElement {
+	const outline = outlineFor(deck.title, cards);
+
+	const back = showBackLink
+		? a(
+				{ href: "/flashcards/", class: "flashcards-back" },
+				"← All cheat sheets",
+			)
+		: null;
+
 	const browseTab = buildTab("Browse", true);
 	const reviewTab = buildTab("Review", false);
 
 	const browsePanel = div(
 		{ class: "browse-panel" },
-		buildToolbar(cards.length),
-		buildBrowseView(cards),
+		buildToolbar(cards.length, outline),
+		buildBrowseView(outline, cards),
 	);
 	browsePanel.setAttribute("role", "tabpanel");
 
-	const reviewPanel = buildReviewView();
+	const reviewPanel = buildReviewView(outline);
 	reviewPanel.setAttribute("role", "tabpanel");
 
 	const tablist = div(
@@ -87,5 +114,7 @@ export function buildFlashcardsApp(cards: CardTemplate[]): HTMLDivElement {
 	);
 	tablist.setAttribute("role", "tablist");
 
-	return div({ class: "flashcards" }, tablist);
+	const app = div({ class: "flashcards" }, back, tablist);
+	app.dataset.deckSlug = deck.slug;
+	return app;
 }
