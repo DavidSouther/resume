@@ -8,7 +8,7 @@
 import { NodeFileSystem } from "@davidsouther/jiffies/fs_node.ts";
 import { parse as parseYaml } from "yaml";
 import { DECK_MANIFEST, type DeckSource } from "./manifest.ts";
-import { parseDeckNotes } from "./validate.ts";
+import { parseDeckNotes } from "./parse.ts";
 
 // Rooted at the repo's cwd (the build always runs from there), so a deck's
 // `url` — same leading-"/" form the browser fetches (see load-client.ts) —

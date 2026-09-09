@@ -35,10 +35,11 @@ served from the same place as any other deck.
   default, but nothing stops a manifest entry pointing at a different
   origin, CORS permitting — and parses the response text with the same
   `yaml` package, bundled into the client build.
-- `validate.ts` — both loaders run parsed YAML through `parseDeckNotes`,
-  which drops (and warns about) malformed entries instead of taking down the
-  whole app on one bad note. Deck data can come from anywhere; treat it
-  accordingly.
+- `parse.ts` — both loaders run parsed YAML through `parseDeckNotes`, which
+  parses each entry into a `Note` (defaulting `modelName` to `"Basic"` when
+  absent) and drops (with a warning) whatever doesn't parse, instead of
+  taking down the whole app on one bad note. Deck data can come from
+  anywhere; treat it accordingly.
 
 Two loader modules, not one, because they need different runtimes: the
 server one imports `node:fs`, which the browser bundle can't (and shouldn't

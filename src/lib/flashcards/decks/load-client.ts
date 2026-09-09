@@ -5,7 +5,7 @@
 
 import { parse as parseYaml } from "yaml";
 import { DECK_MANIFEST, type DeckSource } from "./manifest.ts";
-import { parseDeckNotes } from "./validate.ts";
+import { parseDeckNotes } from "./parse.ts";
 
 async function loadDeckNotes(url: string) {
 	const res = await fetch(url);
