@@ -5,7 +5,7 @@
 
 import { parse as parseYaml } from "yaml";
 import { DECK_MANIFEST, type DeckSource } from "./manifest.ts";
-import { parseDeckNotes } from "./validate.ts";
+import { parseDeckNotes } from "./parse.ts";
 
 async function loadDeckNotes(url: string) {
 	const res = await fetch(url);
@@ -15,6 +15,17 @@ async function loadDeckNotes(url: string) {
 		);
 	}
 	return parseDeckNotes(parseYaml(await res.text()), url);
+}
+
+/** Loads the one manifest entry matching `slug` — used by client.ts, which only ever needs the one deck its /flashcards/<slug>/ page is for. */
+export async function loadDeck(slug: string): Promise<DeckSource> {
+	const entry = DECK_MANIFEST.find((d) => d.slug === slug);
+	if (!entry) throw new Error(`No deck registered with slug "${slug}"`);
+	return {
+		slug: entry.slug,
+		title: entry.title,
+		notes: await loadDeckNotes(entry.url),
+	};
 }
 
 export async function loadAllDecks(): Promise<DeckSource[]> {

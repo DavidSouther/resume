@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { parseDeckNotes } from "./validate.ts";
+import { parseDeckNotes } from "./parse.ts";
 
 const GOOD_NOTE = {
 	noteId: "n1",
@@ -36,5 +36,10 @@ describe("parseDeckNotes", () => {
 		const bad = { ...GOOD_NOTE, modelName: "NotAModel" };
 		expect(parseDeckNotes([bad], "test")).toEqual([]);
 		warn.mockRestore();
+	});
+
+	it("defaults modelName to Basic when absent", () => {
+		const { modelName: _modelName, ...withoutModelName } = GOOD_NOTE;
+		expect(parseDeckNotes([withoutModelName], "test")).toEqual([GOOD_NOTE]);
 	});
 });

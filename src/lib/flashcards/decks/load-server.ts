@@ -8,7 +8,7 @@
 import { NodeFileSystem } from "@davidsouther/jiffies/fs_node.ts";
 import { parse as parseYaml } from "yaml";
 import { DECK_MANIFEST, type DeckSource } from "./manifest.ts";
-import { parseDeckNotes } from "./validate.ts";
+import { parseDeckNotes } from "./parse.ts";
 
 // Rooted at the repo's cwd (the build always runs from there), so a deck's
 // `url` — same leading-"/" form the browser fetches (see load-client.ts) —
@@ -20,6 +20,17 @@ async function loadDeckNotes(url: string) {
 	// directly instead of a loopback network round-trip.
 	const raw = await fs.readFile(`public${url}`);
 	return parseDeckNotes(parseYaml(raw), url);
+}
+
+/** Loads the one manifest entry matching `slug` — used by pages/flashcards/[slug]/page.ts, which only ever needs its own deck's notes. */
+export async function loadDeck(slug: string): Promise<DeckSource> {
+	const entry = DECK_MANIFEST.find((d) => d.slug === slug);
+	if (!entry) throw new Error(`No deck registered with slug "${slug}"`);
+	return {
+		slug: entry.slug,
+		title: entry.title,
+		notes: await loadDeckNotes(entry.url),
+	};
 }
 
 export async function loadAllDecks(): Promise<DeckSource[]> {

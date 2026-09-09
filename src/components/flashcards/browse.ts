@@ -1,7 +1,10 @@
 import { Card, Panel } from "@davidsouther/jiffies/components/index.ts";
 import { div, h2, h3 } from "@davidsouther/jiffies/dom/html.ts";
 import type { CardTemplate } from "../../lib/flashcards/anki-types.ts";
-import { groupCardsByOutline } from "../../lib/flashcards/deck-outline.ts";
+import {
+	type DeckOutline,
+	groupCardsByOutline,
+} from "../../lib/flashcards/deck-outline.ts";
 import { buildAnnotationControl } from "./annotation-control.ts";
 import { stripHtml } from "./html-text.ts";
 
@@ -57,13 +60,16 @@ export function buildFlashTile(card: CardTemplate): HTMLDivElement {
 }
 
 /**
- * The full casual/browse view: every card, grouped and headed per the fixed
- * deck outline. Each top-level group is a jiffies-css flat Panel (`<section>
- * > header / main`) — a plain grouping surface, one notch flatter than the
- * elevated Cards inside it.
+ * The full casual/browse view: every card, grouped and headed per `outline`
+ * (see deck-outline.ts). Each top-level group is a jiffies-css flat Panel
+ * (`<section> > header / main`) — a plain grouping surface, one notch
+ * flatter than the elevated Cards inside it.
  */
-export function buildBrowseView(cards: CardTemplate[]): HTMLDivElement {
-	const bySection = groupCardsByOutline(cards);
+export function buildBrowseView(
+	outline: DeckOutline,
+	cards: CardTemplate[],
+): HTMLDivElement {
+	const bySection = groupCardsByOutline(outline, cards);
 	const groups = new Map<string, HTMLElement[]>();
 	for (const {
 		group,
