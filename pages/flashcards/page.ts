@@ -7,8 +7,11 @@ import { cardsForNotes } from "../../src/lib/flashcards/models.ts";
 import { pageHead } from "../../src/lib/page-head.ts";
 
 // The deck picker: one tile per registered deck, linking to its own
-// /flashcards/<slug>/ page (see [slug]/page.ts). Studying itself always
-// happens scoped to one deck — this page is just the "which one" step.
+// /flashcards/<slug>/ page (see [slug]/page.ts); plus a "bring your own
+// deck" loader (hub-client.ts) for anyone else's Anki-shaped notes, mounted
+// inline here rather than on its own static page since the SSG can't know
+// an arbitrary URL's route at build time. Studying a registered deck always
+// happens scoped to just that deck — this page is just the "which one" step.
 export default {
 	head: () => [
 		...pageHead("Flashcards — David Souther"),
@@ -24,4 +27,5 @@ export default {
 			})),
 		);
 	},
+	clientModules: ["/src/components/flashcards/hub-client.ts"],
 } satisfies PageModule;

@@ -53,6 +53,41 @@ export const FLASHCARDS_CSS = /* css */ `
     font-size: 1.15rem;
   }
 
+  .hub-external {
+    margin-block-start: var(--size-large, 1.5rem);
+    padding-block-start: var(--size-large, 1.5rem);
+    border-block-start: 1px solid var(--color-outline-variant, currentcolor);
+  }
+  .hub-external h3 {
+    margin-block-end: var(--size-small, 0.25rem);
+  }
+  .hub-external-hint {
+    margin-block-start: 0;
+    color: var(--color-on-surface-variant, currentcolor);
+    font-size: 0.9rem;
+  }
+  .hub-external-form {
+    gap: var(--size-small, 0.25rem) var(--size-base, 0.5rem);
+    margin-block: var(--size-base, 0.5rem);
+  }
+  .hub-external-url {
+    flex: 1 1 20rem;
+    min-width: 0;
+  }
+  .hub-external-mount:not(:empty) {
+    margin-block-start: var(--size-base, 0.5rem);
+  }
+
+  .hub-resources {
+    margin-block-start: var(--size-large, 1.5rem);
+  }
+  .hub-resources ul {
+    padding-inline-start: 1.25rem;
+  }
+  .hub-resources li {
+    margin-block-end: var(--size-small, 0.25rem);
+  }
+
   .flashcards-back {
     display: inline-block;
     margin-block-end: var(--size-small, 0.25rem);
@@ -120,6 +155,12 @@ export const FLASHCARDS_CSS = /* css */ `
   }
   [role="status"][data-variant="success"] {
     border: 1px solid var(--color-success, currentcolor);
+  }
+  [role="alert"][data-variant="error"] {
+    border: 1px solid var(--color-error, currentcolor);
+  }
+  [role="alert"][data-variant="warning"] {
+    border: 1px solid var(--color-warning, currentcolor);
   }
 
   small[data-variant] {

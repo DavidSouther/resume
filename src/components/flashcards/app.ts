@@ -64,23 +64,33 @@ function buildToolbar(cardCount: number, outline: DeckOutline): HTMLDivElement {
 }
 
 /**
- * Builds one deck's /flashcards/<slug>/ page body: a link back to the deck
- * picker, a Browse/Review tab strip, each tab's panel holding that mode's
- * content (Browse: toolbar + the server-rendered casual grid; Review: the
- * review panel shell). `deck.slug` is stamped onto the root element so
- * client.ts knows which deck to fetch and which localStorage keys to use —
- * this page only ever holds one deck's cards, never several at once.
+ * Builds one deck's Browse/Review app body: a Browse/Review tab strip, each
+ * tab's panel holding that mode's content (Browse: toolbar + the
+ * server-rendered casual grid; Review: the review panel shell).
+ * `deck.slug` is stamped onto the root element so client.ts/app-runtime.ts
+ * know which localStorage keys to use — this holds one deck's cards, never
+ * several at once.
+ *
+ * Two callers, two contexts: pages/flashcards/[slug]/page.ts builds this
+ * server-side for one of `DECK_MANIFEST`'s own decks (`showBackLink: true`,
+ * a link up to the deck picker makes sense); hub-client.ts builds this
+ * client-side for a "bring your own URL" deck mounted inline on the picker
+ * page itself (`showBackLink: false` — a link back to the page you're
+ * already on would be circular).
  */
 export function buildFlashcardsApp(
 	deck: { slug: string; title: string },
 	cards: CardTemplate[],
+	{ showBackLink = true }: { showBackLink?: boolean } = {},
 ): HTMLDivElement {
 	const outline = outlineFor(deck.title, cards);
 
-	const back = a(
-		{ href: "/flashcards/", class: "flashcards-back" },
-		"← All cheat sheets",
-	);
+	const back = showBackLink
+		? a(
+				{ href: "/flashcards/", class: "flashcards-back" },
+				"← All cheat sheets",
+			)
+		: null;
 
 	const browseTab = buildTab("Browse", true);
 	const reviewTab = buildTab("Review", false);
