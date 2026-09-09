@@ -1,0 +1,116 @@
+- noteId: migration-what-is-one
+  deckName: SQL Migrations
+  fields:
+    Front: What is a database schema migration?
+    Back: A versioned, incremental change to a database's schema, written as code and tracked alongside the application so the schema's history is reproducible.
+  tags:
+    - migration
+- noteId: migration-up-down
+  deckName: SQL Migrations
+  fields:
+    Front: What do a migration's "up" and "down" steps do?
+    Back: "\"Up\" applies the change going forward; \"down\" reverts it, so a bad migration can be rolled back."
+  tags:
+    - migration
+- noteId: migration-tools
+  deckName: SQL Migrations
+  fields:
+    Front: Name common SQL schema-migration tools
+    Back: Flyway, Liquibase, Alembic, golang-migrate, dbmate, node-pg-migrate, Prisma Migrate
+  tags:
+    - migration
+- noteId: migration-tracking-table
+  deckName: SQL Migrations
+  fields:
+    Front: How does a migration runner avoid re-applying a migration that already ran?
+    Back: It records each applied migration's identifier in a tracking table (often schema_migrations) and only runs migrations not yet in that table.
+  tags:
+    - migration
+- noteId: migration-naming
+  deckName: SQL Migrations
+  fields:
+    Front: What's the typical migration file naming convention?
+    Back: A sortable timestamp or sequence number prefix plus a short description, e.g. 20240115120000_add_habitat_table.sql — so applying order matches filename order.
+  tags:
+    - migration
+- noteId: migration-transactional-ddl-pg
+  deckName: SQL Migrations
+  fields:
+    Front: Can a Postgres migration's schema changes be rolled back as part of a failed transaction?
+    Back: Yes — Postgres runs CREATE/ALTER/DROP TABLE inside transactions, so a migration wrapped in BEGIN/COMMIT is atomic and rolls back cleanly on error.
+  tags:
+    - migration
+    - postgres
+- noteId: migration-sqlite-alter-limits
+  deckName: SQL Migrations
+  fields:
+    Front: What can SQLite's ALTER TABLE actually do?
+    Back: Only RENAME TABLE, RENAME COLUMN, ADD COLUMN, and DROP COLUMN — it cannot change a column's type or constraints in place, unlike Postgres's ALTER COLUMN ... TYPE.
+  tags:
+    - migration
+    - sqlite
+- noteId: migration-sqlite-table-rebuild
+  deckName: SQL Migrations
+  fields:
+    Front: How do you migrate a SQLite table when ALTER TABLE can't express the change?
+    Back: The table-rebuild pattern — create a new table with the desired schema, copy the data across, drop the old table, then rename the new table into place.
+  tags:
+    - migration
+    - sqlite
+- noteId: migration-expand-contract
+  deckName: SQL Migrations
+  fields:
+    Front: What is the expand/contract migration pattern, and why use it?
+    Back: Expand the schema with new, backward-compatible structures; dual-write and backfill; switch reads over; then contract by dropping the old structures — so a rolling deploy never has old and new code both breaking on the schema.
+  tags:
+    - migration
+- noteId: migration-backward-compatible-column
+  deckName: SQL Migrations
+  fields:
+    Front: Give an example of a backward-compatible vs. a breaking column addition
+    Back: Adding a nullable column (or one with a default) is backward compatible with old code still running; adding a NOT NULL column with no default breaks any insert old code issues.
+  tags:
+    - migration
+- noteId: migration-schema-vs-data
+  deckName: SQL Migrations
+  fields:
+    Front: Distinguish a schema migration from a data migration
+    Back: A schema migration changes structure (DDL — tables, columns, constraints); a data migration transforms or backfills existing rows (DML), and is often run as its own separate, resumable step.
+  tags:
+    - migration
+- noteId: migration-seed-data
+  deckName: SQL Migrations
+  fields:
+    Front: What is "seed data" in a migration?
+    Back: Fixed reference or lookup rows (e.g. a table of status codes) inserted by a migration so every environment starts with the same baseline data.
+  tags:
+    - migration
+- noteId: migration-dump-restore-pg
+  deckName: SQL Migrations
+  fields:
+    Front: Round-trip a Postgres database through a plain-SQL dump
+    Back: |
+      pg_dump -U username -d database > backup.sql
+      psql -U username -d database < backup.sql
+  tags:
+    - migration
+    - postgres
+- noteId: migration-dump-restore-sqlite
+  deckName: SQL Migrations
+  fields:
+    Front: Round-trip a SQLite database through a plain-SQL dump
+    Back: |
+      sqlite3 database.db .dump > backup.sql
+      sqlite3 new-database.db < backup.sql
+  tags:
+    - migration
+    - sqlite
+- noteId: migration-cross-engine-portability
+  deckName: SQL Migrations
+  fields:
+    Front: What breaks when porting a Postgres schema straight to SQLite?
+    Back: Postgres-specific types with no direct SQLite equivalent — SERIAL, JSONB, ARRAY, ENUM — plus Postgres's stricter column typing versus SQLite's dynamic, loosely-typed columns.
+  tags:
+    - migration
+    - postgres
+    - sqlite
