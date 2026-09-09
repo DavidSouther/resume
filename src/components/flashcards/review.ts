@@ -11,6 +11,7 @@ import {
 	small,
 	span,
 } from "@davidsouther/jiffies/dom/html.ts";
+import type { DeckOutline } from "../../lib/flashcards/deck-outline.ts";
 import { Rating } from "../../lib/flashcards/fsrs.ts";
 import { buildAnnotationControl } from "./annotation-control.ts";
 import { buildDeckSelect } from "./deck-select.ts";
@@ -73,14 +74,14 @@ function buildReviewFace(face: "front" | "back"): HTMLElement {
  * owns picking the due queue (from deck data + localStorage progress) and
  * filling in each face's `<main>` on the card shown.
  */
-export function buildReviewView(): HTMLDivElement {
+export function buildReviewView(outline: DeckOutline): HTMLDivElement {
 	const startBtn = Button(undefined, "Start review");
 	startBtn.classList.add("review-start");
 	// A joined picker + go-button pair — jiffies-css's FormGroup fuses them
 	// into one segmented row, the sanctioned pattern for exactly this shape.
 	const scope = FormGroup(
 		{ legend: "Review scope" },
-		buildDeckSelect("review-deck-select", "All due cards"),
+		buildDeckSelect("review-deck-select", "All due cards", outline),
 		startBtn,
 	);
 

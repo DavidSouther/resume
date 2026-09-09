@@ -1,15 +1,19 @@
 import { optgroup, option, select } from "@davidsouther/jiffies/dom/html.ts";
-import { DECK_OUTLINE, deckName } from "../../lib/flashcards/deck-outline.ts";
+import {
+	type DeckOutline,
+	deckName,
+} from "../../lib/flashcards/deck-outline.ts";
 
-/** A `<select>` of every deck section, grouped by top-level group, with a leading "everything" option. */
+/** A `<select>` of every section in `outline`, grouped by top-level group, with a leading "everything" option. */
 export function buildDeckSelect(
 	className: string,
 	allLabel: string,
+	outline: DeckOutline,
 ): HTMLSelectElement {
-	const groups = DECK_OUTLINE.map(({ group, sections }) =>
+	const groups = outline.groups.map(({ group, sections }) =>
 		optgroup(
 			{ label: group },
-			...sections.map((s) => option({ value: deckName(group, s) }, s)),
+			...sections.map((s) => option({ value: deckName(outline, group, s) }, s)),
 		),
 	);
 	// `value: ""` set via the attrs shorthand: the attrs runtime treats a falsy
