@@ -31,6 +31,9 @@ function buildToolbar(cardCount: number): HTMLDivElement {
 	search.setAttribute("aria-label", "Search cards");
 
 	const dueOnly = Switch("Due only", { class: "due-only-checkbox" });
+	const annotatedOnly = Switch("Annotated only", {
+		class: "annotated-only-checkbox",
+	});
 
 	const summary = Chip(
 		{ variant: "neutral", class: "flashcards-summary" },
@@ -45,6 +48,7 @@ function buildToolbar(cardCount: number): HTMLDivElement {
 	const status = div(
 		{ class: "flashcards-status flex row align-center" },
 		dueOnly,
+		annotatedOnly,
 		summary,
 	);
 

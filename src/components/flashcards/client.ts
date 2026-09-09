@@ -1,4 +1,9 @@
 import type { CardTemplate } from "../../lib/flashcards/anki-types.ts";
+import {
+	type AnnotationStore,
+	type CardAnnotation,
+	createAnnotationStore,
+} from "../../lib/flashcards/annotations.ts";
 import { loadAllDecks } from "../../lib/flashcards/decks/load-client.ts";
 import { Rating } from "../../lib/flashcards/fsrs.ts";
 import { cardsForNotes } from "../../lib/flashcards/models.ts";
@@ -25,6 +30,73 @@ function one<T extends Element>(sel: string, root: ParentNode = document): T {
 	return el;
 }
 
+/**
+ * Wires one `.annotation-control` (see annotation-control.ts) to
+ * `annotationStore`: toggling open/closed, saving/clearing a note, and
+ * reflecting the current card's annotated state. `getCardId` is a thunk
+ * rather than a fixed id because the review panel has exactly one control
+ * instance retargeted at whichever card is currently showing (browse tiles
+ * just close over their own fixed id). `onChange` lets each caller update
+ * whatever else depends on the annotation — a tile's `data-annotated` dot,
+ * the browse summary count, the review-back note display.
+ */
+function wireAnnotationControl(
+	control: HTMLElement,
+	annotationStore: AnnotationStore,
+	getCardId: () => string | undefined,
+	onChange: (cardId: string, annotation: CardAnnotation | undefined) => void,
+): { refresh: () => void; close: () => void; open: () => void } {
+	const toggleBtn = one<HTMLButtonElement>(".annotation-toggle", control);
+	const form = one<HTMLElement>(".annotation-form", control);
+	const noteInput = one<HTMLTextAreaElement>(".annotation-note", control);
+	const saveBtn = one<HTMLButtonElement>(".annotation-save", control);
+	const clearBtn = one<HTMLButtonElement>(".annotation-clear", control);
+	const cancelBtn = one<HTMLButtonElement>(".annotation-cancel", control);
+
+	function refresh(): void {
+		const cardId = getCardId();
+		const annotation = cardId ? annotationStore.get(cardId) : undefined;
+		control.classList.toggle("annotated", annotation !== undefined);
+		noteInput.value = annotation?.note ?? "";
+		clearBtn.hidden = annotation === undefined;
+	}
+	function close(): void {
+		form.hidden = true;
+	}
+	function open(): void {
+		refresh();
+		form.hidden = false;
+		noteInput.focus();
+	}
+
+	toggleBtn.addEventListener("click", () => (form.hidden ? open() : close()));
+	saveBtn.addEventListener("click", () => {
+		const cardId = getCardId();
+		const note = noteInput.value.trim();
+		if (!cardId || !note) return;
+		const annotation: CardAnnotation = { note, annotatedAt: Date.now() };
+		annotationStore.set(cardId, annotation);
+		close();
+		refresh();
+		onChange(cardId, annotation);
+	});
+	clearBtn.addEventListener("click", () => {
+		const cardId = getCardId();
+		if (!cardId) return;
+		annotationStore.reset(cardId);
+		close();
+		refresh();
+		onChange(cardId, undefined);
+	});
+	cancelBtn.addEventListener("click", () => {
+		close();
+		refresh();
+	});
+
+	refresh();
+	return { refresh, close, open };
+}
+
 function main(): void {
 	// Kicked off immediately but not awaited here: browse mode is fully
 	// interactive from server-rendered markup with no need for the deck data
@@ -45,6 +117,7 @@ function main(): void {
 	const store = createProgressStore(window.localStorage);
 	const progressFor = (cardId: string): CardProgress =>
 		store.get(cardId) ?? initialProgress();
+	const annotationStore = createAnnotationStore(window.localStorage);
 
 	// ---------------------------------------------------------------- Mode switch
 	// Pure jiffies-css tabs: tabs.css shows the panel adjacent to whichever
@@ -76,6 +149,9 @@ function main(): void {
 	const searchInput = one<HTMLInputElement>(".flashcards-search");
 	const deckSelect = one<HTMLSelectElement>(".flashcards-deck-select");
 	const dueOnlyCheckbox = one<HTMLInputElement>(".due-only-checkbox");
+	const annotatedOnlyCheckbox = one<HTMLInputElement>(
+		".annotated-only-checkbox",
+	);
 	const summary = one<HTMLElement>(".flashcards-summary");
 
 	function refreshDueDots(): void {
@@ -86,16 +162,27 @@ function main(): void {
 		}
 	}
 
+	function refreshAnnotationDots(): void {
+		for (const tile of tiles) {
+			const id = tile.dataset.cardId;
+			tile.dataset.annotated = String(
+				!!id && annotationStore.get(id) !== undefined,
+			);
+		}
+	}
+
 	function applyFilters(): void {
 		const query = searchInput.value.trim().toLowerCase();
 		const deck = deckSelect.value;
 		const onlyDue = dueOnlyCheckbox.checked;
+		const onlyAnnotated = annotatedOnlyCheckbox.checked;
 		let visible = 0;
 		for (const tile of tiles) {
 			const show =
 				(!query || (tile.dataset.search ?? "").includes(query)) &&
 				(!deck || tile.dataset.deck === deck) &&
-				(!onlyDue || tile.dataset.due === "true");
+				(!onlyDue || tile.dataset.due === "true") &&
+				(!onlyAnnotated || tile.dataset.annotated === "true");
 			tile.hidden = !show;
 			if (show) visible++;
 		}
@@ -113,13 +200,20 @@ function main(): void {
 		summary.textContent = `${visible} of ${tiles.length} cards · ${dueCount} due`;
 	}
 
+	// Every tile carries its own annotation control (see browse.ts) — clicks
+	// and space/enter keydowns inside it must not also flip the tile
+	// underneath.
 	browseView.addEventListener("click", (e) => {
-		const tile = (e.target as HTMLElement).closest<HTMLElement>(".flash-tile");
+		const target = e.target as HTMLElement;
+		if (target.closest(".annotation-control")) return;
+		const tile = target.closest<HTMLElement>(".flash-tile");
 		if (tile) tile.classList.toggle("flipped");
 	});
 	browseView.addEventListener("keydown", (e) => {
 		if (e.key !== " " && e.key !== "Enter") return;
-		const tile = (e.target as HTMLElement).closest<HTMLElement>(".flash-tile");
+		const target = e.target as HTMLElement;
+		if (target.closest(".annotation-control")) return;
+		const tile = target.closest<HTMLElement>(".flash-tile");
 		if (!tile) return;
 		e.preventDefault();
 		tile.classList.toggle("flipped");
@@ -127,8 +221,25 @@ function main(): void {
 	searchInput.addEventListener("input", applyFilters);
 	deckSelect.addEventListener("change", applyFilters);
 	dueOnlyCheckbox.addEventListener("change", applyFilters);
+	annotatedOnlyCheckbox.addEventListener("change", applyFilters);
+
+	for (const tile of tiles) {
+		const control = tile.querySelector<HTMLElement>(".annotation-control");
+		const cardId = tile.dataset.cardId;
+		if (!control || !cardId) continue;
+		wireAnnotationControl(
+			control,
+			annotationStore,
+			() => cardId,
+			(_id, annotation) => {
+				tile.dataset.annotated = String(annotation !== undefined);
+				applyFilters();
+			},
+		);
+	}
 
 	refreshDueDots();
+	refreshAnnotationDots();
 	applyFilters();
 
 	// ---------------------------------------------------------------- Review
@@ -146,6 +257,10 @@ function main(): void {
 	const emptyEl = one<HTMLElement>(".review-empty");
 	const doneEl = one<HTMLElement>(".review-done");
 	const doneSummary = one<HTMLElement>(".review-done-summary");
+	// Lives in the back Card's footer (see review.ts's buildReviewFace), not
+	// its <main> — showCurrentCard() replaces reviewBack's innerHTML on every
+	// card, which would otherwise wipe this out along with the card content.
+	const reviewAnnotationNoteEl = one<HTMLElement>(".review-annotation-note");
 
 	let queue: QueueItem[] = [];
 	let sessionDone = 0;
@@ -153,6 +268,36 @@ function main(): void {
 	function isFlipped(): boolean {
 		return reviewCard.classList.contains("flipped");
 	}
+
+	function currentCardId(): string | undefined {
+		return queue[0]?.card.cardId;
+	}
+
+	function updateAnnotationNote(): void {
+		const cardId = currentCardId();
+		const annotation = cardId ? annotationStore.get(cardId) : undefined;
+		reviewAnnotationNoteEl.hidden = annotation === undefined;
+		reviewAnnotationNoteEl.textContent = annotation
+			? `📝 Annotated: ${annotation.note}`
+			: "";
+	}
+
+	// The one review-panel annotation control (see review.ts), retargeted at
+	// whichever card is current via currentCardId() rather than a fixed id.
+	const reviewAnnotationControl = one<HTMLElement>(
+		".review-grades .annotation-control",
+	);
+	const reviewAnnotation = wireAnnotationControl(
+		reviewAnnotationControl,
+		annotationStore,
+		currentCardId,
+		(cardId, annotation) => {
+			const tile = tileById.get(cardId);
+			if (tile) tile.dataset.annotated = String(annotation !== undefined);
+			applyFilters();
+			updateAnnotationNote();
+		},
+	);
 
 	/**
 	 * Field markdown is rendered once, server-side, when a deck's data file is
@@ -199,6 +344,10 @@ function main(): void {
 		// overshoot a total fixed at session start.
 		progressEl.max = sessionDone + queue.length;
 		progressEl.value = sessionDone;
+
+		reviewAnnotation.close();
+		reviewAnnotation.refresh();
+		updateAnnotationNote();
 	}
 
 	function revealAnswer(): void {
@@ -295,6 +444,8 @@ function main(): void {
 			revealAnswer();
 		} else if (!gradesEl.hidden && ["1", "2", "3", "4"].includes(e.key)) {
 			gradeCurrentCard(Number(e.key) as Rating);
+		} else if (!gradesEl.hidden && e.key === "5") {
+			reviewAnnotation.open();
 		}
 	});
 	for (const btn of gradeButtons) {

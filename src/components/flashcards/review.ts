@@ -12,6 +12,7 @@ import {
 	span,
 } from "@davidsouther/jiffies/dom/html.ts";
 import { Rating } from "../../lib/flashcards/fsrs.ts";
+import { buildAnnotationControl } from "./annotation-control.ts";
 import { buildDeckSelect } from "./deck-select.ts";
 
 const GRADE_LABELS: [grade: number, label: string][] = [
@@ -23,8 +24,12 @@ const GRADE_LABELS: [grade: number, label: string][] = [
 
 // A plain flex row of independent action buttons, not jiffies-css's
 // FormGroup (which fuses adjacent controls into one seamlessly-joined
-// segmented row) — grading is four discrete one-shot actions, not a single
-// joined control, so a fused-border look would be misleading here.
+// segmented row) — grading is discrete one-shot actions, not a single
+// joined control, so a fused-border look would be misleading here. The
+// annotation control (a 5th option alongside the four FSRS grades) rides in
+// the same row: it isn't a grade — annotating doesn't advance the queue —
+// but it's only meaningful once the answer's showing, same as grading, so
+// it shares `.review-grades`'s shown/hidden lifecycle for free.
 function buildGradeButtons(): HTMLDivElement {
 	const buttons = GRADE_LABELS.map(([grade, label]) => {
 		const btn = Button(
@@ -35,15 +40,31 @@ function buildGradeButtons(): HTMLDivElement {
 		btn.dataset.grade = String(grade);
 		return btn;
 	});
-	return div({ class: "review-grades flex row", hidden: true }, ...buttons);
+	return div(
+		{ class: "review-grades flex row", hidden: true },
+		...buttons,
+		buildAnnotationControl(),
+	);
 }
 
 /**
  * One face (front or back) of the review flashcard: a jiffies-css elevated
  * Card for the surface, content written straight into its own `<main>` (see
- * browse.ts's buildFlashFace for why — one `<main>`, never nested).
+ * browse.ts's buildFlashFace for why — one `<main>`, never nested). The back
+ * face also carries a footer slot for the annotated-card note: client.ts
+ * replaces `<main>`'s innerHTML wholesale on every card shown, so the note
+ * display has to live outside `<main>` to survive that.
  */
 function buildReviewFace(face: "front" | "back"): HTMLElement {
+	if (face === "back") {
+		return Card({
+			class: `review-face review-${face}`,
+			footer: Alert(
+				{ variant: "warning", class: "review-annotation-note", hidden: true },
+				"",
+			),
+		});
+	}
 	return Card({ class: `review-face review-${face}` });
 }
 
@@ -86,7 +107,7 @@ export function buildReviewView(): HTMLDivElement {
 		card,
 		p(
 			{ class: "review-hint" },
-			"Click the card or press Space to flip. Then grade it — press 1-4.",
+			"Click the card or press Space to flip. Then grade it — press 1-4, or 5 to annotate it.",
 		),
 		buildGradeButtons(),
 	);
