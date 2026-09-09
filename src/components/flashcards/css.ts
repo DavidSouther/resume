@@ -146,6 +146,35 @@ export const FLASHCARDS_CSS = /* css */ `
       background: var(--color-primary, currentcolor);
       pointer-events: none;
     }
+
+    /* .flash-tile has its own position:relative, so it's its own stacking
+     * context — an open .annotation-form's z-index (below) only elevates it
+     * over the rest of *this* tile, not over the next row of tiles, which
+     * paint later in DOM order and would otherwise cover it. Elevating the
+     * whole tile while its form is open fixes that. */
+    &:has(.annotation-form:not([hidden])) {
+      z-index: 10;
+    }
+  }
+  /* Sits outside .flash-tile-inner (see browse.ts) so it never takes part
+   * in the flip transform and is reachable from either face. Selector is
+   * two classes combined, not just .flash-tile-annotation alone, so its
+   * specificity beats the later plain .annotation-control position:relative
+   * rule below regardless of source order. */
+  .annotation-control.flash-tile-annotation {
+    position: absolute;
+    top: -0.4rem;
+    left: -0.4rem;
+    z-index: 2;
+
+    & > .annotation-toggle {
+      width: 1.6rem;
+      height: 1.6rem;
+      padding: 0;
+      border-radius: 50%;
+      font-size: 0.8rem;
+      line-height: 1;
+    }
   }
   .flash-tile-inner {
     position: relative;
@@ -209,6 +238,7 @@ export const FLASHCARDS_CSS = /* css */ `
     margin: 0;
     overflow-y: auto;
     display: flex;
+    flex-direction: column;
     align-items: flex-start;
     justify-content: center;
     text-align: center;
@@ -216,8 +246,13 @@ export const FLASHCARDS_CSS = /* css */ `
     padding-block: var(--size-base, 0.5rem);
     font-size: 1.05em;
 
-    & > main {
+    & > main, & > footer {
       width: 100%;
+    }
+    /* The annotated-card note (see review.ts's footer part) reads as an
+     * aside beneath the card content, not more centered prose. */
+    & > footer {
+      text-align: left;
     }
     pre {
       text-align: left;
@@ -253,6 +288,54 @@ export const FLASHCARDS_CSS = /* css */ `
   .review-grades button[data-grade="4"] {
     --_button-fill: var(--color-success-container, #d1e7dd);
     --_button-label: var(--color-on-success-container, #0f5132);
+  }
+
+  /* ------------------------------------------------------------ Annotating
+   * Shared between one browse-tile annotation control per card (browse.ts)
+   * and the single review-panel one, retargeted per card by client.ts. */
+  .annotation-control {
+    position: relative;
+  }
+  .annotation-toggle {
+    font-size: 0.75rem;
+    padding-block: 0.15em;
+  }
+  .annotation-control.annotated .annotation-toggle {
+    --_button-fill: var(--color-warning-container, #fff3cd);
+    --_button-label: var(--color-on-warning-container, #664d03);
+  }
+  .annotation-form {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    gap: var(--size-small, 0.25rem);
+    width: max(14rem, 100%);
+    margin-top: 0.25rem;
+    padding: var(--size-base, 0.5rem);
+    background: var(--card-background-color, canvas);
+    border: 1px solid var(--color-outline-variant, currentcolor);
+    border-radius: var(--border-radius-container, 0.5rem);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    text-align: left;
+
+    &[hidden] {
+      display: none;
+    }
+  }
+  .annotation-note {
+    width: 100%;
+    resize: vertical;
+    font: inherit;
+  }
+  .annotation-form-actions {
+    gap: var(--size-small, 0.25rem);
+    flex-wrap: wrap;
+  }
+  .review-annotation-note {
+    font-size: 0.85em;
   }
 
   @media (prefers-reduced-motion: reduce) {
