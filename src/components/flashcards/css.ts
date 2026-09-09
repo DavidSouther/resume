@@ -157,15 +157,30 @@ export const FLASHCARDS_CSS = /* css */ `
     }
   }
   /* Sits outside .flash-tile-inner (see browse.ts) so it never takes part
-   * in the flip transform and is reachable from either face. Selector is
-   * two classes combined, not just .flash-tile-annotation alone, so its
-   * specificity beats the later plain .annotation-control position:relative
-   * rule below regardless of source order. */
+   * in the flip transform and is reachable from either face. Bottom-right,
+   * inset (not overhanging the corner like the due dot's ::after) so it
+   * stays entirely inside the card. Selector is two classes combined, not
+   * just .flash-tile-annotation alone, so its specificity beats the later
+   * plain .annotation-control position:relative rule below regardless of
+   * source order. */
   .annotation-control.flash-tile-annotation {
     position: absolute;
-    top: -0.4rem;
-    left: -0.4rem;
+    right: 0.4rem;
+    bottom: 0.4rem;
     z-index: 2;
+    /* Hidden until the tile's hovered/focused — one per card is too much
+     * chrome to show at rest. Stays visible for a card that's already
+     * annotated (a signal worth keeping) or while its own form is open
+     * (so moving the pointer off the button mid-edit doesn't hide it). */
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease;
+
+    .flash-tile:hover &, .flash-tile:focus-within &, &.annotated,
+    &:has(.annotation-form:not([hidden])) {
+      opacity: 1;
+      pointer-events: auto;
+    }
 
     & > .annotation-toggle {
       width: 1.6rem;
@@ -174,6 +189,17 @@ export const FLASHCARDS_CSS = /* css */ `
       border-radius: 50%;
       font-size: 0.8rem;
       line-height: 1;
+    }
+
+    /* Opens upward from the bottom-right corner, not downward off the
+     * bottom edge of the grid row below. */
+    & > .annotation-form {
+      top: auto;
+      bottom: 100%;
+      left: auto;
+      right: 0;
+      margin-top: 0;
+      margin-bottom: 0.25rem;
     }
   }
   .flash-tile-inner {
