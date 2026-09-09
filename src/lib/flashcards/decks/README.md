@@ -104,3 +104,30 @@ Regenerating this file (e.g. after an upstream content change) means
 re-running that authoring pass against the updated source and re-merging the
 result — there's no mechanical script to rerun, since the authoring step
 itself is a reading-comprehension task.
+
+## `sql-cheat-sheet.yaml`
+
+The `Syntax::*` cards were authored by reading
+[LearnSQL.com](https://learnsql.com)'s "PostgreSQL Cheat Sheet" (published by
+Vertabelo SA, CC BY-NC-ND) section by section, one note per distinct,
+testable fact. Their source PDF groups everything under Postgres, but the
+syntax itself is mostly standard SQL, so deck names group by topic
+(`Syntax::DDL`, `Syntax::Select`, `Syntax::DML`, `Syntax::Text`,
+`Syntax::Numeric`, `Syntax::Null`, `Syntax::DateTime`, `Syntax::Casting`)
+rather than by engine — engine-specific commands within a topic (e.g.
+Postgres's `\copy`, `::` cast operator, `SERIAL` column type) are still
+called out via each note's `postgres` tag. `Connecting::Postgres` and
+`Connecting::SQLite` are the exception: connecting to a server is
+genuinely engine-specific (CLI, auth, dump/restore invocation), so that
+section keeps an engine split. `Connecting::SQLite` is an original note set,
+not derived from the LearnSQL source. As with the Rust deck, this is an
+unofficial derivative study aid, not affiliated with or endorsed by
+LearnSQL.com or Vertabelo SA.
+
+## `sql-migrations.yaml`
+
+Schema-migration concept cards (up/down migrations, migration tools,
+expand/contract, SQLite's `ALTER TABLE` limits, etc.), split out from
+`sql-cheat-sheet.yaml` into their own file — and deliberately left off
+`DECK_MANIFEST` for now — while the card set itself is still being reworked.
+Fold it back into the manifest once it's ready to ship.

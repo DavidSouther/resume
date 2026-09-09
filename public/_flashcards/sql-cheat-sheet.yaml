@@ -1,5 +1,5 @@
 - noteId: psql-connecting-basic
-  deckName: SQL Cheat Sheet::Connecting
+  deckName: SQL Cheat Sheet::Connecting::Postgres
   fields:
     Front: Connect to a Postgres server
     Back: psql -U username
@@ -7,7 +7,7 @@
     - psql
     - connection
 - noteId: psql-connecting-host-password
-  deckName: SQL Cheat Sheet::Connecting
+  deckName: SQL Cheat Sheet::Connecting::Postgres
   fields:
     Front: Connect to a Postgres server, with a specific host and database
     Back: psql -U username -h host_name -d database
@@ -15,7 +15,7 @@
     - psql
     - connection
 - noteId: psql-docker-start
-  deckName: SQL Cheat Sheet::Connecting
+  deckName: SQL Cheat Sheet::Connecting::Postgres
   fields:
     Front: Start a Postgres instance in Docker, with a persistent database file
     Back: |
@@ -28,7 +28,7 @@
     - psql
     - connection
 - noteId: psql-docker-connect
-  deckName: SQL Cheat Sheet::Connecting
+  deckName: SQL Cheat Sheet::Connecting::Postgres
   fields:
     Front: Connect to a Postgres server running in a local Docker instance
     Back: docker exec -it postgres-dev psql -U postgres
@@ -36,7 +36,7 @@
     - psql
     - connection
 - noteId: psql-exit
-  deckName: SQL Cheat Sheet::Connecting
+  deckName: SQL Cheat Sheet::Connecting::Postgres
   fields:
     Front: Command to exit psql shell
     Back: \q or Ctrl-d
@@ -44,7 +44,7 @@
     - psql
     - connection
 - noteId: psql-docker-stop
-  deckName: SQL Cheat Sheet::Connecting
+  deckName: SQL Cheat Sheet::Connecting::Postgres
   fields:
     Front: Stop a running Docker postgres instance
     Back: docker stop postgres-dev
@@ -52,7 +52,7 @@
     - psql
     - connection
 - noteId: psql-help-sql
-  deckName: SQL Cheat Sheet::Connecting
+  deckName: SQL Cheat Sheet::Connecting::Postgres
   fields:
     Front: Get help for SQL commands
     Back: \?
@@ -60,7 +60,7 @@
     - psql
     - connection
 - noteId: psql-help-internals
-  deckName: SQL Cheat Sheet::Connecting
+  deckName: SQL Cheat Sheet::Connecting::Postgres
   fields:
     Front: Get help for PSQL builtins
     Back: \h
@@ -68,7 +68,7 @@
     - psql
     - connection
 - noteId: psql-dump-data
-  deckName: SQL Cheat Sheet::Connecting
+  deckName: SQL Cheat Sheet::Connecting::Postgres
   fields:
     Front: Export all data from a postgres database
     Back: pg_dump -U username -h hostname  -d database_name > backup.sql
@@ -76,10 +76,605 @@
     - psql
     - connection
 - noteId: psql-docker-dump-data
-  deckName: SQL Cheat Sheet::Connecting
+  deckName: SQL Cheat Sheet::Connecting::Postgres
   fields:
     Front: Export all data from a postgres database running in Docker
     Back: docker exec -it postgres-dev pg_dump -U username -h hostname  -d database_name > backup.sql
   tags:
     - psql
     - connection
+- noteId: sqlite-connecting-open
+  deckName: SQL Cheat Sheet::Connecting::SQLite
+  fields:
+    Front: Open (or create) a SQLite database file
+    Back: sqlite3 database.db
+  tags:
+    - sqlite
+    - connection
+- noteId: sqlite-connecting-memory
+  deckName: SQL Cheat Sheet::Connecting::SQLite
+  fields:
+    Front: Open a temporary, in-memory SQLite database
+    Back: "sqlite3 :memory:"
+  tags:
+    - sqlite
+    - connection
+- noteId: sqlite-exit
+  deckName: SQL Cheat Sheet::Connecting::SQLite
+  fields:
+    Front: Command to exit the sqlite3 shell
+    Back: .quit or Ctrl-d
+  tags:
+    - sqlite
+    - connection
+- noteId: sqlite-help
+  deckName: SQL Cheat Sheet::Connecting::SQLite
+  fields:
+    Front: List all sqlite3 dot-commands
+    Back: .help
+  tags:
+    - sqlite
+    - connection
+- noteId: sqlite-list-tables
+  deckName: SQL Cheat Sheet::Connecting::SQLite
+  fields:
+    Front: List all tables in the current SQLite database
+    Back: .tables
+  tags:
+    - sqlite
+    - connection
+- noteId: sqlite-schema
+  deckName: SQL Cheat Sheet::Connecting::SQLite
+  fields:
+    Front: Show the CREATE TABLE statement for a specific table
+    Back: .schema animal
+  tags:
+    - sqlite
+    - connection
+- noteId: sqlite-list-databases
+  deckName: SQL Cheat Sheet::Connecting::SQLite
+  fields:
+    Front: List the databases attached to the current SQLite connection
+    Back: .databases
+  tags:
+    - sqlite
+    - connection
+- noteId: sqlite-readable-output
+  deckName: SQL Cheat Sheet::Connecting::SQLite
+  fields:
+    Front: Make sqlite3 shell query output readable, with column headers
+    Back: |
+      .headers on
+      .mode column
+  tags:
+    - sqlite
+    - connection
+- noteId: sqlite-dump
+  deckName: SQL Cheat Sheet::Connecting::SQLite
+  fields:
+    Front: Export a SQLite database's schema and data to a SQL file
+    Back: sqlite3 database.db .dump > backup.sql
+  tags:
+    - sqlite
+    - connection
+- noteId: sqlite-restore
+  deckName: SQL Cheat Sheet::Connecting::SQLite
+  fields:
+    Front: Restore a SQLite database from a dumped SQL file
+    Back: sqlite3 database.db < backup.sql
+  tags:
+    - sqlite
+    - connection
+- noteId: psql-create-database
+  deckName: SQL Cheat Sheet::Syntax::DDL
+  fields:
+    Front: Create a database
+    Back: CREATE DATABASE zoo;
+  tags:
+    - postgres
+    - ddl
+- noteId: psql-drop-database
+  deckName: SQL Cheat Sheet::Syntax::DDL
+  fields:
+    Front: Delete a specific database
+    Back: DROP DATABASE zoo;
+  tags:
+    - postgres
+    - ddl
+- noteId: psql-list-databases
+  deckName: SQL Cheat Sheet::Syntax::DDL
+  fields:
+    Front: List all databases on a Postgres server
+    Back: \l
+  tags:
+    - postgres
+    - connection
+- noteId: psql-connect-database
+  deckName: SQL Cheat Sheet::Syntax::DDL
+  fields:
+    Front: Connect to a specific database from within psql
+    Back: \c zoo
+  tags:
+    - postgres
+    - connection
+- noteId: psql-list-tables
+  deckName: SQL Cheat Sheet::Syntax::DDL
+  fields:
+    Front: List all tables in the current database
+    Back: \dt
+  tags:
+    - postgres
+    - connection
+- noteId: psql-describe-table
+  deckName: SQL Cheat Sheet::Syntax::DDL
+  fields:
+    Front: Get column names, data types, and defaults for a specific table
+    Back: \d animal
+  tags:
+    - postgres
+    - connection
+- noteId: psql-create-table-basic
+  deckName: SQL Cheat Sheet::Syntax::DDL
+  fields:
+    Front: Create a table with two columns
+    Back: |
+      CREATE TABLE habitat (
+        id INT,
+        name VARCHAR(64)
+      );
+  tags:
+    - postgres
+    - ddl
+- noteId: psql-create-table-serial
+  deckName: SQL Cheat Sheet::Syntax::DDL
+  fields:
+    Front: Auto-increment a table's ID column with each new row
+    Back: |
+      CREATE TABLE habitat (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(64)
+      );
+  tags:
+    - postgres
+    - ddl
+- noteId: psql-create-table-foreign-key
+  deckName: SQL Cheat Sheet::Syntax::DDL
+  fields:
+    Front: Create a table with a foreign key referencing another table
+    Back: |
+      CREATE TABLE animal (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(64),
+        habitat_id INT,
+        FOREIGN KEY (habitat_id)
+          REFERENCES habitat(id)
+      );
+  tags:
+    - postgres
+    - ddl
+- noteId: psql-alter-rename-table
+  deckName: SQL Cheat Sheet::Syntax::DDL
+  fields:
+    Front: Rename a table
+    Back: ALTER TABLE animal RENAME TO pet;
+  tags:
+    - postgres
+    - ddl
+- noteId: psql-alter-add-column
+  deckName: SQL Cheat Sheet::Syntax::DDL
+  fields:
+    Front: Add a column to a table
+    Back: |
+      ALTER TABLE animal
+      ADD COLUMN name VARCHAR(64);
+  tags:
+    - postgres
+    - ddl
+- noteId: psql-alter-rename-column
+  deckName: SQL Cheat Sheet::Syntax::DDL
+  fields:
+    Front: Rename a column
+    Back: |
+      ALTER TABLE animal
+      RENAME COLUMN id TO identifier;
+  tags:
+    - postgres
+    - ddl
+- noteId: psql-alter-column-type
+  deckName: SQL Cheat Sheet::Syntax::DDL
+  fields:
+    Front: Change a column's data type
+    Back: |
+      ALTER TABLE animal
+      ALTER COLUMN name TYPE VARCHAR(128);
+  tags:
+    - postgres
+    - ddl
+- noteId: psql-alter-drop-column
+  deckName: SQL Cheat Sheet::Syntax::DDL
+  fields:
+    Front: Delete a column from a table
+    Back: |
+      ALTER TABLE animal
+      DROP COLUMN name;
+  tags:
+    - postgres
+    - ddl
+- noteId: psql-drop-table
+  deckName: SQL Cheat Sheet::Syntax::DDL
+  fields:
+    Front: Delete a table
+    Back: DROP TABLE animal;
+  tags:
+    - postgres
+    - ddl
+- noteId: psql-query-single-table
+  deckName: SQL Cheat Sheet::Syntax::Select
+  fields:
+    Front: 'Write a single-table query using WHERE, GROUP BY, HAVING, and ORDER BY together'
+    Back: |
+      SELECT species, AVG(age) AS average_age
+      FROM animal
+      WHERE id != 3
+      GROUP BY species
+      HAVING AVG(age) > 3
+      ORDER BY AVG(age) DESC;
+  tags:
+    - postgres
+    - query
+- noteId: psql-query-join
+  deckName: SQL Cheat Sheet::Syntax::Select
+  fields:
+    Front: Write a query joining two tables
+    Back: |
+      SELECT city.name, country.name
+      FROM city
+      [INNER | LEFT | RIGHT | FULL] JOIN country
+        ON city.country_id = country.id;
+  tags:
+    - postgres
+    - query
+    - joins
+- noteId: psql-agg-functions
+  deckName: SQL Cheat Sheet::Syntax::Select
+  fields:
+    Front: Name the five basic aggregate functions
+    Back: 'AVG(expr), COUNT(expr), MAX(expr), MIN(expr), SUM(expr)'
+  tags:
+    - postgres
+    - aggregation
+- noteId: psql-count-rows
+  deckName: SQL Cheat Sheet::Syntax::Select
+  fields:
+    Front: Count all rows in a table
+    Back: |
+      SELECT COUNT(*)
+      FROM animal;
+  tags:
+    - postgres
+    - aggregation
+- noteId: psql-count-non-null
+  deckName: SQL Cheat Sheet::Syntax::Select
+  fields:
+    Front: Count the non-NULL values in a column
+    Back: |
+      SELECT COUNT(name)
+      FROM animal;
+  tags:
+    - postgres
+    - aggregation
+- noteId: psql-count-distinct
+  deckName: SQL Cheat Sheet::Syntax::Select
+  fields:
+    Front: Count the unique values in a column
+    Back: |
+      SELECT COUNT(DISTINCT name)
+      FROM animal;
+  tags:
+    - postgres
+    - aggregation
+- noteId: psql-group-by
+  deckName: SQL Cheat Sheet::Syntax::Select
+  fields:
+    Front: Count rows per group, using GROUP BY
+    Back: |
+      SELECT species, COUNT(id)
+      FROM animal
+      GROUP BY species;
+  tags:
+    - postgres
+    - aggregation
+- noteId: psql-insert-multiple
+  deckName: SQL Cheat Sheet::Syntax::DML
+  fields:
+    Front: Insert multiple rows into a table in one statement
+    Back: |
+      INSERT INTO habitat VALUES
+        (1, 'River'),
+        (2, 'Forest');
+  tags:
+    - postgres
+    - dml
+- noteId: psql-insert-columns
+  deckName: SQL Cheat Sheet::Syntax::DML
+  fields:
+    Front: Insert a row specifying only some columns — what happens to the rest?
+    Back: |
+      INSERT INTO habitat (name)
+      VALUES ('Savanna');
+      -- unspecified columns get their default value, or NULL
+  tags:
+    - postgres
+    - dml
+- noteId: psql-update
+  deckName: SQL Cheat Sheet::Syntax::DML
+  fields:
+    Front: Update specific columns of matching rows
+    Back: |
+      UPDATE animal
+      SET
+        species = 'Duck',
+        name = 'Quack'
+      WHERE id = 2;
+  tags:
+    - postgres
+    - dml
+- noteId: psql-delete
+  deckName: SQL Cheat Sheet::Syntax::DML
+  fields:
+    Front: Delete rows matching a condition
+    Back: |
+      DELETE FROM animal
+      WHERE id = 1;
+  tags:
+    - postgres
+    - dml
+- noteId: psql-truncate
+  deckName: SQL Cheat Sheet::Syntax::DML
+  fields:
+    Front: Delete all data from a table at once
+    Back: TRUNCATE TABLE animal;
+  tags:
+    - postgres
+    - dml
+- noteId: psql-copy-from-csv
+  deckName: SQL Cheat Sheet::Syntax::DML
+  fields:
+    Front: Import data from a CSV file into a table
+    Back: "\\copy animal FROM 'animal.csv' CSV HEADER"
+  tags:
+    - postgres
+    - copy
+- noteId: psql-copy-to-csv
+  deckName: SQL Cheat Sheet::Syntax::DML
+  fields:
+    Front: Export a query's results to a CSV file
+    Back: |
+      \copy (SELECT * FROM animal)
+      TO 'animal.csv' CSV HEADER
+  tags:
+    - postgres
+    - copy
+- noteId: psql-cast-operator
+  deckName: SQL Cheat Sheet::Syntax::Casting
+  fields:
+    Front: "Cast a value to another type using the :: operator"
+    Back: 'SELECT 25.5::INTEGER; -- result: 26'
+  tags:
+    - postgres
+    - casting
+- noteId: psql-cast-function
+  deckName: SQL Cheat Sheet::Syntax::Casting
+  fields:
+    Front: "When would you use CAST() instead of the :: operator?"
+    Back: When the target type's name contains spaces, e.g. CAST(column AS DOUBLE PRECISION).
+  tags:
+    - postgres
+    - casting
+- noteId: psql-text-like-prefix
+  deckName: SQL Cheat Sheet::Syntax::Text
+  fields:
+    Front: Match strings starting with a given letter, using LIKE
+    Back: "SELECT name FROM city WHERE name LIKE 'P%';"
+  tags:
+    - postgres
+    - text
+- noteId: psql-text-like-wildcard
+  deckName: SQL Cheat Sheet::Syntax::Text
+  fields:
+    Front: What does the underscore (_) wildcard match in a LIKE pattern?
+    Back: "Exactly one character, e.g. '_ublin' matches 'Dublin' or 'Lublin'."
+  tags:
+    - postgres
+    - text
+- noteId: psql-text-concat-operator
+  deckName: SQL Cheat Sheet::Syntax::Text
+  fields:
+    Front: How does the || concatenation operator handle a NULL operand?
+    Back: "It propagates NULL: 'Great ' || 'day' || NULL results in NULL."
+  tags:
+    - postgres
+    - text
+- noteId: psql-text-concat-function
+  deckName: SQL Cheat Sheet::Syntax::Text
+  fields:
+    Front: How does CONCAT() differ from || when an argument is NULL?
+    Back: "CONCAT() ignores NULL arguments instead of propagating them: CONCAT('Good ', 'day', NULL) results in 'Good day'."
+  tags:
+    - postgres
+    - text
+- noteId: psql-text-length
+  deckName: SQL Cheat Sheet::Syntax::Text
+  fields:
+    Front: Get the number of characters in a string
+    Back: "SELECT LENGTH('LearnSQL.com'); -- result: 12"
+  tags:
+    - postgres
+    - text
+- noteId: psql-text-case
+  deckName: SQL Cheat Sheet::Syntax::Text
+  fields:
+    Front: Convert a string to lowercase or uppercase
+    Back: LOWER(text) and UPPER(text)
+  tags:
+    - postgres
+    - text
+- noteId: psql-text-initcap
+  deckName: SQL Cheat Sheet::Syntax::Text
+  fields:
+    Front: Capitalize the first letter of each word in a string
+    Back: "SELECT INITCAP('hello world'); -- result: 'Hello World'"
+  tags:
+    - postgres
+    - text
+- noteId: psql-text-substring
+  deckName: SQL Cheat Sheet::Syntax::Text
+  fields:
+    Front: Extract part of a string with SUBSTRING()
+    Back: |
+      SELECT SUBSTRING('LearnSQL.com', 9); -- result: .com
+      SELECT SUBSTRING('LearnSQL.com', 1, 5); -- result: Learn
+  tags:
+    - postgres
+    - text
+- noteId: psql-text-replace
+  deckName: SQL Cheat Sheet::Syntax::Text
+  fields:
+    Front: Replace part of a string with REPLACE()
+    Back: "SELECT REPLACE('LearnSQL.com', 'SQL', 'Python'); -- result: LearnPython.com"
+  tags:
+    - postgres
+    - text
+- noteId: psql-numeric-integer-division
+  deckName: SQL Cheat Sheet::Syntax::Numeric
+  fields:
+    Front: What does / return when both operands are integers?
+    Back: "An integer (truncated toward zero): SELECT 25 / 4; -- result: 6"
+  tags:
+    - postgres
+    - numeric
+- noteId: psql-numeric-avoid-integer-division
+  deckName: SQL Cheat Sheet::Syntax::Numeric
+  fields:
+    Front: Force a non-integer (fractional) division result
+    Back: |
+      SELECT 25::numeric / 4; -- result: 6.25
+      SELECT 25.0 / 4; -- result: 6.25
+  tags:
+    - postgres
+    - numeric
+- noteId: psql-numeric-mod
+  deckName: SQL Cheat Sheet::Syntax::Numeric
+  fields:
+    Front: Get the remainder of a division
+    Back: |
+      SELECT MOD(13, 2); -- result: 1
+      SELECT 13 % 2; -- result: 1
+  tags:
+    - postgres
+    - numeric
+- noteId: psql-numeric-round
+  deckName: SQL Cheat Sheet::Syntax::Numeric
+  fields:
+    Front: Round a number to the nearest integer, or to N decimal places
+    Back: |
+      SELECT ROUND(1234.56789); -- result: 1235
+      SELECT ROUND(1234.56789, 3); -- result: 1234.568 (NUMERIC arguments only)
+  tags:
+    - postgres
+    - numeric
+- noteId: psql-numeric-abs-sqrt
+  deckName: SQL Cheat Sheet::Syntax::Numeric
+  fields:
+    Front: Get a number's absolute value, and its square root
+    Back: |
+      SELECT ABS(-12); -- result: 12
+      SELECT SQRT(9); -- result: 3
+  tags:
+    - postgres
+    - numeric
+- noteId: psql-null-coalesce
+  deckName: SQL Cheat Sheet::Syntax::Null
+  fields:
+    Front: Replace NULL with a fallback value using COALESCE()
+    Back: |
+      SELECT domain, COALESCE(domain, 'domain missing')
+      FROM contacts;
+  tags:
+    - postgres
+    - null
+- noteId: psql-null-nullif
+  deckName: SQL Cheat Sheet::Syntax::Null
+  fields:
+    Front: What does NULLIF(x, y) do, and what's it useful for?
+    Back: Returns NULL if x equals y, otherwise returns x — commonly used to turn a divisor of 0 into NULL and avoid a division-by-zero error.
+  tags:
+    - postgres
+    - null
+- noteId: psql-datetime-types
+  deckName: SQL Cheat Sheet::Syntax::DateTime
+  fields:
+    Front: Name Postgres's five main time-related types
+    Back: DATE, TIME, TIMESTAMP, TIMESTAMP WITH TIME ZONE, INTERVAL
+  tags:
+    - postgres
+    - datetime
+- noteId: psql-datetime-current
+  deckName: SQL Cheat Sheet::Syntax::DateTime
+  fields:
+    Front: Get the current time, date, or both
+    Back: CURRENT_TIME, CURRENT_DATE, CURRENT_TIMESTAMP
+  tags:
+    - postgres
+    - datetime
+- noteId: psql-datetime-cast
+  deckName: SQL Cheat Sheet::Syntax::DateTime
+  fields:
+    Front: Create a date, time, or timestamp value from a string literal
+    Back: |
+      SELECT '2023-12-31'::date;
+      SELECT '15:31'::time;
+      SELECT '2023-12-31 23:59:29'::timestamp;
+  tags:
+    - postgres
+    - datetime
+- noteId: psql-interval-literal
+  deckName: SQL Cheat Sheet::Syntax::DateTime
+  fields:
+    Front: Define an interval, and combine two intervals
+    Back: |
+      INTERVAL '3 days';
+      INTERVAL '1 year' + INTERVAL '3 months'
+  tags:
+    - postgres
+    - datetime
+- noteId: psql-datetime-extract
+  deckName: SQL Cheat Sheet::Syntax::DateTime
+  fields:
+    Front: Extract a part of a date, with EXTRACT() and DATE_PART()
+    Back: |
+      SELECT EXTRACT(MONTH FROM '2023-12-31'::DATE); -- result: 12
+      SELECT DATE_PART('day', '2023-12-31'::DATE); -- result: 31
+  tags:
+    - postgres
+    - datetime
+- noteId: psql-datetime-arithmetic
+  deckName: SQL Cheat Sheet::Syntax::DateTime
+  fields:
+    Front: Add an interval to a date, and find the difference between two dates
+    Back: |
+      SELECT '2023-10-31'::DATE + INTERVAL '2 months'; -- result: '2023-12-31'
+      SELECT '2024-01-01'::date - '2023-01-02'::date AS date_diff; -- result: 364
+  tags:
+    - postgres
+    - datetime
+- noteId: psql-datetime-trunc
+  deckName: SQL Cheat Sheet::Syntax::DateTime
+  fields:
+    Front: Truncate a timestamp down to a given unit, with DATE_TRUNC()
+    Back: |
+      SELECT DATE_TRUNC('hour', '2023-01-15 14:38:00'::TIMESTAMP);
+      -- result: '2023-01-15 14:00'
+  tags:
+    - postgres
+    - datetime
