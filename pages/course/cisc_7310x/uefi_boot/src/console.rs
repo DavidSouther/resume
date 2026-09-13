@@ -22,11 +22,31 @@ fn write_units(con_out: *mut SimpleTextOutputProtocol, units: impl Iterator<Item
         i += 1;
         if i == buf.len() - 1 {
             buf[i] = 0;
+            // SAFETY:
+            // Operation: ((*con_out).output_string)(con_out, buf.as_ptr()).
+            // Contract (EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL.OutputString, UEFI
+            // spec §12.4): `this` valid; string pointer non-null, aligned
+            // for `u16`, NUL-terminated.
+            // Evidence:
+            // - `con_out` traceable to `efi_main`'s validated
+            //   `system_table.con_out` (trust-boundary policy, `efi/
+            //   mod.rs`); `SimpleTextOutputProtocol`'s ABI-prefix invariant
+            //   covers `output_string`.
+            // - `buf` is a local, non-aliased stack array: `buf.as_ptr()`
+            //   is non-null and aligned for `u16`.
+            // - `buf[i] = 0` on the line above (LOCAL FACT), `i <
+            //   buf.len() - 1` here, so the write is in-bounds and the
+            //   string is terminated.
+            // Postcondition: firmware has read `buf` up to the NUL;
+            // `OutputString` takes it by const pointer, so `buf` itself is
+            // unchanged.
             unsafe { ((*con_out).output_string)(con_out, buf.as_ptr()) };
             i = 0;
         }
     }
     buf[i] = 0;
+    // SAFETY: same operation, contract, and evidence as above; `buf[i] =
+    // 0` on the line above and `i <= buf.len() - 1` here too.
     unsafe { ((*con_out).output_string)(con_out, buf.as_ptr()) };
 }
 

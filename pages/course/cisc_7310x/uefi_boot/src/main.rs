@@ -54,14 +54,32 @@ use shell::Shell;
 
 /// # Safety
 ///
-/// Firmware calls this with a valid `system_table` per the UEFI
-/// Specification's image entry point contract (§4.1); there is no other
-/// caller.
+/// The caller (firmware, per the UEFI Specification's image entry point
+/// contract, §4.1) must ensure `system_table` is non-null, aligned for
+/// `SystemTable`, and points to a live `EFI_SYSTEM_TABLE` whose real
+/// layout matches this crate's [`efi::system_table::SystemTable`] for at
+/// least the fields this crate declares — the ABI-prefix invariant, see
+/// `efi/mod.rs` — for as long as this function runs. There is no other
+/// caller: firmware invokes this exactly once, as the image's entry point.
+///
+/// SAFETY (attribute): `#[no_mangle]` makes the linker find this function
+/// under the literal symbol name `efi_main`, which the `aarch64-unknown-
+/// uefi` target spec designates as the PE entry symbol. No other symbol in
+/// this crate, or in its one dependency `thiserror`, is named `efi_main`,
+/// so there is no name clash to make the entry point ambiguous.
 #[no_mangle]
 pub unsafe extern "efiapi" fn efi_main(
     _image_handle: Handle,
     system_table: *mut efi::system_table::SystemTable,
 ) -> Status {
+    // SAFETY:
+    // Operation: `&*system_table` (reference creation from a raw pointer).
+    // Contract: the pointee must be non-null, aligned, and a valid,
+    // fully-initialized `SystemTable` for the `&SystemTable`'s lifetime
+    // (this statement).
+    // Evidence: exactly this function's own `# Safety` precondition above,
+    // which places that obligation on our one caller, firmware. Nothing
+    // between entry and this line can have invalidated it.
     let table = unsafe { &*system_table };
     let con_out = table.con_out;
     let con_in = table.con_in;

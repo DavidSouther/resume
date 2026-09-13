@@ -169,6 +169,11 @@ impl Shell {
         con_out: *mut SimpleTextOutputProtocol,
         boot_services: *mut BootServices,
     ) {
+        // SAFETY: `con_in` is traceable to `efi_main`'s validated
+        // `system_table.con_in` through this crate's internal call chain
+        // (`efi_main` -> `Shell::new(..).run(con_in, ..)`), per the
+        // trust-boundary policy in `efi/mod.rs`. `SimpleTextInputProtocol`'s
+        // ABI-prefix invariant covers `wait_for_key`, the only field read.
         let wait_for_key = unsafe { (*con_in).wait_for_key };
         loop {
             write_str(con_out, &format!("{}> ", self.prompt()));
@@ -237,6 +242,22 @@ fn split_trailing_redirect(rest: &str) -> Result<(&str, Option<String>), ShellEr
 fn read_block0(b: &crate::devices::BlockDevice) -> Result<Vec<u8>, ShellError> {
     let size = (b.block_size.max(1)) as usize;
     let mut buf = vec![0u8; size];
+    // SAFETY:
+    // Operation: deref `b.protocol`, call `read_blocks` through it.
+    // Contract (EFI_BLOCK_IO_PROTOCOL.ReadBlocks, UEFI spec §13.9):
+    // `this` valid; `buffer` valid for writes of `buffer_size` bytes.
+    // Evidence:
+    // - `b.protocol` traces to `HandleProtocol`'s FIRMWARE CONTRACT for
+    //   BLOCK_IO_PROTOCOL_GUID (devices.rs::enumerate), and is never
+    //   reassigned after `BlockDevice` construction (LOCAL FACT) — this
+    //   crate never calls `ExitBootServices`, so the protocol interface
+    //   stays live for the rest of the program per that same contract.
+    // - `buf` is a local, non-aliased `Vec<u8>` of length exactly `size`
+    //   (`vec![0u8; size]`, LOCAL FACT), so `buf.as_mut_ptr()` is valid
+    //   for writes of exactly `size == buffer_size` bytes.
+    // Postcondition: on success, firmware has written `size` bytes into
+    // `buf`; `buf`'s length/capacity are unaffected (this call never
+    // reallocates `buf`, only writes through the pointer).
     let status =
         unsafe { ((*b.protocol).read_blocks)(b.protocol, b.media_id, 0, size, buf.as_mut_ptr() as *mut c_void) };
     if !status_is_success(status) {
@@ -258,12 +279,24 @@ fn write_block0(b: &crate::devices::BlockDevice, content: &[u8]) -> Result<(), S
     }
     let mut buf = vec![0u8; size];
     buf[..content.len()].copy_from_slice(content);
+    // SAFETY: same protocol-validity evidence as `read_blocks` in
+    // `read_block0`. Contract (WriteBlocks, UEFI spec §13.9): `buffer`
+    // valid for reads of `buffer_size` bytes — `buf.len() == size ==
+    // buffer_size` (LOCAL FACT, same construction as `read_block0`).
     let status = unsafe {
         ((*b.protocol).write_blocks)(b.protocol, b.media_id, 0, size, buf.as_ptr() as *const c_void)
     };
     if !status_is_success(status) {
         return Err(ShellError::Efi(status));
     }
+    // SAFETY: same protocol-validity evidence as above; `FlushBlocks`
+    // (UEFI spec §13.9) takes only `this`, no buffer to justify. Its
+    // status is deliberately discarded — `WriteBlocks` already succeeded
+    // above, and there's nothing more useful this shell can do with a
+    // flush failure than report the write as done, matching the same
+    // discard-on-purpose pattern `executor::block_on` uses for
+    // `WaitForEvent`'s status. Not a soundness concern either way: no
+    // later code branches on whether the flush ran.
     let _ = unsafe { ((*b.protocol).flush_blocks)(b.protocol) };
     Ok(())
 }

@@ -35,6 +35,12 @@ impl Future for ReadKey {
             scan_code: 0,
             unicode_char: 0,
         };
+        // SAFETY: `con_in` is `ReadKey`'s only field, set by callers
+        // (`console::read_line`) to a `con_in` traceable to `efi_main`'s
+        // validated `system_table.con_in`, per the trust-boundary policy
+        // in `efi/mod.rs`. `SimpleTextInputProtocol`'s ABI-prefix invariant
+        // covers `read_key_stroke`; `key` is a local out-param the
+        // contract (UEFI spec §12.3) only writes through.
         let status = unsafe { ((*con_in).read_key_stroke)(con_in, &mut key) };
         if status == EFI_NOT_READY {
             Poll::Pending
@@ -68,6 +74,14 @@ pub fn block_on<F: Future>(boot_services: *mut BootServices, wait_event: Event, 
         }
         let mut events = [wait_event];
         let mut index = 0usize;
+        // SAFETY: `boot_services` is traceable to `efi_main`'s validated
+        // `system_table.boot_services` (trust-boundary policy, `efi/
+        // mod.rs`); `BootServices`'s ABI-prefix invariant covers
+        // `wait_for_event`. `events` is a local `[Event; 1]` array, and
+        // `number_of_events: 1` matches its length exactly (LOCAL FACT),
+        // satisfying WaitForEvent's contract (UEFI spec §7.1) that `Event`
+        // point to `NumberOfEvents` elements; `index` is a local out-param
+        // the contract only writes through.
         // Ignoring the status: whether this returns EFI_SUCCESS or an
         // error, looping back to poll again is the correct next step
         // either way.

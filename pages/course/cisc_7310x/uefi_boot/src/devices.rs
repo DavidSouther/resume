@@ -120,14 +120,25 @@ fn pixel_format_name(format: u32) -> &'static str {
         .unwrap_or("Unknown")
 }
 
-/// Calls `LocateHandleBuffer(ByProtocol, guid, ...)`, then `HandleProtocol`
-/// on each handle, returning the interface pointers firmware gave us.
+/// # Safety
+///
+/// The caller must ensure `boot_services` is non-null and points to a live
+/// `EFI_BOOT_SERVICES` table (the ABI-prefix invariant, `efi/mod.rs`, for
+/// at least `locate_handle_buffer`/`handle_protocol`/`free_pool`), valid
+/// for the duration of this call. `guid` needs no extra obligation beyond
+/// what `&Guid` already guarantees.
 unsafe fn locate_protocol_instances(
     boot_services: *mut BootServices,
     guid: &Guid,
 ) -> Vec<*mut c_void> {
     let mut count: usize = 0;
     let mut buffer: *mut Handle = core::ptr::null_mut();
+    // SAFETY:
+    // Operation: deref `boot_services`, call `locate_handle_buffer` through it.
+    // Contract: `boot_services` valid (this function's own precondition,
+    // held by the caller for the call's duration); `guid`/`count`/`buffer`
+    // are local out-params LocateHandleBuffer is documented to only read
+    // (`guid`) or write (`count`, `buffer`) (UEFI spec §7.3).
     let status = unsafe {
         ((*boot_services).locate_handle_buffer)(
             LocateSearchType::ByProtocol as u32,
@@ -140,16 +151,44 @@ unsafe fn locate_protocol_instances(
     if !status_is_success(status) || buffer.is_null() {
         return Vec::new();
     }
+    // SAFETY:
+    // Operation: `core::slice::from_raw_parts(buffer, count)`.
+    // Contract: `buffer` non-null, aligned for `Handle`, valid for reads of
+    // `count * size_of::<Handle>()` bytes, pointing to `count` initialized
+    // `Handle` values, all in one live allocation, for the slice's lifetime.
+    // Evidence:
+    // - FIRMWARE CONTRACT (UEFI spec §7.3, LocateHandleBuffer): on success,
+    //   `*NoHandles` is the exact element count and `*Buffer` is a pool
+    //   allocation of exactly that many initialized `EFI_HANDLE` values.
+    // - `status_is_success(status)` and `!buffer.is_null()` were just
+    //   checked above (LOCAL FACT); `count`/`buffer` are locals no other
+    //   code can have mutated since.
+    // - `Handle = *mut c_void` (TYPE FACT): any bit pattern is a valid
+    //   value at this type, so "initialized" only needs pointer-sized
+    //   writes, which the same firmware contract guarantees.
+    // Postcondition: `handles` does not outlive this function, so its
+    // lifetime is trivially within `buffer`'s (which this function frees
+    // only after `handles` goes out of scope, below).
     let handles = unsafe { core::slice::from_raw_parts(buffer, count) };
     let mut out = Vec::with_capacity(count);
     for &handle in handles {
         let mut interface: *mut c_void = core::ptr::null_mut();
+        // SAFETY: same as the `locate_handle_buffer` call above —
+        // `boot_services` valid per this function's precondition;
+        // `handle` is one of the `Handle` values just read out of
+        // `handles`, which HandleProtocol (UEFI spec §7.3) accepts as
+        // opaque input, never dereferencing it itself.
         let status =
             unsafe { ((*boot_services).handle_protocol)(handle, guid as *const Guid, &mut interface) };
         if status_is_success(status) && !interface.is_null() {
             out.push(interface);
         }
     }
+    // SAFETY: `boot_services` valid per this function's precondition;
+    // `buffer` is exactly the pointer `locate_handle_buffer` returned via
+    // `AllocatePool` above and has not been freed yet, satisfying
+    // `FreePool`'s contract (UEFI spec §7.2) that its argument must be a
+    // live pool allocation.
     unsafe { ((*boot_services).free_pool)(buffer as *mut c_void) };
     out
 }
@@ -161,14 +200,36 @@ unsafe fn locate_protocol_instances(
 pub fn enumerate(boot_services: *mut BootServices) -> Vec<Device> {
     let mut devices = Vec::new();
 
+    // SAFETY: `boot_services` is `enumerate`'s own parameter, which by this
+    // module's only caller (`efi_main`) is `system_table.boot_services`,
+    // valid per `efi_main`'s `# Safety` contract for this program's
+    // lifetime — satisfying `locate_protocol_instances`'s precondition.
     let block_protocols = unsafe { locate_protocol_instances(boot_services, &BLOCK_IO_PROTOCOL_GUID) };
     let mut blk_index = 0;
     for raw in block_protocols {
+        // `raw` came back from `HandleProtocol(handle, &BLOCK_IO_PROTOCOL_GUID, ...)`
+        // just above; the FIRMWARE CONTRACT for `HandleProtocol` (UEFI spec
+        // §7.3) is that a non-null result for that GUID points to a live
+        // `EFI_BLOCK_IO_PROTOCOL`, so this cast doesn't change the
+        // pointee's real type, only how we're allowed to talk about it.
         let protocol = raw as *mut BlockIoProtocol;
+        // SAFETY: `protocol` valid per the FIRMWARE CONTRACT above, and
+        // `BlockIoProtocol`'s field order is the ABI-prefix invariant
+        // (`efi/mod.rs`) up through `media`, the only field read here.
         let media_ptr = unsafe { (*protocol).media };
         if media_ptr.is_null() {
             continue;
         }
+        // SAFETY:
+        // Operation: `&*media_ptr` (reference creation).
+        // Contract: non-null, aligned, live, initialized `BlockIoMedia`
+        // for the reference's lifetime (this loop iteration).
+        // Evidence: `media_ptr` was just null-checked (LOCAL FACT); the
+        // FIRMWARE CONTRACT for a live `EFI_BLOCK_IO_PROTOCOL`'s `Media`
+        // field (UEFI spec §13.9) is that, when non-null, it points to a
+        // live, initialized `EFI_BLOCK_IO_MEDIA`; `BlockIoMedia`'s layout
+        // is the ABI-prefix invariant up through `last_block`, every field
+        // read below.
         let media: &BlockIoMedia = unsafe { &*media_ptr };
         devices.push(Device {
             name: format!("blk{blk_index}"),
@@ -186,20 +247,37 @@ pub fn enumerate(boot_services: *mut BootServices) -> Vec<Device> {
         blk_index += 1;
     }
 
+    // SAFETY: same as the Block IO call above — `boot_services` valid per
+    // `efi_main`'s `# Safety` contract.
     let gop_protocols =
         unsafe { locate_protocol_instances(boot_services, &GRAPHICS_OUTPUT_PROTOCOL_GUID) };
     let mut gop_index = 0;
     for raw in gop_protocols {
+        // Same FIRMWARE CONTRACT as the Block IO cast above, for
+        // GRAPHICS_OUTPUT_PROTOCOL_GUID instead.
         let protocol = raw as *mut GraphicsOutputProtocol;
+        // SAFETY: `protocol` valid per the FIRMWARE CONTRACT above;
+        // `GraphicsOutputProtocol`'s ABI-prefix invariant covers `mode`,
+        // the only field read here.
         let mode_ptr = unsafe { (*protocol).mode };
         if mode_ptr.is_null() {
             continue;
         }
+        // SAFETY: `mode_ptr` null-checked above (LOCAL FACT); FIRMWARE
+        // CONTRACT for a live `EFI_GRAPHICS_OUTPUT_PROTOCOL`'s `Mode`
+        // field (UEFI spec §12.9) is that, when non-null, it points to a
+        // live, initialized `EFI_GRAPHICS_OUTPUT_PROTOCOL_MODE`;
+        // `GraphicsOutputProtocolMode`'s ABI-prefix invariant covers every
+        // field read from `mode` here.
         let mode = unsafe { &*mode_ptr };
         let info_ptr = mode.info;
         if info_ptr.is_null() {
             continue;
         }
+        // SAFETY: `info_ptr` null-checked above (LOCAL FACT); same
+        // FIRMWARE CONTRACT pattern as `mode_ptr` applies to `Mode->Info`
+        // (UEFI spec §12.9); `GraphicsOutputModeInformation`'s ABI-prefix
+        // invariant covers every field read from `info` here.
         let info = unsafe { &*info_ptr };
         devices.push(Device {
             name: format!("gop{gop_index}"),
