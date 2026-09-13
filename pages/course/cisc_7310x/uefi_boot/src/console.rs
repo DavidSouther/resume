@@ -10,13 +10,14 @@ const CHAR_BACKSPACE: u16 = 0x08;
 const CHAR_CARRIAGE_RETURN: u16 = 0x0D;
 const CHAR_LINE_FEED: u16 = 0x0A;
 
-/// Writes a `&str` to the console. Interior NULs truncate the string (the
-/// protocol is NUL-terminated); everything else round-trips through UTF-16
-/// a chunk at a time so there's no fixed line-length limit.
-pub fn write_str(con_out: *mut SimpleTextOutputProtocol, s: &str) {
+/// Feeds a stream of UTF-16 code units to `OutputString` in fixed-size
+/// chunks, so neither caller needs its own fixed-line-length limit. Shared
+/// by [`write_str`] and [`write_bytes`] — they differ only in how a source
+/// element becomes a `u16`, not in how the buffering/flushing works.
+fn write_units(con_out: *mut SimpleTextOutputProtocol, units: impl Iterator<Item = u16>) {
     let mut buf = [0u16; 128];
     let mut i = 0;
-    for unit in s.encode_utf16() {
+    for unit in units {
         buf[i] = unit;
         i += 1;
         if i == buf.len() - 1 {
@@ -29,25 +30,20 @@ pub fn write_str(con_out: *mut SimpleTextOutputProtocol, s: &str) {
     unsafe { ((*con_out).output_string)(con_out, buf.as_ptr()) };
 }
 
+/// Writes a `&str` to the console. Interior NULs truncate the string (the
+/// protocol is NUL-terminated); everything else round-trips through UTF-16
+/// a chunk at a time so there's no fixed line-length limit.
+pub fn write_str(con_out: *mut SimpleTextOutputProtocol, s: &str) {
+    write_units(con_out, s.encode_utf16());
+}
+
 /// Writes raw bytes to the console, one byte per UTF-16 code unit (Latin-1
 /// widening). `cat`/`echo` deal in bytes, not `str`, because a block
 /// device's raw content isn't necessarily valid UTF-8 — this is the
 /// lossy-but-simple way to still show something for it, and it round-trips
 /// exactly for the ASCII text `echo` actually writes.
 pub fn write_bytes(con_out: *mut SimpleTextOutputProtocol, bytes: &[u8]) {
-    let mut buf = [0u16; 128];
-    let mut i = 0;
-    for &b in bytes {
-        buf[i] = b as u16;
-        i += 1;
-        if i == buf.len() - 1 {
-            buf[i] = 0;
-            unsafe { ((*con_out).output_string)(con_out, buf.as_ptr()) };
-            i = 0;
-        }
-    }
-    buf[i] = 0;
-    unsafe { ((*con_out).output_string)(con_out, buf.as_ptr()) };
+    write_units(con_out, bytes.iter().map(|&b| b as u16));
 }
 
 /// Reads one line (Enter-terminated) from the keyboard, echoing keystrokes
