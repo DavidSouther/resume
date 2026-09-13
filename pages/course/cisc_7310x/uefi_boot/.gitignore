@@ -1,0 +1,5 @@
+/target
+/qemu/esp
+/qemu/*.img
+/qemu/*.log
+/qemu/*.sock

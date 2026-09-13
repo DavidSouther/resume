@@ -1,0 +1,81 @@
+//! A minimal aarch64 UEFI application that reads device information (disk,
+//! GPU, and removable USB media) straight from firmware-provided protocols
+//! and exposes it through a tiny `ls`/`cd`/`cat`/`echo` shell, sysfs-style.
+//!
+//! ## Why hand-rolled bindings instead of the `uefi` crate
+//!
+//! The brief for this project is explicit: the only crate dependency is
+//! `thiserror`, for error types. The [`efi`] module is this project's own
+//! transcription of the handful of UEFI Specification 2.10 structures and
+//! protocols it needs (§4.3 System Table, §4.4 Boot Services, §12.3/12.4
+//! console, §12.9 Graphics Output, §13.9 Block IO) — not a general-purpose
+//! UEFI binding, just exactly what this shell touches.
+//!
+//! ## Why no device drivers
+//!
+//! Every device this shell shows — the attached disk, the GPU, a
+//! removable USB drive — is reached through a UEFI protocol firmware
+//! already implements (`EFI_BLOCK_IO_PROTOCOL`, `EFI_GRAPHICS_OUTPUT_PROTOCOL`).
+//! Nothing here talks to AHCI, NVMe, USB mass storage, or a GPU register
+//! directly; "removable USB drive" support is just a `BlockIoMedia` handle
+//! whose `RemovableMedia` flag happens to be set, not a USB driver.
+#![no_std]
+#![no_main]
+
+extern crate alloc;
+
+mod alloc_impl;
+mod console;
+mod devices;
+mod efi;
+mod error;
+mod shell;
+
+use core::panic::PanicInfo;
+use efi::types::{Handle, Status, EFI_SUCCESS};
+use shell::Shell;
+
+/// # Safety
+///
+/// Firmware calls this with a valid `system_table` per the UEFI
+/// Specification's image entry point contract (§4.1); there is no other
+/// caller.
+#[no_mangle]
+pub unsafe extern "efiapi" fn efi_main(
+    _image_handle: Handle,
+    system_table: *mut efi::system_table::SystemTable,
+) -> Status {
+    let table = unsafe { &*system_table };
+    let con_out = table.con_out;
+    let con_in = table.con_in;
+    let boot_services = table.boot_services;
+
+    alloc_impl::init(boot_services);
+
+    console::write_str(
+        con_out,
+        "uefi_boot: minimal device-info shell\r\ncommands: ls, cd, cat, echo\r\n",
+    );
+
+    let devices = devices::enumerate(boot_services);
+    console::write_str(
+        con_out,
+        &alloc::format!("found {} device(s)\r\n", devices.len()),
+    );
+
+    Shell::new(devices).run(con_in, con_out);
+
+    // `Shell::run` never returns (there is no `exit`), but the type
+    // checker still wants a `Status` here.
+    EFI_SUCCESS
+}
+
+/// This target's panic strategy is `abort` (no unwinding, no personality
+/// routine to write), so there's nothing to clean up here — just stop.
+/// Printing a diagnostic would need a global console handle threaded in
+/// just for this path, which is more plumbing than a device-info shell's
+/// panic handler is worth.
+#[panic_handler]
+fn panic(_info: &PanicInfo) -> ! {
+    loop {}
+}
