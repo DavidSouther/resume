@@ -19,6 +19,22 @@
 //! Nothing here talks to AHCI, NVMe, USB mass storage, or a GPU register
 //! directly; "removable USB drive" support is just a `BlockIoMedia` handle
 //! whose `RemovableMedia` flag happens to be set, not a USB driver.
+//!
+//! ## Why an async executor, of all things, in a "minimal" project
+//!
+//! Console input used to be a busy-loop around `ReadKeyStroke`. That's
+//! polling, and it's the only I/O mode this project could reach without
+//! either writing an interrupt handler (out of scope — see the README) or
+//! waiting on the keystroke event `SimpleTextInputProtocol` already
+//! hands us. Waiting on that event, though, is UEFI's async primitive:
+//! `CreateEvent`'s notify callback and `WaitForEvent`'s block-until-
+//! signaled are both "resume me later, not now" — which is exactly what
+//! `core::future::Future` models. So [`console::read_line`] is an
+//! `async fn`, and [`executor`] is the smallest thing that can drive one:
+//! one `Future`, one no-op `Waker` (there's only ever one task, so nothing
+//! needs real rescheduling), and a `WaitForEvent` call standing in for a
+//! scheduler. It's still zero non-`thiserror` dependencies — no `tokio`,
+//! no `futures`, just `core::task`.
 #![no_std]
 #![no_main]
 
@@ -29,6 +45,7 @@ mod console;
 mod devices;
 mod efi;
 mod error;
+mod executor;
 mod shell;
 
 use core::panic::PanicInfo;
@@ -63,7 +80,7 @@ pub unsafe extern "efiapi" fn efi_main(
         &alloc::format!("found {} device(s)\r\n", devices.len()),
     );
 
-    Shell::new(devices).run(con_in, con_out);
+    Shell::new(devices).run(con_in, con_out, boot_services);
 
     // `Shell::run` never returns (there is no `exit`), but the type
     // checker still wants a `Status` here.

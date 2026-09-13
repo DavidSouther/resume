@@ -12,9 +12,11 @@
 
 use crate::console::{write_bytes, write_str};
 use crate::devices::{Device, DeviceKind};
+use crate::efi::boot_services::BootServices;
 use crate::efi::text::{SimpleTextInputProtocol, SimpleTextOutputProtocol};
 use crate::efi::types::status_is_success;
 use crate::error::ShellError;
+use crate::executor;
 use alloc::format;
 use alloc::string::{String, ToString};
 use alloc::vec;
@@ -156,10 +158,21 @@ impl Shell {
     /// Reads and runs commands from the console until the firmware kills
     /// the app; there's no `exit` command, matching a bootloader shell
     /// that has nowhere else to go.
-    pub fn run(&mut self, con_in: *mut SimpleTextInputProtocol, con_out: *mut SimpleTextOutputProtocol) {
+    ///
+    /// Each line is read by driving `console::read_line`'s `Future`
+    /// through [`executor::block_on`], which blocks in `WaitForEvent` on
+    /// `con_in`'s own keystroke event between polls rather than spinning
+    /// — see `crate::executor` for why.
+    pub fn run(
+        &mut self,
+        con_in: *mut SimpleTextInputProtocol,
+        con_out: *mut SimpleTextOutputProtocol,
+        boot_services: *mut BootServices,
+    ) {
+        let wait_for_key = unsafe { (*con_in).wait_for_key };
         loop {
             write_str(con_out, &format!("{}> ", self.prompt()));
-            let line = crate::console::read_line(con_in, con_out);
+            let line = executor::block_on(boot_services, wait_for_key, crate::console::read_line(con_in, con_out));
             let line = line.trim();
             if line.is_empty() {
                 continue;

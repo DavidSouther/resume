@@ -3,7 +3,7 @@
 //! commands are single lines.
 
 use crate::efi::text::{SimpleTextInputProtocol, SimpleTextOutputProtocol};
-use crate::efi::types::EFI_NOT_READY;
+use crate::executor::ReadKey;
 use alloc::string::String;
 
 const CHAR_BACKSPACE: u16 = 0x08;
@@ -51,20 +51,14 @@ pub fn write_bytes(con_out: *mut SimpleTextOutputProtocol, bytes: &[u8]) {
 }
 
 /// Reads one line (Enter-terminated) from the keyboard, echoing keystrokes
-/// and handling backspace. Busy-polls `ReadKeyStroke`, which is standard
-/// practice for a UEFI app that hasn't set up the event/timer machinery —
-/// see `EFI_NOT_READY` in the spec's description of that call.
-pub fn read_line(con_in: *mut SimpleTextInputProtocol, con_out: *mut SimpleTextOutputProtocol) -> String {
+/// and handling backspace. Each keystroke is awaited via [`ReadKey`]
+/// rather than polled in a loop; see `crate::executor` and the README's
+/// "I/O modes" section for what that buys over busy-calling
+/// `ReadKeyStroke` directly.
+pub async fn read_line(con_in: *mut SimpleTextInputProtocol, con_out: *mut SimpleTextOutputProtocol) -> String {
     let mut line = String::new();
     loop {
-        let mut key = crate::efi::text::InputKey {
-            scan_code: 0,
-            unicode_char: 0,
-        };
-        let status = unsafe { ((*con_in).read_key_stroke)(con_in, &mut key) };
-        if status == EFI_NOT_READY {
-            continue;
-        }
+        let key = ReadKey(con_in).await;
         if key.scan_code != 0 {
             // Function/arrow keys etc. carry no printable char; ignore.
             continue;
