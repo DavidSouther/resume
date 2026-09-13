@@ -34,7 +34,14 @@ unsafe impl GlobalAlloc for EfiAllocator {
             return ptr::null_mut();
         }
         let align = layout.align().max(8);
-        let total = layout.size() + align + HEADER;
+        // `layout.size()` is caller-chosen (via `alloc::alloc`, ultimately from
+        // whatever `String`/`Vec` growth the shell does) and unbounded; adding
+        // `align + HEADER` to it is *our* arithmetic, not part of `Layout`'s own
+        // already-validated bound, so it needs its own overflow check rather
+        // than assuming a huge request can't happen.
+        let Some(total) = layout.size().checked_add(align).and_then(|n| n.checked_add(HEADER)) else {
+            return ptr::null_mut();
+        };
         let mut raw: *mut c_void = ptr::null_mut();
         let status = unsafe { ((*bs).allocate_pool)(EFI_LOADER_DATA, total, &mut raw) };
         if !status_is_success(status) || raw.is_null() {
