@@ -67,7 +67,11 @@ pub unsafe extern "efiapi" fn efi_main(
     let con_in = table.con_in;
     let boot_services = table.boot_services;
 
-    alloc_impl::init(boot_services);
+    // SAFETY: `boot_services` is `system_table.boot_services`, valid per
+    // this function's own `# Safety` contract for as long as this program
+    // runs; this is the only call to `init`, and it happens before the
+    // first allocation (nothing above this line allocates).
+    unsafe { alloc_impl::init(boot_services) };
 
     console::write_str(
         con_out,

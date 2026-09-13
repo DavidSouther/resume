@@ -18,8 +18,17 @@ use core::sync::atomic::{AtomicPtr, Ordering};
 
 static BOOT_SERVICES: AtomicPtr<BootServices> = AtomicPtr::new(ptr::null_mut());
 
-/// Called once from `efi_main`, before the first allocation.
-pub fn init(boot_services: *mut BootServices) {
+/// # Safety
+///
+/// The caller must ensure `boot_services` is non-null and points to a live
+/// `EFI_BOOT_SERVICES` table, valid for the rest of the program's
+/// execution: every `alloc`/`dealloc` call for the lifetime of the
+/// `#[global_allocator]` dereferences the pointer stored here without
+/// re-checking it. Must be called before the first allocation (i.e.
+/// before any `String`/`Vec`/`Box` use), and at most once — a second call
+/// would let a later, possibly-stale `boot_services` value replace one
+/// in-flight allocations' `dealloc` still depends on.
+pub unsafe fn init(boot_services: *mut BootServices) {
     BOOT_SERVICES.store(boot_services, Ordering::Relaxed);
 }
 
