@@ -2,13 +2,13 @@
 //!
 //! Every field the real table has is declared, in spec order, so that the
 //! offsets of the handful of functions we actually call (`AllocatePool`,
-//! `FreePool`, `LocateHandleBuffer`, `HandleProtocol`, `Stall`) land where
-//! firmware put them. Calls we never make are typed as opaque `usize`
-//! (pointer-sized) slots rather than as real function-pointer types —
-//! their signatures don't matter since nothing ever calls through them,
-//! only their size (one pointer) does.
+//! `FreePool`, `LocateHandleBuffer`, `HandleProtocol`, `Stall`,
+//! `WaitForEvent`) land where firmware put them. Calls we never make are
+//! typed as opaque `usize` (pointer-sized) slots rather than as real
+//! function-pointer types — their signatures don't matter since nothing
+//! ever calls through them, only their size (one pointer) does.
 
-use super::types::{Guid, Handle, Status, TableHeader};
+use super::types::{Event, Guid, Handle, Status, TableHeader};
 use core::ffi::c_void;
 
 /// `EFI_LOCATE_SEARCH_TYPE` (§7.3): the only variant this project uses is
@@ -40,6 +40,8 @@ type LocateHandleBufferFn = extern "efiapi" fn(
     buffer: *mut *mut Handle,
 ) -> Status;
 type StallFn = extern "efiapi" fn(microseconds: usize) -> Status;
+type WaitForEventFn =
+    extern "efiapi" fn(number_of_events: usize, event: *mut Event, index: *mut usize) -> Status;
 
 #[repr(C)]
 pub struct BootServices {
@@ -59,7 +61,7 @@ pub struct BootServices {
     // Event & Timer Services
     create_event: OpaqueFn,
     set_timer: OpaqueFn,
-    wait_for_event: OpaqueFn,
+    pub wait_for_event: WaitForEventFn,
     signal_event: OpaqueFn,
     close_event: OpaqueFn,
     check_event: OpaqueFn,

@@ -27,6 +27,11 @@ pub fn status_is_success(status: Status) -> bool {
 /// `EFI_HANDLE` — an opaque token, never dereferenced by us.
 pub type Handle = *mut c_void;
 
+/// `EFI_EVENT` (§7.1) — also an opaque token, distinct from `Handle` only
+/// by spec convention (both are `VOID*`). Named separately so a
+/// `wait_for_key`/`WaitForEvent` argument reads as what it is.
+pub type Event = *mut c_void;
+
 /// `EFI_LBA` — logical block address (§13.9).
 pub type Lba = u64;
 
