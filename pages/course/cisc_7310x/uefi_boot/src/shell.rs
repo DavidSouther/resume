@@ -2,7 +2,13 @@
 //! tree from [`crate::devices`]. Each grammar is deliberately the smallest
 //! thing that satisfies the spec — no flags anywhere, and `echo`'s only
 //! two literal forms are a single-quoted ASCII string or a bare `\xBB`
-//! byte-escape sequence, optionally followed by a plain `> file`.
+//! byte-escape sequence.
+//!
+//! `> file` redirect is not special-cased per command: every command's
+//! output is just bytes ([`Shell::emit`]), and every redirect target is
+//! just some device's `data` file. That's what makes
+//! `cat /drive/info > /usb/drive_info` work as a way to get one device's
+//! attributes onto another — a whole-machine `cat`, not an `echo` feature.
 
 use crate::console::{write_bytes, write_str};
 use crate::devices::{Device, DeviceKind};
@@ -111,23 +117,39 @@ impl Shell {
             .ok_or_else(|| ShellError::NotFound(path.to_string()))
     }
 
-    fn cmd_echo(&self, args: &str) -> Result<EchoOutcome, ShellError> {
-        let (content, redirect) = parse_echo(args)?;
+    /// Every command's output lands here: printed to the console with a
+    /// trailing newline, or — when the line ends in `> path` — written
+    /// verbatim (no added newline) to `path`'s raw `data` file, exactly
+    /// the way `echo ... > data` writes to a block device. `content` is
+    /// always already-final bytes; this function never knows or cares
+    /// which command produced them.
+    fn emit(
+        &self,
+        content: &[u8],
+        redirect: Option<String>,
+        con_out: *mut SimpleTextOutputProtocol,
+    ) -> Result<(), ShellError> {
         match redirect {
-            None => Ok(EchoOutcome::Print(content)),
-            Some(path) => {
-                let (idx, name) = self.resolve_file(&path)?;
-                if name != "data" {
-                    return Err(ShellError::NotWritable(path));
-                }
-                match &self.devices[idx].kind {
-                    DeviceKind::Block(b) => {
-                        write_block0(b, &content)?;
-                        Ok(EchoOutcome::Wrote)
-                    }
-                    DeviceKind::Gop(_) => Err(ShellError::NotWritable(path)),
-                }
+            None => {
+                write_bytes(con_out, content);
+                write_str(con_out, "\r\n");
+                Ok(())
             }
+            Some(path) => self.write_data_file(&path, content),
+        }
+    }
+
+    /// The write side of a redirect: resolve `path` to a device's `data`
+    /// file and `WriteBlocks` into it. Shared by every command that can
+    /// end in `> path` — there's nothing echo-specific left here.
+    fn write_data_file(&self, path: &str, content: &[u8]) -> Result<(), ShellError> {
+        let (idx, name) = self.resolve_file(path)?;
+        if name != "data" {
+            return Err(ShellError::NotWritable(path.to_string()));
+        }
+        match &self.devices[idx].kind {
+            DeviceKind::Block(b) => write_block0(b, content),
+            DeviceKind::Gop(_) => Err(ShellError::NotWritable(path.to_string())),
         }
     }
 
@@ -153,38 +175,50 @@ impl Shell {
         let rest = rest.trim();
         match cmd {
             "ls" => {
-                let arg = if rest.is_empty() { None } else { Some(rest) };
-                for entry in self.cmd_ls(arg)? {
-                    write_str(con_out, &format!("{entry}\r\n"));
-                }
-                Ok(())
+                let (arg, redirect) = split_trailing_redirect(rest)?;
+                let arg = if arg.is_empty() { None } else { Some(arg) };
+                let content = self.cmd_ls(arg)?.join("\r\n").into_bytes();
+                self.emit(&content, redirect, con_out)
             }
-            "cd" => self.cmd_cd(if rest.is_empty() { "/" } else { rest }),
+            "cd" => {
+                let (arg, redirect) = split_trailing_redirect(rest)?;
+                if redirect.is_some() {
+                    return Err(ShellError::Usage("cd produces no output to redirect".into()));
+                }
+                self.cmd_cd(if arg.is_empty() { "/" } else { arg })
+            }
             "cat" => {
-                if rest.is_empty() {
+                let (path, redirect) = split_trailing_redirect(rest)?;
+                if path.is_empty() {
                     return Err(ShellError::Usage("cat <file>".into()));
                 }
-                let bytes = self.cmd_cat(rest)?;
-                write_bytes(con_out, &bytes);
-                write_str(con_out, "\r\n");
-                Ok(())
+                let content = self.cmd_cat(path)?;
+                self.emit(&content, redirect, con_out)
             }
-            "echo" => match self.cmd_echo(rest)? {
-                EchoOutcome::Print(bytes) => {
-                    write_bytes(con_out, &bytes);
-                    write_str(con_out, "\r\n");
-                    Ok(())
-                }
-                EchoOutcome::Wrote => Ok(()),
-            },
+            "echo" => {
+                let (content, redirect) = parse_echo(rest)?;
+                self.emit(&content, redirect, con_out)
+            }
             other => Err(ShellError::UnknownCommand(other.to_string())),
         }
     }
 }
 
-enum EchoOutcome {
-    Print(Vec<u8>),
-    Wrote,
+/// Splits a plain, unquoted argument — what `ls`, `cd`, and `cat` all
+/// take — on its first top-level `>`. `echo` parses its own redirect
+/// instead ([`parse_echo`]), since its quoted-string form may itself
+/// contain a `>` that this simple split would misread.
+fn split_trailing_redirect(rest: &str) -> Result<(&str, Option<String>), ShellError> {
+    match rest.split_once('>') {
+        None => Ok((rest.trim(), None)),
+        Some((left, right)) => {
+            let target = right.trim();
+            if target.is_empty() {
+                return Err(ShellError::Usage("> needs a filename".into()));
+            }
+            Ok((left.trim(), Some(target.to_string())))
+        }
+    }
 }
 
 fn read_block0(b: &crate::devices::BlockDevice) -> Result<Vec<u8>, ShellError> {
