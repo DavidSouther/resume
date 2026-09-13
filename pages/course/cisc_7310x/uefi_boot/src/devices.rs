@@ -193,10 +193,9 @@ unsafe fn locate_protocol_instances(
     out
 }
 
-/// Walks Block IO and Graphics Output handles into the device list the
-/// shell browses. Called once at startup; the result is a snapshot — a
-/// disk that's hot-plugged mid-session won't appear without a re-scan,
-/// which this minimal shell doesn't offer.
+/// Called once at startup; the result is a snapshot — a disk that's
+/// hot-plugged mid-session won't appear without a re-scan, which this
+/// minimal shell doesn't offer.
 pub fn enumerate(boot_services: *mut BootServices) -> Vec<Device> {
     let mut devices = Vec::new();
 
