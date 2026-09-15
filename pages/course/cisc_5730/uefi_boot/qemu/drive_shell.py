@@ -3,9 +3,8 @@
 
 Connects to the socket QEMU exposes for -chardev socket,...,path=<sock>,
 sends each command in `commands` with a short settle delay, and prints
-everything the guest wrote back. Used only to exercise the shell during
-development -- not part of the shipped project.
-"""
+everything the guest wrote back."""
+
 import socket
 import sys
 import time

@@ -1,6 +1,5 @@
 //! Line-oriented console I/O over `EFI_SIMPLE_TEXT_INPUT/OUTPUT_PROTOCOL`.
-//! No line-editing beyond backspace; that's plenty for a shell whose
-//! commands are single lines.
+//! No line-editing!
 
 use crate::efi::text::{SimpleTextInputProtocol, SimpleTextOutputProtocol};
 use crate::executor::ReadKey;
@@ -9,11 +8,16 @@ use alloc::string::String;
 const CHAR_BACKSPACE: u16 = 0x08;
 const CHAR_CARRIAGE_RETURN: u16 = 0x0D;
 const CHAR_LINE_FEED: u16 = 0x0A;
+const CHAR_CTRL_C: u16 = 0x03;
+const CHAR_CTRL_D: u16 = 0x04;
+
+pub enum ReadLineResult {
+    Line(String),
+    Halt,
+}
 
 /// Feeds a stream of UTF-16 code units to `OutputString` in fixed-size
-/// chunks, so neither caller needs its own fixed-line-length limit. Shared
-/// by [`write_str`] and [`write_bytes`] — they differ only in how a source
-/// element becomes a `u16`, not in how the buffering/flushing works.
+/// chunks, so neither caller needs its own fixed-line-length limit.
 fn write_units(con_out: *mut SimpleTextOutputProtocol, units: impl Iterator<Item = u16>) {
     let mut buf = [0u16; 128];
     let mut i = 0;
@@ -50,28 +54,26 @@ fn write_units(con_out: *mut SimpleTextOutputProtocol, units: impl Iterator<Item
     unsafe { ((*con_out).output_string)(con_out, buf.as_ptr()) };
 }
 
-/// Writes a `&str` to the console. Interior NULs truncate the string (the
-/// protocol is NUL-terminated); everything else round-trips through UTF-16
-/// a chunk at a time so there's no fixed line-length limit.
+/// Writes a `&str` to the console. Interior NULs truncate the string as the
+/// protocol is NUL-terminated.
 pub fn write_str(con_out: *mut SimpleTextOutputProtocol, s: &str) {
     write_units(con_out, s.encode_utf16());
 }
 
 /// Writes raw bytes to the console, one byte per UTF-16 code unit (Latin-1
-/// widening). `cat`/`echo` deal in bytes, not `str`, because a block
-/// device's raw content isn't necessarily valid UTF-8 — this is the
-/// lossy-but-simple way to still show something for it, and it round-trips
-/// exactly for the ASCII text `echo` actually writes.
+/// widening).
 pub fn write_bytes(con_out: *mut SimpleTextOutputProtocol, bytes: &[u8]) {
     write_units(con_out, bytes.iter().map(|&b| b as u16));
 }
 
 /// Reads one line (Enter-terminated) from the keyboard, echoing keystrokes
-/// and handling backspace. Each keystroke is awaited via [`ReadKey`]
-/// rather than polled in a loop; see `crate::executor` and the README's
-/// "I/O modes" section for what that buys over busy-calling
-/// `ReadKeyStroke` directly.
-pub async fn read_line(con_in: *mut SimpleTextInputProtocol, con_out: *mut SimpleTextOutputProtocol) -> String {
+/// and handling backspace. Ctrl-C and Ctrl-D return [`ReadLineResult::Halt`]
+/// immediately. Each keystroke is awaited via [`ReadKey`] rather than polled
+/// in a loop; see `crate::executor` and the README's "I/O modes".
+pub async fn read_line(
+    con_in: *mut SimpleTextInputProtocol,
+    con_out: *mut SimpleTextOutputProtocol,
+) -> ReadLineResult {
     let mut line = String::new();
     loop {
         let key = ReadKey(con_in).await;
@@ -80,9 +82,10 @@ pub async fn read_line(con_in: *mut SimpleTextInputProtocol, con_out: *mut Simpl
             continue;
         }
         match key.unicode_char {
+            CHAR_CTRL_C | CHAR_CTRL_D => return ReadLineResult::Halt,
             CHAR_CARRIAGE_RETURN | CHAR_LINE_FEED => {
                 write_str(con_out, "\r\n");
-                return line;
+                return ReadLineResult::Line(line);
             }
             CHAR_BACKSPACE => {
                 if line.pop().is_some() {

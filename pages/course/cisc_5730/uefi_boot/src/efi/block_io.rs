@@ -1,8 +1,5 @@
-//! `EFI_BLOCK_IO_PROTOCOL` (UEFI spec §13.9) — the protocol every disk,
-//! and every removable-media drive (USB included), exposes. This is the
-//! entire "hard drive" and "USB drive" story: no AHCI/NVMe/USB-mass-storage
-//! driver is written here, because firmware already did that and handed us
-//! this protocol instead.
+//! `EFI_BLOCK_IO_PROTOCOL` (UEFI spec §13.9) to handle devices with Simple File Storage firmware.
+//! Simple File Storage is based on FAT16/FAT32, so very minimal security features.
 
 use super::types::{Guid, Lba, Status};
 use core::ffi::c_void;
@@ -15,8 +12,7 @@ pub const BLOCK_IO_PROTOCOL_GUID: Guid = Guid(
     [0x8e, 0x39, 0x00, 0xa0, 0xc9, 0x69, 0x72, 0x3b],
 );
 
-/// `EFI_BLOCK_IO_MEDIA` (§13.9): only the revision-1 fields are declared,
-/// which is every field this project reads.
+/// `EFI_BLOCK_IO_MEDIA` (§13.9) revision-1 fields
 #[repr(C)]
 pub struct BlockIoMedia {
     pub media_id: u32,

@@ -1,9 +1,6 @@
 //! Enumerates the UEFI Block IO and Graphics Output handles present at
 //! boot into a two-level, sysfs-style tree: `/` lists devices, each device
-//! lists a fixed set of attribute files. There is no third level — a real
-//! sysfs nests arbitrarily, but every device this project shows (a disk,
-//! a GPU, a USB stick) fits in one flat set of attributes, so a deeper
-//! tree would just be unused generality.
+//! lists a fixed set of attribute files.
 
 use crate::efi::block_io::{BlockIoMedia, BlockIoProtocol, BLOCK_IO_PROTOCOL_GUID};
 use crate::efi::boot_services::{BootServices, LocateSearchType};
@@ -14,6 +11,7 @@ use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 use core::ffi::c_void;
 
+/// A block device exposes blocks of storage data.
 pub struct BlockDevice {
     pub protocol: *mut BlockIoProtocol,
     pub media_id: u32,
@@ -25,6 +23,7 @@ pub struct BlockDevice {
     pub last_block: u64,
 }
 
+/// A Graphics Output Protocol device.
 pub struct GopDevice {
     pub horizontal_resolution: u32,
     pub vertical_resolution: u32,

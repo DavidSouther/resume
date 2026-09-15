@@ -1,6 +1,7 @@
 //! A minimal aarch64 UEFI application that reads device information (disk,
 //! GPU, and removable USB media) straight from firmware-provided protocols
-//! and exposes it through a tiny `ls`/`cd`/`cat`/`echo` shell, sysfs-style.
+//! and exposes it through a tiny `ls`/`cd`/`cat`/`echo`/`halt` shell,
+//! sysfs-style.
 //!
 //! ## Why hand-rolled bindings instead of the `uefi` crate
 //!
@@ -85,6 +86,7 @@ pub unsafe extern "efiapi" fn efi_main(
     let con_out = table.con_out;
     let con_in = table.con_in;
     let boot_services = table.boot_services;
+    let runtime_services = table.runtime_services;
 
     // SAFETY: `boot_services` is `system_table.boot_services`, valid per
     // this function's own `# Safety` contract for as long as this program
@@ -94,7 +96,7 @@ pub unsafe extern "efiapi" fn efi_main(
 
     console::write_str(
         con_out,
-        "uefi_boot: minimal device-info shell\r\ncommands: ls, cd, cat, echo\r\n",
+        "uefi_boot: minimal device-info shell\r\ncommands: ls, cd, cat, echo, halt\r\n",
     );
 
     let devices = devices::enumerate(boot_services);
@@ -103,10 +105,10 @@ pub unsafe extern "efiapi" fn efi_main(
         &alloc::format!("found {} device(s)\r\n", devices.len()),
     );
 
-    Shell::new(devices).run(con_in, con_out, boot_services);
+    Shell::new(devices).run(con_in, con_out, boot_services, runtime_services);
 
-    // `Shell::run` never returns (there is no `exit`), but the type
-    // checker still wants a `Status` here.
+    // `Shell::run` never returns after the shell requests shutdown, but the
+    // type checker still wants a `Status` here.
     EFI_SUCCESS
 }
 

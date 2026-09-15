@@ -1,17 +1,9 @@
 //! `EFI_BOOT_SERVICES` (UEFI spec §4.4).
-//!
-//! Every field the real table has is declared, in spec order, so that the
-//! offsets of the handful of functions we actually call (`AllocatePool`,
-//! `FreePool`, `LocateHandleBuffer`, `HandleProtocol`, `Stall`,
-//! `WaitForEvent`) land where firmware put them. Calls we never make are
-//! typed as opaque `usize` (pointer-sized) slots rather than as real
-//! function-pointer types — their signatures don't matter since nothing
-//! ever calls through them, only their size (one pointer) does.
 
 use super::types::{Event, Guid, Handle, Status, TableHeader};
 use core::ffi::c_void;
 
-/// `EFI_LOCATE_SEARCH_TYPE` (§7.3): the only variant this project uses is
+/// `EFI_LOCATE_SEARCH_TYPE` (§7.3):
 /// `ByProtocol`, to ask firmware for every handle exposing a given GUID.
 #[repr(u32)]
 #[allow(dead_code)]
@@ -43,6 +35,9 @@ type StallFn = extern "efiapi" fn(microseconds: usize) -> Status;
 type WaitForEventFn =
     extern "efiapi" fn(number_of_events: usize, event: *mut Event, index: *mut usize) -> Status;
 
+/// BootServices contains all UEFI `EFI_BOOT_SERVICES` from §4.4.
+///
+/// Unused services are `OpaqueFn` to ensure appropriate repr(C) packing.
 #[repr(C)]
 pub struct BootServices {
     pub hdr: TableHeader,

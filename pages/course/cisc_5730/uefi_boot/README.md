@@ -1,8 +1,8 @@
 # uefi_boot
 
-A minimal aarch64 UEFI application: it reads device information straight
-from firmware-provided protocols — the attached disk, the GPU, a
-removable USB drive — and exposes it through a tiny sysfs-style shell.
+A minimal aarch64 UEFI shell. It reads device information directly
+from firmware-provided protocols and exposes that information through
+a tiny shell on over an sysfs-like interface.
 
 ```
 /> ls
@@ -39,32 +39,21 @@ logical_partition: false
 media_present: true
 ```
 
-That last pair — `cat` reading one device and redirecting straight into
-another — is how you get data off the machine: point `>` at a removable
-device's `data` file and whatever you `cat` (or `ls`) lands on its first
-sector, ready to read back on another machine.
+To extract data, identify the block device whose `info` reports `removable: true`, then write to that device.
 
-## Constraints this project is built to
+## Constraints
 
 - **Rust stable.** No nightly features.
-- **One dependency: `thiserror`.** Everything else — including the UEFI
-  bindings themselves — is hand-written, deliberately, rather than pulled
-  in from the `uefi` or `r-efi` crates.
-- **No custom device drivers.** Every device shown here (disk, GPU, USB
-  stick) is reached through a protocol the UEFI spec requires firmware to
-  implement: `EFI_BLOCK_IO_PROTOCOL` and `EFI_GRAPHICS_OUTPUT_PROTOCOL`.
+- **No EFI dependencies.** All UEFI code is in tree, though `thiserror`
+  is used to simplify shell error handling.
+- **No custom device drivers.** Every device supported through a protocol
+  the UEFI spec, `EFI_BLOCK_IO_PROTOCOL` and `EFI_GRAPHICS_OUTPUT_PROTOCOL`.
   Nothing talks to AHCI, NVMe, USB mass storage, or a GPU register
   directly. "USB drive support" is just a Block IO handle whose
   `RemovableMedia` flag happens to be set — there's no USB stack code
   here at all.
-- **No added async runtime.** Console input is `async`/`.await` now (see
-  "I/O modes" below) — but that's `core::future::Future` and a
-  hand-rolled 20-line executor, not `tokio` or `futures`. Still zero
-  non-`thiserror` dependencies.
-
-See `src/main.rs` for the fuller rationale, and `src/efi/` for the
-bindings themselves — each file cites the UEFI Specification 2.10 section
-its layout comes from.
+- **BYO Executor.** Console input is `async`/`.await` with a
+  20-line in-tree executor.
 
 ## The device tree
 
@@ -77,14 +66,13 @@ Two levels, because that's all any of these devices need:
   and — for block devices only — a `data` file that is the device's raw
   block 0, readable and writable.
 
-`cat` on `data` performs a live `ReadBlocks`; redirecting into `data`
-(from `echo`, or from any other command) performs a live `WriteBlocks`
-(padded/zero-filled to the device's block size, and rejected if the
-content is longer than one block). This is not a filesystem — there's no
-FAT/ext parser here — so writing to `data` overwrites the device's first
-sector directly. Point it at your actual boot disk and you will corrupt
-your boot disk; the `run.sh` script below gives the shell two disposable
-scratch disks and a removable USB image so there's always a safe target.
+`cat` on `data` performs `ReadBlocks`; redirecting into `data` performs
+`WriteBlocks` for a single block, padded & zero-filled to the device's
+block size. This is not a filesystem, so writing to `data` overwrites the
+device's first sector directly. Point it at an actual boot disk and it
+will corrupt that boot disk; the `make run` target below gives the shell two
+disposable scratch disks and a removable USB image so there's always a
+safe target.
 
 ## Shell grammar
 
@@ -96,22 +84,14 @@ scratch disks and a removable USB image so there's always a safe target.
   doing nothing.
 - `cat <file> [> file]` — print a file's contents. No flags.
 - `echo <text> [> file]` — print `text` to the console. `text` is
-  exactly one of:
-  - `'a single-quoted literal'` — taken byte-for-byte as ASCII; no
-    backslash escapes are recognized inside the quotes.
+  - `'a single-quoted literal'` — ASCII; no escape sequences are
+    recognized inside the quotes.
   - a bare `\xBB\xBB...` sequence — each `\xNN` is one raw byte, hex
     encoded (so `\x48\x65\x6c\x6c\x6f` writes `Hello`).
+- `halt` — request a firmware shutdown. Ctrl-C and Ctrl-D request the same
+  shutdown immediately, without waiting for Enter.
 
-`> file` isn't an `echo`-only feature: every command's output is just
-bytes, and every redirect target is just some device's `data` file, so
-`ls`, `cat`, and `echo` all support it, and any of them can write across
-devices (`cat /blk3/info > /blk0/data`). The one thing `> file` never
-does is add anything — no extra newline gets appended to what's written,
-so a redirected `cat` copies its source exactly. Printing to the console
-still appends a trailing newline, same as before, purely for readability
-at the prompt.
-
-## I/O modes: where polling, interrupt, and DMA actually happen
+## I/O modes: polling, interrupt, and DMA
 
 This project started from [CISC7310X's lecture on I/O
 schemes](https://huichen-cs.github.io/course/CISC7310X/26FA/lecture/ioscheme_interrupt),
@@ -119,15 +99,10 @@ which frames device I/O as three shapes: **polling** (the CPU repeatedly
 asks "are you ready yet?"), **interrupt** (the device tells the CPU when
 it's ready, instead), and **DMA** (the device moves bulk data itself,
 without the CPU shuttling it byte by byte). All three are present here,
-in one form or another. Two of them are code this project wrote, after
-deliberately converting a polling loop into something closer to
-interrupt-notified, using nothing but a standard Boot Services call and
-about 20 lines of hand-rolled `Future`/executor plumbing.
+in one form or another.
 
 **Interrupt-notified — `console::read_line` (`src/console.rs`) and
-`src/executor.rs`.** Reading a keystroke used to be a tight loop around
-`ReadKeyStroke`, asking "is a key ready? No. Is a key ready? No. ...".
-It's now an `.await` instead:
+`src/executor.rs`.**
 
 ```rust
 // console.rs — read one key
@@ -146,10 +121,7 @@ loop {
 `wait_event` is `SimpleTextInputProtocol::wait_for_key` — an `EFI_EVENT`
 firmware signals the moment its own keyboard-servicing code (itself
 driven by a real IRQ) buffers a keystroke. `WaitForEvent` blocks until
-that happens; the CPU is told, rather than asking on a schedule. That's
-the actual difference from before: not the busy-loop's *frequency*, but
-that there's no polling left in `uefi_boot`'s own code at all — the wait
-is one blocking firmware call, not a spin.
+that happens.
 
 This is also, structurally, the smallest possible async runtime:
 `core::future::Future` needs a `Waker`, so `executor.rs` uses
@@ -157,26 +129,18 @@ This is also, structurally, the smallest possible async runtime:
 rescheduling — `WaitForEvent` returning *is* the wakeup) and
 `alloc::boxed::Box::pin` to hold the `async fn`'s state machine (which
 isn't `Unpin`, since it borrows across an `.await` point). No `tokio`,
-no `futures` crate — `core::task` and about 20 lines. Console *output*
-(`write_str`/`write_bytes` → `OutputString`) didn't change: it's still
-one blocking call with no completion callback, because there was never
-anything to wait *for* on that side.
+no `futures` crate — `core::task` and about 20 lines.
 
-**A real hardware interrupt handler — still one layer down, never in
-this code.** This is the "???" the lecture leaves for the reader, and
-waiting on `wait_for_key` doesn't actually answer it: `WaitForEvent` is
-still firmware telling *us* when to stop waiting, not this project
-taking an interrupt itself. Doing that for real means owning the
+**Hardware interrupt handler** `WaitForEvent` is
+still firmware telling *us* when to stop waiting, not owning a dedicated
+interrupt in tree.  Doing that for real means owning the
 interrupt controller (GICv2/v3, on aarch64) — either via
 `EFI_HARDWARE_INTERRUPT_PROTOCOL` (an edk2/ARM platform convention, not
-in the UEFI Specification proper, so it only exists because this
-project's firmware happens to be edk2-based) or by programming the GIC
-directly, which is squarely the kind of custom device driver the brief
-rules out. What actually happens now, same as before this change: a real
-keyboard IRQ fires, firmware's own driver services it, buffers the
-keystroke, and signals `wait_for_key` — and `uefi_boot` finds out only
+in the UEFI Specification) or by programming the GIC
+directly, instea of letting the firmware's own driver service
+it, buffer the keystroke, and signalling  `wait_for_key` — and `uefi_boot` finds out only
 because it asked to be told, not because anything interrupted it. The
-interrupt is real; it's still exactly one layer further down than a
+interrupt is real; it's just exactly one layer further down than a
 UEFI application is allowed to reach.
 
 **DMA — `EFI_BLOCK_IO_PROTOCOL::{Read,Write}Blocks` (`src/shell.rs`).**
@@ -186,7 +150,9 @@ UEFI application is allowed to reach.
 ((*b.protocol).read_blocks)(b.protocol, b.media_id, 0, size, buf.as_mut_ptr() as *mut c_void);
 ```
 
-and nothing else. We never move the bytes ourselves — that's the console
+The CPU never moves these bytes. We hand 
+
+We never move the bytes ourselves — that's the console
 path's job — we hand over a destination and a size, and whatever driver
 is actually behind that handle (virtio-blk, USB mass storage, AHCI...)
 moves the bulk data on its own, typically by pointing the controller at
@@ -204,34 +170,60 @@ this particular device declines that path entirely and requires `Blt()`
 instead. `uefi_boot` never calls `Blt`, so GPU I/O here is read-only mode
 metadata — neither polled, interrupted, nor DMA'd, just a struct we read.
 
+## Installing prerequisites
+
+```sh
+make install
+```
+
+This requires `rustup`. On macOS it installs QEMU with Homebrew; on
+Debian-based Linux it installs `qemu-system-arm`, `qemu-utils`, and
+`qemu-efi-aarch64` with `apt-get`. It also installs Rust's
+`aarch64-unknown-uefi` target. Debian package installation uses `sudo`
+when not run as root.
+
 ## Building
 
 ```sh
 rustup target add aarch64-unknown-uefi   # once
-cargo build --target aarch64-unknown-uefi
+make build
 ```
 
-Produces `target/aarch64-unknown-uefi/debug/uefi_boot.efi`, a PE32+ image
-for firmware to load as `EFI/BOOT/BOOTAA64.EFI`.
+Produces `target/aarch64-unknown-uefi/debug/uefi_boot.efi`, a PE32+ image,
+and stages it at `qemu/esp/EFI/BOOT/BOOTAA64.EFI` for firmware to load.
 
 ## Running under QEMU
 
 ```sh
-qemu/run.sh
+make run
 ```
 
 Needs `qemu-system-aarch64` and an aarch64 UEFI firmware image (Debian/
 Ubuntu: `apt install qemu-system-arm ovmf`, which installs one at
 `/usr/share/qemu-efi-aarch64/QEMU_EFI.fd`; override the path with
-`UEFI_BOOT_FIRMWARE` if yours lives elsewhere). The script builds the
-crate, assembles a FAT boot directory QEMU serves directly as a virtual
-disk (`-drive file=fat:rw:esp,...`), creates two disposable raw disk
-images on first run (a 4 MiB "hard drive" and a 2 MiB "USB stick", the
-latter attached through a USB controller and marked removable), adds a
-`virtio-gpu-pci` device for Graphics Output, and hands the guest's serial
-console to your terminal.
+`UEFI_BOOT_FIRMWARE` if yours lives elsewhere). The `run` target depends on
+`build`, then creates two disposable raw disk images on first run (a
+4 MiB "hard drive" and a 2 MiB "USB stick", the latter attached through
+a USB controller and marked removable), adds a `virtio-gpu-pci` device
+for Graphics Output, and hands the guest's serial console to your
+terminal.
+
+On macOS, Homebrew's QEMU formula includes the same aarch64 EDK2 firmware
+under the filename `edk2-aarch64-code.fd`:
+
+```sh
+brew install qemu
+UEFI_BOOT_FIRMWARE="$(brew --prefix qemu)/share/qemu/edk2-aarch64-code.fd" make run
+```
+
+The dynamic prefix works with both Apple Silicon and Intel Homebrew
+installations.
 
 `qemu/drive_shell.py` is a small development helper that drives the shell
 over a UNIX-socket serial port non-interactively (used to script the
 device/round-trip checks during development); it isn't part of the
 shipped project.
+
+## Appendices & LInkes
+
+https://uefi.org/specs/UEFI/2.9_A

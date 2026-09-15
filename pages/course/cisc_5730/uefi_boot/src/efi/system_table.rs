@@ -3,9 +3,9 @@
 //! is reached.
 
 use super::boot_services::BootServices;
+use super::runtime_services::RuntimeServices;
 use super::text::{SimpleTextInputProtocol, SimpleTextOutputProtocol};
 use super::types::{Handle, TableHeader};
-use core::ffi::c_void;
 
 #[repr(C)]
 pub struct SystemTable {
@@ -18,7 +18,7 @@ pub struct SystemTable {
     pub con_out: *mut SimpleTextOutputProtocol,
     pub standard_error_handle: Handle,
     pub std_err: *mut SimpleTextOutputProtocol,
-    pub runtime_services: *mut c_void,
+    pub runtime_services: *mut RuntimeServices,
     pub boot_services: *mut BootServices,
     // NumberOfTableEntries / ConfigurationTable follow; unused here.
 }

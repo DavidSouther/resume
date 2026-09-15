@@ -1,18 +1,7 @@
-//! The shell itself: `ls`, `cd`, `cat`, `echo` over the two-level device
-//! tree from [`crate::devices`]. Each grammar is deliberately the smallest
-//! thing that satisfies the spec — no flags anywhere, and `echo`'s only
-//! two literal forms are a single-quoted ASCII string or a bare `\xBB`
-//! byte-escape sequence.
-//!
-//! `> file` redirect is not special-cased per command: every command's
-//! output is just bytes ([`Shell::emit`]), and every redirect target is
-//! just some device's `data` file. That's what makes
-//! `cat /drive/info > /usb/drive_info` work as a way to get one device's
-//! attributes onto another — a whole-machine `cat`, not an `echo` feature.
-
 use crate::console::{write_bytes, write_str};
 use crate::devices::{Device, DeviceKind};
 use crate::efi::boot_services::BootServices;
+use crate::efi::runtime_services::{RuntimeServices, EFI_RESET_SHUTDOWN};
 use crate::efi::text::{SimpleTextInputProtocol, SimpleTextOutputProtocol};
 use crate::efi::types::status_is_success;
 use crate::error::ShellError;
@@ -41,9 +30,8 @@ impl Shell {
         }
     }
 
-    /// Interprets `path` relative to `self.cwd` (or from the root, if it
-    /// starts with `/`), following only the segments a two-level tree can
-    /// mean: `.`, `..`, `/`, or a device name.
+    /// Interprets `path` from the root if starts with `/`, or relative to `self.cwd`.
+    /// Segment `.` and `..` are normalized to their usual meanings.
     fn resolve_dir(&self, path: &str) -> Result<Option<usize>, ShellError> {
         let path = path.trim();
         let mut cur = if path.starts_with('/') { None } else { self.cwd };
@@ -67,8 +55,7 @@ impl Shell {
         Ok(cur)
     }
 
-    /// Splits `path` into (containing device, filename): the piece a
-    /// `cat`/`echo` target always needs, since only devices hold files.
+    /// Splits `path` into (containing device, filename)
     fn resolve_file<'p>(&self, path: &'p str) -> Result<(usize, &'p str), ShellError> {
         let path = path.trim();
         let (dir, file) = match path.rsplit_once('/') {
@@ -119,12 +106,6 @@ impl Shell {
             .ok_or_else(|| ShellError::NotFound(path.to_string()))
     }
 
-    /// Every command's output lands here: printed to the console with a
-    /// trailing newline, or — when the line ends in `> path` — written
-    /// verbatim (no added newline) to `path`'s raw `data` file, exactly
-    /// the way `echo ... > data` writes to a block device. `content` is
-    /// always already-final bytes; this function never knows or cares
-    /// which command produced them.
     fn emit(
         &self,
         content: &[u8],
@@ -141,9 +122,6 @@ impl Shell {
         }
     }
 
-    /// The write side of a redirect: resolve `path` to a device's `data`
-    /// file and `WriteBlocks` into it. Shared by every command that can
-    /// end in `> path` — there's nothing echo-specific left here.
     fn write_data_file(&self, path: &str, content: &[u8]) -> Result<(), ShellError> {
         let (idx, name) = self.resolve_file(path)?;
         if name != "data" {
@@ -155,88 +133,126 @@ impl Shell {
         }
     }
 
-    /// Reads and runs commands from the console until the firmware kills
-    /// the app; there's no `exit` command, matching a bootloader shell
-    /// that has nowhere else to go.
-    ///
-    /// Each line is read by driving `console::read_line`'s `Future`
-    /// through [`executor::block_on`], which blocks in `WaitForEvent` on
-    /// `con_in`'s own keystroke event between polls rather than spinning
-    /// — see `crate::executor` for why.
+    /// Reads and runs commands from the console until the shell requests a
+    /// firmware shutdown.
     pub fn run(
         &mut self,
         con_in: *mut SimpleTextInputProtocol,
         con_out: *mut SimpleTextOutputProtocol,
         boot_services: *mut BootServices,
+        runtime_services: *mut RuntimeServices,
     ) {
-        // SAFETY: `con_in` is traceable to `efi_main`'s validated
-        // `system_table.con_in` through this crate's internal call chain
-        // (`efi_main` -> `Shell::new(..).run(con_in, ..)`), per the
-        // trust-boundary policy in `efi/mod.rs`. `SimpleTextInputProtocol`'s
-        // ABI-prefix invariant covers `wait_for_key`, the only field read.
+        // SAFETY: `con_in` from `efi_main`.
+        // `SimpleTextInputProtocol`'s invariant covers `wait_for_key`.
         let wait_for_key = unsafe { (*con_in).wait_for_key };
         loop {
             write_str(con_out, &format!("{}> ", self.prompt()));
             let line = executor::block_on(boot_services, wait_for_key, crate::console::read_line(con_in, con_out));
+            let line = match line {
+                crate::console::ReadLineResult::Line(line) => line,
+                crate::console::ReadLineResult::Halt => shutdown(runtime_services),
+            };
             let line = line.trim();
             if line.is_empty() {
                 continue;
             }
-            if let Err(err) = self.dispatch(line, con_out) {
+            if let Err(err) = self.dispatch(line, con_out, runtime_services) {
                 write_str(con_out, &format!("{err}\r\n"));
             }
         }
     }
 
-    fn dispatch(&mut self, line: &str, con_out: *mut SimpleTextOutputProtocol) -> Result<(), ShellError> {
-        let (cmd, rest) = line.split_once(char::is_whitespace).unwrap_or((line, ""));
+    fn dispatch(
+        &mut self,
+        line: &str,
+        con_out: *mut SimpleTextOutputProtocol,
+        runtime_services: *mut RuntimeServices,
+    ) -> Result<(), ShellError> {
+        let (command, redirect) = split_redirect(line)?;
+        let (cmd, rest) = command
+            .split_once(char::is_whitespace)
+            .unwrap_or((command, ""));
         let rest = rest.trim();
-        match cmd {
+        let output = match cmd {
+            "halt" => {
+                if !rest.is_empty() {
+                    return Err(ShellError::Usage("halt takes no arguments".into()));
+                }
+                CommandOutput::Halt
+            }
             "ls" => {
-                let (arg, redirect) = split_trailing_redirect(rest)?;
-                let arg = if arg.is_empty() { None } else { Some(arg) };
-                let content = self.cmd_ls(arg)?.join("\r\n").into_bytes();
-                self.emit(&content, redirect, con_out)
+                let arg = if rest.is_empty() { None } else { Some(rest) };
+                CommandOutput::Bytes(self.cmd_ls(arg)?.join("\r\n").into_bytes())
             }
             "cd" => {
-                let (arg, redirect) = split_trailing_redirect(rest)?;
-                if redirect.is_some() {
-                    return Err(ShellError::Usage("cd produces no output to redirect".into()));
-                }
-                self.cmd_cd(if arg.is_empty() { "/" } else { arg })
+                CommandOutput::ChangeDirectory(if rest.is_empty() { "/" } else { rest })
             }
             "cat" => {
-                let (path, redirect) = split_trailing_redirect(rest)?;
-                if path.is_empty() {
+                if rest.is_empty() {
                     return Err(ShellError::Usage("cat <file>".into()));
                 }
-                let content = self.cmd_cat(path)?;
-                self.emit(&content, redirect, con_out)
+                CommandOutput::Bytes(self.cmd_cat(rest)?)
             }
-            "echo" => {
-                let (content, redirect) = parse_echo(rest)?;
-                self.emit(&content, redirect, con_out)
+            "echo" => CommandOutput::Bytes(parse_echo(rest)?),
+            other => return Err(ShellError::UnknownCommand(other.to_string())),
+        };
+
+        match (output, redirect) {
+            (CommandOutput::Bytes(content), redirect) => self.emit(&content, redirect, con_out),
+            (CommandOutput::ChangeDirectory(path), None) => self.cmd_cd(path),
+            (CommandOutput::ChangeDirectory(_), Some(_)) => {
+                Err(ShellError::Usage("cd produces no output to redirect".into()))
             }
-            other => Err(ShellError::UnknownCommand(other.to_string())),
+            (CommandOutput::Halt, None) => shutdown(runtime_services),
+            (CommandOutput::Halt, Some(_)) => {
+                Err(ShellError::Usage("halt produces no output to redirect".into()))
+            }
         }
     }
 }
 
-/// Splits a plain, unquoted argument — what `ls`, `cd`, and `cat` all
-/// take — on its first top-level `>`. `echo` parses its own redirect
-/// instead ([`parse_echo`]), since its quoted-string form may itself
-/// contain a `>` that this simple split would misread.
-fn split_trailing_redirect(rest: &str) -> Result<(&str, Option<String>), ShellError> {
-    match rest.split_once('>') {
-        None => Ok((rest.trim(), None)),
-        Some((left, right)) => {
-            let target = right.trim();
-            if target.is_empty() {
-                return Err(ShellError::Usage("> needs a filename".into()));
+enum CommandOutput<'a> {
+    Bytes(Vec<u8>),
+    ChangeDirectory(&'a str),
+    Halt,
+}
+
+fn shutdown(runtime_services: *mut RuntimeServices) -> ! {
+    // SAFETY:
+    // Operation: dereference `runtime_services` and call `ResetSystem`.
+    // Contract (EFI_RUNTIME_SERVICES.ResetSystem, UEFI spec §8.5): the
+    // runtime-services table and its function pointer are valid while the
+    // image runs; `ResetData` may be null when `DataSize` is zero.
+    // Evidence: `runtime_services` is copied from the validated system table
+    // in `efi_main` and passed unchanged through `Shell::run`; this image
+    // never calls `ExitBootServices` or changes the table pointer.
+    unsafe {
+        ((*runtime_services).reset_system)(EFI_RESET_SHUTDOWN, 0, 0, core::ptr::null())
+    }
+}
+
+/// Splits a command line at its first unquoted `>`. Redirection belongs to
+/// the shell grammar rather than to any one command, so dispatch can route
+/// every command's output through the same destination logic. Single quotes
+/// are the only quoting syntax in this shell; tracking them here keeps a `>`
+/// inside an `echo 'literal'` argument from becoming a redirect.
+fn split_redirect(line: &str) -> Result<(&str, Option<String>), ShellError> {
+    let mut in_single_quote = false;
+    for (index, ch) in line.char_indices() {
+        match ch {
+            '\'' => in_single_quote = !in_single_quote,
+            '>' if !in_single_quote => {
+                let command = line[..index].trim();
+                let target = line[index + ch.len_utf8()..].trim();
+                if target.is_empty() {
+                    return Err(ShellError::Usage("> needs a filename".into()));
+                }
+                return Ok((command, Some(target.to_string())));
             }
-            Ok((left.trim(), Some(target.to_string())))
+            _ => {}
         }
     }
+    Ok((line.trim(), None))
 }
 
 fn read_block0(b: &crate::devices::BlockDevice) -> Result<Vec<u8>, ShellError> {
@@ -303,8 +319,8 @@ fn write_block0(b: &crate::devices::BlockDevice, content: &[u8]) -> Result<(), S
 
 /// Parses `echo`'s argument grammar: a single-quoted ASCII literal (no
 /// escapes recognized inside, per spec) or a bare sequence of `\xBB` byte
-/// escapes, then an optional ` > file`.
-fn parse_echo(args: &str) -> Result<(Vec<u8>, Option<String>), ShellError> {
+/// escapes. Redirection has already been removed by [`split_redirect`].
+fn parse_echo(args: &str) -> Result<Vec<u8>, ShellError> {
     let args = args.trim_start();
     let (content, rest): (Vec<u8>, &str) = if let Some(after_quote) = args.strip_prefix('\'') {
         let end = after_quote
@@ -321,18 +337,10 @@ fn parse_echo(args: &str) -> Result<(Vec<u8>, Option<String>), ShellError> {
     };
 
     let rest = rest.trim();
-    let redirect = if let Some(target) = rest.strip_prefix('>') {
-        let target = target.trim();
-        if target.is_empty() {
-            return Err(ShellError::Usage("> needs a filename".into()));
-        }
-        Some(target.to_string())
-    } else if rest.is_empty() {
-        None
-    } else {
+    if !rest.is_empty() {
         return Err(ShellError::Usage(format!("unexpected trailing text: {rest}")));
-    };
-    Ok((content, redirect))
+    }
+    Ok(content)
 }
 
 fn parse_byte_escapes(token: &str) -> Result<Vec<u8>, ShellError> {

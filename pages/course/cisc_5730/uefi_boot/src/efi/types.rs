@@ -1,10 +1,6 @@
-//! Scalar types shared by every UEFI structure/protocol binding.
+//! Scalar types shared by UEFI structs and protocol bindings.
 //!
-//! Layouts and values are transcribed from the UEFI Specification 2.10.
-//! Nothing here is invented: every struct field order, every GUID byte, and
-//! every status code matches the spec exactly, because this program talks
-//! to firmware through raw memory layout — a wrong field order or a wrong
-//! byte in a GUID is silent memory corruption, not a compile error.
+//! Layouts and values are copied from the UEFI Specification 2.10.
 
 use core::ffi::c_void;
 
@@ -24,12 +20,12 @@ pub fn status_is_success(status: Status) -> bool {
     status == EFI_SUCCESS
 }
 
-/// `EFI_HANDLE` — an opaque token, never dereferenced by us.
+/// `EFI_HANDLE` — an opaque token, never dereferenced.
 pub type Handle = *mut c_void;
 
 /// `EFI_EVENT` (§7.1) — also an opaque token, distinct from `Handle` only
 /// by spec convention (both are `VOID*`). Named separately so a
-/// `wait_for_key`/`WaitForEvent` argument reads as what it is.
+/// `wait_for_key`/`WaitForEvent` argument reads better.
 pub type Event = *mut c_void;
 
 /// `EFI_LBA` — logical block address (§13.9).

@@ -1,7 +1,4 @@
-//! `EFI_GRAPHICS_OUTPUT_PROTOCOL` (UEFI spec §12.9) — the GPU story. We
-//! only ever read the current mode's resolution/pixel format; `QueryMode`,
-//! `SetMode`, and `Blt` are declared as opaque slots to keep the struct's
-//! layout correct, never called.
+//! `EFI_GRAPHICS_OUTPUT_PROTOCOL` (UEFI spec §12.9)
 
 use super::types::Guid;
 
@@ -13,7 +10,7 @@ pub const GRAPHICS_OUTPUT_PROTOCOL_GUID: Guid = Guid(
     [0x96, 0xfb, 0x7a, 0xde, 0xd0, 0x80, 0x51, 0x6a],
 );
 
-/// `EFI_GRAPHICS_PIXEL_FORMAT` (§12.9): the four defined values.
+/// `EFI_GRAPHICS_PIXEL_FORMAT` (§12.9) has defined values.
 pub const PIXEL_FORMAT_NAMES: [&str; 4] = [
     "RGBReserved8BitPerColor",
     "BGRReserved8BitPerColor",

@@ -1,7 +1,4 @@
-//! Shell-facing errors. `thiserror` is the project's one allowed
-//! dependency (its `Display` impl lets these surface as one-line messages
-//! the shell prints back at the prompt, the way a real shell reports
-//! `cat: no such file or directory`).
+//! Shell-facing errors.
 
 use alloc::string::String;
 
