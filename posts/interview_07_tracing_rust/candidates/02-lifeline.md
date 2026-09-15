@@ -26,7 +26,8 @@ Six marks, all drawn with one pen.
 | Shared borrow | D-bracket opens the span, mirrored D closes it | `-D-` … `-C-` |
 | Mutable borrow | triangle bracket opens, mirrored triangle closes | `->-` … `-<-` |
 | Referent under `&mut` | dashed lifeline for the span | `!` |
-| Drop | filled diamond ends the lifeline | `<>` |
+| Loan ends | the borrow's closing bracket ends the active span | `-C-` or `-<-` |
+| Binding end / drop | filled diamond ends the lifeline | `<>` |
 | Lifetime extent | the length of the lifeline between circle and diamond | the column itself |
 | Frame | a bracket opened at the call, closed at the return | `+---` … `+---` |
 
@@ -35,9 +36,16 @@ the source, a T-junction does not. Shared and mutable borrow are told apart
 by the bracket shape, D against triangle, and by whether the referent's own
 lifeline continues solid or turns dashed for the span.
 
-The error tell is uniform across all three canonical errors: **a reference's
-dotted lifeline extends past its referent's drop diamond**, or the lifeline
-a program asks for is not on the page at all.
+The three canonical errors share a decision rule, not one geometric tell:
+read the lifelines, borrow brackets, and frame boundary at the attempted
+operation, then reject the operation when that current state does not permit
+it. Use after move has no source lifeline; move while borrowed meets an open
+bracket; returning a local reference attempts to cross a frame where its
+referent ends.
+
+A diamond always ends the binding in this notation, but it means destruction
+only for an owned value. Ending an `&T` binding does not destroy its referent,
+and a non-lexical borrow may become inactive before the binding's scope ends.
 
 ## Worked traces
 
@@ -203,27 +211,26 @@ fn main() {
   |      |
   |     -D- - - ->  (:borrowed_art:)
   |      |                  :
-  |      |                  :        admire_art
-  |      *-------.          :        +--------------------
-  |               `------------------>   (art)
-  |                         :        |     |
-  |                         :        |    <>   the data dies here
-  |                         :        +--------------------
-  |                         :
-  |                         :   <-- still live, still dotted
-  |                        <>
+  |      |                  :
+  |      ! move?            :   rejected: shared borrow is still active
+  |      |                  :
+  |      |                  :   last use of borrowed_art
+  |     -C- - - - - - - - :   last use ends the active loan
+  |      |                 :   reference binding remains in scope
+  |     <>                <>   lexical scope ends
   +-------------------------------------------------------------
 ```
 
-`borrowed_art`'s dotted lifeline runs below the diamond that ends its
-referent. The reference is **outliving its referent**, and the drawing shows
-it without any compiler message: a dotted line crosses a horizontal level
-where the solid line it depends on has already stopped.
+The attempted move meets an open shared-borrow bracket, so it is rejected.
+No destination lifeline or referent diamond is drawn: the program does not
+compile and the transfer never occurs. Allowing it would make
+`borrowed_art` outlive its referent; the graph exposes that counterfactual
+without pretending a dangling reference exists at runtime.
 
 ### listing 2.13 — a reference returned from a frame
 
 ```rust
-fn build_art() -> &Artwork {
+fn build_art<'a>() -> &'a Artwork {
     let art = Artwork { name: "La Liberté guidant le peuple".to_string() };
     &art
 }
@@ -241,21 +248,14 @@ fn main() {
   |     -D- - - ->  (:&art:)
   |      |               :
   |     <>               :   art is dropped at the end of build_art
-  +----------------------:-------
-                         :   returned out of the frame
-  main                   :
-  +----------------------:-------
-  |   (art) = build_art():
-  |      :  <  <  <  <  <'
-  |      :
-  |     <>
-  +------------------------------
+  +----------------------!-------
+                         !   rejected at the frame boundary
 ```
 
-Same tell, one frame higher: **returning a reference** carries its dotted
-lifeline out of a frame whose owned lifeline already ended in a diamond. If a
-function returns a reference and takes no reference as a parameter, the
-dotted line always has to cross a diamond on the way out.
+The same decision applies at a frame boundary: **returning a reference** would
+carry its dotted lifeline out of a frame whose owned lifeline ends in a
+diamond. The `!` marks the rejected crossing. No reference lifeline is drawn
+in `main`; the compiler does not let one escape.
 
 ### listing Copy — the added seventh program
 
@@ -303,17 +303,19 @@ Walk listing 2.12 line by line.
 3. `let borrowed_art = &art1;` — draw `-D-` on `art1`'s stroke, open a second
    column to the right with `(:borrowed_art:)`, and start a dotted stroke.
    Both existing marks are untouched.
-4. `admire_art(art1);` — put a filled dot on `art1`'s stroke and run an arrow
-   to a new frame bracket on the right. Inside it, `(art)`, a stroke, and at
-   the frame's close a diamond. Keep extending `borrowed_art`'s dotted stroke
-   down past all of it, because that binding is still in scope.
-5. `println!(... borrowed_art.name);` — the dotted stroke is already below the
-   diamond. The error is visible at the moment it is drawn.
-6. `}` — close `main`'s bracket and put the last diamond on `borrowed_art`.
+4. `admire_art(art1);` — the attempted filled dot meets an open D-bracket.
+   Write `! move?`, but do not run an arrow or open a callee frame: the move is
+   rejected and never executes.
+5. `println!(... borrowed_art.name);` — extend the dotted stroke to this use.
+   This later line establishes why the borrow was active at the attempted
+   move. Close the D-bracket after the use, but continue the reference's
+   dotted binding lifeline.
+6. `}` — close `main`'s bracket and end both remaining bindings with diamonds.
 
 Every mark in that walk was added, never erased, never moved, and no diamond
-was reserved before its scope exit was reached. On drop points alone,
-Candidate B satisfies **no back-editing**.
+was reserved before its scope exit was reached. That claim relies on having
+looked ahead far enough to know the borrow remained active through step 5.
+On drop points alone, Candidate B satisfies **no back-editing**.
 
 ### Where this candidate needs foreknowledge
 

@@ -19,21 +19,23 @@ None of this has been tested with learners.
 ## The ruler
 
 The ruler sits to the left of the table, separated from it by a double bar
-`||`. Each binding gets a two-character column, labelled at the top with the
-binding's name. A row of the ruler lines up with the row of the table that the
-same statement wrote.
+`||`. Each binding gets a narrow column, labelled at the top with its name or
+a stable call-qualified abbreviation such as `art#1`. A label never changes
+or names a later binding. A row of the ruler lines up with the row of the
+table that the same statement wrote.
 
 | Glyph | Meaning |
 |---|---|
 | `o` | The binding is created here. This is the top of its stroke. |
-| `\|` | The binding is live and has full access to its data. |
+| `\|` | An owning binding still has a value; borrow brackets determine its current access. |
 | `.` | The binding is a reference. A reference's stroke is dotted for its whole length. |
 | `:` | The binding is live but may not be touched right now. |
 | `*` | The stroke ends because the data left. Nothing is destroyed here. |
-| `#` | The stroke ends because the data is destroyed here. |
+| `#` | An owned value is destroyed here. |
+| `R` | A reference binding reaches lexical scope end; its referent is untouched. |
 | `D` `C` | A shared borrow of this binding opens (`D`) and closes (`C`). |
 | `>` `<` | A mutable borrow of this binding opens (`>`) and closes (`<`). |
-| `?` | A binding was named here, and there is no stroke above the `?`. |
+| `?` | The source requests an operation that the current ruler state does not permit. |
 
 Nine glyphs, all of them writable with one pen stroke or two.
 
@@ -49,12 +51,13 @@ different glyph from one.
 **Copy.** No `*` anywhere. The source column's stroke continues straight down
 through the row while a new column opens with `o`. Two live strokes side by
 side, from one statement, is the whole of copy. The table body shows two
-different addresses, because a copy makes a second value.
+independent equal values; their machine addresses are not part of the rule.
 
 **Borrow.** On the owner's column, `D` on the row of the `&` and `C` on the row
-where the reference dies. Between them the owner's stroke stays `|`: the owner
-may still be read during a shared borrow. The reference itself opens its own
-column with `o` and runs dotted, `.`, to its own end.
+where the active loan ends. Between them the owner's stroke stays `|`: the
+owner still has its value and may read it, though the shared loan prevents a
+move, mutable borrow, or ordinary write. The reference itself opens its own
+column with `o` and runs dotted, `.`, to `R` at lexical scope exit.
 
 **Mutable borrow.** On the owner's column, `>` opens and `<` closes. Between
 them the owner's stroke is written `:` instead of `|`: the owner may not be
@@ -62,13 +65,15 @@ read or written for the span. The reference's column runs dotted, the same as
 for a shared borrow — the difference between the two borrows is drawn on the
 *owner*, which is where the difference actually is.
 
-**Drop.** A filled diamond, `#`, on the row where the scope ends. Written when
-the trace reaches the closing brace, never before.
+**Drop.** A filled diamond, `#`, on the row where an owned value is destroyed.
+Written when the trace reaches that point, never before. A reference instead
+ends with `R`; ending a reference never destroys its referent.
 
-**Lifetime.** Not a glyph. A lifetime is the vertical extent of a stroke, from
-its `o` to its `#` or `*`. That is the point of a ruler: the thing the reader
-must learn to see is a length, so it is drawn as a length, and it is measured
-against the table rows beside it.
+**Lifetime.** Not a glyph. An owned value's extent runs from `o` to `#` or
+`*`; an active loan runs from its opening bracket to `C` or `<`; and a
+reference binding runs from `o` to `R`. These are distinct intervals:
+non-lexical lifetime analysis can end a loan after its last use even while the
+reference name remains in scope.
 
 ## Listing 2.2 — a plain lifetime
 
@@ -124,7 +129,7 @@ t1 t2 t3 t  || main
  |  o       ||   t2 | { id: 7 }
  |  |     o || ─────────────────────────────── stamp
  |  |     | ||   t  | { id: ~~7~~ 8 }
- |  |  o  # || XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX stamp returns; t dropped
+ |  |  o  # || XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX stamp returns; t goes out of scope
  |  |  |    ||   t3 | { id: 8 }
  #  #  #    || end of main
 ```
@@ -181,15 +186,15 @@ fn main() {
 ```
 
 ```text
-art1 art || main
-  o      ||   art1 | 0x10 ------> [ Artwork { name: "The Ordeal of Owain" } ]
-  D   o  || ───────────────────────────────── admire_art
-  |   .  ||   art  | & 0x10 -----> art1
-  C   #  || XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX art dropped; borrow closed
-  D   o  || ───────────────────────────────── admire_art
-  |   .  ||   art  | & 0x10 -----> art1
-  C   #  || XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX art dropped; borrow closed
-  #      || end of main
+art1 art#1 art#2 || main
+  o              ||   art1 | 0x10 ------> [ Artwork { name: "The Ordeal of Owain" } ]
+  D     o        || ───────────────────────────────── admire_art call 1
+  |     .        ||   art  | & 0x10 -----> art1
+  C     R        || XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX loan and binding end
+  D           o  || ───────────────────────────────── admire_art call 2
+  |           .  ||   art  | & 0x10 -----> art1
+  C           R  || XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX loan and binding end
+  #              || end of main
 ```
 
 In listing 2.9, `art1`'s stroke is unbroken from `o` to `#`, so it is never
@@ -214,18 +219,18 @@ fn main() {
 ```
 
 ```text
-art1 art || main
-  o      ||   art1 | 0x20 ------> [ Artwork { view_count: 0, name: "" } ]
-  >   o  || ───────────────────────────────── admire_art
-  :   .  ||   art  | &mut 0x20 --> art1
-  :   .  ||   heap 0x20: view_count ~~0~~ -> 1
-  <   #  || XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX art dropped; borrow closed
-  |      ||   (zero references to art1 on this row)
-  >   o  || ───────────────────────────────── admire_art
-  :   .  ||   art  | &mut 0x20 --> art1
-  :   .  ||   heap 0x20: view_count ~~1~~ -> 2
-  <   #  || XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX art dropped; borrow closed
-  #      || end of main
+art1 art#1 art#2 || main
+  o              ||   art1 | 0x20 ------> [ Artwork { view_count: 0, name: "" } ]
+  >     o        || ───────────────────────────────── admire_art call 1
+  :     .        ||   art  | &mut 0x20 --> art1
+  :     .        ||   heap 0x20: view_count ~~0~~ -> 1
+  <     R        || XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX loan and binding end
+  |              ||   (zero references to art1 on this row)
+  >           o  || ───────────────────────────────── admire_art call 2
+  :           .  ||   art  | &mut 0x20 --> art1
+  :           .  ||   heap 0x20: view_count ~~1~~ -> 2
+  <           R  || XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX loan and binding end
+  #              || end of main
 ```
 
 In listing 2.11 the two `:` runs never touch, and the row between them is
@@ -234,7 +239,7 @@ picture of "one mutable reference at a time": the rule is a statement about
 rows, and the ruler makes it a statement about ink. The cross-out inside the
 heap block is the same overwrite history Stage 0 draws for any mutation.
 
-## Listing 2.12 — a reference outliving its referent
+## Listing 2.12 — a move rejected while borrowed
 
 ```rust
 fn admire_art(art: Artwork) {
@@ -250,25 +255,24 @@ fn main() {
 ```
 
 ```text
-art1 b_a art || main
-  o          ||   art1 | 0x30 ------> [ Artwork { name: "Man on Fire" } ]
-  D    o     ||   borrowed_art | & 0x30 --> art1
-  |    .     ||
-  *    .   o || ──────────────────────────── admire_art
-       .   | ||   art | 0x30 ------> [ Artwork { name: "Man on Fire" } ]
-       .   # || XXXXXXXXXXXXXXXXXXXXXXXXXXXX art dropped; the data is gone
-       .     ||   println!("{}", borrowed_art.name)
+art1 b_a || main
+  o      ||   art1 | 0x30 ------> [ Artwork { name: "Man on Fire" } ]
+  D    o ||   borrowed_art | & 0x30 --> art1
+  |    . ||   admire_art(art1)   ? move rejected while D is open
+  C    . ||   println!("{}", borrowed_art.name); last use closes loan
+  #    R || end of main; bindings end and art1 is destroyed
 ```
 
-The `D` on `art1` never gets its `C`. The dotted stroke for `borrowed_art` runs
-past the `*` that ended `art1`, and past the `#` that destroyed the data, and
-is still dotted on the row that reads it. A reference outliving its referent is
-drawn as a dotted stroke with nothing beside it.
+The `D` on `art1` is still open at the attempted move because
+`borrowed_art` is used on the following line. Mark the conflict, but do not
+draw `*`, a callee binding, or destruction: compilation rejects the move, so
+ownership never transfers. If it were allowed, the reference would outlive
+its referent; Rust prevents that runtime state.
 
 ## Listing 2.13 — returning a reference to a dropped value
 
 ```rust
-fn build_art() -> &Artwork {
+fn build_art<'a>() -> &'a Artwork {
   let art = Artwork { name: "La Liberté guidant le peuple".to_string() };
   &art
 }
@@ -284,33 +288,34 @@ art ret || main
   o     ||   art    | 0x40 ------> [ Artwork { name: "La Liberté ..." } ]
   D  o  ||   return | & 0x40 -----> art
   |  .  ||
-  #  .  || XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX build_art ends; art dropped
-     .  ||   art | & 0x40 -----> ???
+  #  ?  || XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX rejected: ret cannot cross frame
 ```
 
-The return arrow carries a dotted stroke out of a frame whose `#` has already
-been written. Listing 2.12 and listing 2.13 leave the same picture behind — a
-dotted stroke below a `#` — which is why they are one lesson and not two.
+The attempted return would carry a dotted stroke out of a frame whose owned
+value ends at `#`. Mark that crossing as rejected. Do not draw a reference in
+`main`: the compiler does not create a dangling reference.
 
-## The three errors, as one mark
+## The three errors, as one rule
 
-All three canonical errors are a gap in the ruler, read on a single row:
+All three canonical errors are rejected operations, decided from the ruler
+state on the current row:
 
 1. **Use after move** (listing 2.5) — a `?` with no stroke above it.
-2. **A reference outliving its referent** (listing 2.12) — a dotted stroke
-   continuing below its referent's `#`.
-3. **Returning a reference** out of a frame (listing 2.13) — the same dotted
-   stroke below the same `#`, carried across a frame line.
+2. **A reference outliving its referent** (the state prevented in listing
+   2.12) — an attempted move while the reference's borrow bracket is open.
+3. **Returning a reference** out of a frame (listing 2.13) — an attempted
+   dotted stroke crossing the frame line where its referent reaches `#`.
 
-The reader's question is always the same one: *is there ink above this row in
-that column?* That is the sentence the whole notation exists to make askable.
+The reader's question is always the same one: *does the current ruler state
+permit this operation?* The answer may come from a missing owner stroke, an
+open borrow bracket, or a frame boundary where the referent ends.
 
 ## Draw order
 
 The ruler is drawn top to bottom, one row per statement, by a reader who does
-not know how the program ends. Here is listing 2.12 line by line. Each step
-adds ink to exactly one new row; no earlier glyph is erased, moved, or
-rewritten, and no glyph is reserved in advance.
+not know how the program ends. Here is listing 2.12 line by line. Moves and
+scope exits add ink to new rows without back-editing. Precise borrow ends are
+called out separately because they require recognizing a later last use.
 
 **`let art1 = ...;`** — Write the table row the way Stage 0 already teaches it:
 name, heap arrow, heap block. Then, in the margin beside that row, open a
@@ -334,46 +339,40 @@ art1 b_a || main
 ```
 
 **`admire_art(art1);`** — The parameter type is `Artwork`, not `&Artwork`, so
-this call moves. Write `*` in `art1`'s column on the frame-line row and stop
-drawing that column. Open a third column for the callee's `art` with `o`. The
-`D` written two rows ago is not revisited. Nothing is erased.
+this call attempts a move. The open `D` says the shared borrow is still
+active, so write `?` for the rejected operation. Do not write `*` or open a
+callee column: the rejected program transfers nothing.
 
 ```text
-art1 b_a art || main
-  o          ||   art1 | 0x30 ------> [ Artwork { name: "Man on Fire" } ]
-  D    o     ||   borrowed_art | & 0x30 --> art1
-  |    .     ||
-  *    .   o || ──────────────────────────── admire_art
+art1 b_a || main
+  o      ||   art1 | 0x30 ------> [ Artwork { name: "Man on Fire" } ]
+  D    o ||   borrowed_art | & 0x30 --> art1
+  |    . ||   admire_art(art1)   ? move rejected while D is open
 ```
 
-**End of `admire_art`** — The frame's closing brace is reached, so the drop is
-written now, on the row where it happens: `#` in `art`'s column, and the big X
-across the finished frame. The diamond was never reserved on an earlier row and
-never moved down to meet the brace.
-
 **`println!("{}", borrowed_art.name);`** — Continue `b_a`'s dotted stroke onto
-this row, as with any live binding. The error is now visible without any
-back-editing: the dotted stroke has nothing beside it. The reader sees the
-defect at the moment they draw it, not after reasoning about the whole program.
+this row. This later use is why the borrow was active at the attempted move;
+close the active loan with `C` after this use. Continue the dotted binding
+stroke until lexical scope exit, where `R` ends it.
 
-Three properties make this work, and they are the argument for this candidate:
+These properties make the ruler useful, but they do not prove a universal
+no-back-editing claim:
 
 - **The table never moves.** All new ink lands in the margin, which is blank
   paper, so adding Rust information cannot disturb a row that is already
   written. Candidate A must widen or subdivide a column that already has ink in
   it; this candidate does not.
-- **Every glyph is decided by the current statement alone.** `o` comes from a
-  `let`, `D` and `>` come from a visible `&` or `&mut`, `*` comes from a
-  by-value parameter type, `#` comes from a closing brace, `?` comes from a
-  name with no ink above it. None of them requires knowing where the value will
-  be dropped. Candidate B's finished figures place a drop diamond at a point the
-  artist already knew; here the diamond is a consequence of reaching a brace.
+- **Moves and lexical scope exits are decided by the current statement.** `o`
+  comes from a `let`, `D` and `>` from visible borrows, `*` from an accepted
+  by-value transfer, and `#` from destruction. Precise non-lexical borrow
+  endings are the exception: recognizing a last use requires looking ahead or
+  annotating the earlier row later.
 - **A new binding opens a new column to the right.** The column is blank above
-  its `o`, so opening it costs nothing on any earlier row. Left-margin width is
-  the one real cost: a trace with many simultaneous live bindings needs a wide
-  margin. Two characters per binding, and bindings that end free their column
-  for reuse, keeps this within a normal page margin for every listing in the
-  fixed set. This is a layout cost, not a back-editing cost.
+  its `o`, so opening it costs nothing on any earlier row. Labels remain fixed
+  for the entire trace; columns are not reused under a different binding name.
+  Left-margin width is therefore a real cost for traces with many bindings,
+  though the fixed example set still fits a normal page margin. This is a
+  layout cost, not a back-editing cost.
 
 ## Ink
 

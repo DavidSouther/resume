@@ -1,7 +1,7 @@
 # Candidate A: Extended T-table
 
 Candidate A stays inside the table. The name column and the value column keep
-the meaning they had in [Stage 0](/blog/interview_07_tracing_rust/candidates/00-baseline):
+the meaning they had in [Stage 0](./00-baseline.md):
 names on the left, values on the right, complex values drawn in the heap with
 an arrow or a hex address, cross-out on overwrite. Nothing there changes.
 
@@ -31,12 +31,12 @@ an accident.
 |---|---|---|
 | Owns the data | `O` | The own strip of the owning binding's row, at the statement that created it |
 | Move | `∅` appended to the source's strip, `O` on the new row | Source keeps its history; the receiving row opens with `O` |
-| Copy | `O` on the new row, plus a `=` tie mark in the value column | Two owners, two addresses, equal bytes |
+| Copy | `O` on the new row, plus a `=` tie mark in the value column | Two independent values with equal bytes |
 | Shared borrow | `&` on the reference's row, `*` appended to the owner's strip | `*` reads "frozen": the owner may read, not write, not move |
 | Mutable borrow | `&m` on the reference's row, `#` appended to the owner's strip | `#` reads "locked": the owner may not touch the data at all |
 | Borrow ends | The `*` or `#` is crossed out | Crossing out a freeze or a lock is the release |
-| Drop | `†` appended to the strip, and the value is crossed out | Written when scope exit is reached, never before |
-| Lifetime extent | The pair of statement stamps on the strip | `O@s1 … †@s6` reads as the extent; there is no drawn stroke |
+| Binding end / drop | `†` appended to the strip; an owned value is crossed out | Written at lexical scope exit; only owned values are destroyed |
+| Lifetime extent | Statement stamps on the strip | A loan runs from `&`/`&m` to the crossed-out freeze/lock; a binding runs from creation to `†` |
 | Error | `!` circled beside the offending row | See the errors section for the one tell that produces it |
 
 Each glyph carries the statement number it was written at, as `O@s1`. The
@@ -45,16 +45,24 @@ A's weakest point and it is worth naming here: the extent is *recorded* as two
 endpoints on a strip, not *drawn* as a length. A reader has to compare two
 stamps instead of comparing two stroke lengths.
 
+The dagger is a lexical binding-end marker, not a claim that every type runs a
+destructor. For an owning `Artwork` it also marks destruction; for
+`&Artwork` it only ends the reference binding. Its referent is untouched. The
+separate crossed-out `*` or `#` marks when the active loan ends, which may be
+earlier than the reference binding's scope.
+
 ### The three verbs on one row
 
 `let var_b = var_a;` writes a new row and appends to `var_a`'s strip:
 
-- **Move** — new row `var_b | <same address> | O@sN`; append `∅@sN` to
-  `var_a`. The address in the value column is the same on both rows, because
-  the data did not move; only the owner did.
-- **Copy** — new row `var_b | <new address> | O@sN`; append nothing to
+- **Move** — new row `var_b | <same resource> | O@sN`; append `∅@sN` to
+  `var_a`. For a `String`, the heap allocation stays the same while ownership
+  of the `String` value transfers. Rust does not promise that the value's
+  stack bytes remain at one machine address.
+- **Copy** — new row `var_b | <equal value> | O@sN`; append nothing to
   `var_a`. A `=` tie mark between the two value cells records that the bytes
-  are equal and the two owners are independent.
+  are equal and the two values are independent. Their machine addresses are
+  an implementation detail, not part of the rule.
 - **Borrow** — new row `var_b | &<address> | &@sN`; append `*@sN` to `var_a`.
 - **Mutable borrow** — new row `var_b | &mut <address> | &m@sN`; append
   `#@sN` to `var_a`.
@@ -83,8 +91,8 @@ fn main() {
 main                              s1: let p1 = Point { x: 3, y: 4 };
   name | value          | own     s2: let p2 = p1;
   ------------------------------  s3: println!
-  p1   | (3, 4) @0x10   | O@s1
-  p2   | (3, 4) @0x20   | O@s2      = tie to p1: equal bytes, new address
+  p1   | (3, 4)          | O@s1
+  p2   | (3, 4)          | O@s2      = tie to p1: equal bytes, independent value
   p1.x | 3              |           (watch row)
   p2.x | 3              |           (watch row)
   p1   | ~~(3, 4)~~     | O@s1 †@s4
@@ -202,28 +210,23 @@ drawn in the heap with the ordinary cross-out, unchanged from Stage 0.
 
 ### Borrow invalidated by a move — listing 2.12
 
-`borrowed_art` borrows `art1`, then `art1` is moved into `admire_art`, then
-`borrowed_art` is used.
+`borrowed_art` borrows `art1`, then the program attempts to move `art1` into
+`admire_art` before using the reference.
 
 ```text
 main                              s1: let art1 = ..;
   name         | value      | own  s2: let borrowed_art = &art1;
   --------------------------------  s3: admire_art(art1);
-  art1         | 0x10       | O@s1  *@s2  ∅@s3     s4: println!(borrowed_art.name)
+  art1         | 0x10       | O@s1  *@s2  !move@s3 s4: println!(borrowed_art.name)
   borrowed_art | &0x10      | &@s2
-──────────────────────────────────────────── admire_art   (s3)
-  art          | 0x10       | O@s3  †@s3'
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX frame crossed out
-main
-  borrowed_art | &0x10      | (!) reference outlives its referent
+  error: move rejected while the shared borrow is still active
 ```
 
-Read the two strips side by side at `s4`. `art1` carries `∅@s3`, and its data
-carries `†@s3'` inside a frame that is already crossed out. `borrowed_art`
-carries `&@s2` and no `†`. A live `&` below a dead referent is the error. Note
-also that the `*@s2` freeze was never crossed out before the `∅@s3` was
-appended — a move out from under a live freeze is the same error seen from the
-other side.
+At `s3`, `art1` still carries an uncrossed `*@s2`: `borrowed_art` will be used
+at `s4`, so the shared borrow is active. Mark the attempted move as an error,
+but draw no `∅`, callee frame, or drop. The compiler rejects the move, so
+ownership never transfers. If the move were allowed, the reference would
+outlive its referent; Rust prevents that state from existing.
 
 ### Returning a reference from a frame — listing 2.13
 
@@ -238,16 +241,16 @@ main                              s1: let art = build_art();
   return | &0x30     | &@b2             b2: &art
 XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX frame crossed out at b3
 main
-  art  | &0x30       | (!) returning a reference to a dropped value
+  art  | <rejected>  | (!) returning a reference to a local value
 ```
 
-The tell is the same one, one frame higher. The `return` row holds a `&`
-whose referent's strip already carries a `†` written in the frame that is
-being crossed out. Any `&` crossing a frame line outward, toward a referent
-that carries a `†` on the inside of that line, is this error.
+The attempted return promises a reference that remains usable in the caller,
+but its referent is destroyed when the frame ends. Mark the frame crossing as
+an error; do not draw a live reference in `main`, because a rejected program
+does not produce a dangling reference.
 
-The three errors reduce to a single sentence a reader can hold: **a `&` row
-with no `†` must never sit below a `∅` or a `†` on the row it points at.**
+The reference errors reduce to one sentence: **an attempted move or frame
+crossing is illegal when it would leave a live `&` without a live referent.**
 
 ## Draw order
 
@@ -288,16 +291,14 @@ existing strip. The `O@s1` is untouched.
 main
   name         | value  | own
   -----------------------------
-  art1         | 0x10   | O@s1  *@s2  ∅@s3
+  art1         | 0x10   | O@s1  *@s2  !move@s3
   borrowed_art | &0x10  | &@s2
-──────────────────────────────────── admire_art
-  art          | 0x10   | O@s3  †@s3'
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+  error: attempted move conflicts with the active shared borrow
 ```
 
-A frame line, a row inside it, and one more glyph on the end of `art1`'s
-strip. The `†@s3'` on `art`'s strip is appended when the frame is crossed out
-— at the moment scope exit is reached, never reserved in advance.
+Append an error mark to the strip. Do not open a frame or end either live
+binding: compilation rejects this operation. The uncrossed `*@s2` is the
+local reason for the rejection.
 
 **After `s4: println!("I really enjoy {}", borrowed_art.name);`**
 
@@ -305,21 +306,21 @@ strip. The `†@s3'` on `art`'s strip is appended when the frame is crossed out
 main
   name         | value  | own
   -----------------------------
-  art1         | 0x10   | O@s1  *@s2  ∅@s3
-  borrowed_art | &0x10  | &@s2   (!)
-──────────────────────────────────── admire_art
-  art          | 0x10   | O@s3  †@s3'
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+  art1         | 0x10   | O@s1  *@s2  ~~*@s4~~  †@s5
+  borrowed_art | &0x10  | &@s2  †@s5
 ```
 
-One circled `!` appended to the end of `borrowed_art`'s strip. The error mark
-appears on the page before the reader has read the compiler's message, which
-is the whole point of the exercise.
+The final source line explains why the borrow was still active at `s3`: this
+is the reference's last use, so cross out `*@s2` at `s4`. The reference
+binding itself remains in lexical scope until `s5`; append its `†` only there.
+The loan-release mark is therefore information learned with lookahead (or
+appended after reviewing the later line), not a fact available when `s2` was
+first drawn.
 
 ### Why this order holds
 
-Three properties of the own column make the no-back-editing rule hold, and all
-three are worth stating plainly because Candidate B does not have them:
+For moves and scope exits, three properties of the own column make the
+no-back-editing rule hold:
 
 1. A strip only grows rightward. Appending is always legal, because the page
    reserved the whole row width when the row was drawn.
@@ -330,9 +331,12 @@ three are worth stating plainly because Candidate B does not have them:
    is never reserved in advance, so the reader never needs foreknowledge of a
    drop point.
 
-The cost is the one already named: the lifetime extent lives in two statement
-stamps rather than in a drawn length, so "how long does this live" is a
-comparison a reader performs rather than a shape a reader sees.
+The cost is larger for precise non-lexical borrows. A reader cannot know that
+a reference use is its last use without looking ahead. They must either append
+the end after reading later code, or conservatively keep the borrow open to
+scope exit. The lifetime extent also lives in two statement stamps rather
+than in a drawn length, so "how long does this live" is a comparison a reader
+performs rather than a shape a reader sees.
 
 ## Ink
 

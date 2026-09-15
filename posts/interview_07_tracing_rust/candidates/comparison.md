@@ -28,12 +28,11 @@ mark and no drop diamond reserved in advance. Each candidate's own
 findings side by side.
 
 **Candidate A — extended T-table.** Stays inside the table by adding one
-narrow own-column strip per binding. It satisfies no-back-editing: every glyph
-is appended, and the drop dagger is written only at scope exit. The recorded
-cost is in the strip itself, not in the draw order — the lifetime extent is
-two statement stamps a reader compares (`O@s1 … †@s6`), not a length a reader
-sees. That is a readability tradeoff inside an otherwise clean incremental
-draw order.
+narrow own-column strip per binding. Moves and scope exits are appended, and
+the drop dagger is written only when destruction is reached. Precise
+non-lexical borrow ends still require lookahead or later annotation. Its other
+cost is that lifetime extent is two statement stamps a reader compares
+(`O@s1 … †@s6`), not a length a reader sees.
 
 **Candidate B — lifeline graph.** The most expressive candidate on lifetime
 extent, and the one that discards the table entirely, which is exactly what
@@ -48,27 +47,26 @@ over-conservative dashed span or a back-edit once the last use is known).
 Drop diamonds alone stay incremental; page layout and named borrow spans do
 not.
 
-**Candidate C — hybrid.** The table body is untouched, so it cannot violate
-the governing rule on the body at all; every new mark lands in a blank margin
-ruler instead of on ink that already exists. Its `Draw order` section shows
-every glyph decided by the current statement alone — `o` from a `let`, `D` or
-`>` from a visible `&` or `&mut`, `*` from a by-value parameter type, `#` from
-a closing brace — with no drop diamond reserved before its scope exit and no
-borrow-span foreknowledge required, because a borrow's open and close are each
-written from what is visible on the line being drawn. The one cost it names is
-margin width for many simultaneous live bindings, which is a layout cost paid
-in the margin, not a back-editing cost paid against the table.
+**Candidate C — hybrid.** The table body is untouched; new marks land in a
+margin ruler instead of rewriting the table. Moves, accepted transfers,
+temporary call borrows, and scope exits are decided when their rows are
+reached. Precise non-lexical borrow ends are not: a reader cannot know a use
+is the last use without looking ahead. As with Candidate B, the honest choices
+are to annotate the end after reading later code or extend the borrow
+conservatively to lexical scope exit. Its other cost is margin width for many
+simultaneous live bindings.
 
 ## Recommendation
 
-Candidate C, the hybrid, is the recommendation. It is the only one of the
-three that both extends the table, rather than replacing it, and satisfies
-the incremental draw-order criterion without needing foreknowledge of a drop
-point or a borrow's end. Candidate A satisfies draw order too, but pays for it
-with a lifetime extent the reader must compare rather than see. Candidate B
-draws lifetime extent most clearly of the three but violates the governing
-rule twice over: it discards the table, and its own draw order admits it
-sometimes cannot avoid foreknowledge.
+Candidate C, the hybrid, is the recommendation to test first. It extends the
+table rather than replacing it, makes ownership transfer spatially visible,
+and keeps ordinary moves and scope exits incremental. It does **not** solve
+the last-use problem: exact non-lexical borrow ends require lookahead or later
+annotation in all three candidates. Candidate A keeps the table too, but its
+lifetime extent is a pair of labels rather than a visible length. Candidate B
+draws lifetime extent most clearly but discards the familiar table and needs
+the most horizontal planning. The recommendation is therefore a testable
+hypothesis, not a claim that Candidate C meets every criterion uniquely.
 
 ## What to test
 
