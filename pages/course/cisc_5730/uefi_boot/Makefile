@@ -10,7 +10,7 @@ else
 UEFI_BOOT_FIRMWARE ?= /usr/share/qemu-efi-aarch64/QEMU_EFI.fd
 endif
 
-.PHONY: install build run
+.PHONY: install build run run-loop
 
 install:
 	@command -v rustup >/dev/null 2>&1 || { \
@@ -49,7 +49,7 @@ install:
 	rustup target add $(TARGET)
 
 build:
-	cargo build --target $(TARGET)
+	cargo build --target $(TARGET) $(CARGO_FEATURES)
 	mkdir -p $(dir $(ESP_IMAGE))
 	cp $(EFI_IMAGE) $(ESP_IMAGE)
 
@@ -60,23 +60,30 @@ run: build
 	}
 	@test -f qemu/hdd.img || qemu-img create -f raw qemu/hdd.img 4M
 	@test -f qemu/usb.img || qemu-img create -f raw qemu/usb.img 2M
-	@rm -f qemu/cpu_usage.log
+	@rm -f qemu/cpu_usage.log qemu/qemu.pid
+	( while [ ! -s qemu/qemu.pid ]; do sleep 0.1; done; \
+	  qemu_pid=$$(cat qemu/qemu.pid); \
+	  while kill -0 $$qemu_pid 2>/dev/null; do \
+		ps -o %cpu= -p $$qemu_pid 2>/dev/null; \
+		sleep 1; \
+	  done > qemu/cpu_usage.log ) & \
+	monitor_pid=$$!; \
 	qemu-system-aarch64 \
 		-M virt -cpu cortex-a72 -m 512 \
 		-bios "$(UEFI_BOOT_FIRMWARE)" \
+		-pidfile qemu/qemu.pid \
 		-drive file=fat:rw:qemu/esp,format=raw,media=disk \
 		-drive file=qemu/hdd.img,format=raw,if=virtio \
 		-device virtio-gpu-pci \
 		-device qemu-xhci,id=xhci \
 		-drive file=qemu/usb.img,format=raw,if=none,id=usbstick \
 		-device usb-storage,drive=usbstick,removable=on \
-		-display none -serial mon:stdio -no-reboot & \
-	qemu_pid=$$!; \
-	( while kill -0 $$qemu_pid 2>/dev/null; do \
-		ps -o %cpu= -p $$qemu_pid 2>/dev/null; \
-		sleep 1; \
-	done > qemu/cpu_usage.log ) & \
-	monitor_pid=$$!; \
-	wait $$qemu_pid; \
+		-display none -serial mon:stdio -no-reboot; \
 	kill $$monitor_pid 2>/dev/null; \
 	echo "host CPU%% samples for this run: qemu/cpu_usage.log"
+
+# Same as `run`, but built with the `polling` feature: `executor::block_on`
+# busy-spins on `read_key_stroke` instead of blocking in `WaitForEvent`. Use
+# this to compare host CPU usage against the default, event-driven `run`.
+run-loop: CARGO_FEATURES := --features polling
+run-loop: run
