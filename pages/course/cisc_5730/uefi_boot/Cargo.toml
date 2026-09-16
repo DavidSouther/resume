@@ -1,0 +1,18 @@
+[package]
+name = "uefi_boot"
+version = "0.1.0"
+edition = "2021"
+description = "Minimal aarch64 UEFI device-info shell (no_std, hand-rolled protocol bindings)."
+
+[dependencies]
+thiserror = { version = "2", default-features = false }
+
+[features]
+polling = []
+
+[profile.dev]
+panic = "abort"
+
+[profile.release]
+panic = "abort"
+opt-level = "s"
