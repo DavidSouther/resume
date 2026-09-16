@@ -14,7 +14,7 @@ use core::future::Future;
 use core::pin::Pin;
 use core::task::{Context, Poll, Waker};
 
-/// A `Future` that resolves to the next keystroke. 
+/// A `Future` that resolves to the next keystroke.
 /// The actual waiting happens in [`block_on`] in the gap between polls.
 pub struct ReadKey(pub *mut SimpleTextInputProtocol);
 
@@ -53,38 +53,29 @@ impl Future for ReadKey {
 /// generally `Unpin` (it may hold a borrow across an `.await` point), and
 /// pinning it in a `Box` is the simplest sound way to call `poll` on it
 /// more than once.
-#[cfg(not(feature = "polling"))]
-pub fn block_on<F: Future>(boot_services: *mut BootServices, wait_event: Event, fut: F) -> F::Output {
+pub fn block_on<F: Future>(
+    boot_services: *mut BootServices,
+    wait_event: Event,
+    fut: F,
+) -> F::Output {
     let mut fut = Box::pin(fut);
     let waker = Waker::noop();
     let mut cx = Context::from_waker(waker);
+
     loop {
         if let Poll::Ready(value) = fut.as_mut().poll(&mut cx) {
             return value;
         }
-        let mut events = [wait_event];
-        let mut index = 0usize;
-        // SAFETY: `boot_services` from `efi_main`
-        // `events` is a local `[Event; 1]` array.
-        // Ignoring the status: whether this returns EFI_SUCCESS or an
-        // error, looping back to poll again is the correct next step
-        let _ = unsafe { ((*boot_services).wait_for_event)(1, events.as_mut_ptr(), &mut index) };
-    }
-}
 
-/// Drives `fut` to completion by spinning: every time it's `Pending`,
-/// this polls again immediately, with no firmware call to block on.
-/// `boot_services` and `wait_event` are unused here — they exist only so
-/// callers (`Shell::run`) can call `block_on` identically under either
-/// feature.
-#[cfg(feature = "polling")]
-pub fn block_on<F: Future>(_boot_services: *mut BootServices, _wait_event: Event, fut: F) -> F::Output {
-    let mut fut = Box::pin(fut);
-    let waker = Waker::noop();
-    let mut cx = Context::from_waker(waker);
-    loop {
-        if let Poll::Ready(value) = fut.as_mut().poll(&mut cx) {
-            return value;
+        #[cfg(not(feature = "polling"))]
+        {
+            let mut events = [wait_event];
+            let mut index = 0usize;
+            // SAFETY: `boot_services` from `efi_main`
+            // `events` is a local `[Event; 1]` array.
+            // whatever this returns, looping back to poll again is the correct next step
+            let _ =
+                unsafe { ((*boot_services).wait_for_event)(1, events.as_mut_ptr(), &mut index) };
         }
     }
 }
