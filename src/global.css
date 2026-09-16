@@ -511,3 +511,120 @@ section:has(img.float) + section {
     text-decoration: none;
   }
 }
+
+/*
+ * A trace diagram and the listing it traces are one figure: `src/lib/markdown.ts`
+ * wraps an adjacent code fence and mermaid fence in `.trace-figure`. Side by side
+ * on a wide screen, stacked when the column is too narrow for both to stay
+ * legible. The diagram is an SVG sized only by its viewBox, so it scales into
+ * whatever share of the row it gets.
+ */
+.trace-figure {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--size-3, 1rem);
+  margin-block: var(--size-4, 1.5rem);
+}
+
+/*
+ * Basis values must sum to less than the article column, or the row wraps and
+ * the two halves stack. 16rem + 20rem + gap leaves room in a typical column and
+ * still wraps on a narrow one, which is the intended fallback.
+ */
+.trace-figure > pre {
+  flex: 1 1 16rem;
+  min-width: 0;
+  margin-block: 0;
+  padding: var(--size-3, 1rem);
+  border-radius: var(--radius-blockquote, 0.5rem);
+  background: var(--color-surface-variant, transparent);
+  overflow-x: auto;
+}
+
+/* The diagram is the wider half, so it takes the larger share of any slack. */
+.trace-figure > pre.mermaid {
+  flex: 2 1 20rem;
+  padding: 0;
+  background: none;
+}
+
+/* Sized by viewBox alone, so it scales into whatever share of the row it gets. */
+pre.mermaid svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/*
+ * highlight.js token colours, drawn from jiffies-css intent tokens rather than
+ * from a shipped hljs theme, so a listing follows the site's four themes and
+ * needs no second stylesheet request. Highlighting itself runs at build time in
+ * `src/lib/markdown.ts`; these rules only colour the spans it emits.
+ */
+.hljs-comment,
+.hljs-quote,
+.hljs-doctag {
+  color: var(--color-on-surface-variant);
+  font-style: italic;
+}
+
+.hljs-keyword,
+.hljs-built_in,
+.hljs-selector-tag,
+.hljs-operator {
+  color: var(--color-primary);
+}
+
+.hljs-string,
+.hljs-regexp,
+.hljs-char.escape_ {
+  color: var(--color-success);
+}
+
+.hljs-number,
+.hljs-literal,
+.hljs-type,
+.hljs-symbol {
+  color: var(--color-tertiary);
+}
+
+.hljs-title,
+.hljs-title.function_,
+.hljs-title.class_,
+.hljs-section {
+  color: var(--color-secondary);
+}
+
+.hljs-attr,
+.hljs-attribute,
+.hljs-property,
+.hljs-variable,
+.hljs-template-variable {
+  color: var(--color-on-surface);
+}
+
+.hljs-meta,
+.hljs-tag,
+.hljs-name {
+  color: var(--color-info);
+}
+
+.hljs-link {
+  color: var(--color-link);
+}
+
+.hljs-addition {
+  color: var(--color-ins);
+}
+
+.hljs-deletion {
+  color: var(--color-del);
+}
+
+.hljs-emphasis {
+  font-style: italic;
+}
+
+.hljs-strong {
+  font-weight: bold;
+}
