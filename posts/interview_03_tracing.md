@@ -15,7 +15,28 @@ While there are many possible ways to trace the behavior of code with pen and pa
 
 Tracing starts with a print out of the code to work through. Without code, there’s nothing to trace\! With the code available, create a T table of names on the left and values on the right.
 
-![Tracing the GCD function](/images/Technical_Whiteboarding_Tracing_Basic.png)
+```python
+def gcd(a, b):
+  while a != b:
+    if a > b:
+      a = a - b
+    else:
+      b = b - a
+  return a
+
+gcd(1071, 462)
+```
+
+```mermaid
+traceDiagram
+  title Tracing the GCD function
+  frame gcd
+    a: 1071, 609, 147, 126, 105, 84, 63, 42, 21
+    b: 462, 315, 168, 21
+    ret 21
+  end
+```
+
 
 This is a complete trace of calling a Greatest Common Divisor (GCD) function. The GCD function computes the largest integer that is itself a divisor of two other integers. This approach using repeated subtraction is known as “Euclid’s Algorithm”. It has two variables, a and b, which both have numeric values that change repeatedly over the course of executing the function. Each of those intermediate values is captured in the table, less as reference and more as a tool to keep attention & not lose a value.
 
@@ -37,15 +58,32 @@ For objects and arrays, follow . and \[\] for properties and indexes. Perform ar
 
 Ensure the variable on the left of the \= is already in the table. Evaluate the expression on the right of the \=. Cross out the last value in the table. Write or draw the new value from the evaluated expression?.
 
-![Tracing gcdmod][image2]
+```javascript
+function gcdmod(a, b) {
+  while (b != 0) {
+    [a, b] = [b, a % b];
+  }
+  return a;
+}
+
+gcdmod(1071, 462);
+```
+
+```mermaid
+traceDiagram
+  title Tracing gcdmod
+  frame gcdmod
+    a: 1071, 462, 147, 21
+    b: 462, 147, 21, 0
+    ret 21
+  end
+```
 
 This version of GCD uses the “Long Division” improvement to Euclid’s algorithm, resulting in many fewer iterations. It also uses the JavaScript argument spread syntax, to avoid creating an intermediate variable inside the while loop.
 
 ##### 4\. Follow control flow.
 
-Function calls for code that has been written in this solution should be traced. See [Function Calls](https://codefellows.github.io/common_curriculum/challenges/code/tracing#heading=h.nga0zn5w473p), below.
-
-If statements execute the body when the condition is true, or the else body if the condition is false and the else is present. If conditions that don’t result in a boolean may or may not be an error, depending on the language. Depending on which side, note that next line and repeat.
+Function calls for code that has been written in this solution should be traced. If statements execute the body when the condition is true, or the else body if the condition is false and the else is present. If conditions that don’t result in a boolean may or may not be an error, depending on the language. Depending on which side, note that next line and repeat.
 
 While loops check the condition. If the condition is true, they execute the next line in the body. Otherwise, they execute the next line after the end of the body.
 
@@ -59,7 +97,41 @@ The core purpose of this tracing technique is to understand how program state ch
 
 Primitive values (booleans, numbers, short strings, and small arrays with three items or fewer) should be drawn directly in the value column. Complex values, primarily objects and large arrays of more than three items, should be drawn to the right of the name/value table with an arrow from the value pointing at the object. If a property or array entry itself has a complex value, draw another arrow. In the visual step through, arrows are literal pointer references. When the pointer value changes, either scribble out the arrow or change its color to represent it is the “old state”, and draw a new arrow to the updated value.
 
-![Tracing State](/images/Technical_Whiteboarding_Tracing_Objects.png)
+```javascript
+function hasCycle(listHead) {
+  const visited = new Set();
+  let current = listHead;
+  while (current) {
+    if (visited.has(current)) return true;
+    visited.add(current);
+    current = current.next;
+  }
+  return false;
+}
+```
+
+```mermaid
+traceDiagram
+  title Tracing a circular linked list
+  heap blue 0x10
+    color: cornflowerblue
+    next -> green
+  end
+  heap green 0x20
+    color: mediumseagreen
+    next -> gold
+  end
+  heap gold 0x30
+    color: goldenrod
+    next -> blue
+  end
+  frame hasCycle
+    listHead: @blue
+    visited: {}, {0x10}, {0x10 0x20}, {0x10 0x20 0x30}
+    current: @blue, @green, @gold, @blue
+    ret true
+  end
+```
 
 This walk through of a circular linked list detection algorithm shows a number of arrows for objects. The listHead doesn’t actually point to an object, but points to the reference that is the head of the passed in linked list. Each node then has a color to represent its value, and an arrow for its next pointer. This could also be drawn as a name/value table, but because Linked List nodes are well known, they have a streamlined representation. The yellow node has a next arrow pointing back to blue, forming the circle. The visited set, like the list nodes, uses a shorthand notation wrapping copies of the nodes in curly braces (their next pointers would technically be set, but are elided for clarity). The current node moved several times through the algorithm, with old positions colored red. At the end of the fourth loop iteration, the arrow from current to the blue node was red, and the arrow from current to the yellow node was gray.
 
@@ -71,7 +143,43 @@ When tracing a function call, draw a horizontal line across the table (leaving s
 
 When returning from a function, add a final entry in the name column as return (or ret), with the return value in the value column. Draw an arrow along the left side of the stack back to the variable the return value is assigned to. Copy this value (or arrow) to that value slot. Finally, cross out with a large X the completed function invocation.
 
-![{[width=800px]} Tracing function calls in gcdr](/images/Technical_Whiteboarding_Tracing_Recursion.png)
+```python
+def gcdr(a, b):
+  if b == 0:
+    return a
+  else:
+    return gcdr(b, a % b)
+
+gcdr(1071, 462)
+```
+
+```mermaid
+traceDiagram
+  title Tracing function calls in gcdr
+  frame gcdr
+    a: 1071
+    b: 462
+    ret 21
+    frame gcdr
+      a: 462
+      b: 147
+      ret 21 -> ret
+      done
+      frame gcdr
+        a: 147
+        b: 21
+        ret 21 -> ret
+        done
+        frame gcdr
+          a: 21
+          b: 0
+          ret 21 -> ret
+          done
+        end
+      end
+    end
+  end
+```
 
 A recursive implementation of the GCD algorithm. Each recursive call received a new stack frame (the horizontal lines), with the two arguments. As the functions returned, the arrow filled in the return value for the prior invocation and the frame got crossed off as “complete”.
 
@@ -81,15 +189,38 @@ A recursive implementation of the GCD algorithm. Each recursive call received a 
 
 Instead of arrows to the heap, each heap object can have a “memory address” assigned. These should be chosen pseudo-randomly, and always written in hexadecimal. For the object or list in the heap, write its fake address to the top left of the visualization, and put the same number in the value column for the pointer variable. Arrows are optional \- they will reinforce what the pointer values are, and they make it obvious to see when an object is no longer in use (all arrows pointing to it are crossed out), but they may be over cluttering for some pointer-heavy programs.
 
-![Tracing heap objects with pointers](/images/Technical_Whiteboarding_Tracing_Objects.png)
-
 A good rule of thumb for pointers is to start at 0x10, incrementing the first hex digit by one for each new object, and incrementing the second digit by 1 for each field or item in the array. This does imply a limit of 16 items in an array, or 16 fields in a struct, and does imply word-aligned member access.
 
 ##### Expression Evaluation as Variables
 
 Programmers with complex expressions may want to track those computations during execution. Adding an expression to the T-table where the left column is the expression of interest, and the right column is its value, is a convenient way to track these pieces of information.
 
-![Tracing intermediate expressions](/images/Technical_Whiteboarding_Tracing_Expression.png)
+```javascript
+function extractValue(arg) {
+  return arg.list[2].value;
+}
+```
+
+```mermaid
+traceDiagram
+  title Tracing intermediate expressions
+  heap arg 0x10
+    list -> items
+  end
+  heap items 0x20
+    0: 0x30
+    1: 0x40
+    2: 0x50
+  end
+  heap third 0x50
+    value: 42
+  end
+  frame extractValue
+    arg: @arg
+    watch arg.list[2]: @third
+    ret 42
+  end
+```
 
 The extractValue function looks at the value of the item at index 2 in the list property of arg. In the table, arg.list\[2\] is shown in the “name” column, and makes it clear which object is at index 2 in the array. The return entry can skip the process of going through the entire expression, and follow the arrow directly.
 
@@ -101,7 +232,36 @@ Many languages have block scopes for variables. In Java, scopes are created at a
 
 When tracing a function that has a scope block, draw a dashed line instead of a solid line when starting the scope. Continue the trace as normal, using all values both in the function and the local scope. When the scope is complete, cross it off the same as exiting a function. Multiple scopes can be stacked, and read values higher up the stack.
 
-![Tracing scope](/images/Technical_Whiteboarding_Tracing_Scope.png)
+```javascript
+let total = 0;
+let i = 0;
+while (i < 3) {
+  const t = i * 2;
+  total = total + t;
+  i = i + 1;
+}
+```
+
+```mermaid
+traceDiagram
+  title Tracing scope
+  frame main
+    total: 0, 0, 2, 6
+    i: 0, 1, 2, 3
+    scope while
+      t: 0
+      done
+    end
+    scope while
+      t: 2
+      done
+    end
+    scope while
+      t: 4
+      done
+    end
+  end
+```
 
 In this JavaScript example, using `const` in a `while` loop creates a new `t` value. We show this in the trace by adding a light dashed line to know we're in the same function, but also to offset the scope. Like returning from functions, we also cross out the scope when it exits, that is, when the `while` loop repeats at the top.
 
