@@ -45,9 +45,11 @@ def main() -> None:
         )
         return
 
-    run("pull_permits.py")
+    run("pull_bike_routes.py")
+    run("pull_permits.py")  # audit-only — see sources.yaml street_construction_permits.role
     run("pull_capital_projects.py")
     run("pull_plazas.py")
+    run("pull_pedestrian_space.py")
     run("classify.py")  # refuses (exit 1) if classification.yaml is incomplete
     run("build_table.py")
     run("crosscheck.py")

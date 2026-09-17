@@ -8,16 +8,31 @@ Open Streets) between the Adams administration (Jan 1 2022 – Dec 31
 
 ## Current status
 
-**Not yet run against live data.** This pipeline was authored in a
-sandbox whose network egress policy blocks `data.cityofnewyork.us`,
-`www.nyc.gov`, and `projects.transalt.org`. Every script below is
-written and smoke-tested against synthetic fixtures, but `cache/` and
-`output/final_table.csv` in this repo reflect a pipeline that has never
-touched real Socrata/DOT data. `output/final_table.csv` currently shows
-every metric as `unavailable` with a stated reason — that is the
-correct, honest state for a pipeline that hasn't run, not a bug.
+**Run against live data on 2026-09-17.** `data.cityofnewyork.us` and
+`projects.transalt.org` are reachable from this environment;
+`www.nyc.gov` (the DOT testimony PDF host) returns 403 to a bare `curl`,
+so those three URLs remain `url_verified: false` in
+`config/testimony.yaml` — verify them in a browser before citing a
+testimony figure.
 
-Run it for real from an environment that can reach those three hosts.
+Schema inspection also found that the original assumption — that
+Street Construction Permits (`tqtj-sjs8`) carries `permit_type`/
+`work_type` fields with bike-lane and daylighting categories — was
+wrong: that dataset has neither field, and none of its real categorical
+fields carry either category. The pipeline was re-pointed at NYC's Bike
+Routes inventory (`mzxg-pwib`) for protected bike lanes (an as-built
+record with a real install date, not an issued permit) and at
+Pedestrian Space Added (`uebm-cmjr`) for the plazas/Open Streets
+Adams-vs-Mamdani split (the plazas polygon dataset itself has no
+install-date field). No public dataset was found for daylighted
+intersections at all — see `config/sources.yaml`'s `daylighting.note`
+— so that metric is `unavailable`, honestly, rather than derived from
+unrelated permit free-text. See each dataset's `role` in
+`config/sources.yaml` for the full reasoning.
+
+`output/final_table.csv` now carries real numbers for protected bike
+lanes and a real (FY-approximated) number for plazas/Open Streets;
+daylighting remains `unavailable` because no source exists for it.
 
 ## Setup
 
@@ -37,28 +52,30 @@ python inspect_schema.py
 # Writes ../config/classification.generated.yaml.
 
 # --- STOP: human review ---
-# Open classification.generated.yaml, copy each permit_type/work_type
+# Open classification.generated.yaml, copy each ft_facilit/tf_facilit
 # value into ../config/classification.yaml's `mapping`, assigning it to
-# bike_lane_install / daylighting / other / ambiguous. Also check the
-# printed field lists for:
-#   - street_construction_permits: does length_field exist (a linear
-#     measurement on bike lane permits)? If so, set
-#     sources.yaml -> street_construction_permits.length_field/length_unit.
+# bike_lane_install / other / ambiguous. Also check the printed field
+# lists for:
+#   - bike_routes: does a real per-segment length field exist? If so,
+#     consider whether a lane-mile figure is worth adding — the current
+#     pipeline deliberately reports a segment count instead of guessing
+#     a units-bearing figure from geometry.
 #   - capital_reconstruction_projects: is there a status field and a
 #     completed value? Set status_field/completed_values.
 #   - pedestrian_plazas: is there an install/opening date field? Set
 #     date_field if so; leave null if not (the pipeline then correctly
 #     reports a total count with no year-over-year split).
-# Do not guess any of these three — leave them null/empty if unconfirmed.
+# Do not guess any of these — leave them null/empty if unconfirmed.
 
 # Steps 1-5: pull, classify, aggregate, build the table, cross-check.
 python run_pipeline.py
 ```
 
-Or run the individual steps directly (`pull_permits.py`,
-`pull_capital_projects.py`, `pull_plazas.py`, `classify.py`,
-`build_table.py`, `crosscheck.py`) — `run_pipeline.py` is just a thin
-sequencer around them.
+Or run the individual steps directly (`pull_bike_routes.py`,
+`pull_permits.py`, `pull_capital_projects.py`, `pull_plazas.py`,
+`pull_pedestrian_space.py`, `classify.py`, `build_table.py`,
+`crosscheck.py`) — `run_pipeline.py` is just a thin sequencer around
+them.
 
 `classify.py` refuses (exit 1) and prints every unmapped value if
 `classification.yaml` still has gaps — it will not guess a category or
@@ -72,27 +89,41 @@ silently drop rows.
   figures live. No script hardcodes any of these.
 - `cache/<dataset_id>/page_*.json` + `manifest.json` — raw, unmodified
   Socrata responses, committed so the pull is independently auditable
-  against the final numbers.
-- `output/permits_classified.csv`, `output/final_table.csv` — derived;
-  regenerate by re-running the pipeline rather than hand-editing.
+  against the final numbers. The one exception is
+  `cache/tqtj-sjs8/audit_summary.json` (Street Construction Permits):
+  that dataset has 3M+ rows since 2022, far too large to cache raw for
+  a dataset this pipeline doesn't use for any metric, so its cache is a
+  small row-count-and-finding summary instead — see `pull_permits.py`.
+- `output/bike_routes_classified.csv`, `output/final_table.csv` —
+  derived; regenerate by re-running the pipeline rather than
+  hand-editing.
 
 ## Design notes / constraints this pipeline follows
 
-- A permit row is an **issued** record, not a verified completion. Every
-  permit-derived metric says so in its `completion_semantics` /`notes`
-  column rather than being labeled a completion count.
-- `length_field` (bike-lane linear measurement) defaults to `null` — a
-  permit **count** is reported, not miles, until a real length-bearing
-  field is confirmed via `inspect_schema.py`. Guessing a units-bearing
-  field to manufacture a miles figure is exactly the failure mode this
-  guards against.
-- The pedestrian plazas dataset may have no install/opening date. If so,
-  the pipeline reports a single total count as of extraction, states
-  that plainly, and does not fabricate an Adams/Mamdani split.
-- `crosscheck.py` never picks a "winning" number between the permit
-  pull, DOT testimony, and the TransAlt tracker — every mismatch beyond
-  the configured variance threshold (`testimony.yaml` ->
-  `cross_check.*.variance_warn_threshold_pct`) prints as a warning.
+- A bike route segment is counted only when `status == 'Current'` — a
+  retired/removed facility does not count as a still-installed lane.
+  The `instdate` field is DOT/DCP's own as-built install date, not an
+  issued permit date, which is a stronger completion signal than a
+  permit record.
+- Bike lane figures are a **segment count**, not mileage — no reliable
+  per-segment length field exists without computing one from geometry,
+  and this pipeline does not guess a units-bearing figure to manufacture
+  a miles total.
+- The pedestrian plazas dataset has no install/opening date field, so it
+  contributes only a total count as of extraction — never a fabricated
+  Adams/Mamdani split. That split instead comes from Pedestrian Space
+  Added, bucketed by NYC fiscal year; see `aggregate.py`'s `plaza_metric`
+  for the disclosed FY22/FY26 administration-boundary approximation.
+- No public dataset tracks daylighted intersections as of this pipeline's
+  last catalog search (2026-09-17) — see `sources.yaml`'s `daylighting`
+  block. That metric is reported `unavailable` rather than derived from
+  unrelated permit free-text (a `LIKE '%DAYLIGHT%'` match on permit
+  stipulation text returns ~4,000 rows, but that's boilerplate curb
+  language, not a reliable signal of daylighting projects).
+- `crosscheck.py` never picks a "winning" number between the bike-route
+  inventory, DOT testimony, and the TransAlt tracker — every mismatch
+  (including a unit mismatch, e.g. miles vs. segment count) prints as a
+  warning, not a silently resolved comparison.
 - Mamdani's window has no end date. `mamdani_annualized_total` in the
   final table extrapolates `mamdani_to_date_total` to a full year using
   the elapsed fraction of the window at extraction time — it is clearly

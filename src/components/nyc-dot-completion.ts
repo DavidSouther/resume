@@ -26,7 +26,7 @@ import {
 } from "../lib/nyc-dot.ts";
 
 const CONFIDENCE_LABELS: Record<string, string> = {
-	"permit-verified": "Permit-verified",
+	"inventory-verified": "Inventory-verified",
 	"api-verified": "API-verified",
 	"testimony-only": "Testimony-only",
 	"tracker-only": "Tracker-only",
@@ -105,8 +105,8 @@ function confidenceLegend(): HTMLUListElement {
 		{ class: "nd-legend" },
 		li(
 			{},
-			confidenceBadge("permit-verified"),
-			" sourced from the Street Construction Permits pull",
+			confidenceBadge("inventory-verified"),
+			" sourced from DOT/DCP's own as-built bike route inventory",
 		),
 		li(
 			{},
@@ -161,33 +161,41 @@ export function NycDotCompletion(): HTMLElement {
 			{},
 			li(
 				{},
-				"Primary source: NYC DOT Street Construction Permits (Socrata ",
+				"Primary source for protected bike lanes: NYC's own Bike Routes inventory (Socrata ",
+				code({}, "mzxg-pwib"),
+				"), an ",
+				span({ class: "nd-unverified" }, "as-built"),
+				" record with a real install date per segment — not an issued permit. An earlier version of this pipeline assumed the Street Construction Permits dataset (",
 				code({}, "tqtj-sjs8"),
-				"). A permit is an ",
-				span({ class: "nd-unverified" }, "issued"),
-				", work-authorized record — not a verified completion. Every permit-derived figure in this table says so.",
+				") carried bike-lane/daylighting categories; schema inspection found it does not (it's a general street-opening permit feed with no such field). That dataset is still pulled and cached as a documented audit trail, but is no longer used for classification.",
 			),
 			li(
 				{},
-				"permit_type / work_type values are classified into bike-lane-install / daylighting / other / ambiguous via a human-reviewed mapping (",
+				"ft_facilit / tf_facilit (the facility class in each direction of travel) are classified into bike-lane-install / other / ambiguous via a human-reviewed mapping (",
 				code({}, "tools/nyc-dot-completion/config/classification.yaml"),
-				"), generated from the dataset's own distinct values — never guessed from field names.",
+				'), generated from the dataset\'s own distinct values — never guessed from field names. A segment counts as a protected bike lane if either direction is classified "Protected".',
 			),
 			li(
 				{},
-				"Bike lane mileage is reported only if the permits dataset carries a real linear-measurement field, confirmed by schema inspection. Otherwise the table reports a permit count, not a fabricated mileage.",
+				"Bike lane figures are a segment count, not mileage: no reliable per-segment length field exists on this dataset without computing one from geometry, and this pipeline does not guess a units-bearing figure.",
 			),
 			li(
 				{},
-				"Street and Highway Capital Reconstruction Projects (",
-				code({}, "97nd-ff3i"),
-				") cross-check anything the permit feed alone can't confirm as completed.",
+				"Daylighted intersections has no public NYC Open Data source as of this run (confirmed by catalog search across daylighting-adjacent terms) — DOT Council testimony is the only source, and the most recent (first Mamdani-era) testimony gives no figure at all. This metric is reported as unavailable rather than derived from unrelated permit free-text.",
 			),
 			li(
 				{},
 				"Pedestrian Plazas (",
 				code({}, "k5k6-6jex"),
-				") are bucketed by administration window only if the dataset carries an install/opening date; otherwise this page reports a single total count as of extraction, with no fabricated year split.",
+				") has no install/opening date field, so it contributes only a single total count as of extraction, never a fabricated year split. The Adams/Mamdani comparison for this row instead comes from DOT's Pedestrian Space Added (",
+				code({}, "uebm-cmjr"),
+				") project counts, bucketed by NYC fiscal year — a disclosed approximation, since fiscal years straddle administration transitions and don't line up with the Jan 1 admin-change date.",
+			),
+			li(
+				{},
+				"Street and Highway Capital Reconstruction Projects (",
+				code({}, "97nd-ff3i"),
+				") is pulled and cached as a future cross-check on anything the above feeds alone can't confirm as completed; not yet wired into the metrics above.",
 			),
 			li(
 				{},

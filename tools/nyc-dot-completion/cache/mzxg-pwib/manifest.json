@@ -1,0 +1,9 @@
+{
+  "dataset_id": "mzxg-pwib",
+  "resource_url": "https://data.cityofnewyork.us/resource/mzxg-pwib.json",
+  "where": null,
+  "order_by": "instdate",
+  "page_size": 50000,
+  "row_count": 29695,
+  "fetched_at": "2026-09-17T23:29:42.819962+00:00"
+}

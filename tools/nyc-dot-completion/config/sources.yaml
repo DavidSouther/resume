@@ -2,6 +2,14 @@
 # Every dataset the pipeline touches is declared here, not hardcoded in
 # scripts, so a source swap or a new administration window is a config
 # edit, not a code change.
+#
+# Every field below was confirmed against inspect_schema.py's live output
+# on 2026-09-17 (see tools/nyc-dot-completion/README.md "Current status").
+# The original version of this file guessed field names from the task
+# brief (permit_type/work_type on tqtj-sjs8) before ever seeing the real
+# schema — those guesses were wrong. tqtj-sjs8 carries no bike-lane or
+# daylighting categorical field at all; see street_construction_permits'
+# role below for what schema inspection actually found.
 
 administrations:
   adams:
@@ -24,53 +32,99 @@ socrata:
   page_size: 50000
 
 datasets:
+  bike_routes:
+    dataset_id: mzxg-pwib
+    resource_url: "https://data.cityofnewyork.us/resource/mzxg-pwib.json"
+    metadata_url: "https://data.cityofnewyork.us/api/views/mzxg-pwib.json"
+    # Confirmed via inspect_schema.py: an install date exists directly on
+    # this dataset (a real as-built record, not an issued permit).
+    date_field: instdate
+    status_field: status # "Current" | "Retired" — only "Current" segments count
+    active_status_value: "Current"
+    # Per-segment, per-direction facility class. A segment can be
+    # "Protected" in one direction and something else in the other, so
+    # classify.py checks both, not just the first non-null field.
+    source_fields: [ft_facilit, tf_facilit]
+    role: >
+      Primary source for protected bike lanes: NYC DOT/DCP's own bike
+      route inventory (LION-segment records), each carrying an install
+      date and a facility class per direction of travel. This supersedes
+      street_construction_permits (see below) as the primary source —
+      schema inspection found no bike-lane category on the permits
+      dataset at all. Counts segments, not miles: no reliable
+      per-segment length field exists without computing one from
+      geometry, and this pipeline does not guess a units-bearing figure.
+
   street_construction_permits:
     dataset_id: tqtj-sjs8
     resource_url: "https://data.cityofnewyork.us/resource/tqtj-sjs8.json"
     metadata_url: "https://data.cityofnewyork.us/api/views/tqtj-sjs8.json"
-    # Field name to filter/sort on. Confirm against metadata_url before
-    # trusting this — Socrata field names are the API's own snake_case
-    # aliases, which do not always match the human-readable column name
-    # shown on the dataset's web page.
-    date_field: issue_date
-    # Set only after inspect_schema.py confirms a field carrying a linear
-    # measurement (e.g. curb-mile or linear-feet) on bike lane permits.
-    # Left null (count-only) is a correct, honest default — do not guess a
-    # units-bearing field just to produce a miles figure. Applies only to
-    # the bike_lane_install category; daylighting is always a count.
-    length_field: null
-    length_unit: feet # feet | miles — must match length_field's real unit
+    date_field: permitissuedate
     role: >
-      Primary source for dated installation activity: bike lane and
-      daylighting permits. A permit record is an ISSUED/work-authorized
-      event, not a verified completion — inspect the dataset's own status
-      field (if any) before treating a permit row as "done".
+      NOT used for bike-lane or daylighting classification. Schema
+      inspection (2026-09-17) confirmed this dataset has no permit_type
+      or work_type field, and none of its real categorical fields
+      (permittypedesc, applicationtypeshortdesc, permitseriesshortdesc,
+      equipmenttypedesc) carry a bike-lane or daylighting category — it is
+      a general street-opening/construction permit feed (utility work,
+      refuse containers, sidewalk repair, etc.), not an infrastructure
+      installation log. specificstipulations contains ~4,000 rows
+      matching "DAYLIGHT", but that is boilerplate curb-regulation
+      language on ordinary permits, not a reliable signal of daylighting
+      *projects* — using it would fabricate a category the data doesn't
+      actually support. Retained here, and still pulled by
+      pull_permits.py, purely as a documented negative finding and an
+      audit trail — not consumed by classify.py or aggregate.py.
 
   capital_reconstruction_projects:
     dataset_id: 97nd-ff3i
     resource_url: "https://data.cityofnewyork.us/resource/97nd-ff3i.json"
     metadata_url: "https://data.cityofnewyork.us/api/views/97nd-ff3i.json"
-    date_field: null # confirm during schema inspection; do not assume
-    # Name of the field distinguishing completed/in-progress/planned, and
-    # the exact string value(s) meaning "completed" — both null until
-    # confirmed against inspect_schema.py's field list and a distinct-value
-    # pull on the candidate field.
-    status_field: null
-    completed_values: []
+    date_field: construc_2 # "date project completed" — confirmed present
+    status_field: projectsta
+    completed_values:
+      - "Completed Project"
+      - "Substantial Completion"
+      - "Final Completion"
     role: >
-      Spatial capital-project records, used only as a cross-check on
-      anything the permit feed alone can't confirm as "completed" (has a
-      status field distinguishing completed/in-progress/planned).
+      Spatial capital-project records (project type codes include PED —
+      pedestrian projects). Confirmed fields: projectsta (all three
+      distinct values found mean "done" in some sense; there is no
+      in-progress/planned value in the live data) and construc_2 (a
+      completion date, format "YYYY/MM/DD"). Pulled and cached for
+      transparency; not yet wired into aggregate.py's metrics — kept as
+      future cross-check work per the original design, same as before
+      this pass.
 
   pedestrian_plazas:
     dataset_id: k5k6-6jex
     resource_url: "https://data.cityofnewyork.us/resource/k5k6-6jex.json"
     metadata_url: "https://data.cityofnewyork.us/api/views/k5k6-6jex.json"
-    date_field: null # populated only if schema inspection finds one
+    date_field: null # confirmed absent — no install/opening date on this dataset
     role: >
-      Polygon inventory of pedestrian plazas / Open Streets. If it carries
-      no install/opening date field, report only a total count as of the
-      extraction date; do not bucket it by administration window.
+      Polygon inventory of pedestrian plazas. Confirmed: no install date
+      field exists (schema inspection lists every field). Reports a
+      single total count as of extraction; does not and cannot support
+      an Adams/Mamdani split on its own — see pedestrian_space_added for
+      the metric that actually carries a time axis.
+
+  pedestrian_space_added:
+    dataset_id: uebm-cmjr
+    resource_url: "https://data.cityofnewyork.us/resource/uebm-cmjr.json"
+    metadata_url: "https://data.cityofnewyork.us/api/views/uebm-cmjr.json"
+    # Only a NYC fiscal year (Jul 1 - Jun 30) is available, not a project
+    # date. FY22 (Jul 2021-Jun 2022) straddles the de Blasio/Adams
+    # transition; FY26 (Jul 2025-Jun 2026) straddles Adams/Mamdani. Both
+    # are disclosed approximations, not exact administration-window
+    # buckets — see aggregate.py's notes on this metric.
+    fiscal_year_field: city_fy
+    role: >
+      DOT's own project-level tally of pedestrian space (square footage)
+      added, by NYC fiscal year. This is the metric that actually
+      supports an Adams-vs-Mamdani comparison for plazas/Open Streets;
+      the polygon dataset above cannot. As of extraction, DOT has not yet
+      published an FY2026 row (the fiscal year straddling the
+      administration transition) — see notes on the final table.
 
 secondary_sources:
   # Manual, non-API sources. See config/testimony.yaml for the actual
@@ -84,3 +138,17 @@ secondary_sources:
       before scraping, and rate-limit if scraping is the only option.
       Treat any figure pulled from it as a secondary/comparison series,
       never as the primary number in the final table.
+
+daylighting:
+  # No NYC Open Data dataset tracks daylighted intersections as a distinct,
+  # dated series (confirmed by catalog search across "daylight",
+  # "daylighting", "curb extension", "intersection safety", "vision zero",
+  # "street improvement" on 2026-09-17 — nothing matches). DOT reports
+  # daylighting progress only in Council testimony (config/testimony.yaml),
+  # and the most recent (first Mamdani-era) testimony gives no figure at
+  # all. This is reported as `unavailable` with that reason, never
+  # estimated from an unrelated dataset.
+  note: >
+    No public dataset source exists for this metric as of 2026-09-17.
+    Do not attempt to derive it from street_construction_permits'
+    free-text fields (see that dataset's role above for why).

@@ -1,0 +1,9 @@
+{
+  "dataset_id": "uebm-cmjr",
+  "resource_url": "https://data.cityofnewyork.us/resource/uebm-cmjr.json",
+  "where": null,
+  "order_by": null,
+  "page_size": 50000,
+  "row_count": 757,
+  "fetched_at": "2026-09-17T23:29:49.038292+00:00"
+}

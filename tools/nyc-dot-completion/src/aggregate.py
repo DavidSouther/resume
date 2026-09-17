@@ -1,27 +1,27 @@
-"""Step 3: aggregate classified permits (+ capital projects, + plazas)
-into per-administration-window metrics.
+"""Step 3: aggregate classified bike routes (+ pedestrian plazas, +
+pedestrian space added) into per-administration-window metrics.
 
 Produces a list of metric dicts, each carrying enough provenance
-(permit-count vs. length-summed, completed-vs-issued, date-available vs
-not) that build_table.py can assign an honest confidence label without
-re-deriving any of this logic itself.
+(segment-count vs. capital-project-count, installed-vs-in-place, FY-vs-
+exact-date) that build_table.py can assign an honest confidence label
+without re-deriving any of this logic itself.
+
+Every grouping/date-bucketing query here runs as DuckDB SQL directly
+against the cached JSON / classified CSV files — no pandas.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date
 from pathlib import Path
 
-import pandas as pd
+import duckdb
 import yaml
-
-from socrata import load_cached
 
 CONFIG_DIR = Path(__file__).resolve().parent.parent / "config"
 OUTPUT_DIR = Path(__file__).resolve().parent.parent / "output"
-
-FEET_PER_MILE = 5280.0
+CACHE_DIR = Path(__file__).resolve().parent.parent / "cache"
 
 
 @dataclass
@@ -32,185 +32,227 @@ class Metric:
     adams_total: float | None
     mamdani_to_date_total: float | None
     mamdani_annualized: float | None
-    basis: str  # "permit_count" | "permit_length" | "capital_project" | "inventory_count"
-    completion_semantics: str  # "issued" | "completed" | "in_place_as_of_extraction"
+    basis: str  # "inventory_count" | "capital_project_count" | "none"
+    completion_semantics: str  # "installed" | "in_place_as_of_extraction" | "unknown"
     notes: str = ""
-
-
-def _parse_date(value: str) -> date:
-    return datetime.fromisoformat(value.replace("Z", "+00:00")).date()
 
 
 def load_config() -> dict:
     return yaml.safe_load((CONFIG_DIR / "sources.yaml").read_text(encoding="utf-8"))
 
 
-def window_bounds(admins: dict, key: str, extraction_date: date) -> tuple[date, date]:
-    start = _parse_date(admins[key]["start"])
-    end_raw = admins[key].get("end")
-    end = _parse_date(end_raw) if end_raw else extraction_date
-    return start, end
+def window_sql(admins: dict, key: str, extraction_date: date, field: str) -> str:
+    start = admins[key]["start"]
+    end = admins[key].get("end") or extraction_date.isoformat()
+    return f"{field} BETWEEN DATE '{start}' AND DATE '{end}'"
 
 
-def bucket_by_window(
-    dates: pd.Series, admins: dict, extraction_date: date
-) -> pd.Series:
-    """Returns a Series of window keys ('adams' | 'mamdani' | None) aligned
-    to `dates`. None means the date fell outside every configured window."""
-    adams_start, adams_end = window_bounds(admins, "adams", extraction_date)
-    mamdani_start, mamdani_end = window_bounds(admins, "mamdani", extraction_date)
-
-    def bucket(d: date) -> str | None:
-        if adams_start <= d <= adams_end:
-            return "adams"
-        if mamdani_start <= d <= mamdani_end:
-            return "mamdani"
-        return None
-
-    return dates.apply(bucket)
+def annualize(to_date_total: float, admins: dict, extraction_date: date) -> float:
+    mamdani_start = date.fromisoformat(admins["mamdani"]["start"])
+    elapsed_days = max((extraction_date - mamdani_start).days, 1)
+    return to_date_total * (365.25 / elapsed_days)
 
 
-PERMIT_CATEGORY_SPECS = [
-    ("bike_lane_install", "Protected bike lane", "bike_lane"),
-    ("daylighting", "Daylighted intersections", "daylighting"),
-]
-
-
-def _unpulled_permit_metrics() -> list[Metric]:
-    return [
-        Metric(
-            key=key,
-            label=label,
+def bike_lane_metric(
+    con: duckdb.DuckDBPyConnection, config: dict, extraction_date: date
+) -> Metric:
+    dataset = config["datasets"]["bike_routes"]
+    admins = config["administrations"]
+    classified_path = OUTPUT_DIR / "bike_routes_classified.csv"
+    if not classified_path.exists():
+        return Metric(
+            key="bike_lane",
+            label="Protected bike lane",
             unit="unknown",
             adams_total=None,
             mamdani_to_date_total=None,
             mamdani_annualized=None,
-            basis="permit_count",
-            completion_semantics="issued",
-            notes="Not pulled yet — run pull_permits.py and classify.py.",
+            basis="inventory_count",
+            completion_semantics="installed",
+            notes="Not pulled/classified yet — run pull_bike_routes.py and classify.py.",
         )
-        for _category, label, key in PERMIT_CATEGORY_SPECS
-    ]
+
+    date_field = dataset["date_field"]
+    status_field = dataset["status_field"]
+    active_value = dataset["active_status_value"]
+
+    con.execute(
+        f"CREATE OR REPLACE VIEW bike_lanes AS "
+        f"SELECT * FROM read_csv_auto('{classified_path}')"
+    )
+
+    adams_where = window_sql(admins, "adams", extraction_date, date_field)
+    mamdani_where = window_sql(admins, "mamdani", extraction_date, date_field)
+
+    adams_n, mamdani_n = con.execute(
+        f"""
+        SELECT
+          count(*) FILTER (
+            WHERE category = 'bike_lane_install'
+              AND {status_field} = '{active_value}'
+              AND {adams_where}
+          ) AS adams_n,
+          count(*) FILTER (
+            WHERE category = 'bike_lane_install'
+              AND {status_field} = '{active_value}'
+              AND {mamdani_where}
+          ) AS mamdani_n
+        FROM bike_lanes
+        """
+    ).fetchone()
+
+    mamdani_annualized = annualize(float(mamdani_n), admins, extraction_date)
+
+    return Metric(
+        key="bike_lane",
+        label="Protected bike lane",
+        unit="segments",
+        adams_total=float(adams_n),
+        mamdani_to_date_total=float(mamdani_n),
+        mamdani_annualized=mamdani_annualized,
+        basis="inventory_count",
+        completion_semantics="installed",
+        notes=(
+            "As-built segment count from DOT/DCP's own bike route inventory "
+            f"({dataset['dataset_id']}), status='Current' only, install date "
+            f"({date_field}) bucketed by administration window. Counts "
+            "segments, not miles — no reliable per-segment length field "
+            "exists without computing one from geometry, and this pipeline "
+            "does not guess a units-bearing figure."
+        ),
+    )
 
 
-def permit_metrics(config: dict, extraction_date: date) -> list[Metric]:
-    permits_path = OUTPUT_DIR / "permits_classified.csv"
-    if not permits_path.exists():
-        return _unpulled_permit_metrics()
-
-    dataset = config["datasets"]["street_construction_permits"]
-    admins = config["administrations"]
-
-    df = pd.read_csv(permits_path)
-    dates = pd.to_datetime(df[dataset["date_field"]]).dt.date
-    df = df.assign(_window=bucket_by_window(dates, admins, extraction_date))
-    df = df[df["_window"].notna()]
-
-    metrics = []
-    for category, label, key in PERMIT_CATEGORY_SPECS:
-        subset = df[df["category"] == category]
-        by_window = subset.groupby("_window").size()
-        adams_n = int(by_window.get("adams", 0))
-        mamdani_n = int(by_window.get("mamdani", 0))
-
-        # length_field, when set, is a bike-lane linear measurement — it
-        # has no meaning for other permit categories (e.g. daylighting is
-        # always counted, never measured in miles).
-        length_field = dataset.get("length_field") if category == "bike_lane_install" else None
-        if length_field:
-            unit_factor = 1.0 if dataset.get("length_unit") == "miles" else 1 / FEET_PER_MILE
-            by_window_len = subset.groupby("_window")[length_field].sum() * unit_factor
-            adams_total = float(by_window_len.get("adams", 0.0))
-            mamdani_total = float(by_window_len.get("mamdani", 0.0))
-            unit = "mi"
-            basis = "permit_length"
-        else:
-            adams_total = float(adams_n)
-            mamdani_total = float(mamdani_n)
-            unit = "permits"
-            basis = "permit_count"
-
-        mamdani_start, _ = window_bounds(admins, "mamdani", extraction_date)
-        elapsed_days = max((extraction_date - mamdani_start).days, 1)
-        annualized = mamdani_total * (365.25 / elapsed_days)
-
-        metrics.append(
-            Metric(
-                key=key,
-                label=label,
-                unit=unit,
-                adams_total=adams_total,
-                mamdani_to_date_total=mamdani_total,
-                mamdani_annualized=annualized,
-                basis=basis,
-                completion_semantics="issued",
-                notes=(
-                    "Permit-ISSUED count, not verified completion."
-                    if basis == "permit_count"
-                    else "Permit-ISSUED length, not verified completion."
-                ),
-            )
-        )
-    return metrics
+def daylighting_metric(config: dict) -> Metric:
+    note = (config.get("daylighting", {}).get("note") or "").strip()
+    return Metric(
+        key="daylighting",
+        label="Daylighted intersections",
+        unit="unknown",
+        adams_total=None,
+        mamdani_to_date_total=None,
+        mamdani_annualized=None,
+        basis="none",
+        completion_semantics="unknown",
+        notes=(
+            f"{note} DOT testimony is the only source, and the most recent "
+            "(first Mamdani-era) testimony gives no intersection count at "
+            "all — see config/testimony.yaml fy27_executive."
+        ).strip(),
+    )
 
 
-def plaza_metric(config: dict, extraction_date: date) -> Metric:
-    dataset = config["datasets"]["pedestrian_plazas"]
-    try:
-        rows = load_cached("pedestrian_plazas")
-    except FileNotFoundError:
+def plaza_metric(
+    con: duckdb.DuckDBPyConnection, config: dict, extraction_date: date
+) -> Metric:
+    plaza_dataset = config["datasets"]["pedestrian_plazas"]
+    space_dataset = config["datasets"]["pedestrian_space_added"]
+
+    plaza_cache = CACHE_DIR / plaza_dataset["dataset_id"]
+    space_cache = CACHE_DIR / space_dataset["dataset_id"]
+
+    if not (plaza_cache / "manifest.json").exists() or not (
+        space_cache / "manifest.json"
+    ).exists():
         return Metric(
             key="plazas",
             label="Pedestrian plazas / Open Streets",
-            unit="plazas",
+            unit="unknown",
             adams_total=None,
             mamdani_to_date_total=None,
             mamdani_annualized=None,
-            basis="inventory_count",
+            basis="capital_project_count",
             completion_semantics="in_place_as_of_extraction",
-            notes="Not pulled yet — run pull_plazas.py.",
+            notes="Not pulled yet — run pull_plazas.py and pull_pedestrian_space.py.",
         )
 
-    date_field = dataset.get("date_field")
-    if date_field:
-        admins = config["administrations"]
-        dates = pd.to_datetime(pd.DataFrame(rows)[date_field]).dt.date
-        windows = bucket_by_window(dates, admins, extraction_date)
-        return Metric(
-            key="plazas",
-            label="Pedestrian plazas / Open Streets",
-            unit="plazas",
-            adams_total=float((windows == "adams").sum()),
-            mamdani_to_date_total=float((windows == "mamdani").sum()),
-            mamdani_annualized=None,  # a plaza count isn't a flow rate
-            basis="inventory_count",
-            completion_semantics="in_place_as_of_extraction",
-            notes="",
+    total_plazas = con.execute(
+        f"SELECT count(*) FROM read_json_auto('{plaza_cache}/page_*.json')"
+    ).fetchone()[0]
+
+    fy_field = space_dataset["fiscal_year_field"]
+    con.execute(
+        f"CREATE OR REPLACE VIEW space_added AS "
+        f"SELECT * FROM read_json_auto('{space_cache}/page_*.json')"
+    )
+    fy_rows = con.execute(
+        f"SELECT {fy_field}::INT AS fy, count(*) AS n_projects "
+        f"FROM space_added GROUP BY {fy_field} ORDER BY fy"
+    ).fetchall()
+    fy_counts = {int(fy): int(n) for fy, n in fy_rows}
+
+    # NYC fiscal year runs Jul 1 - Jun 30. Adams (Jan 2022 - Dec 2025) does
+    # not line up cleanly with any set of whole fiscal years: FY22 (Jul
+    # 2021-Jun 2022) is half de Blasio, and FY26 (Jul 2025-Jun 2026) is
+    # half Mamdani. Both boundary years are disclosed approximations, never
+    # silently absorbed into one administration's total.
+    adams_fys = [2022, 2023, 2024, 2025]
+    present_adams_fys = [fy for fy in adams_fys if fy in fy_counts]
+    missing_adams_fys = [fy for fy in adams_fys if fy not in fy_counts]
+    adams_total = sum(fy_counts[fy] for fy in present_adams_fys) if present_adams_fys else None
+
+    mamdani_fy = 2026
+    mamdani_total = fy_counts.get(mamdani_fy)
+
+    notes_parts = [
+        f"Polygon inventory ({plaza_dataset['dataset_id']}) total as of "
+        f"extraction: {total_plazas} plazas citywide; that dataset has no "
+        "install-date field, so it alone supports no year split.",
+        f"Adams/Mamdani totals here instead come from Pedestrian Space "
+        f"Added ({space_dataset['dataset_id']}) project counts, bucketed by "
+        "NYC fiscal year (not exact calendar date) — a capital-project "
+        "count, not a plaza count.",
+    ]
+    if missing_adams_fys:
+        fy_list = ", ".join(f"FY{fy}" for fy in missing_adams_fys)
+        notes_parts.append(
+            f"{fy_list} absent from the dataset (not yet published, or a "
+            "genuine reporting gap) — excluded from the Adams total below "
+            "rather than counted as zero."
         )
+    if mamdani_total is None:
+        notes_parts.append(
+            "FY2026 (the fiscal year spanning the Adams/Mamdani transition) "
+            "has not been published in this dataset as of extraction — "
+            "Mamdani to-date total is unavailable, not zero."
+        )
+    notes_parts.append(
+        "FY22 (Jul 2021-Jun 2022) and FY26 (Jul 2025-Jun 2026) each "
+        "straddle an administration transition; this fiscal-year bucketing "
+        "is a disclosed approximation, not an exact administration-window "
+        "split."
+    )
+
+    mamdani_annualized = (
+        annualize(float(mamdani_total), config["administrations"], extraction_date)
+        if mamdani_total is not None
+        else None
+    )
 
     return Metric(
         key="plazas",
         label="Pedestrian plazas / Open Streets",
-        unit="plazas",
-        adams_total=None,
-        mamdani_to_date_total=None,
-        mamdani_annualized=None,
-        basis="inventory_count",
-        completion_semantics="in_place_as_of_extraction",
-        notes=(
-            f"Dataset carries no install/opening date field. Total count "
-            f"as of extraction ({extraction_date.isoformat()}): {len(rows)}. "
-            f"No year-over-year split is possible from this dataset alone."
+        unit="projects/FY",
+        adams_total=float(adams_total) if adams_total is not None else None,
+        mamdani_to_date_total=(
+            float(mamdani_total) if mamdani_total is not None else None
         ),
+        mamdani_annualized=mamdani_annualized,
+        basis="capital_project_count",
+        completion_semantics="in_place_as_of_extraction",
+        notes=" ".join(notes_parts),
     )
 
 
 def run(extraction_date: date | None = None) -> list[Metric]:
     config = load_config()
     extraction_date = extraction_date or date.today()
-    metrics = permit_metrics(config, extraction_date)
-    metrics.append(plaza_metric(config, extraction_date))
-    return metrics
+    con = duckdb.connect()
+    return [
+        bike_lane_metric(con, config, extraction_date),
+        daylighting_metric(config),
+        plaza_metric(con, config, extraction_date),
+    ]
 
 
 if __name__ == "__main__":

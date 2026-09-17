@@ -1,40 +1,47 @@
-# Human-reviewable classification of Street Construction Permits
-# (tqtj-sjs8) permit_type / work_type values into pipeline categories.
+# Human-reviewable classification of NYC Bike Routes (mzxg-pwib)
+# ft_facilit / tf_facilit values into pipeline categories.
 #
-# THIS FILE IS EMPTY AND MUST BE FILLED IN FROM REAL DATA. It is not
-# safe to guess these mappings from field names alone: run
-#
-#     python src/inspect_schema.py
-#
-# first. It hits the dataset's metadata endpoint, prints the full field
-# list, then prints every distinct value of each categorical field that
-# looks relevant (permit_type, work_type, and any sibling field the
-# metadata reveals), together with its row count. It also writes
-# config/classification.generated.yaml: the same distinct values, each
-# pre-mapped to "UNCLASSIFIED". Copy entries from that generated file
-# into the `mapping` section below, assigning each one a real category —
-# do not leave anything as UNCLASSIFIED in the version that feeds
-# aggregate.py; classify.py refuses to run against unresolved entries.
+# This file previously targeted permit_type/work_type on the Street
+# Construction Permits dataset (tqtj-sjs8) — schema inspection
+# (2026-09-17) confirmed that dataset has neither field, and none of its
+# real fields carry a bike-lane category. mzxg-pwib is the dataset that
+# actually has bicycle facility classes with an install date, so this
+# mapping now targets its ft_facilit/tf_facilit fields instead. Values
+# below were confirmed via config/classification.generated.yaml, written
+# by inspect_schema.py against the live dataset — not guessed.
 #
 # Categories:
-#   bike_lane_install   - installs a protected/painted bike lane
-#   daylighting         - daylighting / corner clearing work
-#   other               - anything else (kept for completeness, excluded
-#                         from the bike-lane and daylighting metrics)
+#   bike_lane_install   - a physically protected bicycle facility
+#                         (ft_facilit or tf_facilit == "Protected")
+#   other               - any other facility class (painted/conventional,
+#                         shared lane, signed route, sidewalk, boardwalk,
+#                         unpaved, link, wide parking lane, ped plaza) —
+#                         kept for completeness, excluded from the
+#                         protected-bike-lane metric
 #   ambiguous           - genuinely can't tell from the value alone; flag
 #                         for a human decision rather than guessing which
 #                         of the above it is
+#
+# A segment is classified bike_lane_install if EITHER direction's field
+# maps to bike_lane_install — classify.py checks all of source_fields,
+# not just the first non-null one (a single-field-then-stop check would
+# silently miss a "Protected" value on the return direction).
 
-# Which field(s) hold the categorical value(s) to classify. Confirm
-# against inspect_schema.py output — this is a starting guess based on
-# the task brief's field names, not a confirmed schema.
 source_fields:
-  - permit_type
-  - work_type
+  - ft_facilit
+  - tf_facilit
 
-mapping: {}
-# Example of a filled-in entry, once inspect_schema.py has told you the
-# real values:
-#   "Bike Lane Installation": bike_lane_install
-#   "Curb Extension / Daylighting": daylighting
-#   "Sidewalk Repair": other
+mapping:
+  "Protected": bike_lane_install
+  "Conventional": other
+  "Conventional Buffered": other
+  "Curbside": other
+  "Curbside Buffered": other
+  "Shared": other
+  "Signed Route": other
+  "Wide Parking Lane": other
+  "Sidewalk": other
+  "Boardwalk": other
+  "Unpaved": other
+  "Link": other
+  "Ped Plaza": other

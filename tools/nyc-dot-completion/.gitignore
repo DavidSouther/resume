@@ -1,2 +1,8 @@
 __pycache__/
 *.pyc
+.venv/
+
+# Scratch review artifact written by inspect_schema.py — a human copies
+# real entries out of it into classification.yaml (the committed source
+# of truth); the generated file itself isn't meant to be committed.
+config/classification.generated.yaml

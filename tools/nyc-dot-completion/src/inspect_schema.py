@@ -1,8 +1,8 @@
 """Step 0: inspect dataset schemas before assuming any column name.
 
 For each dataset in config/sources.yaml, fetches the SODA metadata (full
-field list) and, for the Street Construction Permits dataset specifically,
-pulls the distinct values of every field named in classification.yaml's
+field list) and, for the Bike Routes dataset specifically, pulls the
+distinct values of every field named in classification.yaml's
 `source_fields` — with row counts — so a human can classify them instead
 of guessing.
 
@@ -90,7 +90,7 @@ def main() -> None:
             continue
         print_field_list(dataset_key, metadata)
 
-        if dataset_key != "street_construction_permits":
+        if dataset_key != "bike_routes":
             continue
 
         for field in fields:

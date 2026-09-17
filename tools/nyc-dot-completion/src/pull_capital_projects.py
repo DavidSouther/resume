@@ -1,12 +1,10 @@
-"""Step 1b: pull Street and Highway Capital Reconstruction Projects
+"""Step 1c: pull Street and Highway Capital Reconstruction Projects
 (97nd-ff3i) — the spatial capital-project cross-check dataset.
 
-No date filter is applied by default: config/sources.yaml's date_field for
-this dataset starts as null because the brief doesn't name a confirmed
-completion/last-modified column. Run inspect_schema.py first; if it finds
-one, set date_field and add a $where clause the same way pull_permits.py
-does before re-running this for a large dataset. Until then this pulls
-the full table.
+date_field (construc_2, "date project completed") was confirmed via
+inspect_schema.py's metadata output on 2026-09-17 and is filtered here.
+Not yet consumed by aggregate.py's metrics — cached for a future
+cross-check, same as the original design.
 """
 
 from __future__ import annotations

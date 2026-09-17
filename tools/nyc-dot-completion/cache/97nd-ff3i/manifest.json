@@ -1,0 +1,9 @@
+{
+  "dataset_id": "97nd-ff3i",
+  "resource_url": "https://data.cityofnewyork.us/resource/97nd-ff3i.json",
+  "where": "construc_2 >= '2022-01-01T00:00:00'",
+  "order_by": "construc_2",
+  "page_size": 50000,
+  "row_count": 471,
+  "fetched_at": "2026-09-17T23:29:46.525519+00:00"
+}
