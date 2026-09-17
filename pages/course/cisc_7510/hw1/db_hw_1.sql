@@ -1,46 +1,3 @@
--- Db hw 1
-
--- CISC 7510 HW# 1 (due by 3rd class;): For the below `store' schema:
-
-create table product (
-    productid int serial primary key,
-    description string,
-    listprice float,
-);
-create table customer(
-    customerid int serial primary key,
-    username string,
-    name string,
-    address string,
-    city string,
-    state string,
-    zip string,
-)
-create table purchase(
-    purchaseid int serial primary key,
-    purchasetimestamp timestamp with time zone,
-    customerid int,
-    foreign key (customerid) references  customer(customerid),
-)
-create table purchase_items(
-    itemid int,
-    purchaseid int,
-    productid int,
-    quantity float,
-    price float,
-    foreign key (purchaseid) references purchase(purchaseid),
-    foreign key (productid) references product(productid),
-)
-
--- Schema feedback (not fixed above, just flagged):
---   * `int serial` isn't a type; a serial column is declared as `productid serial primary key` on its own.
---   * `string` isn't a standard SQL type; most engines want `varchar` or `text`.
---   * Every column list has a trailing comma before its closing paren, which most engines reject.
---   * `customer`, `purchase`, and `purchase_items` are each missing the closing `;`.
---   * `purchase_items` has no `customerid`; several answers below join through it as if it did.
-
--- Using SQL, answer these questions (write a SQL query that answers these questions):
-
 -- 1. What is the description of productid=42?
 select p.description from product as p where p.productid = 42;
 
@@ -63,7 +20,7 @@ where p.purchaseid is null;
 select p.description from product as p left join purchase_items as pi on p.productid = pi.productid where pi.productid is null;
 
 -- 7. What products were purchased by customers with zip code 10001?
-select unique(pi.productid) from purchase_items as pi left join purchase as p on pi.purchaseid = p.purchaseid left join customer as c on c.customerid = p.customerid where c.zip = '10001';
+select distinct pi.productid from purchase_items as pi left join purchase as p on pi.purchaseid = p.purchaseid left join customer as c on c.customerid = p.customerid where c.zip = '10001';
 
 -- 8. What percentage of customers have ever purchased productid=42?
 with purchase_42 as (
@@ -78,7 +35,8 @@ from customer as c
 left join purchase_42 as p42 on p42.customerid = c.customerid;
 
 -- 9. Of customers who purchased productid=42, what percentage also purchased productid=24?
-with purchased_42 as (
+with
+purchased_42 as (
     select distinct p.customerid from purchase as p join purchase_items as pi on pi.purchaseid = p.purchaseid where pi.productid = 42
 ),
 purchased_24 as (
