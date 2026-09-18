@@ -1,5 +1,8 @@
 // @vitest-environment jsdom
 
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { cwd } from "node:process";
 import { afterEach, describe, expect, it } from "vitest";
 import { renderTrace } from "./render-trace.ts";
 import { getStyles } from "./styles.ts";
@@ -456,6 +459,131 @@ describe("drawTrace", () => {
 
 		expect(svg.querySelectorAll(".trace-row").length).toBe(1);
 		expect(svg.querySelector(".trace-name")?.textContent).toBe("a");
+	});
+});
+
+/** The tagged figure of `posts/interview_07_tracing_rust`, whose execution
+ *  order is not the listing's order: `steps 9 10 0 1 2 3 11`. */
+const BUILD_ART = [
+	"traceDiagram",
+	"  title Static check of a returned local reference",
+	"  steps 9 10 0 1 2 3 11",
+	"  frame main @9",
+	"    my_art: @10",
+	"    frame build_art @0",
+	"      art: Artwork Liberty @1",
+	"      ret &art -> my_art @2",
+	"      watch return: rejected @2",
+	"      done @3",
+	"    end",
+	"  end",
+].join("\n");
+
+const at = (element: Element | null | undefined): string | null =>
+	element?.getAttribute("data-at") ?? null;
+
+describe("drawTrace timing", () => {
+	it("times each value, its arrows, and the frame X independently", () => {
+		const svg = draw(BUILD_ART);
+
+		const label = (name: string) =>
+			[...svg.querySelectorAll(".trace-frame-label")].find(
+				(candidate) => candidate.textContent === name,
+			);
+		const item = svg.querySelector('.trace-value-item[data-at="4"]');
+		expect(item?.textContent).toBe("Artwork Liberty");
+		expect(at(label("main"))).toBe("1");
+		expect(at(svg.querySelector(".trace-rule"))).toBe("1");
+		expect(at(label("build_art"))).toBe("3");
+		expect(at(svg.querySelector(".trace-return-arrow"))).toBe("5");
+		expect(at(svg.querySelector(".trace-stack-pointer"))).toBe("5");
+		expect(at(svg.querySelector(".trace-frame-done"))).toBe("6");
+	});
+
+	it("times an empty-valued row by the tag on the row itself", () => {
+		const svg = draw(BUILD_ART);
+
+		const name = [...svg.querySelectorAll(".trace-name")].find(
+			(candidate) => candidate.textContent === "my_art",
+		);
+		expect(at(name)).toBe("2");
+		// A row holding values is timed by the first of them, not by the group.
+		const art = [...svg.querySelectorAll(".trace-name")].find(
+			(candidate) => candidate.textContent === "art",
+		);
+		expect(at(art)).toBe("4");
+		// The row group would shadow its own children in document order.
+		expect(svg.querySelector(".trace-row[data-at]")).toBeNull();
+	});
+
+	it("strikes a value with the step of the value that supersedes it", () => {
+		const svg = draw("traceDiagram\n  frame f\n    a: 1 @0, 2 @1\n  end");
+
+		const strike = svg.querySelector(".trace-strike");
+		const struck = svg.querySelector(".trace-value-item");
+		expect(at(struck)).toBe("1");
+		expect(at(strike)).toBe("2");
+		// A sibling of the value group, not a child: inside it the strike would
+		// arrive with the value it cancels.
+		expect(strike?.parentElement).toBe(struck?.parentElement);
+		expect(struck?.contains(strike as Node)).toBe(false);
+	});
+
+	it("gives an untagged item the step of the nearest preceding tag", () => {
+		const svg = draw(
+			"traceDiagram\n  frame f @0\n    a: 5\n    b: 6 @1\n  end",
+		);
+
+		const items = [...svg.querySelectorAll(".trace-value-item")];
+		expect(items.map((each) => at(each))).toEqual(["1", "2"]);
+	});
+
+	it("times a heap card and its fields by the object's own tag", () => {
+		const svg = draw(
+			[
+				"traceDiagram",
+				"  heap artwork 0x08 @1",
+				"    name: Owain",
+				"    view_count: 0",
+				"  end",
+				"  frame main @0",
+				"    art: @artwork @1",
+				"    done @2",
+				"  end",
+			].join("\n"),
+		);
+
+		const card = svg.querySelector(".trace-heap-object");
+		expect(at(card)).toBe("2");
+		expect(
+			[...svg.querySelectorAll(".trace-heap-field-name")].map((each) =>
+				at(each),
+			),
+		).toEqual(["2", "2"]);
+		expect(
+			[...svg.querySelectorAll(".trace-heap-field-value.trace-value")].map(
+				(each) => at(each.parentElement),
+			),
+		).toEqual(["2", "2"]);
+		expect(at(svg.querySelector(".trace-pointer"))).toBe("2");
+	});
+
+	it("emits nothing at all for a diagram that carries no timing notation", () => {
+		// The fixture was written by this renderer at the commit before `data-at`
+		// existed, so the comparison is against the real prior output rather than
+		// against a restatement of the current one.
+		const dir = join(cwd(), "src", "lib", "trace-diagram");
+		const source = readFileSync(
+			join(dir, "untagged-baseline.source.txt"),
+			"utf-8",
+		);
+		const expected = readFileSync(join(dir, "untagged-baseline.svg"), "utf-8");
+
+		const svg = draw(source);
+
+		expect(svg.outerHTML).toBe(expected);
+		expect(svg.querySelector("[data-at]")).toBeNull();
+		expect(svg.querySelector(".trace-value-item")).toBeNull();
 	});
 });
 

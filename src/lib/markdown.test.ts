@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { rewriteMermaidFences, toHTML } from "./markdown.ts";
 import { MERMAID_ESM_URL, MERMAID_VERSION } from "./mermaid-bundle.ts";
+import { getPost } from "./posts.ts";
 
 describe("toHTML", () => {
 	it("renders a mermaid fence as a mermaid container", () => {
@@ -48,6 +49,116 @@ traceDiagram
 
 	it("still renders ordinary prose through jiffdown", () => {
 		expect(toHTML("# Heading\n")).toContain("<h1");
+	});
+});
+
+// The figure is where the resolved step sequence crosses from build time to the
+// browser. It is written with the same `resolveStepsFromSource` the renderer
+// resolves with, so a build-time ordinal and a client ordinal cannot drift.
+describe("the figure's step sequence", () => {
+	const gutterListing = `\`\`\`highlight-gutters
+code rust:
+fn main() {
+    let art = artwork("Owain");
+    println!("{}", art.name);
+}
+marks:
+art 1,2
+\`\`\`
+`;
+
+	it("publishes a tagged diagram's sequence on the figure", () => {
+		const html = toHTML(`${gutterListing}
+\`\`\`mermaid
+traceDiagram
+  frame main @0
+    art: 7 @1
+    watch art: 7 @2
+    done @3
+  end
+\`\`\`
+`);
+
+		expect(html).toContain('data-trace-lines="0 1 2 3"');
+		expect(html).toContain('<figure class="trace-figure lifetime-composite"');
+	});
+
+	it("leaves an untagged diagram's figure exactly as it was", () => {
+		const html = toHTML(`${gutterListing}
+\`\`\`mermaid
+traceDiagram
+  frame main
+    art: 7
+    done
+  end
+\`\`\`
+`);
+
+		expect(html).not.toContain("data-trace-lines");
+		expect(html).toContain('<figure class="trace-figure lifetime-composite">');
+	});
+
+	it("unescapes the diagram before parsing it", () => {
+		// jiffdown escaped `&` and `>`, so a heap pointer reaches this function as
+		// `next -&gt; box` and a stack reference as `&amp;art`. Both must be
+		// reversed before the parse, or the diagram fails to parse and the figure
+		// silently loses its sequence.
+		const html = toHTML(`${gutterListing}
+\`\`\`mermaid
+traceDiagram
+  heap box 0x01 @0
+    next -> box
+  end
+  frame main @1
+    art: 7 @2
+    ret &art -> art @3
+    done @4
+  end
+\`\`\`
+`);
+
+		expect(html).toContain("&amp;art");
+		expect(html).toContain('data-trace-lines="0 1 2 3 4"');
+	});
+
+	it("still pairs a malformed diagram, without a sequence and without throwing", () => {
+		const html = toHTML(`${gutterListing}
+\`\`\`mermaid
+traceDiagram
+  frame main @0
+    art: 7 @1
+\`\`\`
+`);
+
+		expect(html).not.toContain("data-trace-lines");
+		expect(html).toContain('<figure class="trace-figure lifetime-composite">');
+	});
+
+	it("writes the sequence on a plain code fence's figure too", () => {
+		const html = toHTML(`\`\`\`rust
+fn main() {}
+\`\`\`
+\`\`\`mermaid
+traceDiagram
+  frame main @0
+    art: 7 @2
+    done @5
+  end
+\`\`\`
+`);
+
+		expect(html).toContain(
+			'<figure class="trace-figure" data-trace-lines="0 2 5">',
+		);
+	});
+
+	it("gives the tracing post's build_art figure its declared order", async () => {
+		const body = (await getPost("interview_07_tracing_rust")).body ?? "";
+		const figure = [...body.matchAll(/<figure class="trace-figure[^>]*>/g)]
+			.map(([tag]) => tag)
+			.find((tag) => tag.includes('data-trace-lines="9 10 0 1 2 3 11"'));
+
+		expect(figure).toBeDefined();
 	});
 });
 

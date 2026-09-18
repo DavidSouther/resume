@@ -1,6 +1,7 @@
 import { toHTML as jiffdown } from "@davidsouther/jiffdown";
 import hljs from "highlight.js";
 import { rewriteHighlightGutterFences } from "./highlight-gutters.ts";
+import { resolveStepsFromSource } from "./trace-diagram/steps.ts";
 
 // Syntax highlighting runs at build time, not in the browser: the markup is
 // already in the HTML, so a listing is never briefly unstyled and a reader with
@@ -67,13 +68,45 @@ const CODE_THEN_DIAGRAM =
 const GUTTER_THEN_DIAGRAM =
 	/(<div class="highlight-gutters"(?:(?!<\/code><\/pre><\/div>)[\s\S])*?<\/code><\/pre><\/div>)\s*(<pre class="mermaid">\s*traceDiagram(?:(?!<\/pre>)[\s\S])*?<\/pre>)/g;
 
+// The step sequence reaches the client on the figure, written here at build
+// time rather than by the client renderer. `drawTrace` draws into a detached
+// fragment whose root attributes `src/components/mermaid/diagram.ts` does not
+// copy onto mermaid's host element, so an attribute written there would be
+// dropped; the figure element is authored here, the parse is pure, and the
+// attribute ships in the HTML.
+//
+// This calls the same `resolveStepsFromSource` the renderer resolves with, so a
+// build-time ordinal and a client ordinal cannot drift.
+const MERMAID_BODY = /^<pre class="mermaid">([\s\S]*)<\/pre>$/;
+
+function traceLines(diagram: string): string {
+	const body = MERMAID_BODY.exec(diagram)?.[1];
+	if (body === undefined) return "";
+	try {
+		const sequence = resolveStepsFromSource(unescapeHtml(body));
+		// An untimed diagram gets no attribute at all, so its figure is
+		// byte-identical to the one this function emitted before timing existed.
+		if (sequence.length === 0) return "";
+		return ` data-trace-lines="${sequence.join(" ")}"`;
+	} catch {
+		// A diagram that fails to parse yields today's unstepped figure rather
+		// than breaking the build, which is the existing degradation rule.
+		return "";
+	}
+}
+
 export function pairListingsWithDiagrams(html: string): string {
 	return html
 		.replace(
 			GUTTER_THEN_DIAGRAM,
-			'<figure class="trace-figure lifetime-composite">$1$2</figure>',
+			(_whole, listing: string, diagram: string) =>
+				`<figure class="trace-figure lifetime-composite"${traceLines(diagram)}>${listing}${diagram}</figure>`,
 		)
-		.replace(CODE_THEN_DIAGRAM, '<figure class="trace-figure">$1$2</figure>');
+		.replace(
+			CODE_THEN_DIAGRAM,
+			(_whole, listing: string, diagram: string) =>
+				`<figure class="trace-figure"${traceLines(diagram)}>${listing}${diagram}</figure>`,
+		);
 }
 
 /** Renders post Markdown to HTML. The one Markdown entry point for the site. */

@@ -24,6 +24,7 @@ import type {
 	TraceValue,
 } from "./model.ts";
 import { parseTrace } from "./parse.ts";
+import { resolveSteps } from "./steps.ts";
 
 /** Monospace advance and line box, in user units, for FONT_SIZE. */
 const FONT_SIZE = 16;
@@ -73,6 +74,21 @@ interface PlacedHeapPointer {
 	sourceId: string;
 	targetId: string;
 	y: number;
+	/** Step of the heap field that owns the pointer, so the arrow never leads it. */
+	step?: number;
+}
+
+/**
+ * The `data-at` attribute for one timed element, or nothing at all.
+ *
+ * `resolveSteps` writes no `step` on an untimed diagram, so an untagged diagram
+ * emits no timing attribute anywhere and its SVG is byte-identical to the one
+ * the renderer produced before timing existed.
+ */
+type Timing = { "data-at"?: number };
+
+function timing(step: number | undefined): Timing {
+	return step === undefined ? {} : { "data-at": step };
 }
 
 /** The exact string drawn for a stack value. Pointer ids stay lookup-only. */
@@ -160,7 +176,14 @@ function heapObjectSize(
 /** Escaped by construction: every string reaches the DOM as a text node. */
 type Anchor = "start" | "middle" | "end";
 
-function label(x: number, y: number, s: string, cls: string, anchor: Anchor) {
+function label(
+	x: number,
+	y: number,
+	s: string,
+	cls: string,
+	anchor: Anchor,
+	at: Timing = {},
+) {
 	return text(
 		{
 			x,
@@ -170,12 +193,67 @@ function label(x: number, y: number, s: string, cls: string, anchor: Anchor) {
 			"font-family": "ui-monospace, SFMono-Regular, Menlo, monospace",
 			"font-size": FONT_SIZE,
 			"dominant-baseline": "middle",
+			...at,
 		},
 		s,
 	);
 }
 
+/**
+ * One entry of a value history: the value itself, and the strike that cancels
+ * it when a later value supersedes it.
+ *
+ * A timed diagram wraps the value's label in `g.trace-value-item` so the value
+ * is one element that can carry a state; the strike stays a *sibling* of that
+ * group and takes the step of the value that supersedes it, because a strike
+ * appears when its successor does. Placed inside the group it would be revealed
+ * together with the value it cancels.
+ *
+ * An untimed diagram gets neither the wrapper nor the attribute.
+ */
+function valueCells(
+	values: TraceValue[],
+	index: number,
+	x: number,
+	y: number,
+	displayValue: string,
+	cls: string,
+	timed: boolean,
+): SVGElement[] {
+	const value = values[index];
+	const drawn = label(
+		x,
+		y,
+		displayValue,
+		`${cls}${value.struck ? " trace-struck" : ""}`,
+		"start",
+	);
+	const cells: SVGElement[] = [
+		timed
+			? g({ class: "trace-value-item", ...timing(value.step) }, drawn)
+			: drawn,
+	];
+	if (value.struck) {
+		cells.push(
+			line({
+				x1: x - 2,
+				y1: y + FONT_SIZE * 0.35,
+				x2: x + width(displayValue) + 2,
+				y2: y - FONT_SIZE * 0.35,
+				class: "trace-strike",
+				// A terminal `~v~` has no successor, so it is struck when it appears.
+				...timing(values[index + 1]?.step ?? value.step),
+			}),
+		);
+	}
+	return cells;
+}
+
 export function drawTrace(model: TraceModel, host: Element): SVGSVGElement {
+	// One resolution for the whole draw. An empty sequence means the diagram
+	// carries no timing notation, so no `step` is written on any node, `timing`
+	// yields nothing, and no `g.trace-value-item` wrapper is created.
+	const timed = resolveSteps(model).length > 0;
 	const heapAddresses = new Map(
 		model.heap.flatMap((object) =>
 			object.address ? [[object.id, object.address] as const] : [],
@@ -228,6 +306,7 @@ export function drawTrace(model: TraceModel, host: Element): SVGSVGElement {
 					y2: top,
 					class: dashed ? "trace-scope" : "trace-rule",
 					...(dashed ? { "stroke-dasharray": "6 4" } : {}),
+					...timing(frame.step),
 				}),
 			);
 			if (frame.label) {
@@ -240,6 +319,7 @@ export function drawTrace(model: TraceModel, host: Element): SVGSVGElement {
 						frame.label,
 						"trace-frame-label",
 						"end",
+						timing(frame.step),
 					),
 				);
 			}
@@ -285,34 +365,29 @@ export function drawTrace(model: TraceModel, host: Element): SVGSVGElement {
 		const classes = ["trace-row", row.kind === "watch" ? "trace-watch" : ""]
 			.filter(Boolean)
 			.join(" ");
+		// A row tagged in its own right is timed by that tag — which is what makes
+		// an empty-valued row like `my_art:` timeable at all. Otherwise the name
+		// appears with the first value it holds.
+		const nameStep =
+			row.tag === undefined ? (row.values[0]?.step ?? row.step) : row.step;
 		const cells: SVGElement[] = [
-			label(ruleX - PAD, rowY, row.name, "trace-name", "end"),
+			label(ruleX - PAD, rowY, row.name, "trace-name", "end", timing(nameStep)),
 		];
-		row.values.forEach((value, index) => {
-			const x = valueX[index];
-			const displayValue = displayValues[index];
-			const w = width(displayValue);
+		row.values.forEach((_value, index) => {
 			cells.push(
-				label(
-					x,
+				...valueCells(
+					row.values,
+					index,
+					valueX[index],
 					rowY,
-					displayValue,
-					`trace-value${value.struck ? " trace-struck" : ""}`,
-					"start",
+					displayValues[index],
+					"trace-value",
+					timed,
 				),
 			);
-			if (value.struck) {
-				cells.push(
-					line({
-						x1: x - 2,
-						y1: rowY + FONT_SIZE * 0.35,
-						x2: x + w + 2,
-						y2: rowY - FONT_SIZE * 0.35,
-						class: "trace-strike",
-					}),
-				);
-			}
 		});
+		// `g.trace-row` stays untimed: it contains the name and every value, so a
+		// state on the group would shadow its children in document order.
 		nodes.push(g({ class: classes }, ...cells));
 	}
 
@@ -342,6 +417,10 @@ export function drawTrace(model: TraceModel, host: Element): SVGSVGElement {
 					d: `M ${left} ${xTop} L ${tableRight} ${xBottom} M ${tableRight} ${xTop} L ${left} ${xBottom}`,
 					class: "trace-frame-done",
 					fill: "none",
+					// `done` is a second event on one frame, so the X is timed by
+					// `doneAt`, not by the frame's own step. The attribute goes on the
+					// path rather than the enclosing group.
+					...timing(frame.doneAt?.step),
 				}),
 			);
 		}
@@ -379,6 +458,9 @@ export function drawTrace(model: TraceModel, host: Element): SVGSVGElement {
 				class: "trace-return-arrow",
 				fill: "none",
 				"marker-end": "url(#trace-arrow)",
+				// The arrow belongs to the returned value, so it never precedes or
+				// outlives it.
+				...timing(placed.row.values.at(-1)?.step ?? placed.row.step),
 			}),
 		);
 	}
@@ -407,6 +489,7 @@ export function drawTrace(model: TraceModel, host: Element): SVGSVGElement {
 					class: `trace-pointer trace-stack-pointer${value.struck ? " trace-struck" : ""}`,
 					fill: "none",
 					"marker-end": "url(#trace-arrow)",
+					...timing(value.step),
 				}),
 			);
 		});
@@ -433,6 +516,7 @@ export function drawTrace(model: TraceModel, host: Element): SVGSVGElement {
 					sourceId: object.id,
 					targetId: field.pointsTo,
 					y: fieldY,
+					step: field.step,
 				});
 			}
 			const members: SVGElement[] = [
@@ -442,6 +526,7 @@ export function drawTrace(model: TraceModel, host: Element): SVGSVGElement {
 					field.name,
 					"trace-heap-field-name",
 					"end",
+					timing(field.step),
 				),
 			];
 			if (field.pointsTo) {
@@ -452,41 +537,32 @@ export function drawTrace(model: TraceModel, host: Element): SVGSVGElement {
 						"",
 						"trace-heap-field trace-heap-field-value",
 						"start",
+						timing(field.step),
 					),
 				);
 				return members;
 			}
 
 			let valueX = dividerX + PAD;
-			for (const value of field.values) {
+			field.values.forEach((value, at) => {
 				const displayValue = stackValue(value, heapAddresses);
-				const valueW = width(displayValue);
 				members.push(
-					label(
+					...valueCells(
+						field.values,
+						at,
 						valueX,
 						fieldY,
 						displayValue,
-						`trace-heap-field trace-heap-field-value trace-value${value.struck ? " trace-struck" : ""}`,
-						"start",
+						"trace-heap-field trace-heap-field-value trace-value",
+						timed,
 					),
 				);
-				if (value.struck) {
-					members.push(
-						line({
-							x1: valueX - 2,
-							y1: fieldY + FONT_SIZE * 0.35,
-							x2: valueX + valueW + 2,
-							y2: fieldY - FONT_SIZE * 0.35,
-							class: "trace-strike",
-						}),
-					);
-				}
-				valueX += valueW + VALUE_GAP;
-			}
+				valueX += width(displayValue) + VALUE_GAP;
+			});
 			return members;
 		});
 		const box = g(
-			{ class: "trace-heap-object" },
+			{ class: "trace-heap-object", ...timing(object.step) },
 			rect({
 				x: heapLeft,
 				y: heapY,
@@ -568,6 +644,7 @@ export function drawTrace(model: TraceModel, host: Element): SVGSVGElement {
 				class: "trace-pointer trace-heap-pointer",
 				fill: "none",
 				"marker-end": "url(#trace-arrow)",
+				...timing(pointer.step),
 			}),
 		);
 	}
@@ -585,6 +662,7 @@ export function drawTrace(model: TraceModel, host: Element): SVGSVGElement {
 					class: `trace-pointer${value.struck ? " trace-struck" : ""}`,
 					fill: "none",
 					"marker-end": "url(#trace-arrow)",
+					...timing(value.step),
 				}),
 			);
 		});

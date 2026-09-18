@@ -11,10 +11,17 @@ import {
 	type HeapObject,
 	type Row,
 	type RowKind,
+	type Timed,
 	type TraceModel,
 	TraceSyntaxError,
 	type TraceValue,
 } from "./model.ts";
+
+/**
+ * Stamps a node with its document position and its diagram source line. `at` is
+ * the 0-based index of the line in the diagram text.
+ */
+type Mint = (at: number, tag?: number) => Timed;
 
 const HEADER = "traceDiagram";
 
@@ -39,6 +46,39 @@ const HEX_COLOR = /^#(?:[0-9a-f]{3}|[0-9a-f]{4}|[0-9a-f]{6}|[0-9a-f]{8})$/i;
 interface OpenFrame {
 	frame: Frame;
 	line: number;
+}
+
+/**
+ * A trailing step tag: `@` followed by digits only. A heap pointer is `@id`
+ * with a non-numeric id, so the two never collide — which is why a heap object
+ * id may not be all digits.
+ */
+const TRAILING_TAG = /\s*@(\d+)$/;
+
+/**
+ * Peels one trailing `@<digits>` off a statement or a value token. Peeling
+ * before dispatch keeps every statement regex unchanged; `ret &art -> my_art`
+ * in particular keeps its arrow target, which a tag-aware `ret` regex loses.
+ */
+function peelTrailingTag(source: string): { text: string; tag?: number } {
+	const match = source.match(TRAILING_TAG);
+	if (!match || match.index === undefined) return { text: source };
+	return { text: source.slice(0, match.index).trim(), tag: Number(match[1]) };
+}
+
+/**
+ * Gives a statement's peeled tag to the last value it declares, or to the
+ * statement itself when it declares none. `my_art: @10` is a row tag;
+ * `art: @artwork @1` is a value tag.
+ */
+function applyTrailingTag(
+	node: Timed,
+	values: TraceValue[],
+	tag: number | undefined,
+): void {
+	if (tag === undefined) return;
+	const target = values.at(-1) ?? node;
+	target.tag = tag;
 }
 
 /**
@@ -68,20 +108,27 @@ function splitValues(source: string): string[] {
  * Builds a row's values. Every value but the last is superseded, so it is
  * struck; the last is struck only when the author wrote it as `~value~`.
  */
-function parseValues(source: string): TraceValue[] {
+function parseValues(source: string, line: number, mint: Mint): TraceValue[] {
 	const raw = splitValues(source);
-	return raw.map((text, index): TraceValue => {
+	return raw.map((token, index): TraceValue => {
+		const { text, tag } = peelTrailingTag(token);
+		const timed = mint(line, tag);
 		const forced =
 			text.startsWith("~") && text.endsWith("~") && text.length > 1;
 		const bare = forced ? text.slice(1, -1).trim() : text;
 		const struck = forced || index < raw.length - 1;
 		if (bare.startsWith("@")) {
-			return { text: bare.slice(1), struck, pointsTo: bare.slice(1) };
+			return {
+				...timed,
+				text: bare.slice(1),
+				struck,
+				pointsTo: bare.slice(1),
+			};
 		}
 		const stackReference = bare.match(/^&([A-Za-z_][A-Za-z0-9_]*)$/);
 		return stackReference
-			? { text: bare, struck, pointsToStack: stackReference[1] }
-			: { text: bare, struck };
+			? { ...timed, text: bare, struck, pointsToStack: stackReference[1] }
+			: { ...timed, text: bare, struck };
 	});
 }
 
@@ -95,10 +142,21 @@ export function parseTrace(text: string): TraceModel {
 	const model: TraceModel = { frames: [], heap: [] };
 	const stack: OpenFrame[] = [];
 	let heap: HeapObject | undefined;
+	/** Set once a `frame`, `scope`, or `heap` opens, which closes `steps`. */
+	let blockSeen = false;
 
 	const fail = (message: string, index: number, column = 1): never => {
 		throw new TraceSyntaxError(message, index + 1, column);
 	};
+
+	// True document order across heap blocks and frames exists only here, as the
+	// parser walks. Every timed node takes the next ordinal as it is built.
+	let order = 0;
+	const mint: Mint = (at, tag) => ({
+		...(tag === undefined ? {} : { tag }),
+		order: order++,
+		sourceLine: at + 1,
+	});
 
 	let index = 0;
 	// Skip leading blanks, then require the header.
@@ -111,9 +169,14 @@ export function parseTrace(text: string): TraceModel {
 	for (; index < lines.length; index++) {
 		const rawLine = lines[index];
 
-		const line = rawLine.replace(/%%.*$/, "").trim();
-		if (line === "") continue;
-		const column = rawLine.indexOf(line.charAt(0)) + 1;
+		const statement = rawLine.replace(/%%.*$/, "").trim();
+		if (statement === "") continue;
+		const column = rawLine.indexOf(statement.charAt(0)) + 1;
+
+		// The tag is peeled before dispatch, so every statement regex below sees
+		// the text it saw before timing notation existed.
+		const { text: line, tag: trailingTag } = peelTrailingTag(statement);
+		if (line === "") fail(`Unknown statement \`${statement}\``, index, column);
 
 		// Inside a heap object, fields are `name: value` or `name -> id`.
 		if (heap) {
@@ -125,6 +188,7 @@ export function parseTrace(text: string): TraceModel {
 			const pointer = line.match(/^([^\s:]+)\s*->\s*(\S+)$/);
 			if (pointer) {
 				heap.fields.push({
+					...mint(index, trailingTag),
 					name: pointer[1],
 					values: [],
 					pointsTo: pointer[2],
@@ -151,7 +215,9 @@ export function parseTrace(text: string): TraceModel {
 					heap.color = value;
 					continue;
 				}
-				const values = parseValues(value);
+				const timed = mint(index);
+				const values = parseValues(value, index, mint);
+				applyTrailingTag(timed, values, trailingTag);
 				if (values.some(({ pointsTo }) => pointsTo)) {
 					fail(
 						`Heap field \`${name}\` cannot use pointer values in \`name: values\` form; use \`${name} -> target\``,
@@ -159,7 +225,7 @@ export function parseTrace(text: string): TraceModel {
 						column,
 					);
 				}
-				heap.fields.push({ name, values });
+				heap.fields.push({ ...timed, name, values });
 				continue;
 			}
 			fail(`Unknown heap field \`${line}\``, index, column);
@@ -175,7 +241,10 @@ export function parseTrace(text: string): TraceModel {
 
 		if (line === "done") {
 			if (!open) fail("`done` outside a frame or scope", index, column);
-			else open.done = true;
+			else {
+				open.done = true;
+				open.doneAt = mint(index, trailingTag);
+			}
 			continue;
 		}
 
@@ -185,9 +254,33 @@ export function parseTrace(text: string): TraceModel {
 			continue;
 		}
 
+		// At most one `steps`, and only before the first block, so a reader of
+		// the diagram meets the execution order before the trace it orders.
+		const steps = line.match(/^steps\s+(\d+(?:\s+\d+)*)$/);
+		if (steps) {
+			if (model.declaredSteps) {
+				fail(
+					"A diagram may declare at most one `steps` statement",
+					index,
+					column,
+				);
+			} else if (blockSeen) {
+				fail(
+					"`steps` must come before the first `frame`, `scope`, or `heap`",
+					index,
+					column,
+				);
+			} else {
+				model.declaredSteps = steps[1].split(/\s+/).map(Number);
+			}
+			continue;
+		}
+
 		const block = line.match(/^(frame|scope)(?:\s+(.+))?$/);
 		if (block) {
+			blockSeen = true;
 			const frame: Frame = {
+				...mint(index, trailingTag),
 				kind: block[1] as Frame["kind"],
 				label: block[2]?.trim() ?? "",
 				done: false,
@@ -202,7 +295,9 @@ export function parseTrace(text: string): TraceModel {
 
 		const object = line.match(/^heap\s+(\S+)(?:\s+(\S+))?$/);
 		if (object) {
+			blockSeen = true;
 			heap = {
+				...mint(index, trailingTag),
 				id: object[1],
 				...(object[2] ? { address: object[2] } : {}),
 				fields: [],
@@ -213,13 +308,18 @@ export function parseTrace(text: string): TraceModel {
 		const ret = line.match(/^ret\s+(.+?)(?:\s*->\s*(\S+))?$/);
 		if (ret) {
 			if (!open) fail("`ret` outside a frame", index, column);
-			else
+			else {
+				const timed = mint(index);
+				const values = parseValues(ret[1], index, mint);
+				applyTrailingTag(timed, values, trailingTag);
 				open.rows.push({
+					...timed,
 					kind: "ret",
 					name: "ret",
-					values: parseValues(ret[1]),
+					values,
 					...(ret[2] ? { returnsTo: ret[2] } : {}),
 				});
+			}
 			continue;
 		}
 
@@ -227,12 +327,17 @@ export function parseTrace(text: string): TraceModel {
 		if (explicitRow) {
 			const kind = explicitRow[1] as RowKind;
 			if (!open) fail(`\`${kind}\` outside a frame or scope`, index, column);
-			else
+			else {
+				const timed = mint(index);
+				const values = parseValues(explicitRow[3], index, mint);
+				applyTrailingTag(timed, values, trailingTag);
 				open.rows.push({
+					...timed,
 					kind,
 					name: explicitRow[2].trim(),
-					values: parseValues(explicitRow[3]),
+					values,
 				});
+			}
 			continue;
 		}
 
@@ -249,11 +354,10 @@ export function parseTrace(text: string): TraceModel {
 					column,
 				);
 			} else {
-				open.rows.push({
-					kind: "row",
-					name,
-					values: parseValues(implicitRow[2]),
-				});
+				const timed = mint(index);
+				const values = parseValues(implicitRow[2], index, mint);
+				applyTrailingTag(timed, values, trailingTag);
+				open.rows.push({ ...timed, kind: "row", name, values });
 			}
 			continue;
 		}

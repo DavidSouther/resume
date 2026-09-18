@@ -1,0 +1,24 @@
+traceDiagram
+  title Everything at once
+  heap blue 0x10
+    color: cornflowerblue
+    next -> other
+    counts: 1, 2
+  end
+  heap other 0x20
+    value: 7
+  end
+  frame main
+    my_art:
+    head: @blue
+    scope block
+      t: 3, ~4~
+    end
+    frame build_art
+      art: Artwork Liberty
+      ret &art -> my_art
+      watch return: rejected
+      done
+    end
+    done
+  end

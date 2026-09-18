@@ -110,9 +110,13 @@ describe("parseTrace", () => {
 			"traceDiagram\n  frame f\n    borrowed: &0x20\n  end",
 		);
 
+		// Exact equality, so a new value field must be added here deliberately.
+		// The frame takes order 0, its row order 1, and this value order 2.
 		expect(model.frames[0].rows[0].values[0]).toEqual({
 			text: "&0x20",
 			struck: false,
+			order: 2,
+			sourceLine: 3,
 		});
 	});
 
@@ -279,6 +283,154 @@ describe("parseTrace", () => {
 		);
 
 		expect(model.frames[0].label).toBe("f");
+	});
+});
+
+describe("parseTrace timing notation", () => {
+	it("a tag times the value it trails", () => {
+		const model = parseTrace(
+			"traceDiagram\n frame main @0\n  art: 7 @1\n  done @2\n end\n",
+		);
+
+		expect(model.frames[0].tag).toBe(0);
+		expect(model.frames[0].rows[0].values[0].tag).toBe(1);
+		expect(model.frames[0].rows[0].tag).toBeUndefined();
+		expect(model.frames[0].doneAt?.tag).toBe(2);
+	});
+
+	it("gives an empty value list's tag to the row itself", () => {
+		const model = parseTrace(
+			"traceDiagram\n  frame main\n    my_art: @10\n  end",
+		);
+
+		expect(model.frames[0].rows[0].values).toEqual([]);
+		expect(model.frames[0].rows[0].tag).toBe(10);
+	});
+
+	it("keeps a `ret` arrow target when a tag trails it", () => {
+		const model = parseTrace(
+			[
+				"traceDiagram",
+				"  frame main",
+				"    my_art: @10",
+				"    frame build_art @0",
+				"      art: Artwork Liberty @1",
+				"      ret &art -> my_art @2",
+				"    end",
+				"  end",
+			].join("\n"),
+		);
+
+		const ret = model.frames[0].frames[0].rows[1];
+		expect(ret.returnsTo).toBe("my_art");
+		expect(ret.values[0]).toMatchObject({
+			text: "&art",
+			pointsToStack: "art",
+			tag: 2,
+		});
+	});
+
+	it("reads a heap pointer value and its step tag as separate tokens", () => {
+		const model = parseTrace(
+			[
+				"traceDiagram",
+				"  heap artwork 0x08 @1",
+				"    name: Owain",
+				"  end",
+				"  frame main @0",
+				"    art: @artwork @1",
+				"  end",
+			].join("\n"),
+		);
+
+		expect(model.heap[0]).toMatchObject({ address: "0x08", tag: 1 });
+		expect(model.heap[0].fields[0].tag).toBeUndefined();
+		expect(model.frames[0].rows[0].values[0]).toMatchObject({
+			text: "artwork",
+			pointsTo: "artwork",
+			tag: 1,
+		});
+	});
+
+	it("tags each value of a list independently", () => {
+		const model = parseTrace(
+			"traceDiagram\n  frame gcd\n    a: 1071 @5, 609 @6\n  end",
+		);
+
+		const values = model.frames[0].rows[0].values;
+		expect(values.map((v) => v.text)).toEqual(["1071", "609"]);
+		expect(values.map((v) => v.tag)).toEqual([5, 6]);
+	});
+
+	it("reads a `steps` statement as the declared execution order", () => {
+		const model = parseTrace(
+			"traceDiagram\n  steps 9 10 0 1 2 3 11\n  frame main @9\n  end",
+		);
+
+		expect(model.declaredSteps).toEqual([9, 10, 0, 1, 2, 3, 11]);
+	});
+
+	it("rejects a second `steps` statement with its line", () => {
+		expect(() =>
+			parseTrace("traceDiagram\n  steps 0 1\n  steps 2 3\n"),
+		).toThrowError(/one `steps` statement.*line 3/);
+	});
+
+	it("rejects a `steps` statement after the first block, with its line", () => {
+		expect(() =>
+			parseTrace("traceDiagram\n  frame main\n  end\n  steps 0 1\n"),
+		).toThrowError(/`steps` must come before.*line 4/);
+	});
+
+	it("leaves an untagged diagram untimed", () => {
+		const model = parseTrace(
+			[
+				"traceDiagram",
+				"  heap blue 0x10",
+				"    value: 2, 3",
+				"  end",
+				"  frame f",
+				"    a: 1, 2",
+				"    done",
+				"  end",
+			].join("\n"),
+		);
+
+		expect(model.declaredSteps).toBeUndefined();
+		expect(model.heap[0].tag).toBeUndefined();
+		expect(model.heap[0].fields[0].values.map((v) => v.tag)).toEqual([
+			undefined,
+			undefined,
+		]);
+		expect(model.frames[0].tag).toBeUndefined();
+		expect(model.frames[0].doneAt?.tag).toBeUndefined();
+		expect(model.frames[0].rows[0].values.map((v) => v.tag)).toEqual([
+			undefined,
+			undefined,
+		]);
+	});
+
+	it("numbers every timed node in document order across heap and frames", () => {
+		const model = parseTrace(
+			[
+				"traceDiagram",
+				"  heap blue",
+				"    value: 2",
+				"  end",
+				"  frame f",
+				"    a: 1",
+				"    done",
+				"  end",
+			].join("\n"),
+		);
+
+		expect(model.heap[0].order).toBe(0);
+		expect(model.heap[0].fields[0].order).toBe(1);
+		expect(model.heap[0].fields[0].values[0].order).toBe(2);
+		expect(model.frames[0].order).toBe(3);
+		expect(model.frames[0].rows[0].order).toBe(4);
+		expect(model.frames[0].rows[0].values[0].order).toBe(5);
+		expect(model.frames[0].doneAt?.order).toBe(6);
 	});
 });
 

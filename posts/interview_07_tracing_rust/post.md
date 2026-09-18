@@ -122,14 +122,14 @@ art 1,2
 ```mermaid
 traceDiagram
   title A plain owned value
-  heap artwork 0x08
+  heap artwork 0x08 @1
     name: Owain
     view_count: 0
   end
-  frame main
-    art: @artwork
-    watch art.name: Owain
-    done
+  frame main @0
+    art: @artwork @1
+    watch art.name: Owain @2
+    done @3
   end
 ```
 
@@ -152,11 +152,11 @@ b copy a 2,3
 ```mermaid
 traceDiagram
   title Copy creates independent values
-  frame main
-    a: 7
-    b: 7
-    watch println a b: 7 7
-    done
+  frame main @0
+    a: 7 @1
+    b: 7 @2
+    watch println a b: 7 7 @3
+    done @4
   end
 ```
 
@@ -182,17 +182,17 @@ reject 3
 ```mermaid
 traceDiagram
   title Ownership check for use after move
-  heap artwork 0x10
-    state: alive, freed by admire_owned
+  heap artwork 0x10 @1
+    state: alive @1, freed by admire_owned @2
   end
-  frame main
-    art1: @artwork, moved
-    watch first admire_owned: accepted, moves art1
-    frame admire_owned
-      art: @artwork
-      done
+  frame main @0
+    art1: @artwork @1, moved @2
+    watch first admire_owned: accepted @2, moves art1 @2
+    frame admire_owned @2
+      art: @artwork @2
+      done @2
     end
-    watch second admire_owned: rejected
+    watch second admire_owned: rejected @3
   end
 ```
 
@@ -225,17 +225,17 @@ ref2 &art1 3,5
 ```mermaid
 traceDiagram
   title Compatible shared borrows
-  heap artwork 0x20
+  heap artwork 0x20 @1
     name: Owain
     view_count: 0
   end
-  frame main
-    art1: @artwork
-    ref1: &0x20
-    ref2: &0x20
-    watch admire_shared ref1: allowed
-    watch admire_shared ref2: allowed
-    done
+  frame main @0
+    art1: @artwork @1
+    ref1: &0x20 @2
+    ref2: &0x20 @3
+    watch admire_shared ref1: allowed @4
+    watch admire_shared ref2: allowed @5
+    done @6
   end
 ```
 
@@ -269,23 +269,23 @@ mref2 &mut art1 7,8
 ```mermaid
 traceDiagram
   title Sequential mutable borrows
-  heap artwork 0x20
+  heap artwork 0x20 @1
     name: Owain
-    view_count: 0, 1, 2
+    view_count: 0 @1, 1 @4, 2 @8
   end
-  frame main
-    art1: @artwork
-    scope first mutable loan
-      mref1: &mut 0x20
-      watch view_count: 1
-      done
+  frame main @0
+    art1: @artwork @1
+    scope first mutable loan @2
+      mref1: &mut 0x20 @3
+      watch view_count: 1 @4
+      done @5
     end
-    scope second mutable loan
-      mref2: &mut 0x20
-      watch view_count: 2
-      done
+    scope second mutable loan @6
+      mref2: &mut 0x20 @7
+      watch view_count: 2 @8
+      done @9
     end
-    done
+    done @10
   end
 ```
 
@@ -312,16 +312,16 @@ reject 3
 ```mermaid
 traceDiagram
   title Move rejected while borrowed
-  heap artwork 0x30
+  heap artwork 0x30 @1
     name: Fire
     view_count: 0
   end
-  frame main
-    art1: @artwork
-    borrowed: &0x30
-    watch admire_owned art1: rejected
-    watch borrowed.name: Fire
-    done
+  frame main @0
+    art1: @artwork @1
+    borrowed: &0x30 @2
+    watch admire_owned art1: rejected @3
+    watch borrowed.name: Fire @4
+    done @5
   end
 ```
 
@@ -359,13 +359,14 @@ reject 2
 ```mermaid
 traceDiagram
   title Static check of a returned local reference
-  frame main
-    my_art:
-    frame build_art
-      art: Artwork Liberty
-      ret &art -> my_art
-      watch return: rejected
-      done
+  steps 9 10 0 1 2 3 11
+  frame main @9
+    my_art: @10
+    frame build_art @0
+      art: Artwork Liberty @1
+      ret &art -> my_art @2
+      watch return: rejected @2
+      done @3
     end
   end
 ```

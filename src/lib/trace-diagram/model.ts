@@ -2,7 +2,22 @@
 // diagram text exists; everything downstream reads this model, so a value that
 // reaches the renderer is already well-formed.
 
-export interface TraceValue {
+/**
+ * One point in the trace's timeline. `tag` is the author's 0-based listing line;
+ * `step` is the 1-based ordinal resolved against the step sequence.
+ */
+export interface Timed {
+	/** Author's `@<digits>`, absent when the item inherits. */
+	tag?: number;
+	/** Document position across heap and frames, for inheritance and occurrence. */
+	order: number;
+	/** 1-based diagram source line, for TraceSyntaxError positions. */
+	sourceLine: number;
+	/** Resolved 1-based step ordinal. Absent when the diagram is untimed. */
+	step?: number;
+}
+
+export interface TraceValue extends Timed {
 	/** Rendered text. For a heap pointer with no declared address, the heap id. */
 	text: string;
 	/** Superseded by a later value in the row, or forced struck with `~v~`. */
@@ -15,7 +30,7 @@ export interface TraceValue {
 
 export type RowKind = "row" | "watch" | "ret";
 
-export interface Row {
+export interface Row extends Timed {
 	kind: RowKind;
 	/** An identifier, a watched expression, or the literal "ret". */
 	name: string;
@@ -24,7 +39,7 @@ export interface Row {
 	returnsTo?: string;
 }
 
-export interface Frame {
+export interface Frame extends Timed {
 	/** A `scope` draws its opening rule dashed; a `frame` draws it solid. */
 	kind: "frame" | "scope";
 	label: string;
@@ -32,9 +47,11 @@ export interface Frame {
 	done: boolean;
 	rows: Row[];
 	frames: Frame[];
+	/** Timing of the frame's `done`, which is a second event on one frame. */
+	doneAt?: Timed;
 }
 
-export interface HeapField {
+export interface HeapField extends Timed {
 	name: string;
 	/** Scalar value history, using the same semantics as a stack row. */
 	values: TraceValue[];
@@ -42,7 +59,7 @@ export interface HeapField {
 	pointsTo?: string;
 }
 
-export interface HeapObject {
+export interface HeapObject extends Timed {
 	id: string;
 	/** Hexadecimal, written at the object's top-left (the 2021 paper's variant). */
 	address?: string;
@@ -55,6 +72,8 @@ export interface TraceModel {
 	title?: string;
 	frames: Frame[];
 	heap: HeapObject[];
+	/** From a `steps` statement. Absent means "derive the default sequence". */
+	declaredSteps?: number[];
 }
 
 /** Thrown for any malformed diagram. Carries a 1-based line and column. */

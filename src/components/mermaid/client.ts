@@ -9,6 +9,7 @@
 // time and leaves it a genuine runtime import.
 
 import { traceDiagram } from "../../lib/trace-diagram/detector.ts";
+import { mountTraceSteppers } from "../../lib/trace-stepper/stepper.ts";
 
 interface MermaidApi {
 	initialize(config: Record<string, unknown>): void;
@@ -38,6 +39,15 @@ export async function bootMermaid(): Promise<boolean> {
 
 // The diagram source stays legible as text if any of this fails, so a failure
 // degrades to the pre block rather than to an empty figure.
-void bootMermaid().catch((error) => {
-	console.error("mermaid failed to render", error);
-});
+//
+// The steppers mount only after `bootMermaid` resolves: the timed elements live
+// in the SVG mermaid draws, so before that there is nothing to step. A figure
+// whose diagram failed to draw carries no `[data-at]` and is skipped, which is
+// what keeps a failed render from growing a control bar it cannot drive.
+void bootMermaid()
+	.then(() => {
+		mountTraceSteppers(document);
+	})
+	.catch((error) => {
+		console.error("mermaid failed to render", error);
+	});
