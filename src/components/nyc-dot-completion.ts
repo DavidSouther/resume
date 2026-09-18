@@ -177,7 +177,7 @@ export function NycDotCompletion(): HTMLElement {
 			),
 			li(
 				{},
-				"Bike lane figures are a segment count, not mileage: no reliable per-segment length field exists on this dataset without computing one from geometry, and this pipeline does not guess a units-bearing figure.",
+				"Segment count and mileage are reported as two separate rows, deliberately: this dataset has no length field, but its geometry is real, so mileage is computed from each segment's own geometry (reprojected to EPSG:2263 for planar length), not guessed from a units-bearing field. On-street mileage only — a handful of off-street greenway/park-path segments run 3-15 miles as a single geometry and would otherwise swing an on-street pace figure by themselves; their totals are reported separately in that row's notes.",
 			),
 			li(
 				{},

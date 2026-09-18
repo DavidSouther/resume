@@ -62,7 +62,16 @@ def main() -> None:
 
     con = duckdb.connect()
     cache_glob = str(cache_dir / "page_*.json")
-    con.execute(f"CREATE VIEW segments AS SELECT * FROM read_json_auto('{cache_glob}')")
+    # DISTINCT: the raw Socrata response for this dataset contains a small
+    # number of exact-duplicate rows (88 out of 29,695 as of 2026-09-17,
+    # same segmentid/bikeid/geometry repeated) even from a single-page
+    # pull with no offset paging involved — a data-quality issue in the
+    # source, not a pagination artifact. Left undeduplicated, this
+    # over-counted the Adams-window segment total by 46 rows (~2.4%, since
+    # duplicates aren't evenly spread across install dates). Every count
+    # downstream of this view must be deduplicated at the source, not
+    # patched over per-query.
+    con.execute(f"CREATE VIEW segments AS SELECT DISTINCT * FROM read_json_auto('{cache_glob}')")
 
     con.execute("CREATE TABLE category_map (value VARCHAR, category VARCHAR)")
     if mapping:

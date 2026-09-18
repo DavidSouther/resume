@@ -16,7 +16,7 @@ import csv
 from pathlib import Path
 
 from aggregate import Metric, run as run_aggregate
-from crosscheck import bike_route_derived_counts_by_year
+from crosscheck import bike_route_derived_miles_by_year
 
 CONFIG_DIR = Path(__file__).resolve().parent.parent / "config"
 OUTPUT_DIR = Path(__file__).resolve().parent.parent / "output"
@@ -25,23 +25,24 @@ OUTPUT_DIR = Path(__file__).resolve().parent.parent / "output"
 def confidence_for(metric: Metric) -> str:
     if metric.adams_total is None and metric.mamdani_to_date_total is None:
         return "unavailable"
-    if metric.basis == "inventory_count":
+    if metric.basis in ("inventory_count", "inventory_length"):
         return "inventory-verified"
     return "api-verified"
 
 
 def annotate_bike_lane_crosscheck(metric: Metric) -> None:
-    """If an inventory-derived figure exists, note whether it was checked
-    against testimony — build_table never silently drops that context."""
-    if metric.key != "bike_lane" or metric.adams_total is None:
+    """If a mileage figure exists, note whether it was checked against
+    testimony — build_table never silently drops that context. Only the
+    mileage row is mile-for-mile comparable to testimony; the segment-
+    count row isn't (see that row's own notes)."""
+    if metric.key != "bike_lane_miles" or metric.adams_total is None:
         return
-    by_year = bike_route_derived_counts_by_year()
+    by_year = bike_route_derived_miles_by_year()
     if by_year:
         metric.notes = (
             metric.notes
             + " Cross-checked against DOT testimony — see crosscheck.py "
-            "output (unit mismatch: miles vs. segment count, trend check "
-            "only)."
+            "output for per-year variance."
         ).strip()
 
 

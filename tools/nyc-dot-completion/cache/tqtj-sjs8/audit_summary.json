@@ -11,5 +11,5 @@
   ],
   "finding": "None of checked_fields carries a bike-lane-install or daylighting category. This dataset is a general street-opening/construction permit feed (utility work, refuse containers, sidewalk repair, etc.), not an infrastructure installation log. Not used for classification.",
   "not_cached_reason": "3073389 rows since 2022-01-01 is too large to cache raw (multiple GB of JSON) for a dataset this pipeline doesn't use for any metric \u2014 see finding above.",
-  "fetched_at": "2026-09-17T23:29:45.038179+00:00"
+  "fetched_at": "2026-09-18T00:21:51.385892+00:00"
 }

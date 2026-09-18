@@ -1,3 +1,8 @@
 requests>=2.31
 duckdb>=1.0
 pyyaml>=6.0
+
+# aggregate.py's bike_lane_miles_metric runs `INSTALL spatial; LOAD
+# spatial;` at runtime — DuckDB's extension installer, not a pip package.
+# First run needs network access to fetch it; it's then cached locally
+# (~/.duckdb/extensions) for subsequent runs.

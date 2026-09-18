@@ -23,6 +23,8 @@ CONFIG_DIR = Path(__file__).resolve().parent.parent / "config"
 OUTPUT_DIR = Path(__file__).resolve().parent.parent / "output"
 CACHE_DIR = Path(__file__).resolve().parent.parent / "cache"
 
+FEET_PER_MILE = 5280.0
+
 
 @dataclass
 class Metric:
@@ -118,7 +120,120 @@ def bike_lane_metric(
             f"({date_field}) bucketed by administration window. Counts "
             "segments, not miles — no reliable per-segment length field "
             "exists without computing one from geometry, and this pipeline "
-            "does not guess a units-bearing figure."
+            "does not guess a units-bearing figure. Caveat confirmed via "
+            "crosscheck.py (a ~10x gap against DOT's own testimony mileage, "
+            "in the direction this dataset overcounts): the field's own "
+            f"description says {date_field} is set on install OR "
+            "MODIFICATION of a facility, so a pre-existing lane that was "
+            "only restriped/upgraded can show up as a same-year 'install' "
+            "here. This likely inflates both administrations' totals to "
+            "some degree — not verified whether the inflation rate has "
+            "shifted between them."
+        ),
+    )
+
+
+def bike_lane_miles_metric(
+    con: duckdb.DuckDBPyConnection, config: dict, extraction_date: date
+) -> Metric:
+    """On-street protected-lane mileage, computed from each segment's own
+    geometry (DuckDB's spatial extension, reprojected to EPSG:2263 — NY
+    State Plane feet — for an accurate planar length), not guessed from a
+    units-bearing field that doesn't exist on this dataset. Segment count
+    alone hides a real trend: recent installs skew shorter (see notes),
+    so a raw count can understate how much the actual pace has slowed.
+
+    on-street only (onoffst='ON'): off-street greenway/park paths are
+    real bike infrastructure but a handful of them are 3-15 mile single
+    geometries (e.g. the Shore Pkwy Greenway), and folding those into a
+    "protected bike lane" pace figure would let one park-path digitization
+    swing the whole number. Reported separately in notes instead.
+    """
+    dataset = config["datasets"]["bike_routes"]
+    admins = config["administrations"]
+    dataset_id = dataset["dataset_id"]
+    cache_dir = CACHE_DIR / dataset_id
+    if not (cache_dir / "manifest.json").exists():
+        return Metric(
+            key="bike_lane_miles",
+            label="Protected bike lane (on-street)",
+            unit="unknown",
+            adams_total=None,
+            mamdani_to_date_total=None,
+            mamdani_annualized=None,
+            basis="inventory_length",
+            completion_semantics="installed",
+            notes="Not pulled yet — run pull_bike_routes.py.",
+        )
+
+    con.execute("INSTALL spatial")
+    con.execute("LOAD spatial")
+    cache_glob = str(cache_dir / "page_*.json")
+    date_field = dataset["date_field"]
+    status_field = dataset["status_field"]
+    active_value = dataset["active_status_value"]
+
+    # SELECT DISTINCT: same source duplicate-row issue as classify.py —
+    # see that file's comment. Deduplicate here too since this reads the
+    # raw cache directly, not the classified CSV (whose CSV-serialized
+    # the_geom column isn't valid GeoJSON — see git history for why this
+    # function reads geometry from the cache instead).
+    con.execute(
+        f"""
+        CREATE OR REPLACE VIEW bike_geom AS
+        SELECT DISTINCT
+          {date_field}::DATE AS inst_date, onoffst, grnwy,
+          ST_Length(ST_Transform(
+            ST_GeomFromGeoJSON(to_json(the_geom)), 'EPSG:4326', 'EPSG:2263'
+          )) AS length_ft
+        FROM read_json_auto('{cache_glob}')
+        WHERE {status_field} = '{active_value}'
+          AND (ft_facilit = 'Protected' OR tf_facilit = 'Protected')
+        """
+    )
+
+    adams_where = window_sql(admins, "adams", extraction_date, "inst_date")
+    mamdani_where = window_sql(admins, "mamdani", extraction_date, "inst_date")
+
+    adams_ft, mamdani_ft, adams_off_ft, mamdani_off_ft = con.execute(
+        f"""
+        SELECT
+          sum(length_ft) FILTER (WHERE onoffst = 'ON' AND {adams_where}),
+          sum(length_ft) FILTER (WHERE onoffst = 'ON' AND {mamdani_where}),
+          sum(length_ft) FILTER (WHERE onoffst = 'OFF' AND {adams_where}),
+          sum(length_ft) FILTER (WHERE onoffst = 'OFF' AND {mamdani_where})
+        FROM bike_geom
+        """
+    ).fetchone()
+
+    adams_mi = (adams_ft or 0.0) / FEET_PER_MILE
+    mamdani_mi = (mamdani_ft or 0.0) / FEET_PER_MILE
+    adams_off_mi = (adams_off_ft or 0.0) / FEET_PER_MILE
+    mamdani_off_mi = (mamdani_off_ft or 0.0) / FEET_PER_MILE
+    mamdani_annualized = annualize(mamdani_mi, admins, extraction_date)
+
+    return Metric(
+        key="bike_lane_miles",
+        label="Protected bike lane (on-street)",
+        unit="mi",
+        adams_total=round(adams_mi, 2),
+        mamdani_to_date_total=round(mamdani_mi, 2),
+        mamdani_annualized=round(mamdani_annualized, 2),
+        basis="inventory_length",
+        completion_semantics="installed",
+        notes=(
+            f"Miles computed from each segment's own geometry "
+            f"({dataset_id}), reprojected to EPSG:2263 for planar length "
+            "— not a guessed units-bearing field. On-street only "
+            "(onoffst='ON'); off-street greenway/park paths installed in "
+            f"the same windows total {adams_off_mi:.1f} mi (Adams) and "
+            f"{mamdani_off_mi:.1f} mi (Mamdani to date), reported "
+            "separately because a few multi-mile park-path geometries "
+            "would otherwise swing an on-street pace figure. Recent "
+            "installs skew shorter per segment than earlier years' — this "
+            "mileage figure falls faster than the plain segment count "
+            "above, not slower; see the segment-count row's install-year "
+            "breakdown for the underlying trend."
         ),
     )
 
@@ -250,6 +365,7 @@ def run(extraction_date: date | None = None) -> list[Metric]:
     con = duckdb.connect()
     return [
         bike_lane_metric(con, config, extraction_date),
+        bike_lane_miles_metric(con, config, extraction_date),
         daylighting_metric(config),
         plaza_metric(con, config, extraction_date),
     ]
