@@ -11,7 +11,10 @@ const baseline = resolve(candidates, "00-baseline.md");
 const tTable = resolve(candidates, "01-t-table.md");
 const lifeline = resolve(candidates, "02-lifeline.md");
 const hybrid = resolve(candidates, "03-hybrid.md");
+const gutterHighlights = resolve(candidates, "04-gutter-highlights.md");
+const combined = resolve(candidates, "05-combined.md");
 const comparison = resolve(candidates, "comparison.md");
+const globalCss = resolve(postDir, "../../src/global.css");
 
 const LISTINGS = ["2.2", "2.5", "2.9", "2.11", "2.12", "2.13"];
 
@@ -35,8 +38,7 @@ function read(path: string): string {
 }
 
 describe("Rust tracing notation teaching material", () => {
-	it("stages the T-table into Rust ownership across three drawable candidates", () => {
-		// Arrange: the post and its five candidate documents.
+	it("stages the T-table into Rust ownership across five drawable candidates", () => {
 		const postSource = read(post);
 		const front = matter(postSource);
 		const body = front.content;
@@ -47,6 +49,7 @@ describe("Rust tracing notation teaching material", () => {
 			["hybrid", read(hybrid)],
 		]);
 		const comparisonText = read(comparison);
+		const styles = read(globalCss);
 
 		// Assert: the post is a real, unlisted post that hands off to the prior one.
 		expect(front.data.title).toBeTruthy();
@@ -62,6 +65,8 @@ describe("Rust tracing notation teaching material", () => {
 			"Candidate A",
 			"Candidate B",
 			"Candidate C",
+			"Candidate D",
+			"Candidate CD",
 			"What to test",
 		]) {
 			expect(body).toMatch(new RegExp(`^## ${heading}`, "im"));
@@ -131,8 +136,12 @@ describe("Rust tracing notation teaching material", () => {
 			expect(text, `${name} must not require back-editing`).toMatch(
 				/no back[- ]editing|without back[- ]editing|never (?:erased|moved|reserved)/i,
 			);
-			// Worked traces are ASCII, so they are diffable and reviewable in text.
-			expect(text, `${name} needs worked traces`).toMatch(/```text[\s\S]*?```/);
+			// Text source keeps every worked trace inspectable and diffable.
+			if (name === "lifeline graph") {
+				expect(text).toMatch(/```mermaid\s+flowchart TD/);
+			} else {
+				expect(text, `${name} needs worked traces`).toMatch(/```text[\s\S]*?```/);
+			}
 			// One ink color: no mark may depend on color alone.
 			expect(text).toMatch(/one (?:ink )?color|single color|survives.*one ink/i);
 		}
@@ -143,11 +152,14 @@ describe("Rust tracing notation teaching material", () => {
 		expect(candidateA).toMatch(/reference binding's scope/i);
 
 		const candidateB = candidateTexts.get("lifeline graph")!;
-		expect(candidateB).toMatch(/\| Loan ends \|[^\n]*`-C-` or `-<-`/);
-		expect(candidateB).toMatch(/\| Binding end \/ drop \|[^\n]*`<>`/);
-		expect(candidateB).toMatch(/continue the reference's\s+dotted binding lifeline/i);
-		expect(candidateB).toMatch(/share a decision rule, not one geometric tell/i);
+		expect(candidateB).toMatch(/\| Loan ends \|[^\n]*`C` or `<`/);
+		expect(candidateB).toMatch(/\| Binding end \/ drop \|[^\n]*diamond/i);
+		expect(candidateB).toMatch(/Reference binding[^\n]*reference node/i);
+		expect(candidateB).toMatch(/share a decision\s+rule, not one geometric tell/i);
 		expect(candidateB).not.toMatch(/error tell is uniform/i);
+		expect(candidateB.match(/```mermaid\s+flowchart TD/g)).toHaveLength(7);
+		expect(candidateB).not.toMatch(/```text/);
+		expect(candidateB).toMatch(/attempted[^\n]*-. rejected/);
 
 		const candidateC = candidateTexts.get("hybrid")!;
 		expect(candidateC).toMatch(
@@ -173,11 +185,30 @@ describe("Rust tracing notation teaching material", () => {
 			body.indexOf("## Candidate B"),
 			body.indexOf("## Candidate C"),
 		);
-		expect(candidateBSection).toContain("<>");
-		expect(candidateBSection).not.toContain("<#>");
-		expect(candidateBSection).toMatch(/Borrow brackets close[\s\S]*binding's diamond/);
+		expect(candidateBSection.match(/```mermaid\s+flowchart TD/g)).toHaveLength(7);
+		expect(candidateBSection).not.toMatch(/```text/);
+		expect(candidateBSection).toMatch(
+			/Borrow brackets close[\s\S]*binding's\s+(?:end node|diamond)/,
+		);
+		expect(candidateBSection).toMatch(
+			/let ref1 = &art1;\s+admire_shared\(ref1\);\s+let ref2 = &art1;\s+admire_shared\(ref2\);/,
+		);
+		expect(candidateBSection).toMatch(/D: shared loan ref1 opens[\s\S]*C: loan ref2 closes/);
+		for (const heading of [
+			"A plain owned value",
+			"A `Copy` value",
+			"Move and use after move",
+			"Shared and mutable borrows",
+			"A move rejected while borrowed",
+			"Returning a reference to a local",
+		]) {
+			expect(candidateBSection).toContain(`### ${heading}`);
+		}
 
-		const candidateCSection = body.slice(body.indexOf("## Candidate C"));
+		const candidateCSection = body.slice(
+			body.indexOf("## Candidate C"),
+			body.indexOf("## Candidate D"),
+		);
 		for (const heading of [
 			"A plain owned value",
 			"A `Copy` value",
@@ -202,15 +233,208 @@ describe("Rust tracing notation teaching material", () => {
 			/`C` and `<` close those loans; `R` separately\s+ends/,
 		);
 
-		// Assert: the comparison picks a winner on the draw-order criterion and
-		// says what a test with people would measure.
+		const gutterText = read(gutterHighlights);
+		const candidateDSection = body.slice(
+			body.indexOf("## Candidate D"),
+			body.indexOf("## Draw order and recommendation"),
+		);
+		for (const text of [gutterText, candidateDSection]) {
+			expect(text).toMatch(/left(?:-hand)? gutter/i);
+			expect(text).toMatch(/literal\s+highlighter band/i);
+			expect(text).toMatch(/lexical\s+binding scope/i);
+			expect(text).toMatch(/active\s+loan/i);
+			expect(text).toMatch(/conservative lexical subset/i);
+			expect(text).toMatch(/overstates?\s+(?:the\s+)?(?:real\s+)?active loan/i);
+			expect(text).toMatch(/non-lexical lifetimes|NLL/i);
+			expect(text).toMatch(/shared loans? (?:may|can) overlap/i);
+			expect(text).toMatch(/overlap (?:alone|by itself) is not (?:an )?error/i);
+			expect(text).toMatch(/incompatible access/i);
+			expect(text).toMatch(/rejected operation[^.]*does not execute/i);
+			expect(text).toMatch(/different\s+highlighter color/i);
+			expect(text).toContain('class="lifetime-gutter"');
+			expect(text).toContain('class="lifetime-band"');
+			expect(text).toMatch(/source[^.]*`&`[^.]*`&mut`|`&`[^.]*`&mut`[^.]*source/i);
+			expect(text).not.toContain('role="img"');
+			for (const container of text.match(/<div class="lifetime-gutter"[^>]*>/g) ?? []) {
+				expect(container).toContain('role="group"');
+				expect(container).toContain("aria-label=");
+			}
+			for (const band of text.match(/<span class="lifetime-band[^>]*>/g) ?? []) {
+				expect(band).toContain('aria-hidden="true"');
+			}
+			expect(text).not.toContain("<span></span>");
+		}
+		for (const listing of LISTINGS) {
+			expect(gutterText, `gutter highlights must draw listing ${listing}`).toContain(
+				`listing ${listing}`,
+			);
+		}
+		for (const heading of [
+			"A plain owned value",
+			"A `Copy` value",
+			"Move and use after move",
+			"Shared and mutable borrows",
+			"A move rejected while borrowed",
+			"Returning a reference to a local",
+		]) {
+			expect(candidateDSection).toContain(`### ${heading}`);
+		}
+		expect(gutterText).toMatch(/borrow[^.]*closing brace/i);
+		expect(gutterText).toMatch(/inner blocks?[\s\S]*mutable borrow/i);
+		for (const text of [gutterText, candidateDSection]) {
+			expect(text).toMatch(/shared[\s\S]*requested (?:`|&amp;)?&?mut/i);
+			expect(text).toMatch(/proof obligation/i);
+			expect(text).toMatch(
+				/let shared = &amp;art1;[\s\S]*let requested_mut = &amp;mut art1; \/\/ rejected:[\s\S]*shared\.name/,
+			);
+			expect(text).toMatch(/not an executed loan|no second loan executes/i);
+		}
+		expect(gutterText).not.toMatch(/band ends? at (?:its |the )?last use/i);
+		for (const text of [gutterText, candidateDSection]) {
+			expect(text).toMatch(
+				/lifetime-end[\s\S]*?&amp;art \/\/ rejected return[\s\S]*?<code>}<\/code>[\s\S]*?lifetime-end[\s\S]*?caller would still require the reference here/,
+			);
+			expect(text).not.toMatch(/lifetime-end[^>]*><\/span><code>}<\/code>/);
+		}
+
+		const combinedText = read(combined);
+		const candidateCDSection = body.slice(
+			body.indexOf("## Candidate CD"),
+			body.indexOf("## Draw order and recommendation"),
+		);
+		for (const text of [combinedText, candidateCDSection]) {
+			expect(text).toMatch(/lexical[^.]*teaching simplification/i);
+			expect(text).toContain('class="lifetime-composite"');
+			expect(text).toContain('class="lifetime-gutter lifetime-gutter-geometry"');
+			expect(text).not.toContain('class="lifetime-symbol"');
+			expect(text).toMatch(/<pre class="mermaid"[^>]*>traceDiagram/);
+			expect(text).toMatch(/different\s+highlighter color/i);
+			expect(text).toMatch(/return(?:ing)? a (?:stack pointer|reference to a stack-local)/i);
+			expect(text).toMatch(/use after (?:free|move)/i);
+			expect(text).toMatch(/Rust rejects[^.]*before[^.]*runtime state/i);
+			expect(text).toMatch(/aria-label="[^"]+"/);
+			expect(text).toMatch(/touch(?:ing|es)[^.]*sideways pyramid/i);
+			expect(text).not.toContain("lifetime-connector");
+			expect(text).not.toContain("data-label=");
+			expect(text).toContain('class="lifetime-move-terminal"');
+			expect(text).toContain('class="lifetime-band lifetime-suspended"');
+		}
+		for (const heading of [
+			"A plain owned value",
+			"A `Copy` value",
+			"Move and use after move",
+			"Shared borrows",
+			"Mutable borrows",
+			"A move rejected while borrowed",
+			"Returning a stack pointer",
+		]) {
+			expect(combinedText).toContain(`## ${heading}`);
+			expect(candidateCDSection).toContain(`### ${heading}`);
+		}
+		for (const text of [combinedText, candidateCDSection]) {
+			expect(text.match(/class="lifetime-composite"/g)).toHaveLength(7);
+			expect(text.match(/>traceDiagram/g)).toHaveLength(7);
+			expect(
+				text.match(
+					/class="lifetime-gutter lifetime-gutter-geometry lifetime-gutter-connected"/g,
+				),
+			).toHaveLength(4);
+			const connectedGutters =
+				text.match(
+					/<div class="lifetime-gutter lifetime-gutter-geometry lifetime-gutter-connected"[\s\S]*?<pre>/g,
+				) ?? [];
+			expect(connectedGutters).toHaveLength(4);
+			for (const gutter of connectedGutters) {
+				expect(gutter).not.toContain('class="lifetime-labels"');
+			}
+			expect(text.match(/class="lifetime-labels"/g)).toHaveLength(3);
+
+			expect(text.match(/class="lifetime-band lifetime-suspended"/g)).toHaveLength(4);
+
+			const copyExample = text.slice(
+				text.indexOf("A `Copy` value"),
+				text.indexOf("Move and use after move"),
+			);
+			expect(copyExample).not.toContain("lifetime-gutter-connected");
+
+			const moveExample = text.slice(
+				text.indexOf("Move and use after move"),
+				text.indexOf("Shared borrows"),
+			);
+			expect(moveExample).toContain('style="--lanes: 1"');
+			expect(moveExample).not.toContain("lifetime-gutter-connected");
+			expect(moveExample).not.toMatch(/callee art|lifetime-gutter-connected/);
+			expect(moveExample).toMatch(
+				/lifetime-band lifetime-end[^>]*><\/span><span class="lifetime-move-terminal" aria-hidden="true"><\/span><code>    admire_owned\(art1\);<\/code>/,
+			);
+
+			const useAfterMoveDiagram = text.slice(
+				text.indexOf("title Ownership check for use after move"),
+				text.indexOf("</pre>", text.indexOf("title Ownership check for use after move")),
+			);
+			const acceptedFirstCall = useAfterMoveDiagram.indexOf(
+				"\n    watch first admire_owned: accepted, moves art1",
+			);
+			const executedCall = useAfterMoveDiagram.indexOf("frame admire_owned");
+			const rejectedRetry = useAfterMoveDiagram.indexOf(
+				"watch second admire_owned: rejected",
+			);
+			expect(acceptedFirstCall).toBeGreaterThan(-1);
+			expect(executedCall).toBeGreaterThan(-1);
+			expect(rejectedRetry).toBeGreaterThan(-1);
+			expect(acceptedFirstCall).toBeLessThan(executedCall);
+			expect(executedCall).toBeLessThan(rejectedRetry);
+
+			const returnedLocal = text.slice(
+				text.indexOf("Returning a stack pointer"),
+				text.indexOf("Candidate CD", text.indexOf("Returning a stack pointer")),
+			);
+			expect(returnedLocal).toContain(
+				'<span class="lifetime-line"><span aria-hidden="true"></span><span class="lifetime-band" aria-hidden="true"></span><code>}</code></span>',
+			);
+			expect(returnedLocal).toMatch(/blue[^.]*extends beyond[^.]*yellow owner/i);
+		}
+		expect(combinedText).toMatch(/yellow `art` band[^.]*`&art` line/i);
+		expect(styles).toMatch(/nth-child\(1\)[\s\S]*#f4d35e/);
+		expect(styles).toMatch(/nth-child\(2\)[\s\S]*#56b4e9/);
+		expect(styles).toContain("Use distinct lane colors only as a secondary cue");
+		expect(styles).toContain(
+			".lifetime-line > .lifetime-band.lifetime-suspended",
+		);
+		expect(styles).toMatch(
+			/\.lifetime-gutter-connected \.lifetime-line[\s\S]*--lifetime-lane-width:\s*1\.35rem/,
+		);
+		expect(styles).toMatch(
+			/\.lifetime-gutter-connected[\s\S]*column-gap:\s*0/,
+		);
+		expect(styles).toMatch(
+			/\.lifetime-gutter-connected \.lifetime-band[\s\S]*width:\s*100%/,
+		);
+		expect(styles).toMatch(/\.lifetime-band\s*\{[\s\S]*?width:\s*1\.35rem/);
+		expect(styles).not.toMatch(
+			/\.lifetime-gutter-connected \.lifetime-labels/,
+		);
+		expect(styles).toMatch(
+			/\.lifetime-move-terminal\s*\{[\s\S]*?border-block-start:/,
+		);
+		expect(styles).not.toMatch(/\.lifetime-(?:connector|borrow-return)/);
+		expect(styles).toMatch(
+			/\.lifetime-composite[\s\S]*grid-template-columns:\s*minmax\(0,\s*1fr\)/,
+		);
+
 		expect(comparisonText).toMatch(/^#+ Recommendation/im);
 		expect(comparisonText).toMatch(/hybrid/i);
 		expect(comparisonText).toMatch(/add detail rather than change/i);
 		expect(comparisonText).toMatch(/incremental|draw order/i);
 		expect(comparisonText).toMatch(/\bnot been tested\b|\buntested\b/i);
 		expect(comparisonText).toMatch(/^#+ (?:What to test|Test protocol)/im);
-		for (const name of ["extended T-table", "lifeline", "hybrid"]) {
+		for (const name of [
+			"extended T-table",
+			"Mermaid node graph",
+			"hybrid",
+			"gutter highlighter",
+			"Candidate CD",
+		]) {
 			expect(comparisonText).toMatch(new RegExp(name, "i"));
 		}
 	});
