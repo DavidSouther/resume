@@ -1,17 +1,10 @@
 ---
 title: "Tracing Rust: Ownership, Borrows, and Lifetimes on Paper"
 summary: "Five candidate notations extend the pen-and-paper T-table to show Rust moves, copies, borrows, and the intervals in which a place may be used."
-show: false
+# show: false
 ---
 
-This spike extends the paper method from [Tracing Algorithms](/blog/interview_03_tracing).
-It has not been tested with learners; every recommendation below is a teaching
-hypothesis rather than a measured result.
-
 ## Four operations
-
-Read each row as: “After this statement, `var_b` designates data at the same
-address as, at a new address from, or by a reference to `var_a`'s data.”
 
 | Operation | Statement | Data address | Type | Owner of the data | Value in `var_b` | Access after the statement |
 |---|---|---|---|---|---|---|
@@ -41,7 +34,7 @@ A reference going out of scope does not destroy its referent. For types such
 as `&T`, an end marker means “this binding or borrow is finished,” not that the
 resource was dropped.
 
-## Stage 0: what the old T-table misses
+## Runtime vs compile time
 
 Consider a compiling program:
 
@@ -61,7 +54,7 @@ fn main() {
 
 A language-neutral trace can follow the one allocation and its mutation:
 
-```text
+```mermaid
 main
   name    | value
   phrase  | 0x10 ------> [ String "hi" ]

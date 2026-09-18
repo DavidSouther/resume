@@ -61,6 +61,46 @@
   --content-columns: 1;
 }
 
+/*
+ * jiffies-css's default --font-scale (1.25, a major third) is tuned for a
+ * sparse marketing hero, not a resume packed with repeated section headers
+ * (Roles & Positions, Education, Projects...) or long-form post bodies where
+ * every markdown `#`/`##` becomes a heading. At that ratio h1 is ~3.8x body
+ * size and h3 -- the level this site's Card headers render at -- is already
+ * ~2.4x, so every card title and post heading reads oversized next to its own
+ * content. Retuning the single dial to a gentler near-major-second ratio
+ * keeps the h1 > h2 > ... hierarchy intact while pulling every step down
+ * proportionally. Unlayered so it beats the bundle's @layer theme rule
+ * regardless of load order (see the --content-columns comment above).
+ * Candidate for upstreaming as a lower default, or at least a documented
+ * "editorial density" preset, in jiffies-css itself.
+ */
+:root {
+  --font-scale: 1.15;
+}
+
+/*
+ * jiffdown nests one <section> per markdown heading level, so a subsection's
+ * heading is almost always the FIRST child of a freshly opened section, not a
+ * sibling of the paragraph before it. jiffies-css's "extra space before a
+ * heading" rule (content/typography-block.css) only fires on a sibling
+ * combinator (`p ~ h2`, etc.), so a heading that opens a nested section gets
+ * none of that breathing room, while a heading later in the same section --
+ * after a paragraph -- does. The result is post bodies where some headings
+ * sit flush against the text above them and others don't, for no reason a
+ * reader can see. Force the same top margin unconditionally wherever a
+ * heading opens a fresh section inside post content, so every subsection
+ * break reads the same regardless of nesting depth. Scoped to `.post` (posts
+ * only nest this deep) rather than the whole site, since the resume's own
+ * hand-built <section>s (.job, .role, .pub) rely on a heading being their
+ * first child for grid placement and must not gain a margin here. Unlayered
+ * for the same load-order reason as above. Candidate for upstreaming as a
+ * `:first-child` case in jiffies-css's own heading-spacing rule.
+ */
+.post section > :is(h1, h2, h3, h4, h5, h6):first-child {
+  margin-block-start: var(--spacing-block-vertical);
+}
+
 @media print {
   :root {
     --spacing-block-vertical: 0.1rem;
