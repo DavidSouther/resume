@@ -129,6 +129,21 @@ function mountFigure(figure: HTMLElement): boolean {
 		return line.textContent?.trim() ?? "";
 	};
 
+	/**
+	 * Turns the stylesheet's transitions off, or on again. The attribute goes on
+	 * every timed element and not on the figure alone, because mermaid prefixes
+	 * every selector of the diagram's own stylesheet with the SVG's id: a rule
+	 * in there cannot reach up to an ancestor of the SVG.
+	 */
+	const suppressMotion = (suppressed: boolean): void => {
+		if (suppressed) figure.dataset.motion = "none";
+		else figure.removeAttribute("data-motion");
+		for (const { element } of timed) {
+			if (suppressed) element.setAttribute("data-motion", "none");
+			else element.removeAttribute("data-motion");
+		}
+	};
+
 	const show = (step: number): void => {
 		const target = Math.min(Math.max(step, 1), total);
 		// Only forward motion animates. A backward move — Previous, Replay,
@@ -136,10 +151,10 @@ function mountFigure(figure: HTMLElement): boolean {
 		// un-draws and no value slides back out of its cell.
 		const instant = target < current;
 		current = target;
-		if (instant) figure.dataset.motion = "none";
+		if (instant) suppressMotion(true);
+
 		figure.dataset.step = String(current);
 		for (const { element, at } of timed) {
-			if (instant) element.setAttribute("data-motion", "none");
 			element.setAttribute(
 				"data-state",
 				at < current ? "past" : at === current ? "current" : "future",
@@ -153,13 +168,13 @@ function mountFigure(figure: HTMLElement): boolean {
 		);
 		previous.disabled = current === 1;
 		next.disabled = current === total;
+
 		if (instant) {
 			// Reading a layout property commits the suppressed frame. Without the
 			// flush the browser would compute style once, at the end of this task,
 			// with the suppression already lifted — and play the reverse motion.
 			void figure.clientHeight;
-			figure.removeAttribute("data-motion");
-			for (const { element } of timed) element.removeAttribute("data-motion");
+			suppressMotion(false);
 		}
 	};
 
