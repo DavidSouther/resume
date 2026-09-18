@@ -145,6 +145,56 @@ describe("the build_art figure's declared order", () => {
 	});
 });
 
+describe("motion", () => {
+	// The stylesheet animates a reveal. Running one backwards would un-draw an
+	// arrow and slide a value back out of its cell, which reads as an undo of
+	// something the reader never did, so a backward move commits instantly.
+	//
+	// The suppression is an attribute the stylesheet keys on. It is written and
+	// lifted inside one call, around a forced layout read, so the suppressed
+	// frame is committed before the transitions come back. Nothing observable
+	// survives the call, which is exactly what these assert.
+
+	it("suppresses no transition while moving forward", async () => {
+		const figure = await buildArtFigure();
+
+		press(figure, "Next");
+
+		expect(figure.dataset.motion).toBeUndefined();
+		expect(figure.querySelector("[data-motion]")).toBeNull();
+	});
+
+	it("lifts the backward suppression again once the move is committed", async () => {
+		const figure = await buildArtFigure();
+		goTo(figure, 4);
+
+		press(figure, "Previous");
+
+		expect(figure.dataset.step).toBe("3");
+		expect(figure.dataset.motion).toBeUndefined();
+		expect(figure.querySelector("[data-motion]")).toBeNull();
+	});
+
+	it("gives the sliding spotlight the row it has to slide to", async () => {
+		const figure = await buildArtFigure();
+
+		// Step 2 is `let my_art = build_art();`, listing line 10, and the listing
+		// prints its thirteen lines in order, so the bar sits on row ten.
+		press(figure, "Next");
+
+		expect(figure.style.getPropertyValue("--trace-spotlight-index")).toBe("10");
+		expect(figure.dataset.traceSpotlight).toBe("");
+	});
+
+	it("measures no arrow under an engine with no SVG geometry", async () => {
+		const figure = await buildArtFigure();
+
+		// jsdom implements no SVGGeometryElement, so the stylesheet's fallback
+		// dash has to stand on its own. A browser overwrites it at mount.
+		expect(figure.querySelector("[style*='--trace-draw-length']")).toBeNull();
+	});
+});
+
 describe("the ends of the range", () => {
 	it("stops at the last step, with Next disabled", async () => {
 		const figure = await buildArtFigure();

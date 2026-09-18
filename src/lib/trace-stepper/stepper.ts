@@ -47,6 +47,30 @@ function gutterLines(figure: HTMLElement): HTMLElement[] {
 	return [...figure.querySelectorAll<HTMLElement>(".highlight-gutter-line")];
 }
 
+/**
+ * Writes each arrow's and strike's drawn length into `--trace-draw-length`, so
+ * the stylesheet can draw it with `stroke-dasharray` rather than guess at a
+ * dash long enough for the longest path in the diagram.
+ *
+ * Measured once at mount: the geometry never changes afterwards. An engine
+ * with no SVG geometry API — jsdom, and any renderer that failed — leaves the
+ * property unset and the stylesheet's fallback stands.
+ */
+function measureDrawLengths(timed: readonly TimedElement[]): void {
+	for (const { element } of timed) {
+		const geometry = element as SVGGeometryElement;
+		if (typeof geometry.getTotalLength !== "function") continue;
+		try {
+			const length = Math.ceil(geometry.getTotalLength());
+			if (length > 0) {
+				geometry.style.setProperty("--trace-draw-length", String(length));
+			}
+		} catch {
+			// A path the engine cannot measure keeps the stylesheet's fallback.
+		}
+	}
+}
+
 /** Mounts one figure and returns whether a control bar was added. */
 function mountFigure(figure: HTMLElement): boolean {
 	const sequence = parseSequence(figure);
@@ -81,12 +105,13 @@ function mountFigure(figure: HTMLElement): boolean {
 	const spotlight = (step: number): string => {
 		for (const line of lines) line.removeAttribute("data-state");
 		const wanted = sequence[step - 1];
-		const line = lines.find(
+		const index = lines.findIndex(
 			(candidate) => Number(candidate.dataset.line) === wanted,
 		);
-		if (!line) {
+		if (index < 0) {
 			// A `steps` entry past the end of the listing is only detectable here:
 			// the parser never sees the listing. The figure stays steppable.
+			figure.removeAttribute("data-trace-spotlight");
 			if (lines.length > 0 && !warned) {
 				warned = true;
 				console.warn(
@@ -95,14 +120,26 @@ function mountFigure(figure: HTMLElement): boolean {
 			}
 			return "";
 		}
+		const line = lines[index];
 		line.setAttribute("data-state", "current");
+		// Every gutter row is one line box tall, so the sliding spotlight bar is
+		// placed from the row's ordinal alone and never has to read layout.
+		figure.style.setProperty("--trace-spotlight-index", String(index));
+		figure.dataset.traceSpotlight = "";
 		return line.textContent?.trim() ?? "";
 	};
 
 	const show = (step: number): void => {
-		current = Math.min(Math.max(step, 1), total);
+		const target = Math.min(Math.max(step, 1), total);
+		// Only forward motion animates. A backward move — Previous, Replay,
+		// ArrowLeft, Home — commits with transitions suppressed, so no arrow
+		// un-draws and no value slides back out of its cell.
+		const instant = target < current;
+		current = target;
+		if (instant) figure.dataset.motion = "none";
 		figure.dataset.step = String(current);
 		for (const { element, at } of timed) {
+			if (instant) element.setAttribute("data-motion", "none");
 			element.setAttribute(
 				"data-state",
 				at < current ? "past" : at === current ? "current" : "future",
@@ -116,6 +153,14 @@ function mountFigure(figure: HTMLElement): boolean {
 		);
 		previous.disabled = current === 1;
 		next.disabled = current === total;
+		if (instant) {
+			// Reading a layout property commits the suppressed frame. Without the
+			// flush the browser would compute style once, at the end of this task,
+			// with the suppression already lifted — and play the reverse motion.
+			void figure.clientHeight;
+			figure.removeAttribute("data-motion");
+			for (const { element } of timed) element.removeAttribute("data-motion");
+		}
 	};
 
 	replay.update({ events: { click: () => show(1) } });
@@ -138,6 +183,7 @@ function mountFigure(figure: HTMLElement): boolean {
 		event.preventDefault();
 	});
 
+	measureDrawLengths(timed);
 	figure.dataset.traceSteps = String(total);
 	figure.append(bar);
 	figure.setAttribute(MOUNTED, "");

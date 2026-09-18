@@ -18,7 +18,7 @@ today's complete trace.
 - [x] Step 3: Renderer emits `data-at` on every timed element
 - [x] Step 4: Figure-level transport and the seven tagged figures
 - [x] Step 5: The stepper module and its control bar
-- [ ] Step 6: Presentation, motion, and the visual check
+- [x] Step 6: Presentation, motion, and the visual check
 
 ## Amendments this plan carries
 
@@ -668,6 +668,36 @@ The stepper never advances on its own, so WCAG 2.2.2 does not engage.
 - Final sweep: `mise run check` and `mise run test` green, with
   `trace-diagram.feature.test.ts`, `render-trace.test.ts`,
   `paper-diagrams.feature.test.ts`, and `parse.test.ts` unmodified.
+
+*Built as:* every stepping selector is keyed on `[data-state]`, which only the
+stepper writes, and repeats `[data-at]`, which only a tagged diagram carries.
+That pair is the whole degradation guard — no `data-trace-mounted` check is
+needed inside the SVG — and `[data-at]` is what lifts the state rules over the
+existing two-class rules, so a struck pointer is not left visible at 0.6 while
+it is still in the future. `src/lib/trace-diagram/styles.test.ts` pins both
+directions of that, plus the reduced-motion and print blocks.
+
+Four things the plan did not foresee:
+
+- **Mermaid namespaces every selector with `#<svgId> `**, so a rule inside the
+  diagram's stylesheet cannot reach up to an ancestor of the SVG. The backward
+  suppression is therefore `data-motion="none"` written on each timed element,
+  not on the figure alone, and it is expressed as
+  `:not([data-motion="none"])` on the transition rules rather than as a later
+  override, because the id prefix puts the injected sheet above anything
+  `global.css` can say without `!important`.
+- **The suppression is lifted inside the same call**, around a forced layout
+  read. Removing it in a later task would restore the transitions before the
+  suppressed frame was ever committed.
+- **`stroke-dasharray` needs a length.** `measureDrawLengths` reads
+  `getTotalLength()` once at mount and writes `--trace-draw-length`; jsdom
+  implements no SVG geometry, so the stylesheet carries a fallback.
+- **One fence in the post is ASCII art tagged ```mermaid**, so `mermaid.run`
+  rejects for the whole page and the `.then` that mounted the steppers never
+  ran. `src/components/mermaid/client.ts` now mounts from `.finally`: one
+  unrenderable fence must not cost every other figure its control bar. The
+  fence itself is left alone — it degrades to legible text, which is the
+  documented behaviour — but it is an authoring bug worth fixing separately.
 
 ## Coordinator amendments (post plan intent review, 2026-09-18)
 
