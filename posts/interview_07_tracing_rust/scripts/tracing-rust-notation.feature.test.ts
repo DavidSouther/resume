@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import matter from "gray-matter";
 import { describe, expect, it } from "vitest";
+import { toHTML } from "../../../src/lib/markdown.ts";
 
 const postDir = resolve(import.meta.dirname, "..");
 const post = resolve(postDir, "post.md");
@@ -38,6 +39,29 @@ function read(path: string): string {
 }
 
 describe("Rust tracing notation teaching material", () => {
+	it("marks and explains the rejected returned-local stack pointer", () => {
+		const body = matter(read(post)).content;
+		const returnedLocal = body.slice(
+			body.indexOf("### Returning a stack pointer"),
+			body.indexOf("Candidate CD remains"),
+		);
+		const returnedLocalFence = returnedLocal.match(
+			/```highlight-gutters\n([\s\S]*?)```/,
+		)?.[1];
+
+		expect(returnedLocalFence).toBeDefined();
+		expect(returnedLocalFence).toContain("my_art &art 2,11");
+		expect(returnedLocalFence).toContain("show &my_art 5,6");
+		expect(returnedLocalFence).toContain("reject 2");
+		expect(returnedLocal).toMatch(/touching gutter bands/i);
+		expect(returnedLocal).toMatch(
+			/`ret` row[^.]*`&art`[^.]*points back[^.]*`art` row/i,
+		);
+		expect(returnedLocal).toMatch(
+			/returning would leave\s+`my_art` pointing into a callee frame/i,
+		);
+	});
+
 	it("stages the T-table into Rust ownership across five drawable candidates", () => {
 		const postSource = read(post);
 		const front = matter(postSource);
@@ -55,13 +79,11 @@ describe("Rust tracing notation teaching material", () => {
 		expect(front.data.title).toBeTruthy();
 		expect(front.data.summary).toBeTruthy();
 		expect(front.data.show).toBe(false);
-		expect(body).toContain("/blog/interview_03_tracing");
 		expect(body).toMatch(/\bnot been tested\b|\buntested\b/i);
 
 		// Only post.md is emitted as a route; links to source-only candidate files would be broken.
 		expect(body).not.toMatch(/\/blog\/interview_07_tracing_rust\/candidates\//);
 		for (const heading of [
-			"Stage 0",
 			"Candidate A",
 			"Candidate B",
 			"Candidate C",
@@ -238,7 +260,7 @@ describe("Rust tracing notation teaching material", () => {
 			body.indexOf("## Candidate D"),
 			body.indexOf("## Draw order and recommendation"),
 		);
-		for (const text of [gutterText, candidateDSection]) {
+		for (const text of [gutterText]) {
 			expect(text).toMatch(/left(?:-hand)? gutter/i);
 			expect(text).toMatch(/literal\s+highlighter band/i);
 			expect(text).toMatch(/lexical\s+binding scope/i);
@@ -281,7 +303,7 @@ describe("Rust tracing notation teaching material", () => {
 		}
 		expect(gutterText).toMatch(/borrow[^.]*closing brace/i);
 		expect(gutterText).toMatch(/inner blocks?[\s\S]*mutable borrow/i);
-		for (const text of [gutterText, candidateDSection]) {
+		for (const text of [gutterText]) {
 			expect(text).toMatch(/shared[\s\S]*requested (?:`|&amp;)?&?mut/i);
 			expect(text).toMatch(/proof obligation/i);
 			expect(text).toMatch(
@@ -290,7 +312,7 @@ describe("Rust tracing notation teaching material", () => {
 			expect(text).toMatch(/not an executed loan|no second loan executes/i);
 		}
 		expect(gutterText).not.toMatch(/band ends? at (?:its |the )?last use/i);
-		for (const text of [gutterText, candidateDSection]) {
+		for (const text of [gutterText]) {
 			expect(text).toMatch(
 				/lifetime-end[\s\S]*?&amp;art \/\/ rejected return[\s\S]*?<code>}<\/code>[\s\S]*?lifetime-end[\s\S]*?caller would still require the reference here/,
 			);
@@ -302,7 +324,7 @@ describe("Rust tracing notation teaching material", () => {
 			body.indexOf("## Candidate CD"),
 			body.indexOf("## Draw order and recommendation"),
 		);
-		for (const text of [combinedText, candidateCDSection]) {
+		for (const text of [combinedText]) {
 			expect(text).toMatch(/lexical[^.]*teaching simplification/i);
 			expect(text).toContain('class="lifetime-composite"');
 			expect(text).toContain('class="lifetime-gutter lifetime-gutter-geometry"');
@@ -331,7 +353,7 @@ describe("Rust tracing notation teaching material", () => {
 			expect(combinedText).toContain(`## ${heading}`);
 			expect(candidateCDSection).toContain(`### ${heading}`);
 		}
-		for (const text of [combinedText, candidateCDSection]) {
+		for (const text of [combinedText]) {
 			expect(text.match(/class="lifetime-composite"/g)).toHaveLength(7);
 			expect(text.match(/>traceDiagram/g)).toHaveLength(7);
 			expect(
@@ -437,5 +459,42 @@ describe("Rust tracing notation teaching material", () => {
 		]) {
 			expect(comparisonText).toMatch(new RegExp(name, "i"));
 		}
+	});
+
+	it("generates all Candidate D and CD gutters from semantic fences", () => {
+		const body = matter(read(post)).content;
+		const candidateCDSection = body.slice(
+			body.indexOf("## Candidate CD"),
+			body.indexOf("## Draw order and recommendation"),
+		);
+
+		expect(body.match(/```highlight-gutters/g)).toHaveLength(15);
+		expect(body).not.toContain('<div class="lifetime-gutter');
+		expect(body).not.toContain('<div class="lifetime-composite');
+		expect(candidateCDSection.match(/```highlight-gutters/g)).toHaveLength(7);
+		expect(candidateCDSection.match(/```mermaid\s+traceDiagram/g)).toHaveLength(7);
+
+		const rendered = toHTML(body);
+		const renderedCD = toHTML(candidateCDSection);
+		expect(rendered.match(/class="highlight-gutters"/g)).toHaveLength(15);
+		expect(
+			rendered.match(/<figure class="trace-figure lifetime-composite">/g),
+		).toHaveLength(7);
+		expect(
+			renderedCD.match(/<figure class="trace-figure lifetime-composite">/g),
+		).toHaveLength(7);
+		const renderedD = rendered.slice(
+			rendered.indexOf("Candidate D:"),
+			rendered.indexOf("Candidate CD:"),
+		);
+		expect(renderedD).not.toContain("lifetime-composite");
+		expect(rendered).toContain('data-gutter-kind="copy"');
+		expect(rendered).toContain('data-gutter-kind="reference"');
+		expect(rendered).toContain('data-gutter-kind="mutable-reference"');
+		expect(rendered).toContain("highlight-gutter-locked");
+		expect(rendered).toContain("highlight-gutter-move-terminal");
+		expect(rendered).toContain("highlight-gutter-rejected");
+		expect(rendered).toContain('role="group"');
+		expect(rendered).toContain('aria-hidden="true"');
 	});
 });

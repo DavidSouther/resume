@@ -1,5 +1,6 @@
 import { toHTML as jiffdown } from "@davidsouther/jiffdown";
 import hljs from "highlight.js";
+import { rewriteHighlightGutterFences } from "./highlight-gutters.ts";
 
 // Syntax highlighting runs at build time, not in the browser: the markup is
 // already in the HTML, so a listing is never briefly unstyled and a reader with
@@ -62,13 +63,17 @@ export function rewriteMermaidFences(html: string): string {
 // selectable as text — rather than being redrawn inside the diagram.
 // Matches a listing whether or not highlighting has already annotated it.
 const CODE_THEN_DIAGRAM =
-	/(<pre><code class="(?:hljs )?language-[^"]*">[\s\S]*?<\/code><\/pre>)\s*(<pre class="mermaid">[\s\S]*?<\/pre>)/g;
+	/(<pre><code class="(?:hljs )?language-(?!highlight-gutters)[^"]*">(?:(?!<\/code><\/pre>)[\s\S])*?<\/code><\/pre>)\s*(<pre class="mermaid">\s*traceDiagram(?:(?!<\/pre>)[\s\S])*?<\/pre>)/g;
+const GUTTER_THEN_DIAGRAM =
+	/(<div class="highlight-gutters"(?:(?!<\/code><\/pre><\/div>)[\s\S])*?<\/code><\/pre><\/div>)\s*(<pre class="mermaid">\s*traceDiagram(?:(?!<\/pre>)[\s\S])*?<\/pre>)/g;
 
 export function pairListingsWithDiagrams(html: string): string {
-	return html.replace(
-		CODE_THEN_DIAGRAM,
-		'<figure class="trace-figure">$1$2</figure>',
-	);
+	return html
+		.replace(
+			GUTTER_THEN_DIAGRAM,
+			'<figure class="trace-figure lifetime-composite">$1$2</figure>',
+		)
+		.replace(CODE_THEN_DIAGRAM, '<figure class="trace-figure">$1$2</figure>');
 }
 
 /** Renders post Markdown to HTML. The one Markdown entry point for the site. */
@@ -77,6 +82,10 @@ export function toHTML(markdown: string): string {
 	// before highlighting sees it, and highlighting must annotate the listing
 	// before the pairing wraps it.
 	return pairListingsWithDiagrams(
-		highlightFences(rewriteMermaidFences(jiffdown(markdown) as string)),
+		highlightFences(
+			rewriteHighlightGutterFences(
+				rewriteMermaidFences(jiffdown(markdown) as string),
+			),
+		),
 	);
 }

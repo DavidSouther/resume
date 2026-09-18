@@ -16,6 +16,29 @@ describe("toHTML", () => {
 		expect(toHTML("```rust\nlet a = 1;\n```\n")).toContain("language-rust");
 	});
 
+	it("pairs a semantic gutter with an adjacent trace diagram", () => {
+		const html = toHTML(`\`\`\`highlight-gutters
+code rust:
+let phrase = "hi";
+marks:
+phrase 0,0
+\`\`\`
+
+\`\`\`mermaid
+traceDiagram
+  frame main
+  end
+\`\`\`
+`);
+
+		expect(
+			html.match(/<figure class="trace-figure lifetime-composite">/g),
+		).toHaveLength(1);
+		expect(html.indexOf("highlight-gutters")).toBeLessThan(
+			html.indexOf('<pre class="mermaid">'),
+		);
+	});
+
 	it("keeps diagram source escaped", () => {
 		const html = toHTML("```mermaid\ntraceDiagram\n  row a: <b> & x\n```\n");
 

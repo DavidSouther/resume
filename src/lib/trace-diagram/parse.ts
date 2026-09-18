@@ -75,8 +75,12 @@ function parseValues(source: string): TraceValue[] {
 			text.startsWith("~") && text.endsWith("~") && text.length > 1;
 		const bare = forced ? text.slice(1, -1).trim() : text;
 		const struck = forced || index < raw.length - 1;
-		return bare.startsWith("@")
-			? { text: bare.slice(1), struck, pointsTo: bare.slice(1) }
+		if (bare.startsWith("@")) {
+			return { text: bare.slice(1), struck, pointsTo: bare.slice(1) };
+		}
+		const stackReference = bare.match(/^&([A-Za-z_][A-Za-z0-9_]*)$/);
+		return stackReference
+			? { text: bare, struck, pointsToStack: stackReference[1] }
 			: { text: bare, struck };
 	});
 }
@@ -267,8 +271,8 @@ export function parseTrace(text: string): TraceModel {
 		);
 	}
 
-	// Every pointer must name a declared heap object, and every return arrow must
-	// name a row that exists, so the renderer can assume both resolve.
+	// Heap pointers must name declared objects, stack pointers must name rows
+	// above them, and return arrows must name rows, so every relation can render.
 	const declared = new Set(model.heap.map((o) => o.id));
 	for (const object of model.heap) {
 		for (const field of object.fields) {
@@ -282,11 +286,24 @@ export function parseTrace(text: string): TraceModel {
 		}
 	}
 	const rows = allRows(model.frames);
+	const precedingRows: Row[] = [];
 	for (const rowEntry of rows) {
 		for (const value of rowEntry.values) {
 			if (value.pointsTo && !declared.has(value.pointsTo)) {
 				throw new TraceSyntaxError(
 					`Row \`${rowEntry.name}\` points at undeclared heap object \`${value.pointsTo}\``,
+					1,
+					1,
+				);
+			}
+			if (
+				value.pointsToStack &&
+				!precedingRows.some(
+					(candidate) => candidate.name === value.pointsToStack,
+				)
+			) {
+				throw new TraceSyntaxError(
+					`Row \`${rowEntry.name}\` points at stack row \`${value.pointsToStack}\` that is not declared above it`,
 					1,
 					1,
 				);
@@ -302,6 +319,7 @@ export function parseTrace(text: string): TraceModel {
 				1,
 			);
 		}
+		precedingRows.push(rowEntry);
 	}
 
 	return model;

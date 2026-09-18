@@ -87,6 +87,59 @@ describe("parseTrace", () => {
 		expect(inner.done).toBe(true);
 	});
 
+	it("resolves a Rust-like returned reference to a stack row", () => {
+		const model = parseTrace(
+			[
+				"traceDiagram",
+				"  frame main",
+				"    my_art:",
+				"    frame build_art",
+				"      art: Artwork Liberty",
+				"      ret &art -> my_art",
+				"    end",
+				"  end",
+			].join("\n"),
+		);
+
+		const returned = model.frames[0].frames[0].rows[1].values[0];
+		expect(returned).toMatchObject({ text: "&art", pointsToStack: "art" });
+	});
+
+	it("keeps address-like references as textual values", () => {
+		const model = parseTrace(
+			"traceDiagram\n  frame f\n    borrowed: &0x20\n  end",
+		);
+
+		expect(model.frames[0].rows[0].values[0]).toEqual({
+			text: "&0x20",
+			struck: false,
+		});
+	});
+
+	it("rejects a reference to an undeclared stack row", () => {
+		expect(() =>
+			parseTrace("traceDiagram\n  frame f\n    ret &missing\n  end"),
+		).toThrowError(/stack row `missing` that is not declared above it/);
+	});
+
+	it("rejects a forward reference to a stack row", () => {
+		expect(() =>
+			parseTrace(
+				"traceDiagram\n  frame f\n    ret &later\n    later: value\n  end",
+			),
+		).toThrowError(/stack row `later` that is not declared above it/);
+	});
+
+	it("accepts duplicate stack-row names when one precedes the reference", () => {
+		const model = parseTrace(
+			"traceDiagram\n  frame f\n    value: first\n    value: second\n    ret &value\n  end",
+		);
+
+		expect(model.frames[0].rows[2].values[0]).toMatchObject({
+			pointsToStack: "value",
+		});
+	});
+
 	it("reads heap objects with addresses, fields, and pointer fields", () => {
 		const model = parseTrace(
 			[

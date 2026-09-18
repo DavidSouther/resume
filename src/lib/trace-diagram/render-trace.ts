@@ -383,6 +383,35 @@ export function drawTrace(model: TraceModel, host: Element): SVGSVGElement {
 		);
 	}
 
+	// Rust-like `&name` values point back into the stack table. The row name is
+	// still printed, but the arrow makes the storage relation geometric rather
+	// than leaving the reference as text alone.
+	for (const placed of placedRows) {
+		placed.row.values.forEach((value, index) => {
+			if (!value.pointsToStack) return;
+			const target = placedRows
+				.filter(
+					(candidate) =>
+						candidate.row.name === value.pointsToStack &&
+						candidate.y < placed.y,
+				)
+				.at(-1);
+			if (!target) return;
+			const sourceX =
+				placed.valueX[index] + width(placed.displayValues[index]) + ARROW_GAP;
+			const targetX = (target.valueX[0] ?? valueLeft) - ARROW_GAP;
+			const bendX = Math.max(sourceX, target.endX + PAD);
+			nodes.push(
+				path({
+					d: `M ${sourceX} ${placed.y} C ${bendX} ${placed.y} ${bendX} ${target.y} ${targetX} ${target.y}`,
+					class: `trace-pointer trace-stack-pointer${value.struck ? " trace-struck" : ""}`,
+					fill: "none",
+					"marker-end": "url(#trace-arrow)",
+				}),
+			);
+		});
+	}
+
 	// The heap, to the right of the table.
 	let heapY = ruleTop;
 	const heapLeft = tableRight + HEAP_GAP;

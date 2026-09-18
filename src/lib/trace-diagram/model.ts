@@ -3,12 +3,14 @@
 // reaches the renderer is already well-formed.
 
 export interface TraceValue {
-	/** Rendered text. For a pointer with no declared address, the heap id. */
+	/** Rendered text. For a heap pointer with no declared address, the heap id. */
 	text: string;
 	/** Superseded by a later value in the row, or forced struck with `~v~`. */
 	struck: boolean;
 	/** Heap object id, set when the source wrote `@id`. */
 	pointsTo?: string;
+	/** Stack row name, set when the source wrote a Rust-like `&name`. */
+	pointsToStack?: string;
 }
 
 export type RowKind = "row" | "watch" | "ret";

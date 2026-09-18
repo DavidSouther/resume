@@ -63,6 +63,52 @@ describe("drawTrace", () => {
 		expect(svg.querySelector(".trace-return-arrow")).not.toBeNull();
 	});
 
+	it("draws a returned local reference back into the callee stack frame", () => {
+		const svg = draw(
+			[
+				"traceDiagram",
+				"  frame main",
+				"    my_art:",
+				"    frame build_art",
+				"      art: Artwork Liberty",
+				"      ret &art -> my_art",
+				"    end",
+				"  end",
+			].join("\n"),
+		);
+
+		const pointer = svg.querySelector(".trace-stack-pointer");
+		const artValue = [...svg.querySelectorAll(".trace-row")]
+			.find((row) => row.querySelector(".trace-name")?.textContent === "art")
+			?.querySelector(".trace-value");
+		expect(svg.querySelector(".trace-return-arrow")).not.toBeNull();
+		expect(pointer).not.toBeNull();
+		expect(pointer?.getAttribute("marker-end")).toBe("url(#trace-arrow)");
+		expect(pointer?.getAttribute("d")).toMatch(/^M [\d.]+ [\d.]+ C /);
+		expect(pointer?.getAttribute("d")).toMatch(
+			new RegExp(
+				`${Number(artValue?.getAttribute("x")) - 8} ${artValue?.getAttribute("y")}$`,
+			),
+		);
+	});
+
+	it("points to the nearest preceding row when stack-row names repeat", () => {
+		const svg = draw(
+			"traceDiagram\n  frame f\n    value: first\n    value: second\n    ret &value\n  end",
+		);
+
+		const matchingRows = [...svg.querySelectorAll(".trace-row")].filter(
+			(row) => row.querySelector(".trace-name")?.textContent === "value",
+		);
+		const nearestValue = matchingRows[1]?.querySelector(".trace-value");
+		const pointer = svg.querySelector(".trace-stack-pointer");
+		expect(pointer?.getAttribute("d")).toMatch(
+			new RegExp(
+				`${Number(nearestValue?.getAttribute("x")) - 8} ${nearestValue?.getAttribute("y")}$`,
+			),
+		);
+	});
+
 	it("draws heap objects, their addresses, and pointer arrows", () => {
 		const svg = draw(
 			[
