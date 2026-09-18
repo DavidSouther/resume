@@ -3,53 +3,22 @@
 // Unit tests for the step control. The feature test walks one reader's path
 // through the `build_art` figure; these pin the whole sequence, the ends of the
 // range, the keyboard, and the degradation cases a reader never sees.
+//
+// The `build_art` cases read the shipped post rather than a local copy of its
+// listing, so the ordering table cannot drift away from the figure it claims to
+// describe. Only the cases the post has no example of use a local fixture.
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { toHTML } from "../markdown.ts";
+import { getPost } from "../posts.ts";
 import { renderTrace } from "../trace-diagram/render-trace.ts";
 import { mountTraceSteppers } from "./stepper.ts";
 
-/** The listing the `build_art` figure traces, 0-based lines 0 through 12. */
-const BUILD_ART_LISTING = `\`\`\`highlight-gutters
-code rust:
-fn build_art<'a>() -> &'a Artwork {
-    let art = artwork("Liberty");
-    &art // rejected return
-}
+const POST_ID = "interview_07_tracing_rust";
 
-fn show_art(show: &Artwork) {
-  println!("{}", show.name);
-}
-
-fn main() {
-    let my_art = build_art();
-    show_art(&my_art);
-}
-marks:
-art 1,2
-my_art &art 2,11
-\`\`\`
-`;
-
-const BUILD_ART_DIAGRAM = `\`\`\`mermaid
-traceDiagram
-  title Static check of a returned local reference
-  steps 9 10 0 1 2 3 11
-  frame main @9
-    my_art: @10
-    frame build_art @0
-      art: Artwork Liberty @1
-      ret &art -> my_art @2
-      watch return: rejected @2
-      done @3
-    end
-  end
-\`\`\`
-`;
-
-/** Renders `markdown` and draws every diagram, as mermaid does in the browser. */
-function render(markdown: string): HTMLElement[] {
-	document.body.innerHTML = toHTML(markdown);
+/** Draws every diagram of `html` into its figure, as mermaid does in a browser. */
+function render(html: string): HTMLElement[] {
+	document.body.innerHTML = html;
 	const figures = [...document.querySelectorAll<HTMLElement>("figure")];
 	for (const figure of figures) {
 		const pre = figure.querySelector("pre.mermaid");
@@ -60,9 +29,18 @@ function render(markdown: string): HTMLElement[] {
 	return figures;
 }
 
-function buildArtFigure(): HTMLElement {
-	const [figure] = render(BUILD_ART_LISTING + BUILD_ART_DIAGRAM);
+/** The post's figures, drawn and mounted. The `build_art` one is at index 6. */
+async function mountPost(): Promise<HTMLElement[]> {
+	const figures = render((await getPost(POST_ID)).body ?? "");
 	mountTraceSteppers(document);
+	return figures;
+}
+
+async function buildArtFigure(): Promise<HTMLElement> {
+	const figure = (await mountPost()).find((candidate) =>
+		candidate.dataset.traceLines?.includes("9 10 0 1 2 3 11"),
+	);
+	if (!figure) throw new Error(`No build_art trace figure in ${POST_ID}`);
 	return figure;
 }
 
@@ -72,6 +50,14 @@ const press = (figure: Element, label: string): void => {
 	);
 	if (!control) throw new Error(`The stepper has no \`${label}\` button`);
 	control.click();
+};
+
+const control = (figure: Element, label: string): HTMLButtonElement => {
+	const found = [...figure.querySelectorAll("button")].find(
+		(candidate) => candidate.textContent?.trim() === label,
+	);
+	if (!found) throw new Error(`The stepper has no \`${label}\` button`);
+	return found;
 };
 
 const key = (target: Element, name: string): void => {
@@ -139,10 +125,10 @@ describe("the build_art figure's declared order", () => {
 		[],
 	];
 
-	it("reveals the right element and spotlights the right line at every step", () => {
-		const figure = buildArtFigure();
+	it("reveals the right element and spotlights the right line at every step", async () => {
+		const figure = await buildArtFigure();
 
-		for (let step = 1; step <= 7; step += 1) {
+		for (let step = 1; step <= EXPECTED_LINES.length; step += 1) {
 			goTo(figure, step);
 
 			expect(figure.dataset.step).toBe(String(step));
@@ -151,8 +137,8 @@ describe("the build_art figure's declared order", () => {
 		}
 	});
 
-	it("publishes the count and starts at the first execution", () => {
-		const figure = buildArtFigure();
+	it("publishes the count and starts at the first execution", async () => {
+		const figure = await buildArtFigure();
 
 		expect(figure.dataset.traceSteps).toBe("7");
 		expect(figure.dataset.step).toBe("1");
@@ -160,35 +146,27 @@ describe("the build_art figure's declared order", () => {
 });
 
 describe("the ends of the range", () => {
-	it("stops at the last step, with Next disabled", () => {
-		const figure = buildArtFigure();
-
+	it("stops at the last step, with Next disabled", async () => {
+		const figure = await buildArtFigure();
 		goTo(figure, 7);
+
 		press(figure, "Next");
 
 		expect(figure.dataset.step).toBe("7");
-		expect(
-			[...figure.querySelectorAll("button")].find(
-				(b) => b.textContent?.trim() === "Next",
-			)?.disabled,
-		).toBe(true);
+		expect(control(figure, "Next").disabled).toBe(true);
 	});
 
-	it("stops at the first step, with Previous disabled", () => {
-		const figure = buildArtFigure();
+	it("stops at the first step, with Previous disabled", async () => {
+		const figure = await buildArtFigure();
 
 		press(figure, "Previous");
 
 		expect(figure.dataset.step).toBe("1");
-		expect(
-			[...figure.querySelectorAll("button")].find(
-				(b) => b.textContent?.trim() === "Previous",
-			)?.disabled,
-		).toBe(true);
+		expect(control(figure, "Previous").disabled).toBe(true);
 	});
 
-	it("replays to the first step from the last", () => {
-		const figure = buildArtFigure();
+	it("replays to the first step from the last", async () => {
+		const figure = await buildArtFigure();
 		goTo(figure, 7);
 
 		press(figure, "Replay");
@@ -198,13 +176,15 @@ describe("the ends of the range", () => {
 });
 
 describe("the keyboard", () => {
-	it("matches Next, Previous, and Replay inside the figure", () => {
-		const figure = buildArtFigure();
+	it("matches Next, Previous, and Replay inside the figure", async () => {
+		const figure = await buildArtFigure();
 
+		// From the listing, not from a button: focus anywhere inside the figure
+		// drives the stepper.
 		key(figure.querySelector(".highlight-gutter-line") ?? figure, "ArrowRight");
 		expect(figure.dataset.step).toBe("2");
 
-		key(figure, "ArrowRight");
+		key(control(figure, "Next"), "ArrowRight");
 		expect(figure.dataset.step).toBe("3");
 
 		key(figure, "ArrowLeft");
@@ -214,8 +194,8 @@ describe("the keyboard", () => {
 		expect(figure.dataset.step).toBe("1");
 	});
 
-	it("ignores the same keys pressed outside the figure", () => {
-		const figure = buildArtFigure();
+	it("ignores the same keys pressed outside the figure", async () => {
+		const figure = await buildArtFigure();
 		goTo(figure, 3);
 
 		key(document.body, "ArrowRight");
@@ -225,21 +205,21 @@ describe("the keyboard", () => {
 });
 
 describe("mounting", () => {
-	it("adds no second control bar when called again", () => {
-		const first = mountTraceSteppers(document);
-		const figure = buildArtFigure();
+	it("adds no second control bar when called again", async () => {
+		const figures = await mountPost();
 
-		const second = mountTraceSteppers(document);
+		const again = mountTraceSteppers(document);
 
-		expect(first).toBe(0);
-		expect(second).toBe(1);
-		expect(figure.querySelectorAll(".trace-stepper")).toHaveLength(1);
+		expect(again).toBe(figures.length);
+		for (const figure of figures) {
+			expect(figure.querySelectorAll(".trace-stepper")).toHaveLength(1);
+		}
 	});
 
-	it("skips a figure whose diagram never drew", () => {
+	it("skips a figure whose diagram never drew", async () => {
 		// The mermaid-failure case: the sequence shipped on the figure, but the
 		// `pre` is still text, so there is no timed element to reveal.
-		document.body.innerHTML = toHTML(BUILD_ART_LISTING + BUILD_ART_DIAGRAM);
+		document.body.innerHTML = (await getPost(POST_ID)).body ?? "";
 		const figure = document.querySelector<HTMLElement>("figure");
 
 		expect(mountTraceSteppers(document)).toBe(0);
@@ -247,16 +227,8 @@ describe("mounting", () => {
 		expect(figure?.dataset.step).toBeUndefined();
 	});
 
-	it("steps two figures on one page independently", () => {
-		render(
-			BUILD_ART_LISTING +
-				BUILD_ART_DIAGRAM +
-				"\n" +
-				BUILD_ART_LISTING +
-				BUILD_ART_DIAGRAM,
-		);
-		expect(mountTraceSteppers(document)).toBe(2);
-		const [one, two] = [...document.querySelectorAll<HTMLElement>("figure")];
+	it("steps two figures on one page independently", async () => {
+		const [one, two] = await mountPost();
 
 		press(one, "Next");
 		press(one, "Next");
@@ -267,6 +239,8 @@ describe("mounting", () => {
 });
 
 describe("a step past the end of the listing", () => {
+	// No figure in the post does this, so it needs its own fixture: `steps 0 5`
+	// over a three-line listing.
 	const SHORT = `\`\`\`highlight-gutters
 code rust:
 fn main() {
@@ -287,7 +261,7 @@ traceDiagram
 
 	it("skips the spotlight, warns once, and stays steppable", () => {
 		const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-		const [figure] = render(SHORT);
+		const [figure] = render(toHTML(SHORT));
 		mountTraceSteppers(document);
 
 		press(figure, "Next");

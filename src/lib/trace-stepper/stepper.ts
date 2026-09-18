@@ -157,8 +157,7 @@ export function mountTraceSteppers(root: ParentNode): number {
 	)) {
 		// A second call on an already-mounted page adds no second bar, but still
 		// counts the figure, so the return value is the page's steppable figures.
-		if (figure.hasAttribute(MOUNTED)) mounted += 1;
-		else if (mountFigure(figure)) mounted += 1;
+		if (figure.hasAttribute(MOUNTED) || mountFigure(figure)) mounted += 1;
 	}
 	return mounted;
 }
