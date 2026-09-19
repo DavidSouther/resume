@@ -68,7 +68,9 @@ const key = (target: Element, name: string): void => {
 
 const spotlightLine = (figure: Element): string | null =>
 	figure
-		.querySelector('.highlight-gutter-line[data-state="current"]')
+		.querySelector(
+			'.highlight-gutter-line[data-state="current"], .trace-listing-line[data-state="current"]',
+		)
 		?.textContent?.trim() ?? null;
 
 /** Names one revealed element by its class and the text it draws. */
@@ -142,6 +144,98 @@ describe("the build_art figure's declared order", () => {
 
 		expect(figure.dataset.traceSteps).toBe("7");
 		expect(figure.dataset.step).toBe("1");
+	});
+});
+
+describe("a loop figure's declared order", () => {
+	// The `gcdmod` figure of `posts/interview_03_tracing.md`. Its listing runs
+	// two lines repeatedly, so line order is not execution order, and one
+	// statement — `[a, b] = [b, a % b]` — writes both rows on the same
+	// execution. That pair is the first real exercise of a repeated line in
+	// `steps` and of two rows interleaving through one line.
+	const LOOP_POST_ID = "interview_03_tracing";
+	const LOOP_SEQUENCE = "7 0 1 2 1 2 1 2 1 4";
+
+	async function gcdmodFigure(): Promise<HTMLElement> {
+		const figures = render((await getPost(LOOP_POST_ID)).body ?? "");
+		mountTraceSteppers(document);
+		const figure = figures.find(
+			(candidate) => candidate.dataset.traceLines === LOOP_SEQUENCE,
+		);
+		if (!figure) throw new Error(`No gcdmod trace figure in ${LOOP_POST_ID}`);
+		return figure;
+	}
+
+	// The loop body twice returns to the line above it, which is what a plain
+	// ascending order cannot express.
+	const EXPECTED_LINES = [
+		"gcdmod(1071, 462);",
+		"function gcdmod(a, b) {",
+		"while (b != 0) {",
+		"[a, b] = [b, a % b];",
+		"while (b != 0) {",
+		"[a, b] = [b, a % b];",
+		"while (b != 0) {",
+		"[a, b] = [b, a % b];",
+		"while (b != 0) {",
+		"return a;",
+	];
+
+	// Each run of the assignment reveals one value in *each* row, and strikes
+	// the value it supersedes. A condition reveals nothing.
+	const EXPECTED_CURRENT = [
+		["trace-rule", "trace-frame-label:gcdmod"],
+		[
+			"trace-name:a",
+			"trace-value-item:1071",
+			"trace-name:b",
+			"trace-value-item:462",
+		],
+		[],
+		[
+			"trace-strike",
+			"trace-value-item:462",
+			"trace-strike",
+			"trace-value-item:147",
+		],
+		[],
+		[
+			"trace-strike",
+			"trace-value-item:147",
+			"trace-strike",
+			"trace-value-item:21",
+		],
+		[],
+		[
+			"trace-strike",
+			"trace-value-item:21",
+			"trace-strike",
+			"trace-value-item:0",
+		],
+		[],
+		["trace-name:ret", "trace-value-item:21"],
+	];
+
+	it("reveals the right element and spotlights the right line at every step", async () => {
+		const figure = await gcdmodFigure();
+
+		for (let step = 1; step <= EXPECTED_LINES.length; step += 1) {
+			goTo(figure, step);
+
+			expect(figure.dataset.step).toBe(String(step));
+			expect(spotlightLine(figure)).toBe(EXPECTED_LINES[step - 1]);
+			expect(current(figure)).toEqual(EXPECTED_CURRENT[step - 1]);
+		}
+	});
+
+	it("mounts every figure of the tracing post", async () => {
+		const figures = render((await getPost(LOOP_POST_ID)).body ?? "");
+
+		expect(mountTraceSteppers(document)).toBe(6);
+		for (const figure of figures) {
+			expect(figure.querySelectorAll(".trace-stepper")).toHaveLength(1);
+			expect(figure.dataset.step).toBe("1");
+		}
 	});
 });
 

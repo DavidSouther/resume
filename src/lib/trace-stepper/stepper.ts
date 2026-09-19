@@ -39,12 +39,18 @@ function collectTimed(figure: HTMLElement): TimedElement[] {
 }
 
 /**
- * The listing's source rows. The gutter band spans carry `data-line` too, so
- * the class qualifier is what keeps a band from being spotlit instead of the
- * line it decorates.
+ * The listing's source rows. A gutter fence emits `.highlight-gutter-line`; a
+ * plain code fence paired with a timed diagram is split into
+ * `.trace-listing-line` by `src/lib/markdown.ts`. The gutter band spans carry
+ * `data-line` too, so the class qualifier is what keeps a band from being
+ * spotlit instead of the line it decorates.
  */
 function gutterLines(figure: HTMLElement): HTMLElement[] {
-	return [...figure.querySelectorAll<HTMLElement>(".highlight-gutter-line")];
+	return [
+		...figure.querySelectorAll<HTMLElement>(
+			".highlight-gutter-line, .trace-listing-line",
+		),
+	];
 }
 
 /**

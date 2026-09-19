@@ -9,6 +9,12 @@
 export interface Timed {
 	/** Author's `@<digits>`, absent when the item inherits. */
 	tag?: number;
+	/**
+	 * Author's `#<digits>`: which execution of `tag`'s line this node belongs to,
+	 * 1-based. Absent when the node takes the next unclaimed occurrence, which is
+	 * only unambiguous while a line executes once per row.
+	 */
+	occurrence?: number;
 	/** Document position across heap and frames, for inheritance and occurrence. */
 	order: number;
 	/** 1-based diagram source line, for TraceSyntaxError positions. */

@@ -19,6 +19,7 @@ today's complete trace.
 - [x] Step 4: Figure-level transport and the seven tagged figures
 - [x] Step 5: The stepper module and its control bar
 - [x] Step 6: Presentation, motion, and the visual check
+- [x] Step 7: Stepping the six loop figures of `posts/interview_03_tracing.md`
 
 ## Amendments this plan carries
 
@@ -720,3 +721,100 @@ These override the plan body where they conflict. They answer P1–P4 of
 - **P4 — scope is `posts/interview_07_tracing_rust/post.md` only.** The six
   diagrams in `posts/interview_03_tracing.md` and the nineteen in
   `posts/memory_diagrams_papers_mermaid.md` stay untagged and byte-identical.
+
+## Step 7: Stepping the six loop figures of `posts/interview_03_tracing.md`
+
+**Amends P4.** P4 fenced scope at the Rust post because the six figures here are
+loops and the mechanism had never stepped one. It has now, so the scope opens by
+one post. `posts/memory_diagrams_papers_mermaid.md` stays untagged.
+
+**Enables:** the first exercise of a repeated line in `steps`. Every figure in
+the Rust post resolves against a sequence of distinct lines, so occurrence
+resolution has never had to run.
+
+**Two obstacles, both confirmed against the code before acting.**
+
+**O1 — every figure is a loop, and the occurrence rule could not express one.**
+Confirmed. It fails in three separate ways, which one notation change answers:
+
+- `[a, b] = [b, a % b]` writes *both* rows of the `gcdmod` figure on listing
+  line 2. The counter in `steps.ts` is keyed on the line alone, so row `a`'s
+  three tags take executions one through three and row `b`'s three clamp to the
+  last. Scoping the counter per row fixes this one.
+- The four `gcdr` frames each bind their arguments on line 0, and each needs a
+  *different* execution of it. A per-row counter gives all four execution one.
+  Neither scope is right for both figures.
+- `if (visited.has(current)) return true;` is one line of `hasCycle`, and it is
+  its *fourth* run that returns. One tag, four executions: no counter reaches
+  the fourth, and clamping only ever reaches the last when there is a surplus.
+
+So the tag gains an optional occurrence qualifier, `@<line>#<k>`, naming which
+execution of that line is meant. The implicit counter is untouched and still
+runs whenever `#k` is absent, so `steps.test.ts` and the Rust post's seven
+figures resolve exactly as before.
+
+**O2 — the spotlight has nothing to point at.** Confirmed: a plain `<pre><code>`
+is one run of text, and `parseHighlightGutters` does accept a fence with no
+`marks:` section (`highlight-gutters.ts:68-75`). The proposed conversion was
+measured and **rejected**: a gutter fence routes the pair through
+`GUTTER_THEN_DIAGRAM`, which adds `lifetime-composite` — `display: grid` with
+one column at `global.css:756` — and `.highlight-gutter-line` reserves
+`minmax(22rem, 1fr)` for its source column. Both figures of a pair would restack
+full width. Measured in the browser: each of the six figures is `319x… + 423x…`
+side by side today, and every Rust figure is `760x… + 760x…` stacked.
+
+The alternative was taken. `pairListingsWithDiagrams` splits a plain listing
+into `span.trace-listing-line[data-line]` — but only when the diagram it pairs
+with is timed, so every untimed figure on the site keeps byte-identical markup.
+`splitHighlightedLines` re-opens any highlight span that ran across the newline,
+because highlight.js wraps a multi-line comment or string in one element.
+
+**The six execution orders**, each derived by tracing the listing and checked
+against the value history already written in the diagram, which did not change:
+
+| figure | steps | shape |
+| --- | --- | --- |
+| `gcd` | 37 | 11 iterations of `while`/`if`/assign; `a` moves on line 3, `b` on line 5 |
+| `gcdmod` | 10 | 3 iterations; one line writes both rows, so both take `#1`, `#2`, `#3` |
+| `hasCycle` | 17 | 3 iterations, then the guard's 4th run returns — `@4#4` |
+| `gcdr` | 16 | 3 calls down line 4, `return a` at 13, then 3 unwinds back up line 4 |
+| `extractValue` | 2 | straight-line; the default ascending sequence, no `steps` |
+| `scope while` | 15 | 3 iterations; each scope opens on `@2#k` and is crossed off on `@2#k+1` |
+
+**Tests**
+
+- `steps.test.ts` — two rows assigned by one loop body take the same execution;
+  a single tag reaches a later execution than the counter would; an occurrence
+  past the end of the line's executions throws naming the diagram line.
+- `parse.test.ts` — `#k` is read onto values, statements, and a `done`.
+- `markdown.test.ts` — a timed plain pair is split into lines and stays out of
+  `lifetime-composite`; an untimed one is untouched; `splitHighlightedLines`
+  re-opens a span across a newline and keeps a blank line.
+- `stepper.test.ts` — the D5 table, over the `gcdmod` figure this time: the
+  exact spotlit line and the exact revealed elements at all ten steps, including
+  the two returns to the line above and the two values one statement reveals.
+
+*Built as:* the occurrence qualifier was the only change to resolution; the
+implicit counter is unchanged and an explicit `#k` sets it, so the two can be
+mixed in one diagram without the explicit tag disturbing what follows it.
+
+Three things the analysis turned up:
+
+- **`gcdr`'s return arrow cannot be timed apart from its value.** The renderer
+  binds the arrow to the row's last value (`render-trace.ts:463`), so a frame
+  draws its `ret` entry and its outgoing arrow on one step and the caller copies
+  the value on the next. That is the rhythm the post's own method describes, and
+  it is consistent across all four frames, so it was kept rather than worked
+  around.
+- **The `else:` line of a Python listing is not a step.** It is a clause header,
+  not a statement; the spotlight moves from the `if` to the body it chose.
+- **The stale `POST_ID`.** `trace-diagram.feature.test.ts` named
+  `interview_03_tracing_mermaid`, a draft whose diagrams 4678890 moved into the
+  canonical post and which c92a3d3 deleted; all seven tests failed with
+  `Post not found`. The constant now names `interview_03_tracing`. Two
+  assertions then failed for real: one reading the draft's own syntax notes off
+  the post's prose, which this article never carried, and one matching
+  `<figure class="trace-figure">` with no attributes. The prose pair was
+  replaced by the same claim read off the diagrams, and the figure assertion was
+  widened and then *strengthened* — all six figures must now carry
+  `data-trace-lines`, and the body must contain no `lifetime-composite`.

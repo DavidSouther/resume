@@ -3,9 +3,8 @@
 // Feature test for the traceDiagram mermaid diagram type.
 //
 // User story:
-//   Given the post posts/interview_03_tracing_mermaid.md, which carries the
-//   lesson of posts/interview_03_tracing.md with every hand-drawn PNG replaced
-//   by a fenced `traceDiagram` block,
+//   Given the post posts/interview_03_tracing.md, in which every hand-drawn PNG
+//   has been replaced by a fenced `traceDiagram` block,
 //   When the site build renders that post and a browser draws its diagrams,
 //   Then the reader sees the same six figures as SVG — value history with the
 //   superseded entries struck, a completed call frame crossed out, a dashed
@@ -23,7 +22,11 @@ import { describe, expect, it } from "vitest";
 import { getPost } from "../posts.ts";
 import { renderTrace } from "./render-trace.ts";
 
-const POST_ID = "interview_03_tracing_mermaid";
+// The diagrams were drafted in a parallel `interview_03_tracing_mermaid.md`,
+// moved into the canonical post by 4678890, and the draft was deleted by
+// c92a3d3 — which left this constant naming a file that no longer exists and
+// every test below failing with `Post not found`.
+const POST_ID = "interview_03_tracing";
 const POST_PATH = join(cwd(), "posts", `${POST_ID}.md`);
 
 /** Every ```mermaid fence body in the post source, in document order. */
@@ -69,11 +72,14 @@ describe("traceDiagram renders the tracing post's figures from text", () => {
 	});
 
 	it("draws the name/value table with superseded values struck through", () => {
-		const sources = diagramSources();
-		expect(sources.join("\n")).not.toMatch(/^\s+row\s/m);
-		const postSource = readFileSync(POST_PATH, "utf-8");
-		expect(postSource).toContain("`name: values`");
-		expect(postSource).not.toContain("one `row` is one name");
+		// An ordinary table entry is written as `name: values` and needs no
+		// keyword. The two assertions that read this off the post's prose named
+		// the deleted draft's syntax notes, which this article — written about
+		// the technique, not the notation — never carried; they are replaced by
+		// the same claim read off the diagrams themselves.
+		const sources = diagramSources().join("\n");
+		expect(sources).not.toMatch(/^\s+row\s/m);
+		expect(sources).toMatch(/^\s+a: 1071\b/m);
 		const svg = svgFor(diagramWith("frame"));
 
 		const names = [...svg.querySelectorAll(".trace-name")].map(
@@ -149,9 +155,15 @@ describe("traceDiagram renders the tracing post's figures from text", () => {
 		const body = (await getPost(POST_ID)).body ?? "";
 
 		// The listing is a code block, not redrawn inside the diagram, and the two
-		// are wrapped as one figure the stylesheet lays out side by side.
-		const figures = body.match(/<figure class="trace-figure">/g) ?? [];
+		// are wrapped as one figure the stylesheet lays out side by side. Each
+		// figure now also publishes the execution order its stepper walks, and
+		// none of them is a `lifetime-composite`, which would stack the pair.
+		const figures = body.match(/<figure class="trace-figure"[^>]*>/g) ?? [];
 		expect(figures.length).toBe(6);
+		expect(figures.every((tag) => tag.includes("data-trace-lines="))).toBe(
+			true,
+		);
+		expect(body).not.toContain("lifetime-composite");
 		expect(body).toMatch(/language-(python|javascript)/);
 		expect(diagramSources().join("\n")).not.toMatch(/^\s*code\b/m);
 	});

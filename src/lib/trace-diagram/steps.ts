@@ -96,6 +96,24 @@ export function resolveSteps(model: TraceModel): StepSequence {
 				1,
 			);
 		}
+		// An explicit `#k` names the occurrence outright. A loop makes the
+		// implicit counter ambiguous — two rows assigned by one line each need
+		// occurrence 1, and a recursive frame's rows are written above the call
+		// that produced them — so a repeated line is tagged explicitly.
+		const wanted = node.occurrence;
+		if (wanted !== undefined) {
+			if (wanted < 1 || wanted > positions.length) {
+				throw new TraceSyntaxError(
+					`Step tag \`@${tag}#${wanted}\` names execution ${wanted} of listing line ${tag}, which the \`steps\` statement runs ${positions.length} time${positions.length === 1 ? "" : "s"}`,
+					node.sourceLine,
+					1,
+				);
+			}
+			node.step = positions[wanted - 1] + 1;
+			taken.set(tag, wanted);
+			inherited = node.step;
+			continue;
+		}
 		const used = taken.get(tag) ?? 0;
 		node.step = positions[Math.min(used, positions.length - 1)] + 1;
 		taken.set(tag, used + 1);

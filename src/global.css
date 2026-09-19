@@ -936,6 +936,28 @@ pre.mermaid svg {
   position: relative;
 }
 
+/*
+ * A plain code fence paired with a timed diagram is split into one block per
+ * source line by `src/lib/markdown.ts`. The block replaces the newline it was
+ * split on, so the listing keeps exactly the height it had; `max-content`
+ * keeps the tint behind a line wider than the column rather than clipping it
+ * at the scroll box.
+ *
+ * These lines have no gutter to hang a sliding bar beside, so the spotlight is
+ * the row itself: a tint plus an inset rule at its start edge.
+ */
+.trace-listing-line {
+  display: block;
+  width: max-content;
+  min-width: 100%;
+  min-height: 1lh;
+}
+
+.trace-figure[data-trace-mounted] .trace-listing-line[data-state="current"] {
+  background: color-mix(in srgb, var(--color-primary, currentColor) 12%, transparent);
+  box-shadow: inset 0.2rem 0 0 var(--color-primary, currentColor);
+}
+
 .trace-figure[data-trace-mounted] .highlight-gutters > pre::before {
   content: "";
   position: absolute;
@@ -967,20 +989,23 @@ pre.mermaid svg {
       opacity 200ms ease;
   }
 
-  .trace-figure[data-trace-mounted] .highlight-gutter-line {
+  .trace-figure[data-trace-mounted] .highlight-gutter-line,
+  .trace-figure[data-trace-mounted] .trace-listing-line {
     transition: background-color 260ms ease;
   }
 }
 
 /* Backward moves commit instantly, so no spotlight ever slides in reverse. */
 .trace-figure[data-motion="none"] .highlight-gutters > pre::before,
-.trace-figure[data-motion="none"] .highlight-gutter-line {
+.trace-figure[data-motion="none"] .highlight-gutter-line,
+.trace-figure[data-motion="none"] .trace-listing-line {
   transition: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .trace-figure[data-trace-mounted] .highlight-gutters > pre::before,
-  .trace-figure[data-trace-mounted] .highlight-gutter-line {
+  .trace-figure[data-trace-mounted] .highlight-gutter-line,
+  .trace-figure[data-trace-mounted] .trace-listing-line {
     transition: none;
   }
 }
@@ -995,6 +1020,12 @@ pre.mermaid svg {
   .trace-figure[data-trace-mounted]
     .highlight-gutter-line[data-state="current"] {
     background: none;
+    transition: none;
+  }
+
+  .trace-figure[data-trace-mounted] .trace-listing-line[data-state="current"] {
+    background: none;
+    box-shadow: none;
     transition: none;
   }
 }

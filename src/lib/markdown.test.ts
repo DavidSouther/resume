@@ -1,6 +1,10 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { rewriteMermaidFences, toHTML } from "./markdown.ts";
+import {
+	rewriteMermaidFences,
+	splitHighlightedLines,
+	toHTML,
+} from "./markdown.ts";
 import { MERMAID_ESM_URL, MERMAID_VERSION } from "./mermaid-bundle.ts";
 import { getPost } from "./posts.ts";
 
@@ -152,6 +156,48 @@ traceDiagram
 		);
 	});
 
+	it("splits a plain listing into spotlightable lines when the pair is timed", () => {
+		// A plain code fence draws one run of text, so a stepper has no element
+		// to spotlight. Splitting it here keeps the six figures of
+		// `posts/interview_03_tracing.md` out of `lifetime-composite`, which
+		// would restack a side-by-side figure for a gutter with no lanes.
+		const html = toHTML(`\`\`\`python
+def gcd(a, b):
+  return a
+\`\`\`
+\`\`\`mermaid
+traceDiagram
+  frame gcd @0
+    a: 7 @1
+  end
+\`\`\`
+`);
+
+		expect(html).toContain('<span class="trace-listing-line" data-line="0">');
+		expect(html).toContain('<span class="trace-listing-line" data-line="1">');
+		expect(html).not.toContain("lifetime-composite");
+		// The wrapper replaces the newline it split on, so the listing keeps its
+		// height rather than growing a blank row under every line.
+		expect(html).not.toContain('</span>\n<span class="trace-listing-line"');
+	});
+
+	it("leaves an untimed pair's plain listing exactly as it was", () => {
+		const html = toHTML(`\`\`\`python
+def gcd(a, b):
+  return a
+\`\`\`
+\`\`\`mermaid
+traceDiagram
+  frame gcd
+    a: 7
+  end
+\`\`\`
+`);
+
+		expect(html).not.toContain("trace-listing-line");
+		expect(html).toContain('<figure class="trace-figure">');
+	});
+
 	it("gives the tracing post's build_art figure its declared order", async () => {
 		const body = (await getPost("interview_07_tracing_rust")).body ?? "";
 		const figure = [...body.matchAll(/<figure class="trace-figure[^>]*>/g)]
@@ -159,6 +205,25 @@ traceDiagram
 			.find((tag) => tag.includes('data-trace-lines="9 10 0 1 2 3 11"'));
 
 		expect(figure).toBeDefined();
+	});
+});
+
+describe("splitHighlightedLines", () => {
+	it("re-opens a highlight that runs across a newline", () => {
+		// highlight.js wraps a block comment in one span that spans lines. Each
+		// line has to stand as well-formed markup on its own once it is wrapped.
+		const lines = splitHighlightedLines(
+			'a<span class="hljs-comment">/* one\ntwo */</span>b\n',
+		);
+
+		expect(lines).toEqual([
+			'a<span class="hljs-comment">/* one</span>',
+			'<span class="hljs-comment">two */</span>b',
+		]);
+	});
+
+	it("keeps a blank line as a line", () => {
+		expect(splitHighlightedLines("a\n\nb\n")).toEqual(["a", "", "b"]);
 	});
 });
 

@@ -21,7 +21,13 @@ import {
  * Stamps a node with its document position and its diagram source line. `at` is
  * the 0-based index of the line in the diagram text.
  */
-type Mint = (at: number, tag?: number) => Timed;
+type Mint = (at: number, tag?: Tag) => Timed;
+
+/** A peeled `@<line>` with the optional `#<occurrence>` that qualifies it. */
+interface Tag {
+	line: number;
+	occurrence?: number;
+}
 
 const HEADER = "traceDiagram";
 
@@ -49,21 +55,29 @@ interface OpenFrame {
 }
 
 /**
- * A trailing step tag: `@` followed by digits only. A heap pointer is `@id`
- * with a non-numeric id, so the two never collide — which is why a heap object
- * id may not be all digits.
+ * A trailing step tag: `@` followed by digits only, optionally qualified by
+ * `#<digits>` naming which execution of that line is meant. A heap pointer is
+ * `@id` with a non-numeric id, so the two never collide — which is why a heap
+ * object id may not be all digits.
  */
-const TRAILING_TAG = /\s*@(\d+)$/;
+const TRAILING_TAG = /\s*@(\d+)(?:#(\d+))?$/;
 
 /**
- * Peels one trailing `@<digits>` off a statement or a value token. Peeling
- * before dispatch keeps every statement regex unchanged; `ret &art -> my_art`
- * in particular keeps its arrow target, which a tag-aware `ret` regex loses.
+ * Peels one trailing `@<digits>[#<digits>]` off a statement or a value token.
+ * Peeling before dispatch keeps every statement regex unchanged; `ret &art ->
+ * my_art` in particular keeps its arrow target, which a tag-aware `ret` regex
+ * loses.
  */
-function peelTrailingTag(source: string): { text: string; tag?: number } {
+function peelTrailingTag(source: string): { text: string; tag?: Tag } {
 	const match = source.match(TRAILING_TAG);
 	if (!match || match.index === undefined) return { text: source };
-	return { text: source.slice(0, match.index).trim(), tag: Number(match[1]) };
+	return {
+		text: source.slice(0, match.index).trim(),
+		tag: {
+			line: Number(match[1]),
+			...(match[2] === undefined ? {} : { occurrence: Number(match[2]) }),
+		},
+	};
 }
 
 /**
@@ -74,11 +88,12 @@ function peelTrailingTag(source: string): { text: string; tag?: number } {
 function applyTrailingTag(
 	node: Timed,
 	values: TraceValue[],
-	tag: number | undefined,
+	tag: Tag | undefined,
 ): void {
 	if (tag === undefined) return;
 	const target = values.at(-1) ?? node;
-	target.tag = tag;
+	target.tag = tag.line;
+	if (tag.occurrence !== undefined) target.occurrence = tag.occurrence;
 }
 
 /**
@@ -153,7 +168,8 @@ export function parseTrace(text: string): TraceModel {
 	// parser walks. Every timed node takes the next ordinal as it is built.
 	let order = 0;
 	const mint: Mint = (at, tag) => ({
-		...(tag === undefined ? {} : { tag }),
+		...(tag === undefined ? {} : { tag: tag.line }),
+		...(tag?.occurrence === undefined ? {} : { occurrence: tag.occurrence }),
 		order: order++,
 		sourceLine: at + 1,
 	});

@@ -30,10 +30,11 @@ gcd(1071, 462)
 ```mermaid
 traceDiagram
   title Tracing the GCD function
-  frame gcd
-    a: 1071, 609, 147, 126, 105, 84, 63, 42, 21
-    b: 462, 315, 168, 21
-    ret 21
+  steps 8 0 1 2 3 1 2 3 1 2 5 1 2 5 1 2 5 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 6
+  frame gcd @8
+    a: 1071 @0, 609 @3#1, 147 @3#2, 126 @3#3, 105 @3#4, 84 @3#5, 63 @3#6, 42 @3#7, 21 @3#8
+    b: 462 @0, 315 @5#1, 168 @5#2, 21 @5#3
+    ret 21 @6
   end
 ```
 
@@ -72,10 +73,11 @@ gcdmod(1071, 462);
 ```mermaid
 traceDiagram
   title Tracing gcdmod
-  frame gcdmod
-    a: 1071, 462, 147, 21
-    b: 462, 147, 21, 0
-    ret 21
+  steps 7 0 1 2 1 2 1 2 1 4
+  frame gcdmod @7
+    a: 1071 @0, 462 @2#1, 147 @2#2, 21 @2#3
+    b: 462 @0, 147 @2#1, 21 @2#2, 0 @2#3
+    ret 21 @4
   end
 ```
 
@@ -113,23 +115,24 @@ function hasCycle(listHead) {
 ```mermaid
 traceDiagram
   title Tracing a circular linked list
-  heap blue 0x10
+  steps 0 1 2 3 4 5 6 3 4 5 6 3 4 5 6 3 4
+  heap blue 0x10 @0
     color: cornflowerblue
     next -> green
   end
-  heap green 0x20
+  heap green 0x20 @0
     color: mediumseagreen
     next -> gold
   end
-  heap gold 0x30
+  heap gold 0x30 @0
     color: goldenrod
     next -> blue
   end
-  frame hasCycle
-    listHead: @blue
-    visited: {}, {0x10}, {0x10 0x20}, {0x10 0x20 0x30}
-    current: @blue, @green, @gold, @blue
-    ret true
+  frame hasCycle @0
+    listHead: @blue @0
+    visited: {} @1, {0x10} @5#1, {0x10 0x20} @5#2, {0x10 0x20 0x30} @5#3
+    current: @blue @2, @green @6#1, @gold @6#2, @blue @6#3
+    ret true @4#4
   end
 ```
 
@@ -156,25 +159,26 @@ gcdr(1071, 462)
 ```mermaid
 traceDiagram
   title Tracing function calls in gcdr
-  frame gcdr
-    a: 1071
-    b: 462
-    ret 21
-    frame gcdr
-      a: 462
-      b: 147
-      ret 21 -> ret
-      done
-      frame gcdr
-        a: 147
-        b: 21
-        ret 21 -> ret
-        done
-        frame gcdr
-          a: 21
-          b: 0
-          ret 21 -> ret
-          done
+  steps 6 0 1 4 0 1 4 0 1 4 0 1 2 4 4 4
+  frame gcdr @6
+    a: 1071 @0#1
+    b: 462 @0#1
+    ret 21 @4#6
+    frame gcdr @4#1
+      a: 462 @0#2
+      b: 147 @0#2
+      ret 21 -> ret @4#5
+      done @4#6
+      frame gcdr @4#2
+        a: 147 @0#3
+        b: 21 @0#3
+        ret 21 -> ret @4#4
+        done @4#5
+        frame gcdr @4#3
+          a: 21 @0#4
+          b: 0 @0#4
+          ret 21 -> ret @2
+          done @4#4
         end
       end
     end
@@ -204,21 +208,21 @@ function extractValue(arg) {
 ```mermaid
 traceDiagram
   title Tracing intermediate expressions
-  heap arg 0x10
+  heap arg 0x10 @0
     list -> items
   end
-  heap items 0x20
+  heap items 0x20 @0
     0: 0x30
     1: 0x40
     2: 0x50
   end
-  heap third 0x50
+  heap third 0x50 @0
     value: 42
   end
-  frame extractValue
-    arg: @arg
-    watch arg.list[2]: @third
-    ret 42
+  frame extractValue @0
+    arg: @arg @0
+    watch arg.list[2]: @third @1
+    ret 42 @1
   end
 ```
 
@@ -245,20 +249,21 @@ while (i < 3) {
 ```mermaid
 traceDiagram
   title Tracing scope
-  frame main
-    total: 0, 0, 2, 6
-    i: 0, 1, 2, 3
-    scope while
-      t: 0
-      done
+  steps 0 1 2 3 4 5 2 3 4 5 2 3 4 5 2
+  frame main @0
+    total: 0 @0, 0 @4#1, 2 @4#2, 6 @4#3
+    i: 0 @1, 1 @5#1, 2 @5#2, 3 @5#3
+    scope while @2#1
+      t: 0 @3#1
+      done @2#2
     end
-    scope while
-      t: 2
-      done
+    scope while @2#2
+      t: 2 @3#2
+      done @2#3
     end
-    scope while
-      t: 4
-      done
+    scope while @2#3
+      t: 4 @3#3
+      done @2#4
     end
   end
 ```

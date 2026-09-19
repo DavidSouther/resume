@@ -95,6 +95,71 @@ function traceLines(diagram: string): string {
 	}
 }
 
+// A stepper spotlights one source line, so the listing must have a per-line
+// element to spotlight. A ```highlight-gutters fence emits one; a plain
+// ```python fence emits a single run of text. Rather than making the six
+// figures of `posts/interview_03_tracing.md` gutter fences — which would route
+// them through GUTTER_THEN_DIAGRAM, give them `lifetime-composite`, and restack
+// a side-by-side figure for a gutter with no lanes to draw — a plain listing
+// paired with a *timed* diagram is split into lines here.
+//
+// Only a timed pair is split, so every untimed figure on the site keeps the
+// exact markup it has today.
+const LISTING_BODY = /^(<pre><code class="[^"]*">)([\s\S]*)(<\/code><\/pre>)$/;
+
+/**
+ * Splits highlighted markup at its newlines, re-opening every span that was
+ * still open across the break. highlight.js emits only balanced `<span>`
+ * elements and entities, so a tag stack is enough to keep each line's markup
+ * well-formed on its own.
+ */
+export function splitHighlightedLines(body: string): string[] {
+	const lines: string[] = [];
+	const open: string[] = [];
+	let current = "";
+	let last = 0;
+	for (const match of body.matchAll(/<\/?[^>]+>|\n/g)) {
+		const at = match.index;
+		current += body.slice(last, at);
+		last = at + match[0].length;
+		if (match[0] === "\n") {
+			lines.push(current + "</span>".repeat(open.length));
+			current = open.join("");
+		} else if (match[0].startsWith("</")) {
+			open.pop();
+			current += match[0];
+		} else {
+			open.push(match[0]);
+			current += match[0];
+		}
+	}
+	current += body.slice(last);
+	lines.push(current + "</span>".repeat(open.length));
+	// A fence body ends with the newline before its closing ```, which is a
+	// break rather than a tenth line.
+	if (lines.at(-1) === "") lines.pop();
+	return lines;
+}
+
+/**
+ * Wraps each line of a plain code listing in `.trace-listing-line[data-line]`,
+ * the element `src/lib/trace-stepper/stepper.ts` spotlights. The newline itself
+ * is dropped: each wrapper is a block, so the break it used to make is now the
+ * block's own, and the listing keeps its height.
+ */
+function wrapListingLines(listing: string): string {
+	const parts = LISTING_BODY.exec(listing);
+	if (!parts) return listing;
+	const [, opening, body, closing] = parts;
+	const lines = splitHighlightedLines(body)
+		.map(
+			(line, at) =>
+				`<span class="trace-listing-line" data-line="${at}">${line}</span>`,
+		)
+		.join("");
+	return `${opening}${lines}${closing}`;
+}
+
 export function pairListingsWithDiagrams(html: string): string {
 	return html
 		.replace(
@@ -102,11 +167,11 @@ export function pairListingsWithDiagrams(html: string): string {
 			(_whole, listing: string, diagram: string) =>
 				`<figure class="trace-figure lifetime-composite"${traceLines(diagram)}>${listing}${diagram}</figure>`,
 		)
-		.replace(
-			CODE_THEN_DIAGRAM,
-			(_whole, listing: string, diagram: string) =>
-				`<figure class="trace-figure"${traceLines(diagram)}>${listing}${diagram}</figure>`,
-		);
+		.replace(CODE_THEN_DIAGRAM, (_whole, listing: string, diagram: string) => {
+			const lines = traceLines(diagram);
+			const spotted = lines === "" ? listing : wrapListingLines(listing);
+			return `<figure class="trace-figure"${lines}>${spotted}${diagram}</figure>`;
+		});
 }
 
 /** Renders post Markdown to HTML. The one Markdown entry point for the site. */

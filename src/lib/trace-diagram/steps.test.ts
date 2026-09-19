@@ -144,6 +144,58 @@ describe("resolveSteps", () => {
 		expect(model.frames[0].rows[0].values[0].step).toBe(1);
 	});
 
+	it("gives two rows assigned by one loop body the same execution of it", () => {
+		// `[a, b] = [b, a % b]` writes both rows on listing line 2. The implicit
+		// counter cannot express that — it hands a's three tags occurrences one
+		// through three and has none left for b — so `#k` names the execution.
+		const model = parseTrace(
+			[
+				"traceDiagram",
+				"  steps 7 0 1 2 1 2 1 2 1 4",
+				"  frame gcdmod @7",
+				"    a: 1071 @0, 462 @2#1, 147 @2#2, 21 @2#3",
+				"    b: 462 @0, 147 @2#1, 21 @2#2, 0 @2#3",
+				"    ret 21 @4",
+				"  end",
+			].join("\n"),
+		);
+
+		resolveSteps(model);
+
+		const [a, b, ret] = model.frames[0].rows;
+		expect(a.values.map((v) => v.step)).toEqual([2, 4, 6, 8]);
+		expect(b.values.map((v) => v.step)).toEqual([2, 4, 6, 8]);
+		expect(ret.values[0].step).toBe(10);
+	});
+
+	it("reaches a later execution of a line than the implicit counter would", () => {
+		// The `return true` of a cycle check shares its listing line with the
+		// test that guards it, and it is the fourth run of that line that
+		// returns. One tag, so the implicit counter would take the first.
+		const model = parseTrace(
+			[
+				"traceDiagram",
+				"  steps 3 4 3 4 3 4 3 4",
+				"  frame hasCycle @3",
+				"    ret true @4#4",
+				"  end",
+			].join("\n"),
+		);
+
+		resolveSteps(model);
+
+		expect(model.frames[0].rows[0].values[0].step).toBe(8);
+	});
+
+	it("rejects an occurrence the line never reaches, naming its diagram line", () => {
+		const model = parseTrace(
+			"traceDiagram\n  steps 0 1 0\n  frame f @0\n    a: 1 @0#3\n  end",
+		);
+
+		expect(() => resolveSteps(model)).toThrowError(TraceSyntaxError);
+		expect(() => resolveSteps(model)).toThrowError(/`@0#3`.*2 times.*line 4/);
+	});
+
 	it("rejects a tag the explicit sequence never executes, naming its line", () => {
 		const model = parseTrace(
 			"traceDiagram\n  steps 0 1\n  frame f @0\n    a: 1 @7\n  end",

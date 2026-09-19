@@ -362,6 +362,36 @@ describe("parseTrace timing notation", () => {
 		expect(values.map((v) => v.tag)).toEqual([5, 6]);
 	});
 
+	it("reads `#k` as which execution of the tagged line is meant", () => {
+		// A loop runs one line many times, so the two rows a single statement
+		// assigns each need the same execution of it. `#k` says which.
+		const model = parseTrace(
+			[
+				"traceDiagram",
+				"  frame gcdmod @7",
+				"    a: 1071 @0, 462 @2#1, 147 @2#2",
+				"    b: 462 @0, 147 @2#1, 21 @2#2",
+				"    done @1#4",
+				"  end",
+			].join("\n"),
+		);
+
+		const [a, b] = model.frames[0].rows;
+		expect(a.values.map((v) => [v.tag, v.occurrence])).toEqual([
+			[0, undefined],
+			[2, 1],
+			[2, 2],
+		]);
+		expect(b.values.map((v) => [v.tag, v.occurrence])).toEqual([
+			[0, undefined],
+			[2, 1],
+			[2, 2],
+		]);
+		expect(model.frames[0].tag).toBe(7);
+		expect(model.frames[0].occurrence).toBeUndefined();
+		expect(model.frames[0].doneAt).toMatchObject({ tag: 1, occurrence: 4 });
+	});
+
 	it("reads a `steps` statement as the declared execution order", () => {
 		const model = parseTrace(
 			"traceDiagram\n  steps 9 10 0 1 2 3 11\n  frame main @9\n  end",
