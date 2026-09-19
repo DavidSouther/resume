@@ -135,8 +135,8 @@ export function splitHighlightedLines(body: string): string[] {
 	}
 	current += body.slice(last);
 	lines.push(current + "</span>".repeat(open.length));
-	// A fence body ends with the newline before its closing ```, which is a
-	// break rather than a tenth line.
+	// A fence body ends with the newline before its closing fence, which
+	// terminates the last line rather than starting an empty one.
 	if (lines.at(-1) === "") lines.pop();
 	return lines;
 }
