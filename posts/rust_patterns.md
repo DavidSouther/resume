@@ -6,13 +6,7 @@ slides: true
 show: false
 ---
 
-# What This Lecture Is Really About
-
-## The compiler refuses to let you defer decisions you're used to deferring
-
----
-
-## Today's Map
+## Roadmap
 
 **Foundations**
 - Pattern matching
@@ -22,10 +16,10 @@ show: false
 +++
 
 **Building blocks**
-- From / Into
-- Box, Rc, Arc
-- Clone, the honest way
-- Derive
+- `From` / `Into`
+- `Box`, `Rc`, `Arc`
+- `Clone` (smartly)
+- `Derive`
 
 ---
 
@@ -71,9 +65,9 @@ fn area(shape: &Shape) -> f64 {
 
 ---
 
-# Error Propagation
+# Data-driven Control
 
-## `Option`, `Result`, `Error` trats and `?` operator
+## `Option`, `Result`, `Error` traits and `?` operator
 
 ---
 
@@ -86,7 +80,7 @@ fn find_user(id: u64, users: &[User]) -> Option<&User> {
 
 ship_to(find_user(42, users).address); // ⛔️
 find_user(42, users).map(|u| ship_to(u.address))?; // ✅
-match find_user(42, users) {
+match find_user(42, users) { // ✅
     Some(user) => ship_to(u.address),
     None => warn!(userid=42, "No user found for shipping"),
 }
@@ -96,7 +90,9 @@ match find_user(42, users) {
 ## `Result<T, E>`
 
 ```rust
-fn parse_port(input: &str) -> Result<u16, std::num::ParseIntError> {
+fn parse_port(input: &str) -> 
+  Result<u16, std::num::ParseIntError>
+{
     let port: u16 = input.parse()?;
     Ok(port)
 }
@@ -238,9 +234,10 @@ impl From<u64> for UserId {
 }
 
 let uid: UserId = 42.into();
+let oid = OrderId(7);
 ```
 
-Never implement `Into` directly. The blanket implementation covers it.
+<!-- Never implement `Into` directly. The blanket implementation covers it. -->
 
 ---
 
@@ -336,30 +333,53 @@ flowchart LR
 
 ---
 
+## A Good Clone
+
+```rust
+fn register(key: String) { /* takes ownership */ }
+
+let mut key = String::from("timeout_ms");
+register(key.clone());
+key.push_str("_v2"); // `key` is still mine
+```
+
+`register` wants ownership, and the caller still needs `key` afterward.
+The clone is the price of both things being true at once, paid on
+purpose.
+
+---
+
 ## Resist, Then Prefer
 
 **Resist**
 ```rust
-fn total(prices: &Vec<f64>) -> f64 {
-    let prices = prices.clone();
-    // dodging a borrow
-    // error elsewhere
-    prices.iter().sum()
+fn rename_key(config: &Config, old: &str, new: &str)
+    -> HashMap<String, String> {
+    let mut settings = config.settings.clone(); // whole map
+    // dodging &Config's immutable borrow
+    if let Some(value) = settings.remove(old) {
+        settings.insert(new.to_string(), value);
+    }
+    settings
 }
+// existing.settings = rename_key(&existing, "a", "b");
 ```
 
 +++
 
 **Prefer**
 ```rust
-fn total(prices: &[f64]) -> f64 {
-    prices.iter().sum()
+fn rename_key(config: &mut Config, old: &str, new: &str) {
+    if let Some(value) = config.settings.remove(old) {
+        config.settings.insert(new.to_string(), value);
+    }
 }
+// rename_key(&mut existing, "a", "b");
 ```
 
-`Rc::clone(&shared)` two slides back is the acceptable case: cheap,
-a pointer clone. Cloning a `Vec<f64>` is not. The compiler will not
-tell you which one you just wrote.
+<!-- If a `.clone()` makes a borrow-checker error disappear, that's the
+anti-pattern. `clone()` here wasn't the bug, `&Config` was. The fix is
+restructuring how ownership flows, not a smarter clone. -->
 
 ---
 
@@ -368,6 +388,68 @@ tell you which one you just wrote.
 ---
 
 ## Compiler Busywork
+
+```rust
+struct Point {
+    x: i32,
+    y: i32,
+}
+```
+
+---
+
+## Compiler Busywork
+
+```rust
+impl Debug for Point {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Point")
+            .field("x", &self.x)
+            .field("y", &self.y)
+            .finish()
+    }
+}
+```
+
+---
+
+## Compiler Busywork
+
+```rust
+impl Clone for Point {
+    fn clone(&self) -> Self {
+        Self { x: self.x.clone(), y: self.y.clone() }
+    }
+}
+```
+
+---
+
+## Compiler Busywork
+
+```rust
+impl PartialEq for Point {
+    fn eq(&self, other: &Self) -> bool {
+        self.x == other.x && self.y == other.y
+    }
+}
+```
+
+---
+
+## Compiler Busywork
+
+```rust
+impl Default for Point {
+    fn default() -> Self {
+        Self { x: Default::default(), y: Default::default() }
+    }
+}
+```
+
+---
+
+## `Derive`
 
 ```rust
 #[derive(Debug, Clone, PartialEq, Default)]
