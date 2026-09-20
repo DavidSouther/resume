@@ -1,0 +1,72 @@
+/*
+ * highlight.js token colours from jiffies-css intent tokens rather than a
+ * shipped hljs theme, so a listing follows the site's four themes. Bundled
+ * into global.css by lightningcss, so it costs no second request.
+ */
+.hljs-comment,
+.hljs-quote,
+.hljs-doctag {
+  color: var(--color-on-surface-variant);
+  font-style: italic;
+}
+
+.hljs-keyword,
+.hljs-built_in,
+.hljs-selector-tag,
+.hljs-operator {
+  color: var(--color-primary);
+}
+
+.hljs-string,
+.hljs-regexp,
+.hljs-char.escape_ {
+  color: var(--color-success);
+}
+
+.hljs-number,
+.hljs-literal,
+.hljs-type,
+.hljs-symbol {
+  color: var(--color-tertiary);
+}
+
+.hljs-title,
+.hljs-title.function_,
+.hljs-title.class_,
+.hljs-section {
+  color: var(--color-secondary);
+}
+
+.hljs-attr,
+.hljs-attribute,
+.hljs-property,
+.hljs-variable,
+.hljs-template-variable {
+  color: var(--color-on-surface);
+}
+
+.hljs-meta,
+.hljs-tag,
+.hljs-name {
+  color: var(--color-info);
+}
+
+.hljs-link {
+  color: var(--color-link);
+}
+
+.hljs-addition {
+  color: var(--color-ins);
+}
+
+.hljs-deletion {
+  color: var(--color-del);
+}
+
+.hljs-emphasis {
+  font-style: italic;
+}
+
+.hljs-strong {
+  font-weight: bold;
+}
