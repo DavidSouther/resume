@@ -61,6 +61,21 @@
   --content-columns: 1;
 }
 
+/* The bundle's 1.25 ratio oversizes headings in heading-dense pages. */
+:root {
+  --font-scale: 1.15;
+}
+
+/*
+ * jiffdown opens a <section> per heading level, so a subsection heading is a
+ * first child, not a sibling — and the bundle's heading spacing fires only on
+ * a sibling combinator. Scoped to `.post`: the resume's hand-built sections
+ * place a first-child heading on a grid and must not gain a margin.
+ */
+.post section > :is(h1, h2, h3, h4, h5, h6):first-child {
+  margin-block-start: var(--spacing-block-vertical);
+}
+
 @media print {
   :root {
     --spacing-block-vertical: 0.1rem;
@@ -510,4 +525,150 @@ section:has(img.float) + section {
     --color: black;
     text-decoration: none;
   }
+}
+
+/*
+ * Each source row shares a grid with its bands, so geometry stays aligned
+ * without placeholder spans. Spacing, touching edges, hatching, and caps carry
+ * the meaning; colour only reinforces it.
+ */
+.highlight-gutters {
+  /* One line box per row. Anything placing a row by ordinal reads this. */
+  --gutter-line-height: 1.55rem;
+  flex: 1 1 20rem;
+  min-width: 0;
+  margin-block: var(--size-4, 1.5rem);
+  overflow-x: auto;
+}
+
+.trace-figure > .highlight-gutters {
+  margin-block: 0;
+}
+
+.highlight-gutters > pre {
+  min-width: max-content;
+  margin-block: 0;
+  padding: var(--size-2, 0.75rem);
+  border-radius: var(--radius-blockquote, 0.5rem);
+  background: var(--color-surface-variant, transparent);
+}
+
+.highlight-gutters code {
+  display: block;
+  padding: 0;
+  background: none;
+}
+
+.highlight-gutter-line {
+  display: grid;
+  grid-template-columns: repeat(var(--gutter-lanes), 1.35rem) minmax(22rem, 1fr);
+  min-height: var(--gutter-line-height, 1.55rem);
+  font: 0.875rem/1.55rem var(--font-mono, monospace);
+}
+
+.highlight-gutter-source {
+  padding-inline-start: 0.75rem;
+  white-space: pre;
+}
+
+.highlight-gutter-band,
+.highlight-gutter-band-empty {
+  position: relative;
+  display: block;
+  height: 100%;
+}
+
+.highlight-gutter-band[data-gutter-placement="separate"] {
+  margin-inline: 0.22rem;
+}
+
+.highlight-gutter-band.highlight-gutter-connected-source {
+  margin-inline-end: 0;
+}
+
+.highlight-gutter-band[data-gutter-color="0"],
+.highlight-gutter-token[data-gutter-color="0"] {
+  --gutter-color: #f4d35e;
+}
+
+.highlight-gutter-band[data-gutter-color="1"],
+.highlight-gutter-token[data-gutter-color="1"] {
+  --gutter-color: #56b4e9;
+}
+
+.highlight-gutter-band[data-gutter-color="2"],
+.highlight-gutter-token[data-gutter-color="2"] {
+  --gutter-color: #cc79a7;
+}
+
+.highlight-gutter-band[data-gutter-color="3"],
+.highlight-gutter-token[data-gutter-color="3"] {
+  --gutter-color: #009e73;
+}
+
+.highlight-gutter-band[data-gutter-color="4"],
+.highlight-gutter-token[data-gutter-color="4"] {
+  --gutter-color: #e69f00;
+}
+
+.highlight-gutter-band[data-gutter-color="5"],
+.highlight-gutter-token[data-gutter-color="5"] {
+  --gutter-color: #0072b2;
+}
+
+.highlight-gutter-band {
+  background: color-mix(in srgb, var(--gutter-color) 62%, transparent);
+}
+
+.highlight-gutter-token {
+  border-radius: 0.2rem;
+  background: color-mix(in srgb, var(--gutter-color) 42%, transparent);
+}
+
+.highlight-gutter-start {
+  border-start-start-radius: 0.5rem;
+  border-start-end-radius: 0.5rem;
+}
+
+.highlight-gutter-end {
+  border-end-start-radius: 0.5rem;
+  border-end-end-radius: 0.5rem;
+}
+
+.highlight-gutter-exclusive {
+  box-sizing: border-box;
+  border-inline: 1px solid color-mix(in srgb, var(--gutter-color) 80%, currentColor);
+}
+
+.highlight-gutter-exclusive.highlight-gutter-start {
+  border-block-start: 1px solid color-mix(in srgb, var(--gutter-color) 80%, currentColor);
+}
+
+.highlight-gutter-exclusive.highlight-gutter-end {
+  border-block-end: 1px solid color-mix(in srgb, var(--gutter-color) 80%, currentColor);
+}
+
+.highlight-gutter-locked {
+  border-inline: 1px dashed currentColor;
+  background:
+    repeating-linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--gutter-color) 62%, transparent) 0 0.3rem,
+      color-mix(in srgb, currentColor 32%, transparent) 0.3rem 0.45rem
+    );
+}
+
+.highlight-gutter-move-terminal {
+  position: absolute;
+  z-index: 2;
+  inset-inline: 50% -0.5rem;
+  inset-block-start: 50%;
+  border-block-start: 0.18rem solid currentColor;
+  pointer-events: none;
+}
+
+.highlight-gutter-rejected > .highlight-gutter-source {
+  font-weight: 700;
+  text-decoration: underline wavy var(--color-error, currentColor);
+  text-underline-offset: 0.2rem;
 }

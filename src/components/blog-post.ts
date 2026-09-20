@@ -10,6 +10,7 @@ export function renderBlogPost(post: Post): HTMLElement {
 	return main(
 		Card(
 			{
+				class: "post",
 				header: h3(
 					a({ href: "/" }, "David Souther"),
 					` - ${title} - ${(date ?? "").replace(/T.*/, "")}`,

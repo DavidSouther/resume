@@ -1,8 +1,8 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { cwd } from "node:process";
-import { toHTML as jiffdown } from "@davidsouther/jiffdown";
 import matter from "gray-matter";
+import { toHTML } from "./markdown.ts";
 
 export interface Post {
 	id: string;
@@ -102,7 +102,7 @@ export async function getPost(id: string): Promise<Post> {
 		(front.data.date as Date | undefined)?.toISOString() ?? undefined;
 	const title = front.data.title ?? "Unknown Title";
 	const image = front.data.image;
-	const contentHtml = jiffdown(front.content);
+	const contentHtml = toHTML(front.content);
 	const post = {
 		id,
 		date,
