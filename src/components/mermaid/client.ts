@@ -6,6 +6,7 @@
 // stops Rollup resolving a CDN URL at build time.
 
 import { traceDiagram } from "../../lib/trace-diagram/detector.ts";
+import { mountTraceSteppers } from "../../lib/trace-stepper/stepper.ts";
 
 interface MermaidApi {
 	initialize(config: Record<string, unknown>): void;
@@ -33,8 +34,17 @@ export async function bootMermaid(): Promise<boolean> {
 	return true;
 }
 
-// The diagram source stays legible as text if any of this fails, so a failure
-// degrades to the pre block rather than to an empty figure.
-void bootMermaid().catch((error) => {
-	console.error("mermaid failed to render", error);
-});
+// A failure degrades to the pre block, which stays legible as text.
+//
+// Steppers mount after `bootMermaid` settles, because the timed elements live
+// in the SVG mermaid draws. `.finally`, not `.then`: `mermaid.run` rethrows
+// the first error it met after drawing the rest, so one unrenderable fence
+// must not cost every other figure its control bar. A figure that failed to
+// draw carries no `[data-at]` and is skipped.
+void bootMermaid()
+	.catch((error) => {
+		console.error("mermaid failed to render", error);
+	})
+	.finally(() => {
+		mountTraceSteppers(document);
+	});
