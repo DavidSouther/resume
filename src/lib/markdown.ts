@@ -38,14 +38,47 @@ export function highlightFences(html: string): string {
 	});
 }
 
+// Mermaid's runtime finds diagrams by `pre.mermaid`; a `language-mermaid` code
+// block is never rendered. Idempotent, so it becomes a pass-through once
+// jiffdown ships this rewrite itself.
+const MERMAID_FENCE =
+	/<pre><code class="language-mermaid">([\s\S]*?)<\/code><\/pre>/g;
+
+export function rewriteMermaidFences(html: string): string {
+	return html.replace(MERMAID_FENCE, '<pre class="mermaid">$1</pre>');
+}
+
+// A trace diagram is read against the listing it traces, so the two become one
+// figure. The listing stays a real code block — highlightable and selectable —
+// rather than being redrawn inside the diagram. Matches a listing whether or
+// not highlighting has annotated it yet.
+const CODE_THEN_DIAGRAM =
+	/(<pre><code class="(?:hljs )?language-(?!highlight-gutters)[^"]*">(?:(?!<\/code><\/pre>)[\s\S])*?<\/code><\/pre>)\s*(<pre class="mermaid">\s*traceDiagram(?:(?!<\/pre>)[\s\S])*?<\/pre>)/g;
+const GUTTER_THEN_DIAGRAM =
+	/(<div class="highlight-gutters"(?:(?!<\/code><\/pre><\/div>)[\s\S])*?<\/code><\/pre><\/div>)\s*(<pre class="mermaid">\s*traceDiagram(?:(?!<\/pre>)[\s\S])*?<\/pre>)/g;
+
+export function pairListingsWithDiagrams(html: string): string {
+	return html
+		.replace(
+			GUTTER_THEN_DIAGRAM,
+			'<figure class="trace-figure lifetime-composite">$1$2</figure>',
+		)
+		.replace(CODE_THEN_DIAGRAM, '<figure class="trace-figure">$1$2</figure>');
+}
+
 /**
  * Renders post Markdown to HTML. The one Markdown entry point for the site.
  *
- * Order is load-bearing: a gutter fence must stop being a fence before the
- * highlighter meets `highlight-gutters` as a language.
+ * Order is load-bearing: a mermaid or gutter fence must stop being a fence
+ * before the highlighter meets its language, and highlighting must finish
+ * before the pairing wraps the listing.
  */
 export function toHTML(markdown: string): string {
-	return highlightFences(
-		rewriteHighlightGutterFences(jiffdown(markdown) as string),
+	return pairListingsWithDiagrams(
+		highlightFences(
+			rewriteHighlightGutterFences(
+				rewriteMermaidFences(jiffdown(markdown) as string),
+			),
+		),
 	);
 }

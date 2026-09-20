@@ -4,12 +4,18 @@ import { describe, expect, it } from "vitest";
 import { toHTML } from "./markdown.ts";
 
 describe("semantic highlight gutters", () => {
-	it("renders a source fence that declares no marks", () => {
+	it("keeps an unmarked source fence paired with its trace diagram", () => {
 		const html = toHTML(`\`\`\`highlight-gutters
 code rust:
 fn build_art() {
     let art = artwork();
 }
+\`\`\`
+\`\`\`mermaid
+traceDiagram
+  frame build_art
+    art: Artwork
+  end
 \`\`\`
 `);
 		document.body.innerHTML = html;
@@ -17,6 +23,9 @@ fn build_art() {
 		const gutter = document.querySelector<HTMLElement>(".highlight-gutters");
 		expect(gutter?.style.getPropertyValue("--gutter-lanes")).toBe("0");
 		expect(gutter?.querySelectorAll("[data-gutter-band]")).toHaveLength(0);
+		expect(document.querySelector("pre.mermaid")?.textContent).toContain(
+			"traceDiagram",
+		);
 	});
 
 	it("renders copies, shared references, and exclusive mutable references from one fence", () => {

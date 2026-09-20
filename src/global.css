@@ -672,3 +672,75 @@ section:has(img.float) + section {
   text-decoration: underline wavy var(--color-error, currentColor);
   text-underline-offset: 0.2rem;
 }
+
+
+/*
+ * A trace diagram and the listing it traces are one figure: `src/lib/markdown.ts`
+ * wraps an adjacent code fence and mermaid fence in `.trace-figure`. Side by side
+ * on a wide screen, stacked when the column is too narrow for both to stay
+ * legible. The diagram is an SVG sized only by its viewBox, so it scales into
+ * whatever share of the row it gets.
+ */
+.trace-figure {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--size-3, 1rem);
+  margin-block: var(--size-4, 1.5rem);
+}
+
+/*
+ * Basis values must sum to less than the article column, or the row wraps and
+ * the two halves stack. 16rem + 20rem + gap leaves room in a typical column and
+ * still wraps on a narrow one, which is the intended fallback.
+ */
+.trace-figure > pre {
+  flex: 1 1 16rem;
+  min-width: 0;
+  margin-block: 0;
+  padding: var(--size-3, 1rem);
+  border-radius: var(--radius-blockquote, 0.5rem);
+  background: var(--color-surface-variant, transparent);
+  overflow-x: auto;
+}
+
+/* The diagram is the wider half, so it takes the larger share of any slack. */
+.trace-figure > pre.mermaid {
+  flex: 2 1 20rem;
+  padding: 0;
+  background: none;
+}
+
+/* Sized by viewBox alone, so it scales into whatever share of the row it gets. */
+pre.mermaid svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/*
+ * The step control, appended at mount by `src/lib/trace-stepper/stepper.ts`.
+ * With JavaScript off the bar never exists and the figure is the complete
+ * trace, so there is nothing here to hide and nothing is ever `display: none`.
+ *
+ * It takes a whole flex line of its own, under both halves of the figure,
+ * because a reader reads the listing and the diagram together and then acts.
+
+.lifetime-composite {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--size-3, 1rem);
+  align-items: start;
+  margin-block: var(--size-4, 1.5rem);
+}
+
+.lifetime-composite > pre.mermaid {
+  min-width: 0;
+  margin-block: 0;
+}
+
+
+.lifetime-composite > pre.mermaid {
+  padding: 0;
+  background: none;
+  overflow-x: auto;
+}
