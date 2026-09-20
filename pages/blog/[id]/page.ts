@@ -17,5 +17,7 @@ export default {
 		];
 	},
 	default: async (params) => renderBlogPost(await getPost(params?.id ?? "")),
-	clientModules: ["/src/components/mermaid/client.ts"],
+	clientModules: [
+		"/src/components/mermaid/client.ts",
+		"/src/components/slides-client.ts"],
 } satisfies PageModule;

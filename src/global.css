@@ -884,5 +884,81 @@ pre.mermaid svg {
     background: none;
     box-shadow: none;
     transition: none;
+ * ---------------------------------------------------------------------------
+ * Slides treatment (opt-in via `slides: true` frontmatter).
+ *
+ * No-JS/print fallback: every `.slide` stacks and scrolls normally (this is
+ * the plain grid-in-normal-flow default below). `slides-client.ts` marks all
+ * but the current slide `[hidden]` once it runs, switching the deck into a
+ * one-slide-at-a-time presentation.
+ * ---------------------------------------------------------------------------
+ */
+@layer user {
+  .slide-deck {
+    display: grid;
+    gap: var(--size-large);
+  }
+
+  .slide-deck .slide {
+    box-sizing: border-box;
+    min-height: 60vh;
+    padding: var(--spacing-container-vertical) var(--spacing-container-horizontal);
+    border-radius: var(--border-radius-card);
+    background-color: var(--color-surface);
+    color: var(--color-on-surface);
+  }
+
+  .slide-deck .slide[hidden] {
+    display: none;
+  }
+
+  .slide-deck.slide-deck-active {
+    display: block;
+  }
+
+  .slide-deck.slide-deck-active .slide {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .slide-title,
+  .slide-section {
+    align-items: center;
+    text-align: center;
+    gap: var(--size-small);
+  }
+
+  .slide-title h1 {
+    font-size: var(--font-size-h1);
+  }
+
+  .slide-title time {
+    color: var(--color-on-surface-variant);
+  }
+
+  .slide-section :is(h1, h2, h3, h4, h5, h6) {
+    font-size: var(--font-size-h2);
+  }
+
+  .slide-content .slide-columns {
+    display: grid;
+    grid-template-columns: repeat(var(--column-count, 1), 1fr);
+    gap: var(--grid-gap);
+    align-items: start;
+  }
+
+  .slide-deck pre {
+    max-height: 60vh;
+    overflow: auto;
+    border-radius: var(--border-radius-container);
+  }
+
+  .slide-deck .mermaid {
+    display: flex;
+    justify-content: center;
+    overflow: auto;
+    max-height: 60vh;
   }
 }

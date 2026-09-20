@@ -5,8 +5,11 @@ import type { Post } from "../lib/posts.ts";
 // A single blog post inside a page-spine <main> (jiffies-css clamps the post to
 // the responsive base viewport width). The body is pre-rendered HTML.
 export function renderBlogPost(post: Post): HTMLElement {
-	const { title, body, date } = post;
-	const bodyDiv = Object.assign(div(), { innerHTML: body ?? "" });
+	const { title, body, date, slides } = post;
+	const bodyDiv = Object.assign(div(), {
+		className: slides ? "slide-deck" : "",
+		innerHTML: body ?? "",
+	});
 	return main(
 		Card(
 			{
