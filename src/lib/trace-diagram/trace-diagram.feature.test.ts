@@ -155,10 +155,14 @@ describe("traceDiagram renders the tracing post's figures from text", () => {
 		const body = (await getPost(POST_ID)).body ?? "";
 
 		// The listing is a code block, not redrawn inside the diagram, and the two
-		// are wrapped as one figure the stylesheet lays out side by side. None of
-		// them is a `lifetime-composite`, which would stack the pair.
+		// are wrapped as one figure the stylesheet lays out side by side. Each
+		// figure now also publishes the execution order its stepper walks, and
+		// none of them is a `lifetime-composite`, which would stack the pair.
 		const figures = body.match(/<figure class="trace-figure"[^>]*>/g) ?? [];
 		expect(figures.length).toBe(6);
+		expect(figures.every((tag) => tag.includes("data-trace-lines="))).toBe(
+			true,
+		);
 		expect(body).not.toContain("lifetime-composite");
 		expect(body).toMatch(/language-(python|javascript)/);
 		expect(diagramSources().join("\n")).not.toMatch(/^\s*code\b/m);

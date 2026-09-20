@@ -18,6 +18,12 @@ export function getStyles(options: TraceStyleOptions = {}): string {
 	const border = options.nodeBorder ?? stroke;
 	const surface = options.tertiaryColor ?? options.mainBkg ?? "transparent";
 
+	// The accent for the item a step reveals. `--color-primary` is declared on
+	// :root by jiffies-css and inherits into the inline SVG, so it follows the
+	// site's theme; mermaid's own variables carry no usable foreground accent.
+	const accentInk = `var(--color-primary, ${ink})`;
+	const accentStroke = `var(--color-primary, ${stroke})`;
+
 	return `
     .trace-diagram { color: ${ink}; }
     .trace-diagram text { fill: ${ink}; }
@@ -32,7 +38,72 @@ export function getStyles(options: TraceStyleOptions = {}): string {
     .trace-arrowhead { fill: ${stroke}; stroke: none; }
     .trace-heap-rect { stroke: ${border}; stroke-width: 1.5; fill: ${surface}; }
     .trace-heap-address { font-size: 0.8em; opacity: 0.8; }
-  `;
+${steppingStyles(accentInk, accentStroke)}  `;
+}
+
+/**
+ * The presentation of a stepped diagram.
+ *
+ * Keyed on `[data-state]`, which only the stepper writes: JavaScript off,
+ * before mount, on print, or after a mermaid failure, nothing here matches and
+ * the diagram draws complete.
+ *
+ * `[data-at]` is repeated in every selector to outrank the two-class rules
+ * above, where `.trace-pointer.trace-struck` would otherwise beat
+ * `[data-state="future"]` and show a struck pointer before its step.
+ *
+ * A future item is invisible, not dim, and keeps its box.
+ */
+function steppingStyles(accentInk: string, accentStroke: string): string {
+	// A generous fallback for an engine with no SVG geometry API. The stepper
+	// measures each arrow at mount and writes the real length into
+	// `--trace-draw-length`, so this only has to exceed the longest path.
+	const drawLength = "var(--trace-draw-length, 600)";
+	// The elements a reveal draws rather than fades.
+	const drawn = [
+		"path.trace-return-arrow",
+		"path.trace-pointer",
+		"line.trace-strike",
+	];
+	const drawnWhen = (suffix: string): string =>
+		drawn.map((selector) => `${selector}[data-at]${suffix}`).join(", ");
+
+	return `
+    [data-at][data-state="future"] { opacity: 0; }
+    [data-at][data-state="current"] text, text[data-at][data-state="current"] { fill: ${accentInk}; }
+    path[data-at][data-state="current"], line[data-at][data-state="current"] { stroke: ${accentStroke}; }
+
+    @media (prefers-reduced-motion: no-preference) {
+      [data-at][data-state]:not([data-motion="none"]) {
+        transition: opacity 240ms ease, transform 240ms ease, fill 240ms ease, stroke 240ms ease;
+      }
+      g.trace-value-item[data-at][data-state] { transform: translate(0, 0); }
+      g.trace-value-item[data-at][data-state="future"] { transform: translate(-8px, 0); }
+      ${drawnWhen("[data-state]")} {
+        stroke-dasharray: ${drawLength};
+        stroke-dashoffset: 0;
+      }
+      ${drawnWhen('[data-state="future"]')} { stroke-dashoffset: ${drawLength}; }
+      ${drawnWhen('[data-state]:not([data-motion="none"])')} {
+        transition: stroke-dashoffset 380ms ease, stroke 240ms ease, opacity 0s;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      [data-at][data-state] { transition: none; animation: none; transform: none; }
+    }
+
+    @media print {
+      [data-at][data-state="future"] { opacity: 1; }
+      [data-at][data-state]:not([data-motion="none"]) { transition: none; }
+      g.trace-value-item[data-at][data-state] { transform: none; }
+      ${drawnWhen('[data-state]:not([data-motion="none"])')} {
+        transition: none;
+        stroke-dasharray: none;
+        stroke-dashoffset: 0;
+      }
+    }
+`;
 }
 
 export default getStyles;
