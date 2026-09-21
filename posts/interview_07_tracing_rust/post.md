@@ -376,6 +376,173 @@ The `build_art` frame boundary makes the bug concrete: returning would leave
 dangling pointer at runtime because no return executes; the `ret` row preserves
 the rejected stack-pointer relationship for inspection.
 
+Every example so far settles by last use inside a single block; non-lexical
+lifetimes alone decide it. The next three force a different kind of
+reasoning, one where a named lifetime parameter relates two borrows that were
+never in the same block at all.
+
+### Two borrows tied to one lifetime: `long_borrow`
+
+`long_borrow<'a>` takes two borrows and returns one, and all three share the
+single parameter `'a`. That signature commits the compiler to the *shorter*
+of the two argument scopes for the return, regardless of which branch runs.
+The `winner` band therefore touches `art2`, the narrower-lived argument — not
+`art1`'s, even though nothing in the source says which one wins.
+
+```highlight-gutters
+code rust:
+fn long_borrow<'a>(x: &'a Artwork, y: &'a Artwork) -> &'a Artwork {
+    if x.view_count > y.view_count { x } else { y }
+}
+
+fn main() {
+    let art1 = artwork("Owain");
+    let winner;
+    {
+        let art2 = artwork("Fire");
+        winner = long_borrow(&art1, &art2);
+    } // art2 dropped here
+    println!("{}", winner.name); // rejected: winner may still borrow art2
+}
+marks:
+art1 5,12
+art2 8,10
+winner &art2 9,12
+reject 11
+```
+```mermaid
+traceDiagram
+  title Two borrows tied to one lifetime
+  heap owain 0x40 @1
+    name: Owain
+    view_count: 0
+  end
+  heap fire 0x50 @2
+    name: Fire
+    view_count: 5
+  end
+  frame main @0
+    art1: @owain @1
+    scope inner @2
+      art2: @fire @2
+      frame long_borrow @3
+        x: &0x40 @3
+        y: &0x50 @3
+        ret &y -> winner @3
+        done @3
+      end
+      winner: &0x50 @3
+      done @4
+    end
+    watch println winner.name: rejected @5
+  end
+```
+
+Nothing about the rejection depends on which branch actually runs. This
+trace has `long_borrow` return `art2`'s data because `Fire` has the higher
+view count, but the compiler rejected the program from the signature alone,
+before running anything. Swap the view counts and `winner.name` still fails:
+the signature makes no promise about which argument wins, only that the
+result cannot outlive the shorter-lived one.
+
+### A borrow written past its referent's scope
+
+The returned-local-reference example above is rare in practice; borrows more
+often escape through a variable that predates them. `slot` is declared in
+`main`'s own scope, and the compiler follows the assignment
+`slot = Some(&art1)` back to `art1`, whose block ends before `slot` is read.
+The `loan` band has the same shape as `borrowed` in "Move while borrowed,"
+but flowing the other direction: no move competes for `art1` here, the
+reference itself simply needs to live longer than its referent does.
+
+```highlight-gutters
+code rust:
+fn main() {
+    let mut slot: Option<&Artwork> = None;
+    {
+        let art1 = artwork("Owain");
+        slot = Some(&art1);
+    } // art1 dropped here
+    println!("{:?}", slot.unwrap().name); // rejected: art1 no longer exists
+}
+marks:
+slot 1,6
+art1 3,5
+loan &art1 4,6
+reject 6
+```
+```mermaid
+traceDiagram
+  title A borrow written past its referent's scope
+  heap artwork 0x60 @2
+    name: Owain
+    view_count: 0
+  end
+  frame main @0
+    slot: none @1, Some(&0x60) @3
+    scope inner @2
+      art1: @artwork @2
+      done @4
+    end
+    watch println slot.unwrap.name: rejected @5
+  end
+```
+
+The rejection lands on the final `println!`, but the conflict is structural:
+`slot`'s declared type promises a live `&Artwork` for as long as `slot`
+exists, and the inner block cannot make that promise past its own closing
+brace.
+
+### A struct that borrows
+
+A struct with a reference field carries the same obligation as a returned
+reference, except the lifetime parameter now lives in a type definition
+instead of a function signature. `Viewer<'a>` cannot exist without a live
+`&'a Artwork`, so building one from `art1` ties `viewer`'s own usable span to
+`art1`'s block, not to `viewer`'s own binding scope.
+
+```highlight-gutters
+code rust:
+struct Viewer<'a> {
+    art: &'a Artwork,
+}
+
+fn main() {
+    let viewer;
+    {
+        let art1 = artwork("Owain");
+        viewer = Viewer { art: &art1 };
+    } // art1 dropped here
+    println!("{}", viewer.art.name); // rejected: art1 no longer exists
+}
+marks:
+viewer 5,10
+art1 7,9
+loan &art1 8,10
+reject 10
+```
+```mermaid
+traceDiagram
+  title A struct's own lifetime ties to its borrowed field
+  heap artwork 0x70 @2
+    name: Owain
+    view_count: 0
+  end
+  frame main @0
+    viewer: none @1, Viewer art:&0x70 @3
+    scope inner @2
+      art1: @artwork @2
+      done @4
+    end
+    watch println viewer.art.name: rejected @5
+  end
+```
+
+Compare this to "Shared borrows" earlier: there, the reference was a second
+binding sitting beside its owner. Here the reference is packed inside a third
+value, `viewer`, and it is that value's own scope — not a bare `&Artwork`'s —
+that the compiler must bound to `art1`'s block.
+
 Candidate CD remains a statement-by-statement paper method whose
 meaning survives without its reinforcing palette. It has
 not been tested with learners.
