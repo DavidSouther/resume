@@ -67,13 +67,55 @@
 }
 
 /*
+ * The 1.15 scale above keeps the resume's heading-dense sections calm, but a
+ * blog post is the opposite shape: sparse headings, long prose runs between
+ * them, where a compressed scale removes the landmark contrast a reader
+ * navigates by. Restore the bundle's own 1.25 default scoped to .post so the
+ * post title, section headings, and subsection headings step apart clearly,
+ * without touching the resume's ladder.
+ *
+ * Body leading is also loosened here (1.6x -> 1.85x). --base-line-height
+ * flows into `p`/`ul`/`ol`/etc. because typography-block.css re-resolves
+ * `--line-height-base: var(--base-line-height)` on each of those elements
+ * individually rather than once at the root, so overriding it on `.post`
+ * reaches every paragraph inside without touching the resume's line-height.
+ * Headings stay on their own fixed 1.15 (set solid, not on the body lead),
+ * so this only affects reading rhythm, not heading density.
+ */
+.post {
+  --font-scale: 1.25;
+  --base-line-height: calc(1.85 * var(--base-font-size));
+}
+
+/*
  * jiffdown opens a <section> per heading level, so a subsection heading is a
  * first child, not a sibling — and the bundle's heading spacing fires only on
  * a sibling combinator. Scoped to `.post`: the resume's hand-built sections
  * place a first-child heading on a grid and must not gain a margin.
+ *
+ * The margin is relative to the body copy's own size (--base-font-size), not
+ * the heading's own — an em value here would resolve against each heading's
+ * already-enlarged font-size and balloon out of proportion at h1/h2 — and
+ * not the flat --spacing-block-vertical atom, which reads as a paragraph
+ * break, not a section break. This puts more space above a heading than the
+ * paragraph rhythm below it (see `.post main p`), so a heading reads as the
+ * start of what follows rather than the close of what came before.
  */
 .post section > :is(h1, h2, h3, h4, h5, h6):first-child {
-  margin-block-start: var(--spacing-block-vertical);
+  margin-block-start: calc(var(--base-font-size) * 2.25);
+}
+
+/*
+ * The generic heading rule (typography-block.css) gives every h1-h6 a flat
+ * --spacing-block-vertical (8px) trailing margin regardless of size — fine
+ * for the resume's compact hierarchy, too tight under a post's larger,
+ * loosened type. Scale it with body size too, smaller than the leading
+ * margin above (see the first-child rule above) so the asymmetry — more
+ * space above a heading than below it — holds all the way through .post,
+ * not just at the first-child case.
+ */
+.post main :is(h1, h2, h3, h4, h5, h6) {
+  margin-block-end: calc(var(--base-font-size) * 0.75);
 }
 
 @media print {
@@ -129,6 +171,79 @@
 
 article > header > h3 {
   margin-bottom: 0;
+}
+
+/*
+ * The post masthead: a real h1 (the page's only top-level heading, so it
+ * reads as the apex of the page rather than a peer of the h2/h3 section
+ * headings below it) with a quiet byline/date underneath — not a kicker
+ * above the title, which stays banned regardless. The byline moves to the
+ * nav (sans) role at body size and a muted color, same job as
+ * `.section-label` above: read as metadata, not compete with the title.
+ */
+.post header h1 {
+  margin-bottom: 0.2em;
+}
+
+.post header .byline {
+  margin: 0;
+  font-family: var(--nav-font-family);
+  color: var(--color-on-surface-variant);
+}
+
+.post header .byline a {
+  color: inherit;
+  font-weight: 600;
+}
+
+/*
+ * Paragraph rhythm: the bundle's flat --spacing-block-vertical atom (8px) is
+ * a quarter of the 1.6x line-height it sits under, so consecutive
+ * paragraphs read as one fused block rather than distinct thoughts. Scale
+ * the gap with the post's own body size instead of the flat atom, and keep
+ * it smaller than the space above a heading (see the first-child rule
+ * above) so a heading reads as the start of what follows, not the close of
+ * what came before.
+ */
+.post main p {
+  margin-block-end: 1.5em;
+}
+
+/*
+ * Section-chrome labels (Card headers like "Posts", "Roles & Positions",
+ * "Education") sit one rail above content titles (post titles, job org
+ * names) that are themselves h4/h5 in the same serif/bold register. At
+ * --font-scale: 1.15 those two levels land within ~15% of each other in
+ * size, so a bold serif "Posts" reads as a peer of the bold serif post
+ * title beneath it rather than its label. Moving section chrome to the nav
+ * (sans) role, below body size, small-capped and tracked, gives it a
+ * distinct visual job instead of competing on the same axis.
+ */
+.section-label {
+  font-family: var(--nav-font-family);
+  font-size: var(--small-font-size);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-on-surface-variant);
+}
+
+/*
+ * Blog post prose has no `aside` sibling, so layout.css's main/aside measure
+ * clamp never applies and the body text runs the full card width — at
+ * desktop base font sizes that's 95-100+ characters per line, well past the
+ * 45-75ch comfortable reading measure. Clamp the post's own main (the prose
+ * flow) directly. Slide decks render through the same component but inside
+ * an outer `main.fluid` (see renderBlogPost / src/global.css .fluid rules)
+ * and want the full viewport, so lift the clamp there.
+ */
+.post > main {
+  max-inline-size: 70ch;
+  margin-inline: auto;
+}
+
+.fluid .post > main {
+  max-inline-size: none;
 }
 
 .organization {
@@ -718,6 +833,46 @@ pre.mermaid svg {
 }
 
 /*
+ * Mermaid theming, in CSS rather than mermaid's own `themeVariables`.
+ *
+ * A built-in mermaid diagram type (flowchart, etc.) paints its shapes from an
+ * internal `<style>` block mermaid injects into every SVG it draws, hardcoded
+ * to its 'default' theme's literal colors (white nodes, black text/lines) —
+ * so with no override it looks identical in light and dark mode and can be
+ * nearly illegible against a dark page background. `themeVariables` looks
+ * like the intended fix, but it only accepts literal colors: resolving this
+ * site's oklch()-based tokens to one in JS proved unreliable across browsers.
+ * These rules `!important`-override mermaid's injected `<style>` block
+ * directly with the live Jiffies tokens instead, which — being ordinary CSS —
+ * work in every theme and both color schemes with no JS at all.
+ *
+ * (traceDiagram, the site's own diagram type, already draws with `currentColor`
+ * and `var(--color-primary)` — see src/lib/trace-diagram/styles.ts — so it
+ * adapts on its own and needs no override here.)
+ */
+pre.mermaid svg :is(.node, .cluster) :is(rect, polygon, circle, ellipse, path) {
+  fill: var(--color-surface-variant) !important;
+  stroke: var(--color-outline) !important;
+}
+
+pre.mermaid svg :is(.nodeLabel, .edgeLabel, .label) {
+  color: var(--color-on-surface) !important;
+}
+
+pre.mermaid svg .labelBkg {
+  background-color: var(--color-surface) !important;
+}
+
+pre.mermaid svg :is(.flowchart-link, .edgePath .path) {
+  stroke: var(--color-outline) !important;
+}
+
+pre.mermaid svg marker path {
+  fill: var(--color-outline) !important;
+  stroke: var(--color-outline) !important;
+}
+
+/*
  * The step control, appended at mount by `src/lib/trace-stepper/stepper.ts`.
  * With JavaScript off the bar never exists and the figure is the complete
  * trace, so there is nothing here to hide and nothing is ever `display: none`.
@@ -884,143 +1039,9 @@ pre.mermaid svg {
     background: none;
     box-shadow: none;
     transition: none;
- * ---------------------------------------------------------------------------
- * Slides treatment (opt-in via `slides: true` frontmatter).
- *
- * No-JS/print fallback: every `.slide` stacks and scrolls normally (this is
- * the plain grid-in-normal-flow default below). `slides-client.ts` marks all
- * but the current slide `[hidden]` once it runs, switching the deck into a
- * one-slide-at-a-time presentation.
- * ---------------------------------------------------------------------------
- */
-@layer user {
-  /* The deck replaces the Card's own chrome (its own slides already carry a
-     surface/shadow each) so full-width presentation mode isn't double-boxed. */
-  article:has(> main > .slide-deck) {
-    background: transparent;
-    box-shadow: none;
-    border: none;
-  }
-
-  article:has(> main > .slide-deck) > main {
-    padding: 0;
-    columns: 1;
-  }
-
-  .slide-deck {
-    display: grid;
-    gap: var(--size-large);
-  }
-
-  /* slides-client.ts calls .focus() on the deck to capture arrow-key/space
-     navigation; suppress the resulting focus ring, the deck isn't a widget. */
-  .slide-deck:focus {
-    outline: none;
-  }
-
-  .slide-deck .slide {
-    box-sizing: border-box;
-    min-height: 60vh;
-    padding: var(--spacing-container-vertical) var(--spacing-container-horizontal);
-    border-radius: var(--border-radius-card);
-    background-color: var(--color-surface);
-    color: var(--color-on-surface);
-  }
-
-  .slide-deck .slide[hidden] {
-    display: none;
-  }
-
-  .slide-deck.slide-deck-active {
-    display: block;
-  }
-
-  .slide-deck.slide-deck-active .slide {
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .slide-title,
-  .slide-section {
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    gap: var(--size-small);
-  }
-
-  .slide-title h1 {
-    font-size: var(--font-size-h1);
-  }
-
-  .slide-title time {
-    color: var(--color-on-surface-variant);
-  }
-
-  /* The outermost heading (h1 or h2, whichever the post used) reads as the
-     section title; a second heading level or a plain paragraph beneath it is
-     the optional subheading, and reads smaller and muted. */
-  .slide-section > section > :is(h1, h2, h3, h4, h5, h6):first-child {
-    font-size: var(--font-size-h1);
-    margin: 0;
-  }
-
-  .slide-section > section section :is(h1, h2, h3, h4, h5, h6),
-  .slide-section > section > p {
-    font-size: var(--font-size-h4);
-    color: var(--color-on-surface-variant);
-    font-weight: normal;
-    margin: 0;
-  }
-
-  .slide-content {
-    text-align: left;
-  }
-
-  /* Content slides: the heading sits top-left like a running title; the body
-     fills and vertically centers in the space left beneath it. The extra
-     `.slide` outweighs `.slide-deck.slide-deck-active .slide`'s specificity
-     above, so this `display: grid` actually wins over that rule's `flex`. */
-  .slide-deck.slide-deck-active .slide.slide-content {
-    display: grid;
-    grid-template-rows: auto 1fr;
-    row-gap: var(--size-medium);
-    text-align: left;
-  }
-
-  .slide-heading {
-    align-self: start;
-  }
-
-  .slide-heading :is(h1, h2, h3, h4, h5, h6) {
-    margin: 0;
-  }
-
-  .slide-content .slide-columns {
-    align-self: center;
-  }
-
-  .slide-columns {
-    display: grid;
-    grid-template-columns: repeat(var(--column-count, 1), 1fr);
-    gap: var(--grid-gap);
-    align-items: baseline;
-  }
-
-  .slide-deck pre {
-    max-height: 60vh;
-    overflow: auto;
-    border-radius: var(--border-radius-container);
-  }
-
-  .slide-deck .mermaid {
-    display: flex;
-    justify-content: center;
-    overflow: auto;
-    max-height: 60vh;
-  }
-
-  .slide-deck .mermaid svg {
-    max-width: 100%;
   }
 }
+
+/* Slides treatment (opt-in via `slides: true` frontmatter) lives in its own
+   src/slides.css, loaded only on a post that opts in — see
+   src/lib/page-head.ts. */

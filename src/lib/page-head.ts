@@ -19,8 +19,14 @@ const GA_INIT = `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer
  * Shared <head> content for every page: title, the unpkg jiffies-css bundle
  * and built global.css stylesheets, the millisecond-modulo theme picker, and the
  * GA4 analytics snippet. Returned as a Node[] for the SSG `head` hook.
+ *
+ * `slides: true` additionally links `/slides.css` — the slides treatment is
+ * opt-in per post, so its stylesheet ships only to the posts that use it.
  */
-export function pageHead(pageTitle: string): Node[] {
+export function pageHead(
+	pageTitle: string,
+	options?: { slides?: boolean },
+): Node[] {
 	// `charset` is not a typed HTMLMetaElement property, so set it directly.
 	const charset = meta();
 	charset.setAttribute("charset", "utf-8");
@@ -33,6 +39,9 @@ export function pageHead(pageTitle: string): Node[] {
 		title(pageTitle),
 		link({ rel: "stylesheet", href: JIFFIES_CSS_BUNDLE }),
 		link({ rel: "stylesheet", href: "/global.css" }),
+		...(options?.slides
+			? [link({ rel: "stylesheet", href: "/slides.css" })]
+			: []),
 		script(THEME_PICKER),
 		script({
 			async: true,

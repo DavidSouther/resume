@@ -1,0 +1,157 @@
+/*
+ * ---------------------------------------------------------------------------
+ * Slides treatment (opt-in via `slides: true` frontmatter).
+ *
+ * Loaded only on a post with `slides: true` (see src/lib/page-head.ts) — kept
+ * out of global.css so every other page pays nothing for it.
+ *
+ * No-JS/print fallback: every `.slide` stacks and scrolls normally (this is
+ * the plain grid-in-normal-flow default below). `slides-client.ts` marks all
+ * but the current slide `[hidden]` once it runs, switching the deck into a
+ * one-slide-at-a-time presentation.
+ * ---------------------------------------------------------------------------
+ */
+@layer user {
+  /* The deck replaces the Card's own chrome (its own slides already carry a
+     surface/shadow each) so full-width presentation mode isn't double-boxed. */
+  article:has(> main > .slide-deck) {
+    background: transparent;
+    box-shadow: none;
+    border: none;
+  }
+
+  article:has(> main > .slide-deck) > main {
+    padding: 0;
+    columns: 1;
+  }
+
+  .slide-deck {
+    display: grid;
+    gap: var(--size-large);
+  }
+
+  /* slides-client.ts calls .focus() on the deck to capture arrow-key/space
+     navigation; suppress the resulting focus ring, the deck isn't a widget. */
+  .slide-deck:focus {
+    outline: none;
+  }
+
+  .slide-deck .slide {
+    box-sizing: border-box;
+    min-height: 60vh;
+    /* A slide is a much bigger container than a card, so the container
+       padding tokens are scaled up rather than replaced with a literal. */
+    padding: calc(var(--spacing-container-vertical) * 3)
+      calc(var(--spacing-container-horizontal) * 3);
+    border-radius: var(--border-radius-card);
+    background-color: var(--color-surface);
+    color: var(--color-on-surface);
+  }
+
+  /* A slide is read from further away than a page of prose, so its body text
+     (paragraphs, lists, code — headings already set their own size) scales
+     up from the base size instead of sitting at article-reading size. */
+  .slide-deck.slide-deck-active .slide {
+    font-size: calc(var(--base-font-size) * 1.5);
+  }
+
+  .slide-deck .slide[hidden] {
+    display: none;
+  }
+
+  .slide-deck.slide-deck-active {
+    display: block;
+  }
+
+  .slide-deck.slide-deck-active .slide {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .slide-title,
+  .slide-section {
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    gap: var(--size-small);
+  }
+
+  .slide-title h1 {
+    font-size: var(--font-size-h1);
+  }
+
+  .slide-title time {
+    color: var(--color-on-surface-variant);
+  }
+
+  /* The outermost heading (h1 or h2, whichever the post used) reads as the
+     section title; a second heading level or a plain paragraph beneath it is
+     the optional subheading, and reads smaller and muted. */
+  .slide-section > section > :is(h1, h2, h3, h4, h5, h6):first-child {
+    font-size: var(--font-size-h1);
+    margin: 0;
+  }
+
+  .slide-section > section section :is(h1, h2, h3, h4, h5, h6),
+  .slide-section > section > p {
+    font-size: var(--font-size-h4);
+    color: var(--color-on-surface-variant);
+    font-weight: normal;
+    margin: 0;
+  }
+
+  .slide-content {
+    text-align: left;
+  }
+
+  /* Content slides: the heading sits top-left like a running title; the body
+     fills and vertically centers in the space left beneath it. The extra
+     `.slide` outweighs `.slide-deck.slide-deck-active .slide`'s specificity
+     above, so this `display: grid` actually wins over that rule's `flex`. */
+  .slide-deck.slide-deck-active .slide.slide-content {
+    display: grid;
+    grid-template-rows: auto 1fr;
+    row-gap: var(--size-medium);
+    text-align: left;
+  }
+
+  .slide-heading {
+    align-self: start;
+  }
+
+  .slide-heading :is(h1, h2, h3, h4, h5, h6) {
+    margin: 0;
+  }
+
+  /* A heading carried over from an earlier slide (this slide has none of its
+     own) reads as ambient context, not as this slide's title. */
+  .slide-heading-carried {
+    opacity: 0.6;
+  }
+
+  .slide-content .slide-columns {
+    align-self: center;
+  }
+
+  .slide-columns {
+    display: grid;
+    grid-template-columns: repeat(var(--column-count, 1), 1fr);
+    gap: var(--grid-gap);
+    /* `start`, not `baseline`: a column can hold a diagram or a code block
+       as easily as a line of text, and baseline alignment of a large SVG or
+       `<pre>` against a heading is unreliable across browsers. */
+    align-items: start;
+  }
+
+  .slide-deck pre {
+    max-height: 60vh;
+    overflow: auto;
+    border-radius: var(--border-radius-container);
+  }
+
+  .slide-deck pre.mermaid {
+    display: flex;
+    justify-content: center;
+  }
+}

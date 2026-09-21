@@ -28,6 +28,12 @@ export async function bootMermaid(): Promise<boolean> {
 	};
 	const mermaid = module.default;
 
+	// Theming is done entirely in CSS (see global.css's "Mermaid theming"
+	// section), not via mermaid's own themeVariables: those only take literal
+	// colors, and resolving this site's oklch()-based design tokens to a
+	// literal color in JS proved unreliable across browsers (mermaid's color
+	// math choked on the result in some of them). CSS can reference the
+	// tokens directly and stays correct across every theme and color scheme.
 	mermaid.initialize({ startOnLoad: false, securityLevel: "strict" });
 	await mermaid.registerExternalDiagrams([traceDiagram]);
 	await mermaid.run({ querySelector: "pre.mermaid" });

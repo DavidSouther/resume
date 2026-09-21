@@ -1,4 +1,4 @@
-import { toHTML as jiffdown } from "@davidsouther/jiffdown";
+import { toHTML } from "./markdown.ts";
 
 interface SlideDeckHead {
 	title?: string;
@@ -95,32 +95,64 @@ function extractLeadingHeading(markdown: string): {
 	return { heading: null, rest: markdown };
 }
 
-function renderSlideChunk(markdown: string): string {
-	if (markdown.trim() === "") return "";
+interface RenderedSlide {
+	html: string;
+	// The heading this slide introduced, if any — carried forward by
+	// renderSlides so a later headingless content slide can still show it.
+	heading: string | null;
+}
 
-	if (isSectionSlide(markdown)) {
-		return `<section class="slide slide-section">${jiffdown(markdown)}</section>`;
-	}
+// A content slide with no heading of its own (a follow-on slide continuing
+// the same topic) shows the most recent slide's heading instead of going
+// blank, so a viewer who jumps in mid-deck (or clicks past too fast) never
+// loses the section they're in. `slide-heading-carried` lets it read as
+// context rather than as this slide's own title.
+function renderSlideChunk(
+	markdown: string,
+	carriedHeading: string | null,
+): RenderedSlide {
+	if (markdown.trim() === "") return { html: "", heading: null };
 
 	const { heading, rest } = extractLeadingHeading(markdown);
-	const headingHtml = heading
-		? `<div class="slide-heading">${jiffdown(heading)}</div>`
+
+	if (isSectionSlide(markdown)) {
+		return {
+			html: `<section class="slide slide-section">${toHTML(markdown)}</section>`,
+			heading,
+		};
+	}
+
+	const displayHeading = heading ?? carriedHeading;
+	const headingClass =
+		heading === null && displayHeading !== null
+			? "slide-heading slide-heading-carried"
+			: "slide-heading";
+	const headingHtml = displayHeading
+		? `<div class="${headingClass}">${toHTML(displayHeading)}</div>`
 		: "";
 
 	const columns = splitOutsideFences(rest, COLUMN_MARKER).filter(
 		(chunk) => chunk.trim() !== "",
 	);
 	const columnHtml = (columns.length > 0 ? columns : [rest])
-		.map((column) => `<div class="slide-column">${jiffdown(column)}</div>`)
+		.map((column) => `<div class="slide-column">${toHTML(column)}</div>`)
 		.join("");
 	const columnCount = Math.max(columns.length, 1);
 
-	return `<section class="slide slide-content">${headingHtml}<div class="slide-columns" style="--column-count:${columnCount}">${columnHtml}</div></section>`;
+	return {
+		html: `<section class="slide slide-content">${headingHtml}<div class="slide-columns" style="--column-count:${columnCount}">${columnHtml}</div></section>`,
+		heading,
+	};
 }
 
 export function renderSlides(head: SlideDeckHead, markdown: string): string {
+	let lastHeading: string | null = null;
 	const slides = splitOutsideFences(markdown, SLIDE_MARKER)
-		.map(renderSlideChunk)
+		.map((chunk) => {
+			const { html, heading } = renderSlideChunk(chunk, lastHeading);
+			if (heading !== null) lastHeading = heading;
+			return html;
+		})
 		.filter((html) => html !== "");
 
 	return [renderTitleSlide(head), ...slides].join("");

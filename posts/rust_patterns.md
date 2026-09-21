@@ -3,7 +3,7 @@ title: Thinking In Rust
 date: 2026-09-19
 summary: "Lecture 3: Rust Forms of Common Patterns"
 slides: true
-show: false
+# show: false
 ---
 
 ## Roadmap
@@ -174,8 +174,8 @@ flowchart TD
 
 ## Use After Move
 
-```mermaid
-code: rust
+```highlight-gutters
+code rust:
 let v = vec![1, 2, 3];
 for x in v { // x is u32
     println!("{x}");
@@ -184,13 +184,14 @@ println!("{v:?}");
 // error[E0382]:
 // use of moved value: `v`
 marks:
-v: 1, 2
-x: 2, 3
+v 0,1 move
+x 1,3
+reject 4
 ```
 +++
 
-```mermaid
-code: rust
+```highlight-gutters
+code rust:
 let v = vec![1, 2, 3];
 for x in &v { // x is &u32
     println!("{x}");
@@ -198,8 +199,8 @@ for x in &v { // x is &u32
 println!("{v:?}");
 // v still owned here
 marks:
-v: 1,5
-x &v: 2,3
+v 0,4
+x &v 1,3
 ```
 
 ---
@@ -319,13 +320,32 @@ handle.join().unwrap();
 ## Ownership at a Glance
 
 ```mermaid
-flowchart LR
-    Box["Box&lt;T&gt;<br/>one owner<br/>heap"]
-    Rc["Rc&lt;T&gt;<br/>shared owners<br/>single thread"]
-    Arc["Arc&lt;T&gt;<br/>shared owners<br/>atomic, thread-safe"]
-    Box -. "add sharing" .-> Rc
-    Rc -. "add threads" .-> Arc
+traceDiagram
+  title Box, Rc, and Arc — stack-owned pointers to heap data
+  heap heap_box
+    value: 42
+  end
+  heap heap_rc
+    value: [1, 2, 3]
+    strong_count: 2
+  end
+  heap heap_arc
+    value: [1, 2, 3]
+    strong_count: 2
+  end
+  frame main
+    boxed: @heap_box
+    rc: @heap_rc
+    rc2: @heap_rc
+    arc: @heap_arc
+    arc2: @heap_arc
+  end
 ```
+
+Each stack-owned container is a pointer into a heap allocation. `Box` never
+lets a second stack row point at the same box; `Rc` and `Arc` let `rc`/`rc2`
+and `arc`/`arc2` point at the same allocation and share its `strong_count` —
+the only difference between them is whether that count updates atomically.
 
 ---
 

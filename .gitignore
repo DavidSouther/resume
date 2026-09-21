@@ -14,6 +14,7 @@ jefri-jiffies-*.tgz
 
 # Build artifacts generated into public/ by `npm run build`
 public/global.css
+public/slides.css
 public/sitemap.xml
 .playwright-cli/
 

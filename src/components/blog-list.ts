@@ -6,7 +6,7 @@ import { IDLinkList } from "./list.ts";
 // The /blog index: a "Posts" card linking each post by title.
 export function renderBlogList(posts: Post[]): HTMLElement {
 	return Card(
-		{ header: h3("Posts") },
+		{ header: h3({ class: "section-label" }, "Posts") },
 		IDLinkList(
 			posts,
 			({ id }) => `/blog/${id}`,

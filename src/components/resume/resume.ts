@@ -27,13 +27,19 @@ export function Resume(resume: ResumeData): DenormChildren[] {
 	return [
 		jobs
 			? Card(
-					{ class: "jobs", header: h3("Roles & Positions") },
+					{
+						class: "jobs",
+						header: h3({ class: "section-label" }, "Roles & Positions"),
+					},
 					...jobs.map(JobDetail),
 				)
 			: null,
 		knowledge.studies
 			? Card(
-					{ class: "studies", header: h3("Education") },
+					{
+						class: "studies",
+						header: h3({ class: "section-label" }, "Education"),
+					},
 					...knowledge.studies.map(Education),
 				)
 			: null,
@@ -42,7 +48,10 @@ export function Resume(resume: ResumeData): DenormChildren[] {
 					{ class: "artifacts" },
 					projects
 						? Card(
-								{ class: "projects", header: h3("Projects") },
+								{
+									class: "projects",
+									header: h3({ class: "section-label" }, "Projects"),
+								},
 								...projects.map(({ details }) =>
 									details ? Pub(details) : null,
 								),
@@ -50,7 +59,10 @@ export function Resume(resume: ResumeData): DenormChildren[] {
 						: null,
 					publicArtifacts
 						? Card(
-								{ class: "publications", header: h3("Publications") },
+								{
+									class: "publications",
+									header: h3({ class: "section-label" }, "Publications"),
+								},
 								...publications
 									.sort((a, b) => {
 										const da = new Date(a.publishingDate ?? "1970-01-01");

@@ -22,7 +22,13 @@ export function Home(resume: ResumeData, posts: Post[]): HTMLElement {
 			lastUpdate: resume.settings.lastUpdate,
 			header: AboutMe(resume.aboutMe),
 		},
-		Card({ class: "posts no-print", header: h3("Posts") }, ...postsBody),
+		Card(
+			{
+				class: "posts no-print",
+				header: h3({ class: "section-label" }, "Posts"),
+			},
+			...postsBody,
+		),
 		...Resume(resume),
 	);
 }

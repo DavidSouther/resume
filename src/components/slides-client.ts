@@ -2,9 +2,10 @@
 // immediately when the post has no `.slide-deck` (the common case), so it's
 // safe to ship unconditionally rather than threading a per-post clientModules
 // list through the SSG's static PageModule shape.
-
-const MERMAID_URL =
-	"https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.esm.min.mjs";
+//
+// Mermaid diagrams inside a deck are booted by the shared
+// src/components/mermaid/client.ts (also loaded on every post page) — this
+// module only owns slide navigation.
 
 function slideIndexFromHash(count: number): number {
 	const match = /^#slide-(\d+)$/.exec(location.hash);
@@ -65,87 +66,10 @@ function setUpDeck(deck: HTMLElement): void {
 	show(current);
 }
 
-// Read the deck's already-themed Jiffies tokens (they already respond to
-// data-theme and prefers-color-scheme) so mermaid's diagram matches the
-// current brand theme and stays legible in every one, instead of mermaid's
-// own default white-box theme, which has fixed contrast that fights the
-// page's own light/dark background and reads as unstyled/foreign code.
-//
-// Jiffies' color tokens use relative `oklch(from ...)` syntax, which
-// getComputedStyle only resolves to a plain rgb() once it's the *used value*
-// of an actual color property (not when just reading the custom property
-// itself) — hence bouncing each token through a probe element's `color`.
-function themeVariablesFrom(deck: HTMLElement): Record<string, string> {
-	const probe = document.createElement("span");
-	probe.style.display = "none";
-	deck.appendChild(probe);
-
-	// Computed style serializes color back out in whatever color space it was
-	// specified in (oklch, for Jiffies' tokens) — even relative-color tricks
-	// like `rgb(from ...)` still come back as a `color(srgb ...)` function
-	// once components are non-integer — and khroma (mermaid's color library)
-	// only parses hex/rgb()/hsl(). Painting the resolved color onto a 1x1
-	// canvas and reading the pixel back always yields concrete 8-bit sRGB,
-	// regardless of what color space it was specified in.
-	const canvas = document
-		.createElement("canvas")
-		.getContext("2d", { willReadFrequently: true });
-	const resolveColor = (name: string): string => {
-		probe.style.color = `var(${name})`;
-		const resolved = getComputedStyle(probe).color;
-		if (!canvas) return resolved;
-		canvas.fillStyle = resolved;
-		canvas.fillRect(0, 0, 1, 1);
-		const [r, g, b, a] = canvas.getImageData(0, 0, 1, 1).data;
-		return `rgba(${r}, ${g}, ${b}, ${a / 255})`;
-	};
-
-	const variables: Record<string, string> = {
-		background: resolveColor("--color-surface"),
-		primaryColor: resolveColor("--color-surface-variant"),
-		primaryTextColor: resolveColor("--color-on-surface"),
-		primaryBorderColor: resolveColor("--color-outline"),
-		lineColor: resolveColor("--color-outline"),
-		textColor: resolveColor("--color-on-surface"),
-		fontFamily: getComputedStyle(deck)
-			.getPropertyValue("--base-body-font-family")
-			.trim(),
-	};
-
-	probe.remove();
-	for (const key of Object.keys(variables)) {
-		if (variables[key] === "") delete variables[key];
-	}
-	return variables;
-}
-
-async function renderMermaid(deck: HTMLElement): Promise<void> {
-	const blocks = deck.querySelectorAll<HTMLElement>(
-		"pre > code.language-mermaid",
-	);
-	if (blocks.length === 0) return;
-
-	const { default: mermaid } = await import(MERMAID_URL);
-	mermaid.initialize({
-		startOnLoad: false,
-		theme: "base",
-		themeVariables: themeVariablesFrom(deck),
-	});
-
-	blocks.forEach((code) => {
-		const graph = document.createElement("div");
-		graph.className = "mermaid";
-		graph.textContent = code.textContent ?? "";
-		code.closest("pre")?.replaceWith(graph);
-	});
-
-	await mermaid.run({ querySelector: ".mermaid" });
-}
-
 function main(): void {
 	const deck = document.querySelector<HTMLElement>(".slide-deck");
 	if (!deck) return;
-	renderMermaid(deck).finally(() => setUpDeck(deck));
+	setUpDeck(deck);
 }
 
 if (document.readyState === "loading") {
