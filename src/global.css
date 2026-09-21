@@ -894,9 +894,28 @@ pre.mermaid svg {
  * ---------------------------------------------------------------------------
  */
 @layer user {
+  /* The deck replaces the Card's own chrome (its own slides already carry a
+     surface/shadow each) so full-width presentation mode isn't double-boxed. */
+  article:has(> main > .slide-deck) {
+    background: transparent;
+    box-shadow: none;
+    border: none;
+  }
+
+  article:has(> main > .slide-deck) > main {
+    padding: 0;
+    columns: 1;
+  }
+
   .slide-deck {
     display: grid;
     gap: var(--size-large);
+  }
+
+  /* slides-client.ts calls .focus() on the deck to capture arrow-key/space
+     navigation; suppress the resulting focus ring, the deck isn't a widget. */
+  .slide-deck:focus {
+    outline: none;
   }
 
   .slide-deck .slide {
@@ -920,11 +939,11 @@ pre.mermaid svg {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    justify-content: center;
   }
 
   .slide-title,
   .slide-section {
+    justify-content: center;
     align-items: center;
     text-align: center;
     gap: var(--size-small);
@@ -938,15 +957,54 @@ pre.mermaid svg {
     color: var(--color-on-surface-variant);
   }
 
-  .slide-section :is(h1, h2, h3, h4, h5, h6) {
-    font-size: var(--font-size-h2);
+  /* The outermost heading (h1 or h2, whichever the post used) reads as the
+     section title; a second heading level or a plain paragraph beneath it is
+     the optional subheading, and reads smaller and muted. */
+  .slide-section > section > :is(h1, h2, h3, h4, h5, h6):first-child {
+    font-size: var(--font-size-h1);
+    margin: 0;
+  }
+
+  .slide-section > section section :is(h1, h2, h3, h4, h5, h6),
+  .slide-section > section > p {
+    font-size: var(--font-size-h4);
+    color: var(--color-on-surface-variant);
+    font-weight: normal;
+    margin: 0;
+  }
+
+  .slide-content {
+    text-align: left;
+  }
+
+  /* Content slides: the heading sits top-left like a running title; the body
+     fills and vertically centers in the space left beneath it. The extra
+     `.slide` outweighs `.slide-deck.slide-deck-active .slide`'s specificity
+     above, so this `display: grid` actually wins over that rule's `flex`. */
+  .slide-deck.slide-deck-active .slide.slide-content {
+    display: grid;
+    grid-template-rows: auto 1fr;
+    row-gap: var(--size-medium);
+    text-align: left;
+  }
+
+  .slide-heading {
+    align-self: start;
+  }
+
+  .slide-heading :is(h1, h2, h3, h4, h5, h6) {
+    margin: 0;
   }
 
   .slide-content .slide-columns {
+    align-self: center;
+  }
+
+  .slide-columns {
     display: grid;
     grid-template-columns: repeat(var(--column-count, 1), 1fr);
     gap: var(--grid-gap);
-    align-items: start;
+    align-items: baseline;
   }
 
   .slide-deck pre {
@@ -960,5 +1018,9 @@ pre.mermaid svg {
     justify-content: center;
     overflow: auto;
     max-height: 60vh;
+  }
+
+  .slide-deck .mermaid svg {
+    max-width: 100%;
   }
 }

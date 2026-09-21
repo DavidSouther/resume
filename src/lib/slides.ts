@@ -74,23 +74,48 @@ function renderTitleSlide(head: SlideDeckHead): string {
 	return `<section class="slide slide-title">${title}${date}${summary}</section>`;
 }
 
+// A leading heading on a content slide reads as a running title, styled and
+// positioned separately (top-left) from the body that follows it — pulling it
+// out of the first column keeps that position stable whether the rest of the
+// slide is one column or several.
+function extractLeadingHeading(markdown: string): {
+	heading: string | null;
+	rest: string;
+} {
+	const trimmed = markdown.trim();
+	const firstBreak = trimmed.search(/\n\s*\n/);
+	const firstBlock = (
+		firstBreak === -1 ? trimmed : trimmed.slice(0, firstBreak)
+	).trim();
+
+	if (HEADING_LINE.test(firstBlock) && !firstBlock.includes("\n")) {
+		const rest = firstBreak === -1 ? "" : trimmed.slice(firstBreak).trim();
+		return { heading: firstBlock, rest };
+	}
+	return { heading: null, rest: markdown };
+}
+
 function renderSlideChunk(markdown: string): string {
 	if (markdown.trim() === "") return "";
 
-	const columns = splitOutsideFences(markdown, COLUMN_MARKER).filter(
-		(chunk) => chunk.trim() !== "",
-	);
-
-	if (columns.length <= 1 && isSectionSlide(markdown)) {
+	if (isSectionSlide(markdown)) {
 		return `<section class="slide slide-section">${jiffdown(markdown)}</section>`;
 	}
 
-	const columnHtml = (columns.length > 0 ? columns : [markdown])
+	const { heading, rest } = extractLeadingHeading(markdown);
+	const headingHtml = heading
+		? `<div class="slide-heading">${jiffdown(heading)}</div>`
+		: "";
+
+	const columns = splitOutsideFences(rest, COLUMN_MARKER).filter(
+		(chunk) => chunk.trim() !== "",
+	);
+	const columnHtml = (columns.length > 0 ? columns : [rest])
 		.map((column) => `<div class="slide-column">${jiffdown(column)}</div>`)
 		.join("");
 	const columnCount = Math.max(columns.length, 1);
 
-	return `<section class="slide slide-content"><div class="slide-columns" style="--column-count:${columnCount}">${columnHtml}</div></section>`;
+	return `<section class="slide slide-content">${headingHtml}<div class="slide-columns" style="--column-count:${columnCount}">${columnHtml}</div></section>`;
 }
 
 export function renderSlides(head: SlideDeckHead, markdown: string): string {

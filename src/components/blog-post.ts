@@ -11,6 +11,7 @@ export function renderBlogPost(post: Post): HTMLElement {
 		innerHTML: body ?? "",
 	});
 	return main(
+		{ class: slides ? "fluid" : "" },
 		Card(
 			{
 				class: "post",
