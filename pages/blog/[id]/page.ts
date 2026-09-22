@@ -10,12 +10,15 @@ export default {
 	head: async (params) => {
 		const post = await getPost(params?.id ?? "");
 		return [
-			...pageHead(`${post.title} — David Souther`),
+			...pageHead(`${post.title} — David Souther`, { slides: post.slides }),
 			// The client module reads the pinned CDN URL from here rather than
 			// importing it: the module that resolves the pin uses node:fs.
 			meta({ name: "mermaid-src", content: MERMAID_ESM_URL }),
 		];
 	},
 	default: async (params) => renderBlogPost(await getPost(params?.id ?? "")),
-	clientModules: ["/src/components/mermaid/client.ts"],
+	clientModules: [
+		"/src/components/mermaid/client.ts",
+		"/src/components/slides-client.ts",
+	],
 } satisfies PageModule;

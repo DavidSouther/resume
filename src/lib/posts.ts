@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { cwd } from "node:process";
 import matter from "gray-matter";
 import { toHTML } from "./markdown.ts";
+import { renderSlides } from "./slides.ts";
 
 export interface Post {
 	id: string;
@@ -12,6 +13,7 @@ export interface Post {
 	title?: string;
 	body?: string;
 	image?: string;
+	slides?: boolean;
 }
 
 interface PostSource {
@@ -101,14 +103,20 @@ export async function getPost(id: string): Promise<Post> {
 	const date =
 		(front.data.date as Date | undefined)?.toISOString() ?? undefined;
 	const title = front.data.title ?? "Unknown Title";
+	const summary = front.data.summary as string | undefined;
 	const image = front.data.image;
-	const contentHtml = toHTML(front.content);
+	const slides = Boolean(front.data.slides ?? false);
+	const contentHtml = slides
+		? renderSlides({ title, date, summary }, front.content)
+		: toHTML(front.content);
 	const post = {
 		id,
 		date,
 		title,
+		summary,
 		body: contentHtml,
 		show: true,
+		slides,
 		...(image ? { image } : {}),
 	};
 	return post;
