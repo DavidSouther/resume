@@ -1,5 +1,7 @@
 [tools]
 node = "24"
+pandoc = "3.10"
+typst = "0.15.0"
 
 # Thin wrappers over the package.json scripts so `mise run <name>` (and the
 # `mise <name>` shorthand) work. Each delegates to npm, so the script bodies
