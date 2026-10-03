@@ -13,7 +13,7 @@ pub struct LoopJoin {
 }
 
 impl LoopJoin {
-    pub fn try_new(path_a: PathBuf, path_b: PathBuf, max_memory: usize) -> Result<Self, Error> {
+    pub fn create(path_a: PathBuf, path_b: PathBuf, max_memory: usize) -> Result<Self, Error> {
         Ok(LoopJoin {
             file_a: AsyncReader::new(File::open(path_a)?, max_memory),
             file_b: SmallReader::new(File::open(path_b)?)?,
@@ -239,7 +239,7 @@ mod tests {
             let max_memory = fs::read_to_string(case.join("max_memory"))
                 .map_or(1 << 20, |s| s.trim().parse().unwrap());
             let joiner =
-                LoopJoin::try_new(case.join("a.csv"), case.join("b.csv"), max_memory).unwrap();
+                LoopJoin::create(case.join("a.csv"), case.join("b.csv"), max_memory).unwrap();
             let expected = fs::read_to_string(case.join("expected.csv")).unwrap();
             assert_eq!(run(joiner), expected, "case {case:?}");
         }

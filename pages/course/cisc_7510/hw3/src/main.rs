@@ -73,7 +73,7 @@ fn main() {
     let out = JoinWriter::new(File::create(args.out).expect("File::create out"));
     match args.join_type {
         Mode::Loop => {
-            let joiner = LoopJoin::try_new(args.path_a, args.path_b, max_memory).expect("LoopJoin try_new");
+            let joiner = LoopJoin::create(args.path_a, args.path_b, max_memory).expect("LoopJoin try_new");
             joiner.run(out);
         },
         Mode::Merge => todo!(),
