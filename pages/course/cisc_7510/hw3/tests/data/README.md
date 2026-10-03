@@ -8,6 +8,10 @@ of 1048576.
 may emit rows in another order, so compare their output as sorted lines.
 MERGE also needs sorted inputs, which most of these cases do not have.
 
+`tests/join_fixtures.rs` runs the binary over every case for each join type.
+`r#loop::tests::joins_every_fixture_case_at_its_budget` runs LoopJoin at each
+case's `max_memory`.
+
 | Case | Exercises |
 |---|---|
 | `single_match` | One row on each side, one match |

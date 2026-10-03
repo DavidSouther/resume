@@ -61,9 +61,9 @@ struct Args {
     #[arg(long, default_value = "out.csv")]
     out: PathBuf,
     /// First CSV file (A).
-    file_a: PathBuf,
+    path_a: PathBuf,
     /// Second CSV file (B).
-    file_b: PathBuf,
+    path_b: PathBuf,
 }
 
 impl Args {
@@ -74,10 +74,11 @@ impl Args {
 
 fn main() {
     let args = Args::parse();
+    let max_memory = args.max_memory_bytes();
     let out = JoinWriter::new(File::create(args.out).expect("File::create out"));
     match args.join_type {
         Mode::Loop => {
-            let joiner = LoopJoin::try_new(args.file_a, args.file_b, args.max_memory).expect("LoopJoin try_new");
+            let joiner = LoopJoin::try_new(args.path_a, args.path_b, max_memory).expect("LoopJoin try_new");
             joiner.run(out);
         },
         Mode::Merge => todo!(),
@@ -103,14 +104,14 @@ mod tests {
             "64",
             "--join-type",
             "HASH",
-            "a.csv",
-            "b.csv",
+            "./a.csv",
+            "./b.csv",
         ])
         .unwrap();
         assert_eq!(args.max_memory_bytes(), 64 * 1024);
         assert_eq!(args.join_type, Mode::Hash);
-        assert_eq!(args.file_a, PathBuf::from("./a.csv"));
-        assert_eq!(args.file_b, PathBuf::from("./b.csv"));
+        assert_eq!(args.path_a, PathBuf::from("./a.csv"));
+        assert_eq!(args.path_b, PathBuf::from("./b.csv"));
     }
 
     #[test]
