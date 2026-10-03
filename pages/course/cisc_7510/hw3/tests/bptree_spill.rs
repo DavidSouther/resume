@@ -3,7 +3,7 @@
 
 use std::path::Path;
 
-use csv_join::bptree::BPlusTree;
+use csv_join::bptree::IndexBuilder;
 
 const KEYS: u64 = 5_000;
 const VALUES_PER_KEY: u64 = 4;
@@ -17,7 +17,7 @@ fn key(k: u64) -> String {
 #[test]
 fn spills_under_a_tiny_budget_and_returns_every_value() {
     let path = Path::new(env!("CARGO_TARGET_TMPDIR")).join("bptree_spill.pages");
-    let mut tree = BPlusTree::create(&path, BUDGET).unwrap();
+    let mut builder = IndexBuilder::create(&path, BUDGET).unwrap();
 
     // Visit keys in a scrambled order (7919 is prime, so coprime with KEYS),
     // inserting each key once per round, so duplicates are far apart.
@@ -25,15 +25,27 @@ fn spills_under_a_tiny_budget_and_returns_every_value() {
     for i in 0..total {
         let round = i / KEYS;
         let k = (i % KEYS) * 7919 % KEYS;
-        tree.insert(&key(k), k * VALUES_PER_KEY + round).unwrap();
+        builder.insert(&key(k), k * VALUES_PER_KEY + round).unwrap();
     }
+
+    assert!(
+        builder.pages_written() > 0,
+        "expected pages to spill to disk"
+    );
+    assert!(
+        builder.peak_resident_bytes() <= BUDGET,
+        "resident pages peaked at {} bytes, over the {BUDGET} byte budget",
+        builder.peak_resident_bytes()
+    );
+    let index = builder.finish().unwrap();
 
     for k in 0..KEYS {
         let expected: Vec<u64> = (0..VALUES_PER_KEY)
             .map(|r| k * VALUES_PER_KEY + r)
             .collect();
         assert_eq!(
-            tree.get(&key(k))
+            index
+                .get(&key(k))
                 .collect::<std::io::Result<Vec<_>>>()
                 .unwrap(),
             expected,
@@ -41,15 +53,8 @@ fn spills_under_a_tiny_budget_and_returns_every_value() {
             key(k)
         );
     }
-    assert!(tree.get("absent").next().is_none());
+    assert!(index.get("absent").next().is_none());
 
-    assert!(tree.pages_written() > 0, "expected pages to spill to disk");
-    assert!(
-        tree.peak_resident_bytes() <= BUDGET,
-        "resident pages peaked at {} bytes, over the {BUDGET} byte budget",
-        tree.peak_resident_bytes()
-    );
-
-    drop(tree);
+    drop(index);
     assert!(!path.exists(), "spill file should be removed on drop");
 }

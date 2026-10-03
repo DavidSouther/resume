@@ -3,7 +3,7 @@
 
 use std::collections::{HashMap, VecDeque};
 use std::fs::{File, OpenOptions};
-use std::io::{self, Read, Seek, SeekFrom, Write};
+use std::io;
 use std::path::Path;
 
 use super::page::{self, Node, PAGE_SIZE, PageId};
@@ -99,11 +99,29 @@ impl Pool {
         self.pages_written
     }
 
+    /// Write every changed resident page, so the spill file holds every page.
+    pub fn flush(&mut self) -> io::Result<()> {
+        for (&id, frame) in &mut self.frames {
+            if frame.dirty {
+                page::write_at(&self.file, id, &frame.node)?;
+                self.pages_written += 1;
+                frame.dirty = false;
+            }
+        }
+        Ok(())
+    }
+
+    /// Give up the resident pages and return the spill file. Call `flush`
+    /// first, or changed pages are lost.
+    pub fn into_file(self) -> File {
+        self.file
+    }
+
     fn frame(&mut self, id: PageId) -> io::Result<&mut Frame> {
         if self.frames.contains_key(&id) {
             self.touch(id);
         } else {
-            let node = self.load(id)?;
+            let node = page::read_at(&self.file, id)?;
             self.insert(id, Frame { node, dirty: false })?;
         }
         Ok(self
@@ -135,22 +153,12 @@ impl Pool {
         let id = *self.lru.front().expect("a full pool has pages to evict");
         let frame = &self.frames[&id];
         if frame.dirty {
-            let mut buf = [0u8; PAGE_SIZE];
-            page::encode(&frame.node, &mut buf)?;
-            self.file.seek(SeekFrom::Start(id.0 * PAGE_SIZE as u64))?;
-            self.file.write_all(&buf)?;
+            page::write_at(&self.file, id, &frame.node)?;
             self.pages_written += 1;
         }
         self.lru.pop_front();
         self.frames.remove(&id);
         Ok(())
-    }
-
-    fn load(&mut self, id: PageId) -> io::Result<Node> {
-        let mut buf = [0u8; PAGE_SIZE];
-        self.file.seek(SeekFrom::Start(id.0 * PAGE_SIZE as u64))?;
-        self.file.read_exact(&mut buf)?;
-        page::decode(&buf)
     }
 }
 
@@ -245,6 +253,22 @@ mod tests {
         pool.allocate(leaf_with(MIN_PAGES)).unwrap();
         assert!(pool.frames.contains_key(&ids[0]));
         assert!(!pool.frames.contains_key(&ids[1]));
+    }
+
+    #[test]
+    fn flush_writes_each_changed_page_once() {
+        let mut pool = pool();
+        let ids: Vec<_> = (0..MIN_PAGES)
+            .map(|i| pool.allocate(leaf_with(i)).unwrap())
+            .collect();
+        pool.flush().unwrap();
+        assert_eq!(pool.pages_written(), MIN_PAGES);
+        pool.flush().unwrap();
+        assert_eq!(pool.pages_written(), MIN_PAGES);
+        let file = pool.into_file();
+        for (i, &id) in ids.iter().enumerate() {
+            assert_eq!(page::read_at(&file, id).unwrap(), leaf_with(i));
+        }
     }
 
     #[test]

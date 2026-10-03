@@ -11,6 +11,7 @@
 //!
 //! The rest of the page is zero.
 
+use std::fs::File;
 use std::io;
 
 /// Bytes in one page, both on disk and as counted against the pool budget.
@@ -125,6 +126,67 @@ pub fn decode(buf: &[u8; PAGE_SIZE]) -> io::Result<Node> {
         }
         _ => Err(invalid_data(format!("unknown page tag {tag}"))),
     }
+}
+
+/// Read and parse page `id` from `file`. Positioned reads need only `&File`,
+/// so any number of readers may share one handle.
+pub fn read_at(file: &File, id: PageId) -> io::Result<Node> {
+    let mut buf = [0u8; PAGE_SIZE];
+    read_exact_at(file, &mut buf, id.0 * PAGE_SIZE as u64)?;
+    decode(&buf)
+}
+
+/// Encode `node` and write it as page `id` of `file`.
+pub fn write_at(file: &File, id: PageId, node: &Node) -> io::Result<()> {
+    let mut buf = [0u8; PAGE_SIZE];
+    encode(node, &mut buf)?;
+    write_all_at(file, &buf, id.0 * PAGE_SIZE as u64)
+}
+
+#[cfg(unix)]
+fn read_exact_at(file: &File, buf: &mut [u8], offset: u64) -> io::Result<()> {
+    std::os::unix::fs::FileExt::read_exact_at(file, buf, offset)
+}
+
+#[cfg(unix)]
+fn write_all_at(file: &File, buf: &[u8], offset: u64) -> io::Result<()> {
+    std::os::unix::fs::FileExt::write_all_at(file, buf, offset)
+}
+
+/// Windows positioned reads also move the file cursor, which is harmless
+/// here: every access passes its own offset. They may return short, so loop.
+#[cfg(windows)]
+fn read_exact_at(file: &File, mut buf: &mut [u8], mut offset: u64) -> io::Result<()> {
+    use std::os::windows::fs::FileExt;
+    while !buf.is_empty() {
+        match file.seek_read(buf, offset) {
+            Ok(0) => return Err(io::ErrorKind::UnexpectedEof.into()),
+            Ok(n) => {
+                buf = &mut buf[n..];
+                offset += n as u64;
+            }
+            Err(e) if e.kind() == io::ErrorKind::Interrupted => {}
+            Err(e) => return Err(e),
+        }
+    }
+    Ok(())
+}
+
+#[cfg(windows)]
+fn write_all_at(file: &File, mut buf: &[u8], mut offset: u64) -> io::Result<()> {
+    use std::os::windows::fs::FileExt;
+    while !buf.is_empty() {
+        match file.seek_write(buf, offset) {
+            Ok(0) => return Err(io::ErrorKind::WriteZero.into()),
+            Ok(n) => {
+                buf = &buf[n..];
+                offset += n as u64;
+            }
+            Err(e) if e.kind() == io::ErrorKind::Interrupted => {}
+            Err(e) => return Err(e),
+        }
+    }
+    Ok(())
 }
 
 fn invalid_data(msg: String) -> io::Error {
