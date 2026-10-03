@@ -29,16 +29,11 @@
 //!         Pass 4: write file b in sort order to output file b'
 //!         Pass 5: write joined file in sort order
 
-mod readers;
-mod writer;
-mod r#loop;
-mod join;
-
 use std::{fs::File, path::PathBuf};
 
 use clap::{Parser, ValueEnum};
 
-use crate::{join::Join, r#loop::LoopJoin, writer::JoinWriter};
+use csv_join::{join::Join, r#loop::LoopJoin, writer::JoinWriter};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, ValueEnum)]
 enum Mode {
