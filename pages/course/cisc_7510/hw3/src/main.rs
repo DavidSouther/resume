@@ -17,6 +17,9 @@
 //!   max memory. In LOOP, File B is always fully loaded and --max-memory only
 //!   applies to File A. Otherwise, max memory is split evenly between the files.
 //!   Does _not_ count the size of the join key index and tracking details in HASH.
+//! - --max-hash-memory states, in kb, the in-memory page budget for HASH's key
+//!   index, beyond which index pages spill to a temp file. Only resident index
+//!   pages count; the index's own bookkeeping does not.
 //! - --join-type LOOP|HASH|MERGE to specify which joiner to use.
 //!   LOOP: File B is always the inner loop.
 //!   MERGE: Take from A until matching B, take from B until no longer matching in A.
@@ -54,6 +57,10 @@ struct Args {
     /// Maximum memory for loaded rows, in kb.
     #[arg(long, default_value_t = 1024)]
     max_memory: usize,
+    /// In-memory page budget for HASH's key index, in kb. Index pages beyond
+    /// it spill to a temp file.
+    #[arg(long, default_value_t = 1024)]
+    max_hash_memory: usize,
     /// Join algorithm to use.
     #[arg(long, value_enum, ignore_case = true)]
     join_type: Mode,
@@ -69,6 +76,12 @@ struct Args {
 impl Args {
     fn max_memory_bytes(&self) -> usize {
         self.max_memory * 1024
+    }
+
+    // No joiner reads this budget: HASH keeps its whole key index in memory.
+    #[allow(dead_code)]
+    fn max_hash_memory_bytes(&self) -> usize {
+        self.max_hash_memory * 1024
     }
 }
 
@@ -99,6 +112,8 @@ mod tests {
             "csv_join",
             "--max-memory",
             "64",
+            "--max-hash-memory",
+            "256",
             "--join-type",
             "HASH",
             "--out",
@@ -108,6 +123,7 @@ mod tests {
         ])
         .unwrap();
         assert_eq!(args.max_memory_bytes(), 64 * 1024);
+        assert_eq!(args.max_hash_memory_bytes(), 256 * 1024);
         assert_eq!(args.join_type, Mode::Hash);
         assert_eq!(args.out, PathBuf::from("o.csv"));
         assert_eq!(args.path_a, PathBuf::from("./a.csv"));
@@ -120,6 +136,7 @@ mod tests {
         let args = Args::try_parse_from(["csv_join", "--join-type", "loop", "a", "b"]).unwrap();
         assert_eq!(args.join_type, Mode::Loop);
         assert_eq!(args.max_memory, 1024);
+        assert_eq!(args.max_hash_memory, 1024);
         assert_eq!(args.out, PathBuf::from("out.csv"));
     }
 }
