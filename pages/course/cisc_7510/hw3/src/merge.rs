@@ -1,9 +1,4 @@
-use std::{
-    eprintln,
-    fs::File,
-    io::Write,
-    path::PathBuf,
-};
+use std::{fs::File, io::Write, path::PathBuf};
 
 use crate::{
     join::Join,
@@ -27,53 +22,38 @@ impl MergeJoin {
 }
 
 impl Join for MergeJoin {
-    /// MERGE: Take from A until matching B, take from B until no longer matching in A, match set while still in B.
-    ///   File A and file B must both already by sorted. If unsorted, it'll probably
-    ///   just not include data.
+    /// MERGE: Taking each group from A, advance B to a matching group.
+    /// Write their cross product with A outer and B inner.
+    ///   File A and file B must both already be sorted byte-wise on the key.
+    ///   If unsorted, it'll probably just not include data.
     fn run<W: Write>(mut self, mut out: JoinWriter<W>) {
-        // let peek_a = self.file_a.peekable();
-        let mut peek_b = self.file_b.peekable();
-
-        while let Some(a) = self.file_a.next() {
-            match a {
-                Ok(a) => {
-                    while let Some(b) = peek_b.find(|b| match b {
-                        Ok(b) => a.key() == b.key(),
-                        Err(err) => {
-                            eprintln!("Error peeking file_b: {err:?}");
-                            false
-                        }
-                    }) {
-                        let bs: Vec<Record> = peek_b
-                            .by_ref()
-                            .take_while(|r| match r {
-                                Ok(b) => a.key() == b.key(),
-                                Err(err) => {
-                                    eprintln!("Error reading file_b: {err:?}");
-                                    false
-                                },
-                            })
-                            .map(|r| r.unwrap())
-                            .collect();
-                        let mut bs2 = vec![b.unwrap()];
-                        bs2.extend(bs);
-                        for b in bs2 {
-                            match out.write(Record::joined(&a, &b)) {
-                                Err(err) => {
-                                    eprintln!("Error writing output for {}: {err:?}", a.key())
-                                }
-                                _ => (),
-                            }
-                        }
+        while let Some(a_group) = self.file_a.next_group() {
+            let a_group = match a_group {
+                Ok(group) => group,
+                Err(err) => {
+                    eprintln!("Error reading file_a: {err:?}");
+                    break;
+                }
+            };
+            let b_group = match self.file_b.next_matching(a_group[0].key()) {
+                Some(Ok(group)) => group,
+                Some(Err(err)) => {
+                    eprintln!("Error reading file_b: {err:?}");
+                    break;
+                }
+                None => continue,
+            };
+            for a in &a_group {
+                for b in &b_group {
+                    if let Err(err) = out.write(Record::joined(a, b)) {
+                        eprintln!("Error writing output for {}: {err:?}", a.key());
                     }
                 }
-                Err(err) => eprintln!("Error reading file a: {err:?}"),
             }
         }
 
-        match out.finish() {
-            Err(err) => eprintln!("Finish err: {err:?}"),
-            _ => (),
+        if let Err(err) = out.finish() {
+            eprintln!("Finish err: {err:?}");
         }
     }
 }

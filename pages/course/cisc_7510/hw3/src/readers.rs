@@ -1,3 +1,4 @@
+use std::cmp::Ordering;
 use std::fmt;
 use std::io::{self, Read};
 use std::sync::Arc;
@@ -127,11 +128,14 @@ type Batch = Rows;
 /// included. While the caller drains one batch, the background thread fills
 /// the next, so buffered rows stay within `max_memory`. A single row larger
 /// than half the budget still arrives, alone in an oversize batch. Records the
-/// caller keeps hold their batch in memory past that bound.
+/// caller keeps hold their batch in memory past that bound, so a key group
+/// larger than the budget pins every batch it spans.
 pub struct AsyncReader {
     max_memory: usize,
     batch: Option<Records>,
     incoming: Option<Receiver<io::Result<Batch>>>,
+    /// A record read ahead to find where a key group ends, yielded next.
+    lookahead: Option<io::Result<Record>>,
 }
 
 impl AsyncReader {
@@ -144,6 +148,7 @@ impl AsyncReader {
             max_memory,
             batch: None,
             incoming: Some(rx),
+            lookahead: None,
         }
     }
 
@@ -154,6 +159,75 @@ impl AsyncReader {
     /// Bytes of the current batch not yet yielded.
     pub fn current_memory(&self) -> usize {
         self.batch.as_ref().map_or(0, Records::remaining)
+    }
+
+    /// Collect all records in sequence with the same matching key. A
+    /// read error ends the group early, with the next call returning
+    /// the group and the call after that resetting to a new group.
+    pub fn next_group(&mut self) -> Option<io::Result<Vec<Record>>> {
+        let first = match self.next()? {
+            Ok(record) => record,
+            Err(e) => return Some(Err(e)),
+        };
+        let mut group = vec![first];
+        while self.peek_key() == Some(group[0].key()) {
+            group.extend(self.lookahead.take().and_then(Result::ok));
+        }
+        Some(Ok(group))
+    }
+
+    /// Skip records whose key sorts before `key`, then return the group with
+    /// exactly `key`. `None` when no record has `key`. A record with a greater
+    /// key stays unread for the next call. Keys compare byte-wise, so the
+    /// rows must be sorted.
+    pub fn next_matching(&mut self, key: &str) -> Option<io::Result<Vec<Record>>> {
+        loop {
+            let ordering = match self.peek()? {
+                Ok(record) => record.key().cmp(key),
+                Err(_) => return self.next_group(),
+            };
+            match ordering {
+                Ordering::Less => self.lookahead = None,
+                Ordering::Equal => return self.next_group(),
+                Ordering::Greater => return None,
+            }
+        }
+    }
+
+    fn peek(&mut self) -> Option<&io::Result<Record>> {
+        if self.lookahead.is_none() {
+            self.lookahead = self.read_next();
+        }
+        self.lookahead.as_ref()
+    }
+
+    /// The next record's key, or `None` at the end of the rows or an error.
+    fn peek_key(&mut self) -> Option<&str> {
+        self.peek()?.as_ref().ok().map(Record::key)
+    }
+
+    fn read_next(&mut self) -> Option<io::Result<Record>> {
+        loop {
+            if let Some(record) = self.batch.as_mut().and_then(Iterator::next) {
+                return Some(Ok(record));
+            }
+            // Release the handle on the drained batch before
+            // waiting, so only caller retained records hold it.
+            self.batch = None;
+            match self.incoming.as_ref()?.recv() {
+                Ok(Ok(batch)) => {
+                    self.batch = Some(Records::new(batch));
+                }
+                Ok(Err(e)) => {
+                    self.incoming = None;
+                    return Some(Err(e));
+                }
+                Err(_) => {
+                    self.incoming = None;
+                    return None;
+                }
+            }
+        }
     }
 }
 
@@ -241,27 +315,7 @@ impl Iterator for AsyncReader {
     type Item = io::Result<Record>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        loop {
-            if let Some(record) = self.batch.as_mut().and_then(Iterator::next) {
-                return Some(Ok(record));
-            }
-            // Release this reader's handle on the drained batch before
-            // waiting, so only records the caller kept hold it.
-            self.batch = None;
-            match self.incoming.as_ref()?.recv() {
-                Ok(Ok(batch)) => {
-                    self.batch = Some(Records::new(batch));
-                }
-                Ok(Err(e)) => {
-                    self.incoming = None;
-                    return Some(Err(e));
-                }
-                Err(_) => {
-                    self.incoming = None;
-                    return None;
-                }
-            }
-        }
+        self.lookahead.take().or_else(|| self.read_next())
     }
 }
 
@@ -385,6 +439,58 @@ mod tests {
         let err = reader.next().unwrap().unwrap_err();
         assert_eq!(err.kind(), io::ErrorKind::InvalidData);
         assert!(reader.next().is_none());
+    }
+
+    fn group_keys(group: Option<io::Result<Vec<Record>>>) -> Option<Vec<String>> {
+        group.map(|g| g.unwrap().iter().map(|r| r.line().to_string()).collect())
+    }
+
+    #[test]
+    fn next_group_collects_one_key_across_batches() {
+        let mut reader = AsyncReader::new(Cursor::new("1,a\n1,b\n2,c\n"), 1);
+        assert_eq!(group_keys(reader.next_group()).unwrap(), ["1,a", "1,b"]);
+        assert_eq!(group_keys(reader.next_group()).unwrap(), ["2,c"]);
+        assert!(reader.next_group().is_none());
+    }
+
+    #[test]
+    fn next_after_next_group_loses_no_record() {
+        let mut reader = AsyncReader::new(Cursor::new("1,a\n2,b\n3,c\n"), 1024);
+        reader.next_group().unwrap().unwrap();
+        assert_eq!(reader.next().unwrap().unwrap().key(), "2");
+        assert_eq!(group_keys(reader.next_group()).unwrap(), ["3,c"]);
+    }
+
+    #[test]
+    fn next_matching_skips_smaller_keys() {
+        let mut reader = AsyncReader::new(Cursor::new("1,a\n2,b\n4,c\n4,d\n6,e\n"), 1024);
+        assert_eq!(
+            group_keys(reader.next_matching("4")).unwrap(),
+            ["4,c", "4,d"]
+        );
+        assert_eq!(group_keys(reader.next_matching("6")).unwrap(), ["6,e"]);
+        assert!(reader.next_matching("7").is_none());
+    }
+
+    #[test]
+    fn next_matching_keeps_a_greater_key_for_later() {
+        let mut reader = AsyncReader::new(Cursor::new("1,a\n10,b\n"), 1024);
+        assert!(reader.next_matching("0").is_none());
+        assert!(reader.next_matching("01").is_none());
+        assert_eq!(group_keys(reader.next_matching("10")).unwrap(), ["10,b"]);
+    }
+
+    #[test]
+    fn a_read_error_ends_the_group_then_follows_it() {
+        let input: &'static [u8] = b"1,a\n1,b\n\xff\n";
+        let mut reader = AsyncReader::new(Cursor::new(input), 1024);
+        assert_eq!(group_keys(reader.next_group()).unwrap(), ["1,a", "1,b"]);
+        assert!(reader.next_group().unwrap().is_err());
+        assert!(reader.next_group().is_none());
+
+        let mut reader = AsyncReader::new(Cursor::new(input), 1024);
+        assert!(reader.next_matching("2").unwrap().is_err());
+        assert!(reader.next_matching("2").is_none());
     }
 
     fn keys(reader: &SmallReader) -> Vec<String> {

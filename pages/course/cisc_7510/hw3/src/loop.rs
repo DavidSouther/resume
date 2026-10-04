@@ -181,7 +181,11 @@ mod tests {
     #[test]
     fn output_does_not_depend_on_the_memory_budget() {
         let a: String = (0..50).map(|i| format!("{i:02},a{i}\n")).collect();
-        let b: String = (0..50).rev().step_by(7).map(|i| format!("{i:02},b{i}\n")).collect();
+        let b: String = (0..50)
+            .rev()
+            .step_by(7)
+            .map(|i| format!("{i:02},b{i}\n"))
+            .collect();
         let whole = join_bytes(a.as_bytes(), &b, 1 << 20);
         assert_eq!(whole.lines().count(), 8);
         assert_eq!(join_bytes(a.as_bytes(), &b, 1), whole);

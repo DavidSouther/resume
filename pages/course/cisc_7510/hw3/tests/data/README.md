@@ -6,7 +6,8 @@ of 1048576.
 
 `expected.csv` is in LoopJoin order: A rows outer, B rows inner. HASH and MERGE
 may emit rows in another order, so compare their output as sorted lines.
-MERGE also needs sorted inputs, which most of these cases do not have.
+MERGE also needs sorted inputs, which most of these cases do not have. The
+`sorted_*` cases exist for MERGE; their `expected.csv` came from the LOOP binary.
 
 `tests/join_fixtures.rs` runs the binary over every case for each join type.
 `r#loop::tests::joins_every_fixture_case_at_its_budget` runs LoopJoin at each
@@ -26,3 +27,6 @@ case's `max_memory`.
 | `empty_a`, `empty_b`, `empty_both` | Empty inputs give empty output |
 | `oversize_row` | An A row larger than half of `max_memory` (64) |
 | `many_batches` | 200 A rows across many AsyncReader batches at `max_memory` 64 |
+| `sorted_gaps` | Sorted; each side has keys the other lacks, between and around matches |
+| `sorted_duplicates` | Sorted; repeated keys on A, B, and both sides |
+| `sorted_prefix_keys` | Sorted; `01`, `1`, `10`, `100` are distinct keys |

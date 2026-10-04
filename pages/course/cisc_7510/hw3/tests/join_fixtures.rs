@@ -103,7 +103,6 @@ fn hash_joins_every_case() {
 }
 
 #[test]
-#[ignore = "MERGE join is not implemented"]
 fn merge_joins_every_sorted_case() {
     let cases: Vec<_> = cases()
         .into_iter()

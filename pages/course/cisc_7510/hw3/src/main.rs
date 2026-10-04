@@ -33,7 +33,7 @@ use std::{fs::File, path::PathBuf};
 
 use clap::{Parser, ValueEnum};
 
-use csv_join::{join::Join, r#loop::LoopJoin, writer::JoinWriter};
+use csv_join::{join::Join, r#loop::LoopJoin, merge::MergeJoin, writer::JoinWriter};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, ValueEnum)]
 enum Mode {
@@ -73,10 +73,15 @@ fn main() {
     let out = JoinWriter::new(File::create(args.out).expect("File::create out"));
     match args.join_type {
         Mode::Loop => {
-            let joiner = LoopJoin::create(args.path_a, args.path_b, max_memory).expect("LoopJoin try_new");
+            let joiner =
+                LoopJoin::create(args.path_a, args.path_b, max_memory).expect("LoopJoin try_new");
             joiner.run(out);
-        },
-        Mode::Merge => todo!(),
+        }
+        Mode::Merge => {
+            let joiner =
+                MergeJoin::create(args.path_a, args.path_b, max_memory).expect("MergeJoin create");
+            joiner.run(out);
+        }
         Mode::Hash => todo!(),
     }
 }
