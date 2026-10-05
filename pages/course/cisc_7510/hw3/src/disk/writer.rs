@@ -1,6 +1,6 @@
 use std::io::{self, BufWriter, Write};
 
-use crate::readers::Record;
+use crate::disk::readers::Record;
 
 /// Buffered output for joined rows.
 ///
@@ -33,7 +33,7 @@ impl<W: Write> JoinWriter<W> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::readers::SmallReader;
+    use crate::disk::readers::SmallReader;
     use std::io::Cursor;
 
     fn rows(input: &'static str) -> Vec<Record> {

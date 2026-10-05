@@ -12,28 +12,28 @@
 //! - first field in a record is the merge key.
 //! - final output is merge key, remaining file a fields, remaining file b fields
 //! - --max-memory states, in kb, the maximum size of loaded rows at a time. Row
-//!     size is calculated at read time as the number of u8 bytes in the record,
-//!     not counting the record separator. Field separators do count towards the
-//!     max memory. In LOOP, File B is always fully loaded and --max-memory only
-//!     applies to File A. Otherwise, max memory is split evenly between the files.
-//!     Does _not_ count the size of the join key index and tracking details in HASH.
+//!   size is calculated at read time as the number of u8 bytes in the record,
+//!   not counting the record separator. Field separators do count towards the
+//!   max memory. In LOOP, File B is always fully loaded and --max-memory only
+//!   applies to File A. Otherwise, max memory is split evenly between the files.
+//!   Does _not_ count the size of the join key index and tracking details in HASH.
 //! - --join-type LOOP|HASH|MERGE to specify which joiner to use.
-//!     LOOP: File B is always the inner loop.
-//!     MERGE: Take from A until matching B, take from B until no longer matching in A.
-//!         File A and file B must both already by sorted. If unsorted, it'll probably
-//!         just not include data.
-//!     HASH: Multi-pass index builder.
-//!         Pass 1: build a key index with all pairs of lines that have a matching key
-//!         Pass 2: build two sorters with what to write from file a, and what from file b
-//!         Pass 3: write file a in sort order to output file a'
-//!         Pass 4: write file b in sort order to output file b'
-//!         Pass 5: write joined file in sort order
+//!   LOOP: File B is always the inner loop.
+//!   MERGE: Take from A until matching B, take from B until no longer matching in A.
+//!   File A and file B must both already by sorted. If unsorted, it'll probably
+//!   just not include data.
+//!   HASH: Multi-pass index builder.
+//!   - Pass 1: build a key index with all pairs of lines that have a matching key
+//!   - Pass 2: build two sorters with what to write from file a, and what from file b
+//!   - Pass 3: write file a in sort order to output file a'
+//!   - Pass 4: write file b in sort order to output file b'
+//!   - Pass 5: write joined file in sort order
 
 use std::{fs::File, path::PathBuf};
 
 use clap::{Parser, ValueEnum};
 
-use csv_join::{join::Join, r#loop::LoopJoin, merge::MergeJoin, writer::JoinWriter};
+use csv_join::{disk::writer::JoinWriter, join::Join, r#loop::LoopJoin, merge::MergeJoin};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, ValueEnum)]
 enum Mode {

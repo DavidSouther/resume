@@ -1,9 +1,11 @@
 use std::{fs::File, io::Write, path::PathBuf};
 
 use crate::{
+    disk::{
+        readers::{AsyncReader, Record},
+        writer::JoinWriter,
+    },
     join::Join,
-    readers::{AsyncReader, Record},
-    writer::JoinWriter,
 };
 
 pub struct MergeJoin {
