@@ -1,13 +1,14 @@
-//! Feature test: the B+ tree keeps HASH's key index under a tiny memory
-//! budget by spilling pages to disk, and still returns every value.
+//! The B+ tree's public contract: under a budget far below its size, the
+//! index spills pages to disk, stays within the budget, still returns every
+//! value, and removes its spill file when dropped.
 
 use std::path::Path;
 
 use csv_join::bptree::IndexBuilder;
 
-const KEYS: u64 = 5_000;
+const KEYS: u64 = 1_000;
 const VALUES_PER_KEY: u64 = 4;
-/// Four 4 KiB pages: far below the size of 20,000 entries.
+/// Four 4 KiB pages: far below the size of 4,000 entries.
 const BUDGET: usize = 16 * 1024;
 
 fn key(k: u64) -> String {

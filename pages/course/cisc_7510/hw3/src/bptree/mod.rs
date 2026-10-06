@@ -26,7 +26,6 @@ pub const MAX_KEY_LEN: usize = 1000;
 struct SpillPath(PathBuf);
 
 impl Drop for SpillPath {
-    /// Remove the spill file, ignoring errors.
     fn drop(&mut self) {
         let _ = std::fs::remove_file(&self.0);
     }
@@ -39,6 +38,8 @@ mod tests {
     use std::io;
     use std::sync::atomic::{AtomicUsize, Ordering};
 
+    /// A spill file path unique to this process and call. Unit tests do not
+    /// get `CARGO_TARGET_TMPDIR`, so use the system temp directory.
     pub(super) fn tmp_path() -> PathBuf {
         static NEXT: AtomicUsize = AtomicUsize::new(0);
         let n = NEXT.fetch_add(1, Ordering::Relaxed);
@@ -71,12 +72,17 @@ mod tests {
     #[test]
     fn absent_key_is_empty() {
         assert!(values(&index([]), "missing").is_empty());
+        assert!(index([]).iter().next().is_none());
         let keys: Vec<_> = (0..1000).map(|v| format!("k{v:04}")).collect();
         let index = index(keys.iter().zip(0..).map(|(k, v)| (k.as_str(), v)));
         assert!(values(&index, "missing").is_empty());
         assert!(values(&index, "k").is_empty());
         assert!(values(&index, "k0500x").is_empty());
     }
+
+    // Triangulate the insert order: the newest leaf splits at the right
+    // edge, the left edge, and anywhere between, and both `get` and `iter`
+    // still see every entry by key, then by insertion.
 
     fn check_order(order: impl Iterator<Item = u64>) {
         let mut builder = builder(MIN_PAGES);
@@ -88,6 +94,11 @@ mod tests {
         for k in 0..3000 {
             assert_eq!(values(&index, &format!("key{k:04}")), vec![k, k + 10_000]);
         }
+        let entries: Vec<_> = index.iter().collect::<io::Result<_>>().unwrap();
+        let expected: Vec<_> = (0..3000)
+            .flat_map(|k| [k, k + 10_000].map(|v| (format!("key{k:04}"), v)))
+            .collect();
+        assert_eq!(entries, expected);
     }
 
     #[test]
@@ -117,26 +128,6 @@ mod tests {
     }
 
     #[test]
-    fn iter_yields_every_entry_by_key_then_insertion() {
-        let mut builder = builder(MIN_PAGES);
-        for k in (0..3000).map(|i| i * 1009 % 3000) {
-            builder.insert(&format!("key{k:04}"), k).unwrap();
-            builder.insert(&format!("key{k:04}"), k + 10_000).unwrap();
-        }
-        let index = builder.finish().unwrap();
-        let entries: Vec<_> = index.iter().collect::<io::Result<_>>().unwrap();
-        let expected: Vec<_> = (0..3000)
-            .flat_map(|k| [k, k + 10_000].map(|v| (format!("key{k:04}"), v)))
-            .collect();
-        assert_eq!(entries, expected);
-    }
-
-    #[test]
-    fn iter_on_an_empty_index_is_empty() {
-        assert!(index([]).iter().next().is_none());
-    }
-
-    #[test]
     fn cursors_read_side_by_side() {
         let keys: Vec<_> = (0..1000).map(|k| format!("k{k:04}")).collect();
         let index = index(keys.iter().flat_map(|k| [(k.as_str(), 1), (k.as_str(), 2)]));
@@ -148,16 +139,6 @@ mod tests {
         assert_eq!(last.next().unwrap().unwrap(), 2);
         assert!(last.next().is_none());
         assert_eq!(all.count(), 1998);
-    }
-
-    #[test]
-    fn many_keys_stay_under_a_tiny_budget() {
-        let mut builder = builder(MIN_PAGES);
-        for k in 0..5000 {
-            builder.insert(&format!("{k}"), k).unwrap();
-        }
-        assert!(builder.pages_written() > 0);
-        assert!(builder.peak_resident_bytes() <= MIN_PAGES * PAGE_SIZE);
     }
 
     #[test]

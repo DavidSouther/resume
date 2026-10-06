@@ -170,7 +170,7 @@ impl Iterator for Entries<'_> {
     }
 }
 
-/// The values for one key, in insertion order. See `IndexReader::get`.
+/// The values for one key, in insertion order.
 pub struct Values<'r>(Entries<'r>);
 
 impl Iterator for Values<'_> {

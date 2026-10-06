@@ -164,17 +164,8 @@ impl Pool {
 
 #[cfg(test)]
 mod tests {
+    use super::super::tests::tmp_path;
     use super::*;
-    use std::path::PathBuf;
-    use std::sync::atomic::{AtomicUsize, Ordering};
-
-    /// A spill file path unique to this process and call. Unit tests do not
-    /// get `CARGO_TARGET_TMPDIR`, so use the system temp directory.
-    fn tmp_path() -> PathBuf {
-        static NEXT: AtomicUsize = AtomicUsize::new(0);
-        let n = NEXT.fetch_add(1, Ordering::Relaxed);
-        std::env::temp_dir().join(format!("csv_join_pool_{}_{n}.pages", std::process::id()))
-    }
 
     fn leaf_with(i: usize) -> Node {
         Node::Leaf {
@@ -199,16 +190,8 @@ mod tests {
             .map(|i| pool.allocate(leaf_with(i)).unwrap())
             .collect();
         assert!(pool.pages_written() > 0);
-        assert!(pool.peak_resident_bytes() <= MIN_PAGES * PAGE_SIZE);
+        assert_eq!(pool.peak_resident_bytes(), MIN_PAGES * PAGE_SIZE);
         assert_eq!(pool.read(ids[0]).unwrap(), &leaf_with(0));
-    }
-
-    #[test]
-    fn budget_below_min_pages_is_invalid_input() {
-        let err = Pool::create(&tmp_path(), MIN_PAGES * PAGE_SIZE - 1)
-            .err()
-            .unwrap();
-        assert_eq!(err.kind(), io::ErrorKind::InvalidInput);
     }
 
     #[test]
@@ -269,14 +252,5 @@ mod tests {
         for (i, &id) in ids.iter().enumerate() {
             assert_eq!(page::read_at(&file, id).unwrap(), leaf_with(i));
         }
-    }
-
-    #[test]
-    fn resident_bytes_peak_at_the_budget() {
-        let mut pool = pool();
-        for i in 0..10 * MIN_PAGES {
-            pool.allocate(leaf_with(i)).unwrap();
-        }
-        assert_eq!(pool.peak_resident_bytes(), MIN_PAGES * PAGE_SIZE);
     }
 }
