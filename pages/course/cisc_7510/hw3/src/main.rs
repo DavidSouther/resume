@@ -22,18 +22,22 @@
 //!   MERGE: Take from A until matching B, take from B until no longer matching in A.
 //!   File A and file B must both already by sorted. If unsorted, it'll probably
 //!   just not include data.
-//!   HASH: Multi-pass index builder.
+//!   HASH: Create map of hash(B_key) => [(key, [B_rows])]. Iterate A, emitting A x B_rows for Hash(a_key).
+//!   MERGE_SORT: Multi-pass index builder. (unimplemented, unrequested)
 //!   - Pass 1: build a key index with all pairs of lines that have a matching key
 //!   - Pass 2: build two sorters with what to write from file a, and what from file b
 //!   - Pass 3: write file a in sort order to output file a'
 //!   - Pass 4: write file b in sort order to output file b'
 //!   - Pass 5: write joined file in sort order
+//!  
 
 use std::{fs::File, path::PathBuf};
 
 use clap::{Parser, ValueEnum};
 
-use csv_join::{disk::writer::JoinWriter, join::Join, r#loop::LoopJoin, merge::MergeJoin};
+use csv_join::{
+    disk::writer::JoinWriter, hash::HashJoin, join::Join, r#loop::LoopJoin, merge::MergeJoin,
+};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, ValueEnum)]
 enum Mode {
@@ -74,7 +78,7 @@ fn main() {
     match args.join_type {
         Mode::Loop => {
             let joiner =
-                LoopJoin::create(args.path_a, args.path_b, max_memory).expect("LoopJoin try_new");
+                LoopJoin::create(args.path_a, args.path_b, max_memory).expect("LoopJoin create");
             joiner.run(out);
         }
         Mode::Merge => {
@@ -82,7 +86,11 @@ fn main() {
                 MergeJoin::create(args.path_a, args.path_b, max_memory).expect("MergeJoin create");
             joiner.run(out);
         }
-        Mode::Hash => todo!(),
+        Mode::Hash => {
+            let joiner =
+                HashJoin::create(args.path_a, args.path_b, max_memory).expect("HashJoin create");
+            joiner.run(out);
+        }
     }
 }
 
