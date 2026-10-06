@@ -1,16 +1,18 @@
 //! End to end: run the `csv_join` binary over every case in `tests/data` for
 //! each join type, and compare its output file with `expected.csv`.
 //!
-//! `expected.csv` is in LOOP order, so LOOP compares bytes exactly. HASH and
-//! MERGE may emit another order, so they compare sorted lines. MERGE also
-//! needs inputs sorted on the key, so it runs only the cases that are.
+//! Every join type emits A's order, then B's order within each A row, so all
+//! compare exactly. MERGE needs inputs sorted on the key, so this only runs
+//! cases matching that invariant.
 
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::process::Command;
+use std::process::{Command, Output};
 
-/// `--max-memory` values to run each case at. Output must not depend on the
-/// budget; the smallest one forces every A row into its own batch.
+const JOIN_TYPES: [&str; 3] = ["loop", "hash", "merge"];
+
+/// `--max-memory` values for each run. Output must not depend on the
+/// budget.
 const BUDGETS: [Option<&str>; 2] = [None, Some("1")];
 
 fn cases() -> Vec<PathBuf> {
@@ -25,14 +27,16 @@ fn cases() -> Vec<PathBuf> {
     cases
 }
 
-fn name(case: &Path) -> &str {
-    case.file_name().unwrap().to_str().unwrap()
+fn name(path: &Path) -> &str {
+    path.file_name().unwrap().to_str().unwrap()
 }
 
-fn run(join_type: &str, case: &Path, budget: Option<&str>) -> String {
+/// Run the binary, returning its process output and the joined rows.
+fn run(join_type: &str, a: &Path, b: &Path, budget: Option<&str>) -> (Output, String) {
+    let dir = a.parent().unwrap();
     let out = Path::new(env!("CARGO_TARGET_TMPDIR")).join(format!(
         "{join_type}-{}-{}.csv",
-        name(case),
+        name(dir),
         budget.unwrap_or("default")
     ));
     let mut command = Command::new(env!("CARGO_BIN_EXE_csv_join"));
@@ -41,29 +45,13 @@ fn run(join_type: &str, case: &Path, budget: Option<&str>) -> String {
         .arg(join_type)
         .arg("--out")
         .arg(&out)
-        .arg(case.join("a.csv"))
-        .arg(case.join("b.csv"));
+        .arg(a)
+        .arg(b);
     if let Some(budget) = budget {
         command.arg("--max-memory").arg(budget);
     }
     let result = command.output().unwrap();
-    assert!(
-        result.status.success(),
-        "{join_type} {} at {budget:?} failed: {}",
-        name(case),
-        String::from_utf8_lossy(&result.stderr)
-    );
-    fs::read_to_string(&out).unwrap()
-}
-
-fn expected(case: &Path) -> String {
-    fs::read_to_string(case.join("expected.csv")).unwrap()
-}
-
-fn sorted(output: &str) -> Vec<&str> {
-    let mut lines: Vec<_> = output.lines().collect();
-    lines.sort();
-    lines
+    (result, fs::read_to_string(&out).unwrap())
 }
 
 fn sorted_on_key(file: &Path) -> bool {
@@ -73,51 +61,46 @@ fn sorted_on_key(file: &Path) -> bool {
 }
 
 #[test]
-fn loop_joins_every_case() {
+fn every_join_type_joins_every_case_it_accepts() {
     for case in cases() {
-        for budget in BUDGETS {
-            assert_eq!(
-                run("loop", &case, budget),
-                expected(&case),
-                "case {} at {budget:?}",
-                name(&case)
-            );
+        let (a, b) = (case.join("a.csv"), case.join("b.csv"));
+        let expected = fs::read_to_string(case.join("expected.csv")).unwrap();
+        let sorted = sorted_on_key(&a) && sorted_on_key(&b);
+        for join_type in JOIN_TYPES {
+            if join_type == "merge" && !sorted {
+                continue;
+            }
+            for budget in BUDGETS {
+                let (result, output) = run(join_type, &a, &b, budget);
+                let label = format!("{join_type} {} at {budget:?}", name(&case));
+                assert!(
+                    result.status.success(),
+                    "{label} failed: {}",
+                    String::from_utf8_lossy(&result.stderr)
+                );
+                assert_eq!(output, expected, "{label}");
+            }
         }
     }
 }
 
 #[test]
-#[ignore = "HASH join is not implemented"]
-fn hash_joins_every_case() {
-    for case in cases() {
-        for budget in BUDGETS {
-            let output = run("hash", &case, budget);
-            assert_eq!(
-                sorted(&output),
-                sorted(&expected(&case)),
-                "case {} at {budget:?}",
-                name(&case)
-            );
-        }
-    }
-}
-
-#[test]
-fn merge_joins_every_sorted_case() {
-    let cases: Vec<_> = cases()
-        .into_iter()
-        .filter(|c| sorted_on_key(&c.join("a.csv")) && sorted_on_key(&c.join("b.csv")))
-        .collect();
-    assert!(!cases.is_empty(), "no fixture case has sorted inputs");
-    for case in cases {
-        for budget in BUDGETS {
-            let output = run("merge", &case, budget);
-            assert_eq!(
-                sorted(&output),
-                sorted(&expected(&case)),
-                "case {} at {budget:?}",
-                name(&case)
-            );
+fn every_join_type_reports_skipped_rows_by_path_and_still_joins() {
+    let dir = Path::new(env!("CARGO_TARGET_TMPDIR")).join("skipped_rows");
+    fs::create_dir_all(&dir).unwrap();
+    let (a, b) = (dir.join("a.csv"), dir.join("b.csv"));
+    fs::write(&a, b"1,a\n\xff\n3,c\n").unwrap();
+    fs::write(&b, b"1,x\n3,\xff\n").unwrap();
+    for join_type in JOIN_TYPES {
+        let (result, output) = run(join_type, &a, &b, None);
+        let stderr = String::from_utf8_lossy(&result.stderr);
+        assert!(!result.status.success(), "{join_type}");
+        assert_eq!(output, "1,a,x\n", "{join_type}");
+        for skip in [
+            format!("{}:2:1: invalid UTF-8", a.display()),
+            format!("{}:2:3: invalid UTF-8", b.display()),
+        ] {
+            assert!(stderr.contains(&skip), "{join_type}: {stderr}");
         }
     }
 }

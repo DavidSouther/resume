@@ -3,5 +3,5 @@
 pub mod disk;
 pub mod hash;
 pub mod join;
-pub mod merge;
 pub mod r#loop;
+pub mod merge;

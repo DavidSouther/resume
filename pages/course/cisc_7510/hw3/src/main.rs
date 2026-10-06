@@ -23,6 +23,7 @@
 //!   File A and file B must both already by sorted. If unsorted, it'll probably
 //!   just not include data.
 //!   HASH: Create map of hash(B_key) => [(key, [B_rows])]. Iterate A, emitting A x B_rows for Hash(a_key).
+//!   file_b is the builder file, and should be the smaller file. No checks are made to keep it in memory.
 //!   MERGE_SORT: Multi-pass index builder. (unimplemented, unrequested)
 //!   - Pass 1: build a key index with all pairs of lines that have a matching key
 //!   - Pass 2: build two sorters with what to write from file a, and what from file b
@@ -71,26 +72,14 @@ impl Args {
     }
 }
 
-fn main() {
+fn main() -> anyhow::Result<()> {
     let args = Args::parse();
     let max_memory = args.max_memory_bytes();
-    let out = JoinWriter::new(File::create(args.out).expect("File::create out"));
+    let out = JoinWriter::new(File::create(args.out)?);
     match args.join_type {
-        Mode::Loop => {
-            let joiner =
-                LoopJoin::create(args.path_a, args.path_b, max_memory).expect("LoopJoin create");
-            joiner.run(out);
-        }
-        Mode::Merge => {
-            let joiner =
-                MergeJoin::create(args.path_a, args.path_b, max_memory).expect("MergeJoin create");
-            joiner.run(out);
-        }
-        Mode::Hash => {
-            let joiner =
-                HashJoin::create(args.path_a, args.path_b, max_memory).expect("HashJoin create");
-            joiner.run(out);
-        }
+        Mode::Loop => LoopJoin::create(args.path_a, args.path_b, max_memory)?.run(out),
+        Mode::Merge => MergeJoin::create(args.path_a, args.path_b, max_memory)?.run(out),
+        Mode::Hash => HashJoin::create(args.path_a, args.path_b, max_memory)?.run(out),
     }
 }
 
@@ -105,28 +94,32 @@ mod tests {
     }
 
     #[test]
-    fn parses_documented_flags() {
+    fn parses_every_flag() {
         let args = Args::try_parse_from([
             "csv_join",
             "--max-memory",
             "64",
             "--join-type",
             "HASH",
+            "--out",
+            "o.csv",
             "./a.csv",
             "./b.csv",
         ])
         .unwrap();
         assert_eq!(args.max_memory_bytes(), 64 * 1024);
         assert_eq!(args.join_type, Mode::Hash);
+        assert_eq!(args.out, PathBuf::from("o.csv"));
         assert_eq!(args.path_a, PathBuf::from("./a.csv"));
         assert_eq!(args.path_b, PathBuf::from("./b.csv"));
     }
 
     #[test]
-    fn join_type_is_case_insensitive_and_required() {
+    fn join_type_is_required_and_case_insensitive_and_the_rest_default() {
+        assert!(Args::try_parse_from(["csv_join", "a", "b"]).is_err());
         let args = Args::try_parse_from(["csv_join", "--join-type", "loop", "a", "b"]).unwrap();
         assert_eq!(args.join_type, Mode::Loop);
         assert_eq!(args.max_memory, 1024);
-        assert!(Args::try_parse_from(["csv_join", "a", "b"]).is_err());
+        assert_eq!(args.out, PathBuf::from("out.csv"));
     }
 }
