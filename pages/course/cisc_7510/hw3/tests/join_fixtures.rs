@@ -85,6 +85,29 @@ fn every_join_type_joins_every_case_it_accepts() {
 }
 
 #[test]
+fn sort_merge_joins_every_case_in_key_order() {
+    for case in cases() {
+        let (a, b) = (case.join("a.csv"), case.join("b.csv"));
+        // Within a key, both sides keep file order, so the expected rows
+        // only need a stable sort by key.
+        let expected = fs::read_to_string(case.join("expected.csv")).unwrap();
+        let mut rows: Vec<_> = expected.lines().collect();
+        rows.sort_by_key(|r| r.split(',').next().unwrap());
+        let expected: String = rows.iter().map(|r| format!("{r}\n")).collect();
+        for budget in BUDGETS {
+            let (result, output) = run("sort-merge", &a, &b, budget);
+            let label = format!("sort-merge {} at {budget:?}", name(&case));
+            assert!(
+                result.status.success(),
+                "{label} failed: {}",
+                String::from_utf8_lossy(&result.stderr)
+            );
+            assert_eq!(output, expected, "{label}");
+        }
+    }
+}
+
+#[test]
 fn every_join_type_reports_skipped_rows_by_path_and_still_joins() {
     let dir = Path::new(env!("CARGO_TARGET_TMPDIR")).join("skipped_rows");
     fs::create_dir_all(&dir).unwrap();

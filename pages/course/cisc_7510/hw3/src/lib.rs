@@ -6,3 +6,4 @@ pub mod hash;
 pub mod join;
 pub mod r#loop;
 pub mod merge;
+pub mod sort;

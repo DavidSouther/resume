@@ -1,4 +1,8 @@
-use std::{fs::File, io::Write, path::PathBuf};
+use std::{
+    fs::File,
+    io::{Read, Write},
+    path::PathBuf,
+};
 
 use crate::{
     disk::{
@@ -20,14 +24,30 @@ pub struct MergeJoin {
 }
 
 impl MergeJoin {
-    pub fn create(path_a: PathBuf, path_b: PathBuf, max_memory: usize) -> std::io::Result<Self> {
+    pub fn from_paths(
+        path_a: PathBuf,
+        path_b: PathBuf,
+        max_memory: usize,
+    ) -> std::io::Result<Self> {
+        Ok(Self::from_readers(
+            (File::open(&path_a)?, path_a.display().to_string()),
+            (File::open(&path_b)?, path_b.display().to_string()),
+            max_memory,
+        ))
+    }
+
+    /// Merge two sorted sources, each paired with the name its skips report.
+    /// Each source gets half of `max_memory`.
+    pub fn from_readers(
+        (a, name_a): (impl Read + Send + 'static, String),
+        (b, name_b): (impl Read + Send + 'static, String),
+        max_memory: usize,
+    ) -> Self {
         let max_memory = max_memory / 2;
-        Ok(MergeJoin {
-            file_a: AsyncReader::new(File::open(&path_a)?, max_memory)
-                .named(path_a.display().to_string()),
-            file_b: AsyncReader::new(File::open(&path_b)?, max_memory)
-                .named(path_b.display().to_string()),
-        })
+        MergeJoin {
+            file_a: AsyncReader::new(a, max_memory).named(name_a),
+            file_b: AsyncReader::new(b, max_memory).named(name_b),
+        }
     }
 }
 

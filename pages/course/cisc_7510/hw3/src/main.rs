@@ -11,15 +11,6 @@
 //! - simple CSV, without quoted fields or escaped field and record separators.
 //! - first field in a record is the merge key.
 //! - final output is merge key, remaining file a fields, remaining file b fields
-//! - --max-memory states, in kb, the maximum size of loaded rows at a time. Row
-//!   size is calculated at read time as the number of u8 bytes in the record,
-//!   not counting the record separator. Field separators do count towards the
-//!   max memory. In LOOP, File B is always fully loaded and --max-memory only
-//!   applies to File A. Otherwise, max memory is split evenly between the files.
-//!   Does _not_ count the size of the join key index and tracking details in HASH.
-//! - --max-hash-memory states, in kb, the in-memory page budget for HASH's key
-//!   index, beyond which index pages spill to a temp file. Only resident index
-//!   pages count; the index's own bookkeeping does not.
 //! - --join-type LOOP|HASH|MERGE to specify which joiner to use.
 //!   LOOP: File B is always the inner loop.
 //!   MERGE: Take from A until matching B, take from B until no longer matching in A.
@@ -27,20 +18,30 @@
 //!   just not include data.
 //!   HASH: Create map of hash(B_key) => [(key, [B_rows])]. Iterate A, emitting A x B_rows for Hash(a_key).
 //!   file_b is the builder file, and should be the smaller file. No checks are made to keep it in memory.
-//!   MERGE_SORT: Multi-pass index builder. (unimplemented, unrequested)
-//!   - Pass 1: build a key index with all pairs of lines that have a matching key
-//!   - Pass 2: build two sorters with what to write from file a, and what from file b
-//!   - Pass 3: write file a in sort order to output file a'
-//!   - Pass 4: write file b in sort order to output file b'
-//!   - Pass 5: write joined file in sort order
+//!   SORT_MERGE: Sort A and B, then MERGE them. Output is in key order. A file
+//!   within half of --max-memory sorts in memory; a larger one sorts into a
+//!   temp copy through a B+ tree key index.
+//! - --max-memory states, in kb, the maximum size of loaded rows at a time. Row
+//!   size is calculated at read time as the number of u8 bytes in the record,
+//!   not counting the record separator. Field separators do count towards the
+//!   max memory. In LOOP, File B is always fully loaded and --max-memory only
+//!   applies to File A. Otherwise, max memory is split evenly between the files.
+//!   Does _not_ count the size of the join key index and tracking details in HASH.
+//! - --max-hash-memory states, in kb, the in-memory page budget for each of
+//!   SORT-MERGE's key indexes, beyond which index pages spill to a temp file.
+//!   Only resident index pages count; the index's own bookkeeping does not.
 //!  
+//! max-memory and max-hash-memory should almost certainly not be the machine's
+//! maximum memory, but rather chosen to allow some overhead for program and OS
+//! memory.
 
-use std::{fs::File, path::PathBuf};
+use std::{env, fs, fs::File, path::PathBuf, process};
 
 use clap::{Parser, ValueEnum};
 
 use csv_join::{
     disk::writer::JoinWriter, hash::HashJoin, join::Join, r#loop::LoopJoin, merge::MergeJoin,
+    sort::Sorter,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, ValueEnum)]
@@ -48,6 +49,7 @@ enum Mode {
     Loop,
     Merge,
     Hash,
+    SortMerge,
 }
 
 /// Join two CSV files on their first field.
@@ -57,8 +59,7 @@ struct Args {
     /// Maximum memory for loaded rows, in kb.
     #[arg(long, default_value_t = 1024)]
     max_memory: usize,
-    /// In-memory page budget for HASH's key index, in kb. Index pages beyond
-    /// it spill to a temp file.
+    /// In-memory page budget for each SORT-MERGE key index, in kb.
     #[arg(long, default_value_t = 1024)]
     max_hash_memory: usize,
     /// Join algorithm to use.
@@ -78,8 +79,6 @@ impl Args {
         self.max_memory * 1024
     }
 
-    // No joiner reads this budget: HASH keeps its whole key index in memory.
-    #[allow(dead_code)]
     fn max_hash_memory_bytes(&self) -> usize {
         self.max_hash_memory * 1024
     }
@@ -88,11 +87,26 @@ impl Args {
 fn main() -> anyhow::Result<()> {
     let args = Args::parse();
     let max_memory = args.max_memory_bytes();
+    let index_memory = args.max_hash_memory_bytes();
     let out = JoinWriter::new(File::create(args.out)?);
     match args.join_type {
         Mode::Loop => LoopJoin::create(args.path_a, args.path_b, max_memory)?.run(out),
-        Mode::Merge => MergeJoin::create(args.path_a, args.path_b, max_memory)?.run(out),
+        Mode::Merge => MergeJoin::from_paths(args.path_a, args.path_b, max_memory)?.run(out),
         Mode::Hash => HashJoin::create(args.path_a, args.path_b, max_memory)?.run(out),
+        Mode::SortMerge => {
+            let dir = env::temp_dir().join(format!("csv_join_sort_{}", process::id()));
+            let (name_a, name_b) = (
+                args.path_a.display().to_string(),
+                args.path_b.display().to_string(),
+            );
+            let sorted =
+                Sorter::create(args.path_a, args.path_b, max_memory, index_memory).run(&dir);
+            let result = sorted.map_err(Into::into).and_then(|(a, b)| {
+                MergeJoin::from_readers((a, name_a), (b, name_b), max_memory).run(out)
+            });
+            let _ = fs::remove_dir_all(&dir);
+            result
+        }
     }
 }
 

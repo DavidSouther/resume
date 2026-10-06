@@ -6,7 +6,7 @@ use crate::disk::writer::JoinWriter;
 pub trait Join {
     /// Write one row per matching pair: the key, the rest of A, then the rest
     /// of B. Rows that are not valid UTF-8 are skipped and the join continues.
-    /// A failed read or write stops the join. All skips are returned as a single 
+    /// A failed read or write stops the join. All skips are returned as a single
     /// [`Skipped`](crate::disk::readers::Skipped) error, which also carries
     /// the error that stopped the run, if one did.
     fn run<W: Write>(self, out: JoinWriter<W>) -> anyhow::Result<()>;
