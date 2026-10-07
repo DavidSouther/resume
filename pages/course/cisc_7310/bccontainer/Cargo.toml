@@ -1,0 +1,11 @@
+[package]
+name = "bcdocker"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.81"
+description = "A small container launcher: clone, namespaces, chroot, and /proc in safe Rust."
+
+[dependencies]
+thiserror = "2"
+# Pinned exactly: the SAFETY comment in src/clone.rs relies on nix's audited source.
+nix = { version = "=0.31.3", features = ["sched", "mount", "hostname", "fs", "process", "signal", "user"] }
