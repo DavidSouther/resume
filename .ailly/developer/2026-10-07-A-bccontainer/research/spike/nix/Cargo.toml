@@ -1,0 +1,9 @@
+[package]
+name = "spike_nix"
+version = "0.1.0"
+edition = "2024"
+[dependencies]
+nix = { version = "0.31", features = ["sched","mount","hostname","fs","process","signal"] }
+thiserror = "2"
+[profile.release]
+opt-level = "s"

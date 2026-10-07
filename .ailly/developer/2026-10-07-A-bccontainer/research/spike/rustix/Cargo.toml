@@ -1,0 +1,10 @@
+[package]
+name = "spike_rustix"
+version = "0.1.0"
+edition = "2024"
+[dependencies]
+rustix = { version = "1", features = ["mount","process","system","fs"] }
+libc = "0.2"
+thiserror = "2"
+[profile.release]
+opt-level = "s"
