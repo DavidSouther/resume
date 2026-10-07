@@ -15,6 +15,7 @@ sched-name() {
         5) echo "SCHED_IDLE(5)" ;;
         6) echo "SCHED_DEADLINE(6)" ;;
         7) echo "SCHED_EXT(7)" ;;
+        *) echo "UNKNOWN($1)" ;;
     esac
 }
 
@@ -23,7 +24,7 @@ get-pids() {
 }
 
 pid-sched() {
-    cat /proc/$1/sched | grep policy | awk -F':' '{print $2}' | tr -d ' '
+    sed -E 's/.*\) //' /proc/$1/stat | cut -d ' ' -f 39
 }
 
 list-short() {
@@ -37,9 +38,9 @@ list-long() {
     echo "PID CMD ST CMD_ARGS"
     for PID in $(get-pids) ; do
         if [[ -d /proc/$PID && $(cat /proc/$PID/comm) == $1 ]] ; then
-            COMM="$(cat /proc/$PID/comm)"
-            STAT="$(cat /proc/$PID/stat | grep -o "$STATE_PATTERN" | head -1)"
-            LINE="$(cat /proc/$PID/cmdline | tr '\0' ' ' | cut -d ' ' -f 2-)"
+            COMM="$(cat /proc/$PID/comm)" || continue
+            STAT="$(sed -E 's/.*\) (.).*/\1/' /proc/$PID/stat)" || continue
+            LINE="$(cat /proc/$PID/cmdline | tr '\0' ' ' | cut -d ' ' -f 2-)" || continue
 
             echo "$PID $COMM $STAT $LINE"
         fi
@@ -62,7 +63,7 @@ list-pid-is() {
             wchan nswap cnswap exit_signal processor rt_priority policy delayacct_blkio_ticks \
             guest_time cguest_time start_data end_data start_brk arg_start arg_end env_start \
             env_end exit_code \
-        < <(cat /proc/$1/stat)
+        <<< "$rest"
 
     cat <<EOF
         pid: ${pid}
@@ -82,9 +83,9 @@ list-sched-policy-is() {
     echo "PID CMD ST SCHED_POLICY CMD_ARGS"
     for PID in $(get-pids) ; do
         if [[ -d /proc/$PID && $(pid-sched $PID) == $1 ]] ; then
-            COMM="$(cat /proc/$PID/comm)"
-            STAT="$(cat /proc/$PID/stat | grep -o "$STATE_PATTERN" | head -1)"
-            LINE="$(cat /proc/$PID/cmdline | tr '\0' ' ' | cut -d ' ' -f 2-)"
+            COMM="$(cat /proc/$PID/comm)" || continue
+            STAT="$(sed -E 's/.*\) (.).*/\1/' /proc/$PID/stat)" || continue
+            LINE="$(cat /proc/$PID/cmdline | tr '\0' ' ' | cut -d ' ' -f 2-)" || continue
             SCHED="$(sched-name $1)"
             echo "$PID $COMM $STAT $SCHED $LINE"
         fi
@@ -104,7 +105,10 @@ Options are
 EOF
 }
 
-case "$1" in
+case "${1:-}" in
+    --help)
+        usage
+        ;;
     --list-short)
         list-short
         ;;
@@ -112,15 +116,16 @@ case "$1" in
         list-long '*'
         ;;
     --list-name-has)
-        list-long "*$2*"
+        list-long "*${2:?missing <name_part>}*"
         ;;
     --list-pid-is)
-        list-pid-is "$2"
+        list-pid-is "${2:?missing <pid>}"
         ;;
     --list-sched-policy-is)
-        list-sched-policy-is "$2"
+        list-sched-policy-is "${2:?missing <policy_number>}"
         ;;
     *)
-        usage "$0"
+        usage "$0" >&2
+        exit 2
         ;;
 esac

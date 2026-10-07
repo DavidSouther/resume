@@ -8,11 +8,11 @@ uname -a
 
 mkdir -p traces
 
-# strace -o traces/list-shed-policy -f ./psstat.sh --list-sched-policy-is 0
-# egrep 'openat.*/proc/' traces/list-shed-policy
+strace -o traces/list-shed-policy -f ./psstat.sh --list-sched-policy-is 0
+egrep 'openat.*/proc/' traces/list-shed-policy
 
-# strace -o traces/list-short -f ./psstat.sh --list-short
-# egrep -A3 "openat.*/proc" traces/list-short
+strace -o traces/list-short -f ./psstat.sh --list-short
+egrep -A3 "openat.*/proc" traces/list-short
 
 ps -eo pid,stat,comm,args
 ./psstat.sh --list-long

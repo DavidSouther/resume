@@ -1,0 +1,121 @@
+Linux ef62dce4eaee 6.8.0-64-generic #67-Ubuntu SMP PREEMPT_DYNAMIC Sun Jun 15 20:23:40 UTC 2025 aarch64 GNU/Linux
+PID CMD ST SCHED_POLICY CMD_ARGS
+1 bash S SCHED_NORMAL(0) 
+12 yes R SCHED_NORMAL(0) foo bar baz 
+91 yes R SCHED_NORMAL(0) foo bar baz 
+236 yes R SCHED_NORMAL(0) foo bar baz 
+391 bash S SCHED_NORMAL(0) 
+394 bash S SCHED_NORMAL(0) 
+396 strace S SCHED_NORMAL(0) -o traces/list-shed-policy -f ./psstat.sh --list-sched-policy-is 0 
+398 yes R SCHED_NORMAL(0) foo bar baz 
+400 psstat.sh S SCHED_NORMAL(0) ./psstat.sh --list-sched-policy-is 0 
+402   openat(AT_FDCWD, "/proc/filesystems", O_RDONLY|O_CLOEXEC) = 3
+404   openat(AT_FDCWD, "/proc/filesystems", O_RDONLY|O_CLOEXEC) = 3
+404   openat(AT_FDCWD, "/proc/1/stat", O_RDONLY) = 3
+406   openat(AT_FDCWD, "/proc/1/comm", O_RDONLY) = 3
+407   openat(AT_FDCWD, "/proc/filesystems", O_RDONLY|O_CLOEXEC) = 3
+407   openat(AT_FDCWD, "/proc/1/stat", O_RDONLY) = 3
+409   openat(AT_FDCWD, "/proc/1/cmdline", O_RDONLY) = 3
+414   openat(AT_FDCWD, "/proc/filesystems", O_RDONLY|O_CLOEXEC) = 3
+414   openat(AT_FDCWD, "/proc/12/stat", O_RDONLY) = 3
+416   openat(AT_FDCWD, "/proc/12/comm", O_RDONLY) = 3
+417   openat(AT_FDCWD, "/proc/filesystems", O_RDONLY|O_CLOEXEC) = 3
+417   openat(AT_FDCWD, "/proc/12/stat", O_RDONLY) = 3
+419   openat(AT_FDCWD, "/proc/12/cmdline", O_RDONLY) = 3
+424   openat(AT_FDCWD, "/proc/filesystems", O_RDONLY|O_CLOEXEC) = 3
+424   openat(AT_FDCWD, "/proc/91/stat", O_RDONLY) = 3
+426   openat(AT_FDCWD, "/proc/91/comm", O_RDONLY) = 3
+427   openat(AT_FDCWD, "/proc/filesystems", O_RDONLY|O_CLOEXEC) = 3
+427   openat(AT_FDCWD, "/proc/91/stat", O_RDONLY) = 3
+429   openat(AT_FDCWD, "/proc/91/cmdline", O_RDONLY <unfinished ...>
+434   openat(AT_FDCWD, "/proc/filesystems", O_RDONLY|O_CLOEXEC) = 3
+434   openat(AT_FDCWD, "/proc/236/stat", O_RDONLY) = 3
+436   openat(AT_FDCWD, "/proc/236/comm", O_RDONLY) = 3
+437   openat(AT_FDCWD, "/proc/filesystems", O_RDONLY|O_CLOEXEC) = 3
+437   openat(AT_FDCWD, "/proc/236/stat", O_RDONLY) = 3
+439   openat(AT_FDCWD, "/proc/236/cmdline", O_RDONLY <unfinished ...>
+444   openat(AT_FDCWD, "/proc/filesystems", O_RDONLY|O_CLOEXEC) = 3
+444   openat(AT_FDCWD, "/proc/391/stat", O_RDONLY) = 3
+446   openat(AT_FDCWD, "/proc/391/comm", O_RDONLY) = 3
+447   openat(AT_FDCWD, "/proc/filesystems", O_RDONLY|O_CLOEXEC) = 3
+447   openat(AT_FDCWD, "/proc/391/stat", O_RDONLY) = 3
+449   openat(AT_FDCWD, "/proc/391/cmdline", O_RDONLY <unfinished ...>
+454   openat(AT_FDCWD, "/proc/filesystems", O_RDONLY|O_CLOEXEC) = 3
+454   openat(AT_FDCWD, "/proc/394/stat", O_RDONLY) = 3
+456   openat(AT_FDCWD, "/proc/394/comm", O_RDONLY) = 3
+457   openat(AT_FDCWD, "/proc/filesystems", O_RDONLY|O_CLOEXEC) = 3
+457   openat(AT_FDCWD, "/proc/394/stat", O_RDONLY) = 3
+459   openat(AT_FDCWD, "/proc/394/cmdline", O_RDONLY <unfinished ...>
+464   openat(AT_FDCWD, "/proc/filesystems", O_RDONLY|O_CLOEXEC) = 3
+464   openat(AT_FDCWD, "/proc/396/stat", O_RDONLY) = 3
+466   openat(AT_FDCWD, "/proc/396/comm", O_RDONLY) = 3
+467   openat(AT_FDCWD, "/proc/filesystems", O_RDONLY|O_CLOEXEC) = 3
+467   openat(AT_FDCWD, "/proc/396/stat", O_RDONLY) = 3
+469   openat(AT_FDCWD, "/proc/396/cmdline", O_RDONLY) = 3
+474   openat(AT_FDCWD, "/proc/filesystems", O_RDONLY|O_CLOEXEC) = 3
+474   openat(AT_FDCWD, "/proc/398/stat", O_RDONLY) = 3
+476   openat(AT_FDCWD, "/proc/398/comm", O_RDONLY) = 3
+477   openat(AT_FDCWD, "/proc/filesystems", O_RDONLY|O_CLOEXEC) = 3
+477   openat(AT_FDCWD, "/proc/398/stat", O_RDONLY) = 3
+479   openat(AT_FDCWD, "/proc/398/cmdline", O_RDONLY <unfinished ...>
+484   openat(AT_FDCWD, "/proc/filesystems", O_RDONLY|O_CLOEXEC) = 3
+484   openat(AT_FDCWD, "/proc/400/stat", O_RDONLY) = 3
+486   openat(AT_FDCWD, "/proc/400/comm", O_RDONLY) = 3
+487   openat(AT_FDCWD, "/proc/filesystems", O_RDONLY|O_CLOEXEC) = 3
+487   openat(AT_FDCWD, "/proc/400/stat", O_RDONLY) = 3
+489   openat(AT_FDCWD, "/proc/400/cmdline", O_RDONLY <unfinished ...>
+PID
+1
+12
+91
+236
+391
+394
+398
+494
+497
+498
+499
+499   openat(AT_FDCWD, "/proc/filesystems", O_RDONLY|O_CLOEXEC) = 3
+499   fstat(3, {st_mode=S_IFREG|0444, st_size=0, ...}) = 0
+499   read(3, "nodev\tsysfs\nnodev\ttmpfs\nnodev\tbd"..., 1024) = 431
+499   read(3, "", 1024)                 = 0
+--
+499   openat(AT_FDCWD, "/proc", O_RDONLY|O_NONBLOCK|O_CLOEXEC|O_DIRECTORY) = 3
+499   fstat(3, {st_mode=S_IFDIR|0555, st_size=0, ...}) = 0
+499   getdents64(3, 0xc581e9890640 /* 73 entries */, 32768) = 2152
+499   getdents64(3, 0xc581e9890640 /* 0 entries */, 32768) = 0
+    PID STAT COMMAND         COMMAND
+      1 Ss   bash            /bin/bash
+     12 R    yes             yes foo bar baz
+     91 R    yes             yes foo bar baz
+    236 R    yes             yes foo bar baz
+    391 S+   bash            /bin/bash
+    394 S+   bash            /bin/bash
+    398 R+   yes             yes foo bar baz
+    501 R+   ps              ps -eo pid,stat,comm,args
+PID CMD ST CMD_ARGS
+1 bash S 
+12 yes R foo bar baz 
+91 yes R foo bar baz 
+236 yes R foo bar baz 
+391 bash S 
+394 bash S 
+398 yes R foo bar baz 
+502 psstat.sh S ./psstat.sh --list-long 
+cat: /proc/-10/stat: No such file or directory
+0
+-r-------- 1 root root 0 Oct  7 23:24 /proc/1/environ
+-r--r--r-- 1 root root 0 Oct  7 23:24 /proc/1/stat
+
+        pid: 1
+       comm: bash
+      state: S
+     minflt: 1428 
+     majflt: 0
+      utime: 1 clock ticks
+      stime: 1 clock ticks
+num_threads: 1 
+      vsize: 4263936 bytes
+        rss: 832 pages
+cat: /proc/1/environ: Permission denied
