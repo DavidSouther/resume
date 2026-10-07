@@ -33,6 +33,7 @@ pub fn container_main(run: &Run) -> i32 {
 }
 
 fn supervise(run: &Run) -> Result<Status, Error> {
+    sandbox::enter(&run.container)?;
     let child = Command::new(&run.app)
         .args(&run.args)
         .spawn()
