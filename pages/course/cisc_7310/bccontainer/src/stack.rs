@@ -2,13 +2,13 @@
 
 use std::fmt;
 
-/// The smallest accepted stack. A1 in `clone.rs` claims the child's stack use stays below this,
-/// with a margin of 64x over the depth measured in a debug build (`tests/stack.sh`).
+/// The smallest accepted stack: the floor A1 in `clone.rs` depends on; lowering it weakens that
+/// argument. `tests/stack.sh` fails at `MIN / 16`.
 pub const MIN: usize = 1 << 20;
 /// Used unless `--stack-size` says otherwise.
 pub const DEFAULT: usize = 8 << 20;
-/// The largest accepted stack. The memory is reserved, not committed, but a limit keeps a
-/// typo from asking for terabytes.
+/// The largest accepted stack. Untouched stack pages cost no memory, but a limit keeps a typo
+/// from asking for terabytes.
 pub const MAX: usize = 1 << 30;
 
 #[derive(Debug, thiserror::Error)]
@@ -17,9 +17,12 @@ pub enum Error {
     Invalid { text: String },
     #[error("stack size: {text} is outside {} to {}", Human(MIN), Human(MAX))]
     OutOfRange { text: String },
+    #[error("stack size: cannot allocate {}", Human(*bytes))]
+    Alloc { bytes: usize },
 }
 
-/// A stack size in bytes, between `MIN` and `MAX`.
+/// A stack size in bytes. Always within `MIN..=MAX`; `clone::spawn`'s safety argument relies
+/// on the lower bound, so every constructor must check it.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct StackSize(usize);
 
@@ -54,6 +57,16 @@ impl StackSize {
 
     pub fn bytes(self) -> usize {
         self.0
+    }
+
+    /// A zeroed buffer of exactly `bytes()` bytes, or `Alloc` if the address-space or commit
+    /// limit cannot hold it. The fallible reservation is released at once; `vec!` then gets the
+    /// same space as zeroed pages, committed only when touched.
+    pub fn allocate(self) -> Result<Vec<u8>, Error> {
+        Vec::<u8>::new()
+            .try_reserve_exact(self.bytes())
+            .map_err(|_| Error::Alloc { bytes: self.bytes() })?;
+        Ok(vec![0u8; self.bytes()])
     }
 }
 

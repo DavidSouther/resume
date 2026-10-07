@@ -27,7 +27,7 @@ new_case() {
   mkdir -p "$stubs" "$minimal" "$work/fixture/etc" "$work/run"
   echo 'PRETTY_NAME="stub"' >"$work/fixture/etc/os-release"
   : >"$log"
-  # The stubs share one body: record the call, answer info, export a tar.
+  # Each stub logs its call and exports the fixture as a tar; docker also answers info, create and rm.
   cat >"$stubs/docker" <<STUB
 #!/usr/bin/env bash
 echo "docker \$*" >>"$log"
@@ -101,6 +101,16 @@ err=$(mk tinysys debian:bookworm-slim extra 2>&1 >/dev/null); code=$?
 [[ $code -ne 0 ]] || fail "exited 0"
 [[ $err == *"usage: mkrootfs.sh <name> [image]"* ]] || fail "message: $err"
 [[ -z $(ls -A "$work/run/containers" 2>/dev/null) ]] || fail "left behind: $(ls -A "$work/run/containers")"
+done_case
+
+new_case "a name that is not a hostname is refused before anything is built"
+for bad in "" . .. a/b ../x "$(printf 'a%.0s' $(seq 65))"; do
+  err=$(mk "$bad" 2>&1 >/dev/null); code=$?
+  [[ $code -ne 0 ]] || fail "${bad:0:10}: exited 0"
+  [[ $err == *"name must be"* ]] || fail "${bad:0:10}: message: $err"
+done
+[[ -z $(ls -A "$work/run" 2>/dev/null) ]] || fail "left behind: $(ls -A "$work/run")"
+[[ ! -s $log ]] || fail "tools ran: $(cat "$log")"
 done_case
 
 new_case "neither docker nor crane gives an install hint"

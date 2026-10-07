@@ -3,7 +3,7 @@ name = "bcdocker"
 version = "0.1.0"
 edition = "2021"
 rust-version = "1.96"
-description = "A small container launcher: clone, namespaces, chroot, and /proc in safe Rust."
+description = "A small container launcher: clone, namespaces, chroot, and /proc, with one audited `unsafe` call."
 
 [dependencies]
 thiserror = "2"

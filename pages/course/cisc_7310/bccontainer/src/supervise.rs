@@ -24,7 +24,8 @@ pub enum Error {
     Wait(#[source] Errno),
 }
 
-/// The `PATH` the application sees: Debian's default.
+/// Replaces the host's `PATH`, whose directories need not exist in the rootfs; this is Debian's
+/// default. Other variables pass through.
 const DEBIAN_PATH: &str = "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin";
 
 /// Runs the container's PID 1 and returns its exit status. A failure is printed here,
@@ -39,9 +40,6 @@ pub fn container_main(run: &Run) -> i32 {
     }
 }
 
-/// In order: ask for SIGKILL when the host-side parent dies, enter the sandbox, close
-/// inherited descriptors, start the application, then reap until it exits.
-///
 /// The parent-death signal fires when the thread that created PID 1 exits. By I1 in
 /// `clone.rs` that is the host process's only thread, so it fires when the host-side
 /// `bcdocker` dies. A short window remains if the parent dies before this call; the usual
@@ -50,6 +48,7 @@ pub fn container_main(run: &Run) -> i32 {
 fn supervise(run: &Run) -> Result<Status, Error> {
     set_pdeathsig(Signal::SIGKILL).map_err(Error::Pdeathsig)?;
     sandbox::enter(&run.container)?;
+    // After enter: lists the container's own /proc and closes anything setup left open.
     close_extra_fds().map_err(Error::Fds)?;
     let child = Command::new(&run.app)
         .args(&run.args)
@@ -86,11 +85,12 @@ fn open_fds_above(min: RawFd) -> io::Result<Vec<RawFd>> {
 /// Closes every descriptor above 2, so the application inherits only stdin, stdout and
 /// stderr. A host directory descriptor left open would let `fchdir` leave the chroot.
 ///
-/// No live value in this process owns a descriptor above 2 here: the parent's frames above
-/// `callback` were copied but are never resumed or dropped in the child (E2 in `clone.rs`),
-/// and the `ReadDir` used to list them is dropped inside `open_fds_above`. Its own number
-/// then gives `EBADF`, which is expected and ignored. The parent's descriptors are
-/// unaffected because the clone flags exclude `CLONE_FILES` (I2 in `clone.rs`).
+/// Call only in the cloned PID 1, after `sandbox::enter`. There, no live value owns a
+/// descriptor above 2: the parent's frames were copied by `clone::spawn` but are never resumed
+/// or dropped here, no static in this crate, std, nix or glibc holds one, and the `ReadDir`
+/// used to list them is dropped in `open_fds_above`; its number then gives `EBADF`, which is
+/// ignored. The parent's descriptors are unaffected because `CLONE_FLAGS` excludes
+/// `CLONE_FILES`. In the host process this would close descriptors owned by live values.
 fn close_extra_fds() -> io::Result<()> {
     for fd in open_fds_above(2)? {
         let _ = close(fd);

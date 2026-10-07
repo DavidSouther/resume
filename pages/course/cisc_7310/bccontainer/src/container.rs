@@ -11,7 +11,8 @@ pub enum Error {
     BadHostname { name: String },
 }
 
-/// A hostname the kernel accepts: 1 to 64 bytes, no NUL and no `/`.
+/// At most 64 bytes (the kernel's limit), non-empty, and with no NUL or `/`, since it comes
+/// from a directory name.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Hostname(String);
 
@@ -36,8 +37,12 @@ pub struct Container {
 }
 
 impl Container {
-    /// A bare name is `cwd/containers/<name>`; an argument with a `/` is `cwd.join(arg)`.
+    /// A bare name (not `.` or `..`) is `cwd/containers/<name>`; an argument with a `/` is
+    /// `cwd.join(arg)`.
     pub fn resolve(arg: &str, cwd: &Path) -> Result<Container, Error> {
+        if arg == "." || arg == ".." {
+            return Err(Error::BadHostname { name: arg.to_owned() });
+        }
         let rootfs = if arg.contains('/') { cwd.join(arg) } else { cwd.join("containers").join(arg) };
         if !rootfs.is_dir() {
             return Err(Error::Missing { path: rootfs });
@@ -132,6 +137,15 @@ pub(crate) mod tests {
         assert!(Hostname::parse(&"a".repeat(64)).is_ok());
         for bad in ["", &"a".repeat(65), "a\0b", "a/b"] {
             assert_matches!(Hostname::parse(bad), Err(Error::BadHostname { .. }), "{bad:?}");
+        }
+    }
+
+    #[test]
+    fn a_bare_dot_or_dot_dot_is_a_bad_hostname_not_the_containers_directory() {
+        let cwd = Scratch::new().with_dir("containers");
+
+        for arg in [".", ".."] {
+            assert_matches!(Container::resolve(arg, cwd.path()), Err(Error::BadHostname { .. }), "{arg:?}");
         }
     }
 

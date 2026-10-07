@@ -62,6 +62,11 @@ done
 check "host filesystem" sealed "$(field hostfs)"
 # Nothing the container mounted is left on the host, and setup left the rootfs's /proc an empty directory.
 grep -q "$rootfs" /proc/mounts && fail "leftover mount under $rootfs"
+# Nothing the container mounts reaches the mount table it was started from, even when that
+# table propagates mounts: run in a throwaway namespace whose / is shared, and look there.
+leaked=$(cd "$work" && unshare --mount --propagation shared \
+  bash -c '"$1" run bctest /bin/true </dev/null; grep -c -- "$2" /proc/self/mountinfo' _ "$bcdocker" "$rootfs")
+check "mounts leaked to a shared parent" 0 "$leaked"
 [[ -z $(ls -A "$rootfs/proc") ]] || fail "rootfs /proc is not an empty directory"
 
 # 3. Exit status and failures reach the host shell, each with a named reason.

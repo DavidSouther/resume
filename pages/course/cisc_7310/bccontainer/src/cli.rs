@@ -1,4 +1,4 @@
-//! The command line: `bcdocker run <container> <app> [args...]`.
+//! The command line: `bcdocker run [--stack-size <size>] <container> <app> [args...]`.
 
 use std::path::Path;
 
@@ -11,7 +11,7 @@ use crate::{
 pub enum Error {
     #[error("usage: bcdocker run [--stack-size <size>] <container> <app> [args...]")]
     Usage,
-    #[error("usage: unknown option {0:?}; bcdocker run [--stack-size <size>] <container> <app> [args...]")]
+    #[error("usage: unknown option {0:?} (bcdocker run [--stack-size <size>] <container> <app> [args...])")]
     UnknownOption(String),
     #[error(transparent)]
     StackSize(#[from] stack::Error),

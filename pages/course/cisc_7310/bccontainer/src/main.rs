@@ -33,7 +33,8 @@ fn main() -> ExitCode {
     }
 }
 
-/// Order of checks: usage, platform, root, then the container.
+/// Usage errors come first, on any platform and without root, so a typo never looks like a
+/// privilege error.
 fn run() -> Result<Status, Error> {
     let args = cli::parse(std::env::args())?;
     #[cfg(not(target_os = "linux"))]

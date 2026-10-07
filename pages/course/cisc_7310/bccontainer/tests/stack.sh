@@ -39,13 +39,17 @@ fi
 # where the kernel merged the block with a neighbouring mapping.
 touched() {
   local bytes=$1; shift
-  local host pid1 sp page first count=0 i e
+  local host pid1='' app='' sleeper='' sp page first count=0 i e
   (cd "$work" && exec "$bcdocker" run --stack-size "$bytes" bctest /bin/sh -c 'sleep 20' sh "$@" \
     </dev/null >/dev/null 2>&1) &
   host=$!
+  # Found by ancestry (bcdocker, PID 1, sh, sleep), never by name. Once sh has started sleep,
+  # PID 1 is waiting.
   for _ in $(seq 100); do
     pid1=$(pgrep -P "$host" | head -1)
-    [[ -n $pid1 ]] && pgrep -xf 'sleep 20' >/dev/null && break
+    [[ -n $pid1 ]] && app=$(pgrep -P "$pid1" | head -1)
+    [[ -n $app ]] && sleeper=$(pgrep -P "$app" | head -1)
+    [[ -n $sleeper ]] && break
     sleep 0.1
   done
   sp=$(awk '{print $(NF-1)}' "/proc/$pid1/syscall" 2>/dev/null)
@@ -61,7 +65,7 @@ touched() {
   fi
   kill -9 "$host" 2>/dev/null
   { wait "$host"; } 2>/dev/null
-  pkill -xf 'sleep 20' 2>/dev/null
+  [[ -n $app ]] && kill -9 "$app" ${sleeper:+"$sleeper"} 2>/dev/null
   [[ $sp == 0x* ]] && echo $(((count + 1) * 4))
 }
 
@@ -85,6 +89,11 @@ long=/$(printf 'a%.0s' $(seq 3000))
 err=$(cd "$work" && "$bcdocker" run --stack-size 1M bctest "$long" 2>&1 >/dev/null </dev/null); code=$?
 [[ $code -eq 1 ]] || fail "failing exec with a long path exited $code, not 1"
 [[ $err == "bcdocker: exec $long: "* ]] || fail "failing exec message: ${err:0:80}"
+
+# A stack the address-space limit cannot hold is refused with a message, not an abort.
+err=$(cd "$work" && ulimit -v 400000 && "$bcdocker" run --stack-size 1G bctest /bin/true 2>&1 >/dev/null </dev/null); code=$?
+[[ $code -eq 1 ]] || fail "unallocatable stack exited $code, not 1"
+[[ $err == "bcdocker: stack size: cannot allocate 1G" ]] || fail "unallocatable stack message: ${err:0:80}"
 
 if ((failures)); then echo "$failures check(s) failed" >&2; exit 1; fi
 echo "ok"

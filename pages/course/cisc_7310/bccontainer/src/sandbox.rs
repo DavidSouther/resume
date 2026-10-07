@@ -28,7 +28,8 @@ pub struct DevNode {
     pub minor: u64,
 }
 
-/// The devices every OCI runtime provides.
+/// The OCI runtime spec's default devices, less `/dev/console` and `/dev/ptmx`: there is no
+/// pseudo-terminal, so `tty` reports "not a tty".
 pub const DEV_NODES: [DevNode; 6] = [
     DevNode { name: "null", major: 1, minor: 3 },
     DevNode { name: "zero", major: 1, minor: 5 },
@@ -38,10 +39,10 @@ pub const DEV_NODES: [DevNode; 6] = [
     DevNode { name: "tty", major: 5, minor: 0 },
 ];
 
-/// Runs in the cloned child, before the application starts. Every mount lives in the
-/// private mount namespace, so nothing remains on the host. The rootfs directory itself is
-/// never written: `proc` and `dev` are only mounted over, and the device nodes go into the
-/// tmpfs.
+/// Must run in a process with its own mount and UTS namespaces (see `clone::CLONE_FLAGS`);
+/// elsewhere it changes the host. Every mount lives in the private mount namespace, so
+/// nothing remains on the host. Leaves the rootfs directory on disk unchanged: `proc` and
+/// `dev` are only mounted over, and the device nodes go into the tmpfs.
 pub fn enter(container: &Container) -> Result<(), Error> {
     let none = None::<&str>;
     let root = container.rootfs();
@@ -51,7 +52,8 @@ pub fn enter(container: &Container) -> Result<(), Error> {
     mount(none, "/", none, MsFlags::MS_REC | MsFlags::MS_PRIVATE, none)
         .map_err(|source| Error::Mount { target: "/", source })?;
     sethostname(container.hostname().as_str()).map_err(Error::Hostname)?;
-    // A mount point of its own, so the chroot below is a root the container cannot leave by name.
+    // Bind the rootfs onto itself so the container's `/` is a mount point: otherwise its mount
+    // table has no entry for `/`, and `findmnt /` or `df /` inside cannot describe it.
     mount(Some(root), root, none, MsFlags::MS_BIND | MsFlags::MS_REC, none)
         .map_err(|source| Error::Mount { target: "rootfs", source })?;
     mount(
@@ -78,6 +80,9 @@ pub fn enter(container: &Container) -> Result<(), Error> {
     }
     umask(old_umask);
 
+    // chroot does not move the working directory: enter the root by path (after the bind mount,
+    // so this is the bind mount), make it the root, and land on `/`, so no working directory is
+    // left outside it. chroot does not confine a root process; a nested chroot climbs back out.
     chdir(root).map_err(Error::Chroot)?;
     chroot(".").map_err(Error::Chroot)?;
     chdir("/").map_err(Error::Chroot)?;
