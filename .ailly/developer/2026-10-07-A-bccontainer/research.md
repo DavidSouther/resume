@@ -74,19 +74,19 @@ E marks a requirement stated in a course source; I marks one inferred.
 
 ### clone versus clone3, and the flag set
 
-- **Use `clone`, not `clone3`.** Both create the same namespaces from the same flags. `clone3` (Linux 5.3) takes a `struct clone_args` with 64-bit flags, an explicit stack size, `set_tid`, `CLONE_PIDFD`, and `CLONE_INTO_CGROUP` [6]. None of those is needed for the minimum. glibc has no `clone3` wrapper, so a caller must use `syscall(2)` [6], and no Rust crate surveyed wraps it safely (the `clone3` crate's `call()` is `unsafe`). `clone` has a glibc wrapper and a `nix` binding. Docker's default seccomp profile adds a further reason: it cannot inspect flags inside `clone_args`, so Moby makes `clone3` return `ENOSYS`, forcing glibc's fallback to `clone` [12]. Whether that applies under `--privileged` is not established (see Platforms). Bookworm's kernel (6.1) supports `clone3`; availability is not the constraint. Reconsider it when cgroup limits arrive, because `CLONE_INTO_CGROUP` places the child in a cgroup at creation.
+- **Use `clone`, not `clone3`.** Both create the same namespaces from the same flags. `clone3` (Linux 5.3) takes a `struct clone_args` with 64-bit flags, an explicit stack size, `set_tid`, `CLONE_PIDFD`, and `CLONE_INTO_CGROUP` [6]. None of those is needed for the minimum. glibc has no `clone3` wrapper, so a caller must use `syscall(2)` [6], and no Rust crate surveyed wraps it safely (the `clone3` crate's `call()` is `unsafe`). `clone` has a glibc wrapper and a `nix` binding. Bookworm's kernel (6.1) supports `clone3`, so availability is not the constraint. Docker's default seccomp profile returns `ENOSYS` for `clone3` only to containers without `CAP_SYS_ADMIN` [12], so it does not bear on the privileged targets. Reconsider `clone3` when cgroup limits arrive: `CLONE_INTO_CGROUP` places the child in a cgroup at creation.
 - **`CLONE_IO` is not the place to start.** The man page says the child "shares an I/O context with the calling process", where the I/O context is "the I/O scope of the disk scheduler" [7]. It tunes block-layer scheduling for threads doing I/O for one process. It isolates nothing and does not redirect stdin, stdout, or stderr. If the intent was "start with the I/O plumbing", the first milestone is a child whose stdio reaches the terminal (see I/O redirection).
-- **Starting set:** `CLONE_NEWPID | CLONE_NEWNS | CLONE_NEWUTS | CLONE_NEWIPC`, with `SIGCHLD` as the exit signal so the parent can `waitpid` [7]. Creating these namespaces requires `CAP_SYS_ADMIN`; `CLONE_NEWUSER` is the exception [6]. Deferred: `CLONE_NEWNET` (requested), `CLONE_NEWCGROUP`, `CLONE_NEWUSER`. `CLONE_NEWUSER` cannot combine with `CLONE_FS`, `CLONE_THREAD`, or `CLONE_PARENT`, and `CLONE_NEWPID` cannot combine with `CLONE_THREAD` or `CLONE_PARENT` [6].
+- **Starting set:** `CLONE_NEWPID | CLONE_NEWNS | CLONE_NEWUTS | CLONE_NEWIPC`, with `SIGCHLD` as the exit signal so the parent can `waitpid` [7]. Creating these namespaces requires `CAP_SYS_ADMIN`; `CLONE_NEWUSER` is the exception [6]. Deferred: `CLONE_NEWNET` (requested), `CLONE_NEWCGROUP`, `CLONE_NEWUSER`. `CLONE_FS` is rejected with `CLONE_NEWNS` (`EINVAL`), and with `CLONE_NEWUSER`; `CLONE_NEWUSER` and `CLONE_NEWPID` are also rejected with `CLONE_THREAD` or `CLONE_PARENT` [7].
 - **Flags left off, and why** [7]. The child is a separate process, not a thread, so the sharing flags stay unset:
 
   | Flag | Effect if set | Why it stays off |
   |---|---|---|
-  | `CLONE_VM` | Child shares the parent's memory | Would break isolation; the child must exec into its own address space |
-  | `CLONE_VFORK` | Parent suspends until the child execs or exits | The parent must stay free to wait and forward signals |
+  | `CLONE_VM` | Child shares the parent's memory | The child's setup code would write into the parent's memory before `exec` |
+  | `CLONE_VFORK` | Parent suspends until the child execs or exits | The child outlives `exec` as the container's init, and the parent must be free to forward signals meanwhile; it also requires care with `CLONE_VM` |
   | `CLONE_FILES` | Shared descriptor table | The child's `close`/`CLOEXEC` hygiene would change the parent's descriptors |
-  | `CLONE_FS` | Shared root, cwd, and umask | `chroot` in the child would change the parent's root; also incompatible with `CLONE_NEWUSER` |
-  | `CLONE_SIGHAND`, `CLONE_THREAD`, `CLONE_PARENT` | Shared signal handlers; thread semantics; sibling parentage | Thread semantics conflict with `CLONE_NEWPID`; the parent must be the child's parent to `waitpid` it |
-  | `CLONE_PIDFD` (`clone3` and `clone`) | Returns a pidfd for the child | Not needed; `waitpid` suffices |
+  | `CLONE_FS` | Shared root, cwd, and umask | Rejected with `CLONE_NEWNS`, which is in the starting set; it would also let the child's `chroot` change the parent's root |
+  | `CLONE_SIGHAND`, `CLONE_THREAD`, `CLONE_PARENT` | Shared signal handlers (requires `CLONE_VM`); thread semantics; sibling parentage | `CLONE_THREAD` and `CLONE_PARENT` are rejected with `CLONE_NEWPID`; the parent must stay the child's parent to `waitpid` it |
+  | `CLONE_PIDFD` | Returns a pidfd for the child | Not needed; `waitpid` suffices |
   | `CLONE_IO` | Shared disk I/O context | No isolation or stdio effect, as above |
 
 - **PID 1 duties.** The first process in a PID namespace is init: it receives only signals it has handlers for (SIGKILL and SIGSTOP from an ancestor namespace still work), orphans reparent to it, and when it exits the kernel SIGKILLs the whole namespace [8].
@@ -104,7 +104,7 @@ child:  mount(NULL, "/", NULL, MS_REC|MS_PRIVATE, NULL)      // stop mount propa
 parent: waitpid(child) -> exit status
 ```
 
-Before `execve`, the child must also close every descriptor above 2 (or have opened them with `O_CLOEXEC`). A directory descriptor opened on the host before the `chroot` survives it, and `fchdir` on that descriptor returns the child to the host tree.
+Before `execve`, the child must also close every descriptor above 2 (or have opened them with `O_CLOEXEC`). A directory descriptor opened on the host before the `chroot` survives it, and `fchdir` on that descriptor returns the child to the host tree [19].
 
 The `MS_PRIVATE` step matters: on systemd hosts `/` is a shared mount, and without it the child's `/proc` mount leaks back to the host [20]. Plain `chroot` is not a security boundary: it does not change the working directory, and the man page shows the escape `mkdir foo; chroot foo; cd ..` [19]. `pivot_root(".", ".")` followed by `umount2(".", MNT_DETACH)` detaches the old tree and closes that escape; it requires the new root to be a mount point [18]. The assignment asks only for chroot, so `pivot_root` is an optional hardening step.
 
@@ -139,7 +139,7 @@ Option A differs from a raw `clone` in ways the report must explain [8][9]:
 3. After `unshare(CLONE_NEWPID)` the parent cannot create threads (`clone` returns `EINVAL` for `CLONE_THREAD`) [7].
 4. Once the first child exits, later forks fail with `ENOMEM`, so each parent process hosts one container [8].
 5. `/proc` shows the PID namespace of whoever mounts it, so the re-exec'd child must mount it [8].
-6. std's `Command` spawns through `posix_spawn`, `pidfd_spawnp`, or `fork` internally [33], so a `clone` or `clone3` still happens, just not by name in our code. Option A therefore does not guarantee "no `clone3`".
+6. std's `Command` spawns through `posix_spawn`, `pidfd_spawnp`, or `fork` internally [33], so a `clone` still happens, just not by name in our code.
 
 ### I/O redirection
 
@@ -174,7 +174,7 @@ The two hosts are macOS native and Debian native. The two run targets are a `boo
 | **`bookworm-slim` VM** | Run target | All available with root | What the VM is, and which host runs it, is unspecified (see decision 7) |
 | **`bookworm-slim` in Docker on Mac** | Run target | Runs on Docker Desktop's Linux VM kernel; needs elevated privileges (below) | Rootfs must be arm64 on Apple silicon |
 
-**Docker privileges.** The default seccomp profile denies namespace `clone`, `unshare`, `mount`, and `pivot_root` unless the container has `CAP_SYS_ADMIN` [11]. The profile adjusts to the capabilities granted, and `CAP_SYS_CHROOT` is a default capability, so `chroot` alone works unprivileged [10]. Docker's default AppArmor profile denies `mount` where AppArmor is enforced [26]; whether Docker Desktop's VM enforces it is unknown. `--privileged` grants all capabilities and reconfigures AppArmor [10], so it covers both. Rootless Docker and Enhanced Container Isolation run containers in user namespaces, where the kernel refuses a fresh `/proc` mount that would reveal too much [28]; the mount is expected to fail there, but this was not tested.
+**Docker privileges.** The default seccomp profile denies namespace `clone`, `unshare`, and `mount` unless the container has `CAP_SYS_ADMIN`, and denies `pivot_root` as a privileged operation [11]. The profile adjusts to the capabilities granted, and `CAP_SYS_CHROOT` is a default capability, so `chroot` alone works unprivileged [10]. Docker's default AppArmor profile denies `mount` where AppArmor is enforced [26]; whether Docker Desktop's VM enforces it is unknown. `--privileged` grants all capabilities and reconfigures AppArmor [10], so it covers both. Rootless Docker and Enhanced Container Isolation run containers in user namespaces, where the kernel refuses a fresh `/proc` mount that would reveal too much [28]; the mount is expected to fail there, but this was not tested.
 
 **Build and run paths.**
 - *Debian native:* `cargo build`, the rootfs script, then `sudo ./target/debug/bcdocker run …`.
@@ -197,7 +197,7 @@ Before doing any work in this feature, load these skills via the active harness'
 
 **"Start with `CLONE_IO`."** Refuted by the man page [7]: it concerns disk scheduling, not isolation or stdio.
 
-**"`clone3` is the modern choice."** True of the kernel interface, but it buys nothing the minimum needs, has no glibc wrapper [6], and has no safe Rust binding. Docker's seccomp behavior strengthens the case for `clone` in unprivileged containers [12].
+**"`clone3` is the modern choice."** True of the kernel interface, but it buys nothing the minimum needs, has no glibc wrapper [6], and has no safe Rust binding. Docker's `ENOSYS` rule for `clone3` does not apply to the privileged targets [12].
 
 **"All four environments can run the container."** Refuted for macOS native, as the platform table shows.
 
@@ -207,7 +207,7 @@ Before doing any work in this feature, load these skills via the active harness'
 
 **Smallest version that meets the intent:** `bcdocker run <rootfs-dir> <cmd> [args…]` creates new PID, UTS, mount, and IPC namespaces, sets the hostname, makes mounts private, mounts `/proc`, chroots, and runs the application as a child of PID 1, waiting for it and returning its exit status. It ships with a rootfs build script producing at least two containers (`bookworm-slim` extract plus a smaller second one), verified on a Debian host or VM and in privileged `bookworm-slim` on the Mac, with the report and slides.
 
-**Not yet verified.** `pivot_root` and the `/proc` mount have not been run in Docker Desktop, nor has the rootless and Enhanced Container Isolation failure mode. Whether Docker Desktop's VM enforces AppArmor is unknown (moot under `--privileged`). Unpacked rootfs sizes are estimates. Whether `--privileged` also disables the default seccomp profile is not stated on the Docker pages read [10][11]. The instructor video may expect a hand-copied rootfs built from `ldd` output rather than an image extract. The first four are testable on any Linux host with Docker; the Mac needs the user.
+**Not yet verified.** `pivot_root` and the `/proc` mount have not been run in Docker Desktop, nor has the rootless and Enhanced Container Isolation failure mode. Whether Docker Desktop's VM enforces AppArmor is unknown (moot under `--privileged`). Whether `--privileged` also disables the default seccomp profile is not stated on the Docker pages read [10][11]. The instructor video may expect a hand-copied rootfs built from `ldd` output rather than an image extract. The `pivot_root` and `/proc` checks run on a Linux host with Docker; the Docker Desktop checks need the Mac.
 
 ## Scope
 
@@ -232,7 +232,7 @@ Before doing any work in this feature, load these skills via the active harness'
 
 **For you to decide**, most blocking first:
 
-1. **What "safe Rust" means.** You listed "safe rust" and "clone and chroot sys calls" as core requirements. Option B (literal `clone` behind one audited `unsafe` module) meets both if "safe" means memory-safe Rust with unsafe confined and justified. Option A (`unshare` plus re-exec, no `unsafe` at all) meets "safe" in the strictest sense but never calls `clone(2)`, so the clone and flag discussion would describe a call the code does not make, and `CLONE_IO` could not be passed. I recommend B under the first reading and A under the second. Which did you mean?
+1. **What "safe Rust" means.** You listed "safe rust" and "clone and chroot sys calls" as core requirements. Option B (literal `clone` behind one audited `unsafe` module) meets both if "safe" means memory-safe Rust with unsafe confined and justified. Option A (`unshare` plus re-exec, no `unsafe` at all) meets "safe" in the strictest sense but never calls `clone(2)`, so the clone and flag discussion would describe a call the code does not make, and `CLONE_IO` could not be passed. I recommend B. Choose A if "safe" means no `unsafe` anywhere.
 2. **What "flag choices" and `CLONE_IO` were for.** Did "flag choices" mean the full `clone` flag word (covered above, with a reason for each flag left off) or only the namespaces? Was "start with `CLONE_IO`" meant as "start with the I/O plumbing", or do you want the disk-scheduler behavior of `CLONE_IO` explained in the report?
 3. **Repository mapping.** The submission is a GitHub Classroom repo with `README.md`, `.gitignore`, `src/`, and `doc/` at its root [1]. Will `pages/course/cisc_7310/bccontainer` be that repo's root, or a mirror? This decides whether the Cargo crate sits at the folder root and how commit history reaches the classroom repo.
 4. **PID 1 shape.** Match the sample (the launcher's child is PID 1 and forks, waits for, and reaps the application) or exec the application directly as PID 1. I recommend matching the sample.
