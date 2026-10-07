@@ -32,10 +32,11 @@ Feature test: `pages/course/cisc_7310/bccontainer/tests/run.sh`, run with `cargo
 
 ## Specification
 
-**Command line.** `bcdocker run <container> <app> [args…]`.
+**Command line.** `bcdocker run [--stack-size <size>] <container> <app> [args…]`.
 - `<container>` without a `/` names the directory `./containers/<container>`, which is listed in `.gitignore`. With a `/` it is a path. The hostname is the final path component.
 - `<app>` is a path inside the container; arguments pass through unchanged.
-- A missing argument prints usage and exits non-zero.
+- `--stack-size` sets the child's stack, in bytes or with a `K`, `M`, or `G` suffix (`--stack-size 2M` or `--stack-size=2M`). It goes before the container, defaults to 8M, and must be between 1M and 1G, so the safety argument below holds for every accepted value. After the application, `--stack-size` is the application's own argument.
+- A missing argument or an unknown option before the container prints usage and exits non-zero.
 
 **Isolation.** The container gets new PID, mount, UTS, and IPC namespaces, created by one `clone`. Its mounts are private, so nothing it mounts is visible to the host and everything it mounts disappears when it exits. Inside, `/` is the container's directory (changed with `chroot`), `/proc` is a fresh procfs for the container's PID namespace, and `/dev` is a tmpfs holding `null`, `zero`, `full`, `random`, `urandom`, and `tty`. `bcdocker`'s own setup never modifies the rootfs directory; the application can write to it as it would to any root filesystem.
 
@@ -60,12 +61,14 @@ Feature test: `pages/course/cisc_7310/bccontainer/tests/run.sh`, run with `cargo
 
 **Out of scope.** Networking, cgroup limits, user namespaces, image pulling, overlayfs, a pseudo-terminal, reserved exit codes, an architecture check, signal forwarding, and the written explanation of each `clone` flag (report material, deferred with the submission logistics).
 
-**Verification.** Automated: the feature test builds a rootfs and checks PID 1 and PID 2, `/proc` contents, hostname isolation, filesystem isolation, no leftover mounts, the exit status of a normal exit and of a signal, and the failure messages for a missing application, a non-executable application, and a missing container. Manual: run it once on the `bookworm-slim` VM and once in privileged `bookworm-slim` on Docker Desktop, including Ctrl-C in an interactive shell, running without root, and a rootfs built for the other architecture.
+**Verification.** Automated: the feature test builds a rootfs and checks PID 1 and PID 2, `/proc` contents, hostname isolation, filesystem isolation, no leftover mounts, the exit status of a normal exit and of a signal, and the failure messages for a missing application, a non-executable application, and a missing container. Manual: run it once on the `bookworm-slim` VM and once in privileged `bookworm-slim` on Docker Desktop, including Ctrl-C in an interactive shell, running without root, and a rootfs built for the other architecture. `tests/stack.sh` measures how deep the child's stack goes and runs on each target too.
 
 ## Alternatives
 
 - **Path only.** `bcdocker run <rootfs-path> <app>`, with no name resolution. Simplest, but it differs from the assignment's command line (`run bctinysys …`).
 - **Named containers with metadata, `bcdocker mkrootfs`, re-exec init.** A `config.toml` per container, a Rust tar extractor, and PID 1 re-executing itself. Closest to real Docker, but it adds a tar crate and a TOML parser, drifts toward image pulling, and makes PID 1's command line differ from the sample unless copied over.
+
+- **`clap` for the command line.** Measured with the one option above: the release binary grows from 563 KB to 1.13 MB, the dependency tree from 13 crates to 27, and a clean release build from 5 s to 10 s. It would add `--help` and `--version`, and it handles application arguments that look like options. For one optional flag the 25-line hand-written parser is enough, and it keeps the crate small enough to read in one sitting.
 
 The chosen approach keeps the small in-process launcher, matches the assignment's command line and sample output, and adds only name resolution.
 
@@ -73,4 +76,4 @@ The chosen approach keeps the small in-process launcher, matches the assignment'
 
 **Deferred.** `clone3` for `CLONE_INTO_CGROUP` when cgroup limits arrive; `pivot_root` hardening in place of plain `chroot`; a pseudo-terminal; networking; image pulling; reserved exit codes; signal forwarding; an architecture check for foreign rootfs directories.
 
-**Constraint for the plan.** The `clone` module is the only place `unsafe` appears. Starting the application, waiting for it, and any signal handling use safe routes (`std::process::Command`, nix's safe wrappers) or are left out. The child's stack is a heap buffer with no guard page, because a guard page would need four more `unsafe` calls; this is an accepted risk. Its proof therefore rests on one named assumption: the child's stack use stays below 8 MiB. That figure is evidence (a margin over std's 2 MiB thread default), not proof, and no caller input affects it. Toolchain: rustc 1.96 or later (`rust-version`).
+**Constraint for the plan.** The `clone` module is the only place `unsafe` appears. Starting the application, waiting for it, and any signal handling use safe routes (`std::process::Command`, nix's safe wrappers) or are left out. The child's stack is a heap buffer with no guard page, because a guard page would need four more `unsafe` calls; this is an accepted risk. Its proof therefore rests on one named assumption: the child's stack use stays below the 1 MiB floor that `--stack-size` accepts. That is measured and tested, not proved: the child uses 16 KiB in a debug build and 12 KiB in release, so the floor is 64 times the debug figure and the default is 512 times; the depth does not change with the stack size or with 2000 arguments and a 100 KB environment; and `tests/stack.sh` fails if it ever exceeds 64 KiB. No caller input affects the depth. Toolchain: rustc 1.96 or later (`rust-version`).

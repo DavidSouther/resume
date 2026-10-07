@@ -207,7 +207,7 @@ Fill in `clone::spawn` (the one `unsafe` call, with its `SAFETY` comment), `laun
 
 The cloned child is PID 1. `container_main` runs PID 1's steps in order, prints any `supervise::Error` as `bcdocker: <error>` to stderr and returns 1, or returns the application's `Status` code. At this step `supervise`, which `container_main` calls, only starts the application with `std::process::Command` (so the application is PID 2) and waits for it with `waitpid`. A failed start becomes `supervise::Error::Exec`, naming the application and the system's reason. There is no chroot yet, so the application path is a host path at this step. A `clone` that fails with `EPERM` (no `CAP_SYS_ADMIN`, as in unprivileged Docker) says so and suggests `--privileged`. PID 1 writes only to stderr, or ends stdout writes with a newline; the child exits without flushing stdout.
 
-The child's stack is an 8 MiB heap `Vec`. The zeroed allocation is lazily committed, so untouched pages cost nothing. 8 MiB equals the main thread's default stack and is four times std's 2 MiB default for spawned threads, which routinely run `Command::spawn` and formatting. The child runs only the crate's own non-recursive code. This is evidence, not proof: there is no guard page, so an overflow is not guaranteed to fault. A guard page would need four more `unsafe` calls (`mmap`, `mprotect`, `munmap`, `from_raw_parts_mut`), and the constraint allows one. So the stack bound is recorded as assumption A1 in `clone.rs` and as an accepted risk in design.md's "Constraint for the plan".
+The child's stack is a heap `Vec` of `--stack-size` bytes (`stack::StackSize`: 1 MiB to 1 GiB, default 8 MiB). The zeroed allocation is lazily committed, so untouched pages cost nothing. The child runs only the crate's own non-recursive code, and `tests/stack.sh` measures the depth it reaches (16 KiB in a debug build, 12 KiB in release) and fails above 64 KiB. This is measured and tested, not proved: there is no guard page, so an overflow is not guaranteed to fault. A guard page would need four more `unsafe` calls (`mmap`, `mprotect`, `munmap`, `from_raw_parts_mut`), and the constraint allows one. So the stack bound is recorded as assumption A1 in `clone.rs` and as an accepted risk in design.md's "Constraint for the plan".
 
 **Tests**
 
@@ -232,7 +232,9 @@ fn a_signal_maps_to_128_plus_the_signal_number() {
 **Implementation Outline**
 
 ```rust
-// clone.rs: allocate an 8 MiB stack (lazily committed), then the single unsafe call
+// clone.rs: allocate the stack (lazily committed), then the single unsafe call.
+// This sketch is the plan's original; `src/clone.rs` is authoritative. It adds `stack::StackSize`
+// (so the stack length comes from `run`), the measured basis for A1, and the `CLONE_FLAGS` discussion.
 
 //! The only module allowed to use `unsafe`.
 //!
@@ -485,7 +487,7 @@ Verified in the Linux sandbox (Ubuntu 24.04, kernel 6.18, x86_64, root, real `bo
 
 - `clone.rs` carries `#![deny(clippy::undocumented_unsafe_blocks, clippy::multiple_unsafe_ops_per_block)]`.
 - `cargo clippy` and `cargo test` pass on Linux; `grep -rln 'allow(unsafe_code)\|unsafe {' src/` lists only `src/main.rs` (the single allow) and `src/clone.rs`, and `grep -c 'unsafe {' src/clone.rs` prints `1`.
-- `tests/run.sh` and `tests/hardening.sh` print `ok` on both targets.
+- `tests/run.sh`, `tests/hardening.sh`, and `tests/stack.sh` print `ok` on both targets.
 - On Apple silicon, the rootfs built by `mkrootfs.sh` is arm64 and `tests/run.sh` passes.
 
 **Implementation Outline**

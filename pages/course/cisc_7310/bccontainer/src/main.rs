@@ -5,6 +5,7 @@
 mod cli;
 mod container;
 mod error;
+mod stack;
 mod status;
 
 #[cfg(target_os = "linux")]

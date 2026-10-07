@@ -10,15 +10,17 @@
 //!    entry in a procfs `/proc/self/task`, and runs no code between the two that can create
 //!    a thread (moves of locals and, inside `only_thread`, one `ReadDir` drop; see I5).
 //! I2 (flags): every clone uses `CLONE_FLAGS`; callers cannot choose flags.
-//! I3 (stack): every clone uses a fresh heap `Vec` of `STACK` = 8 MiB bytes, alive in the
-//!    parent until `clone` returns. It has no guard page, by the one-`unsafe` constraint;
-//!    see A1.
+//! I3 (stack): every clone uses a fresh heap `Vec` of `run.stack_size.bytes()` bytes, alive
+//!    in the parent until `clone` returns. `StackSize` guarantees `stack::MIN` (1 MiB) <= that
+//!    <= `stack::MAX`, and defaults to `stack::DEFAULT` (8 MiB). The `Vec` has no guard page,
+//!    by the one-`unsafe` constraint; see A1.
 //! I4 (callback): the only closure cloned is built here, from `&Run`, and calls
 //!    `supervise::container_main`. No safe caller can change what the child runs.
 //! I5 (allocator): this crate declares no `#[global_allocator]`; allocation is glibc malloc,
 //!    which never creates threads.
-//! A1 (ASSUMPTION, not proved; design.md "Constraint for the plan"): the child's stack use
-//!    stays below `STACK`. Evidence only: see E5 in `spawn`.
+//! A1 (ASSUMPTION, measured and tested, not proved; design.md "Constraint for the plan"): the
+//!    child's stack use stays below `stack::MIN`, so below every accepted stack size. The
+//!    basis is stated in E5 in `spawn`, and `tests/stack.sh` repeats the measurement.
 
 use std::ffi::c_int;
 
@@ -86,7 +88,6 @@ const CLONE_FLAGS: CloneFlags = CloneFlags::CLONE_NEWPID
     .union(CloneFlags::CLONE_NEWNS)
     .union(CloneFlags::CLONE_NEWUTS)
     .union(CloneFlags::CLONE_NEWIPC);
-const STACK: usize = 8 << 20;
 
 /// Runs `supervise::container_main(run)` as PID 1 of new PID, mount, UTS and IPC
 /// namespaces and returns its host PID.
@@ -100,7 +101,7 @@ const STACK: usize = 8 << 20;
 /// `container_main`'s return value, truncated to 8 bits.
 pub fn spawn(run: &Run) -> Result<Pid, Error> {
     let child: CloneCb<'_> = Box::new(move || supervise::container_main(run) as isize);
-    let mut stack = vec![0u8; STACK];
+    let mut stack = vec![0u8; run.stack_size.bytes()];
     only_thread()?;
     // SAFETY:
     // Operation: `nix::sched::clone(child, &mut stack, CLONE_FLAGS, Some(SIGCHLD))`, nix =0.31.3
@@ -138,13 +139,25 @@ pub fn spawn(run: &Run) -> Result<Pid, Error> {
     //     holds further up the stack (a std `Mutex`, a `OnceLock` init, the stdout lock)
     //     are copied as held; relocking them can deadlock or panic (std docs), which is
     //     not UB, and none is held on `launch`'s path.
-    //  E4 (I3, LOCAL FACT) `stack.len() == STACK == 8 MiB >= 16`. => C3.
-    //  E5 (ASSUMPTION A1; evidence, NOT proof) the child runs only `container_main`, crate
-    //     code with no recursion (I4), plus std's `Command::spawn`, fs and formatting, which
-    //     std runs routinely on its documented 2 MiB thread stacks; 8 MiB is 4x that.
-    //     There is no guard page, so an overflow is not guaranteed to fault. No safe caller
-    //     can raise the child's stack depth. C1 is NOT discharged; it rests on A1, accepted
-    //     in design.md.
+    //  E4 (I3, LOCAL FACT) `stack.len() == run.stack_size.bytes() >= stack::MIN = 1 MiB`, by
+    //     the `StackSize` type, so `>= 16`. => C3.
+    //  E5 (ASSUMPTION A1; measured and tested, NOT proved) the child's stack use stays below
+    //     `stack::MIN` = 1 MiB, so below any accepted size (I3). Basis:
+    //     (a) the child runs only `container_main`: crate code with no recursion and no large
+    //         locals (I4). Everything of variable size (paths, arguments, environment, error
+    //         text) lives on the heap, so the stack depth does not depend on the input;
+    //     (b) measured depth of the child's stack for the whole path (`sandbox::enter`,
+    //         `close_extra_fds`, `Command::spawn`, the wait): 16 KiB in a debug build and
+    //         12 KiB in release, on x86_64, glibc 2.39, rustc 1.97 (2026-10-07). The depth is
+    //         the same at the 8 MiB default and the 1 MiB floor, and with 2000 arguments plus
+    //         a 100 KB environment. `stack::MIN` is 64x the debug figure, the default 512x;
+    //     (c) `tests/stack.sh` repeats (b) on any machine and fails above `stack::MIN / 16` =
+    //         64 KiB, four times the debug figure, so growth fails a test long before it
+    //         nears the floor. It also runs the
+    //         failing-exec path, which formats a long path into an error, on a floor-sized stack.
+    //     Not shown: other architectures or libc versions (run `tests/stack.sh` on each target),
+    //     and a proof for every path. There is no guard page, so an overflow is not guaranteed
+    //     to fault. C1 is NOT discharged; it rests on A1, accepted in design.md.
     //  E6 (AXIOM, Reference, rustc >= 1.81, and Cargo.toml has `rust-version = "1.96"`: a panic
     //     that would unwind out of a Rust-defined `extern "C"` function aborts) nix's
     //     `callback` is such a function. => C6.
