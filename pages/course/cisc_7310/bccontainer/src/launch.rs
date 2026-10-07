@@ -1,8 +1,8 @@
 //! The host side: clone the container, then wait for it.
 
-use nix::errno::Errno;
+use nix::{errno::Errno, sys::wait::waitpid};
 
-use crate::{clone, cli::Run, status::Status};
+use crate::{cli::Run, clone, status::Status};
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -12,6 +12,11 @@ pub enum Error {
     Wait(#[source] Errno),
 }
 
-pub fn launch(_run: &Run) -> Result<Status, Error> {
-    todo!()
+pub fn launch(run: &Run) -> Result<Status, Error> {
+    let pid = clone::spawn(run)?;
+    loop {
+        if let Some(status) = Status::from_wait(waitpid(pid, None).map_err(Error::Wait)?) {
+            return Ok(status);
+        }
+    }
 }
