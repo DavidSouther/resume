@@ -94,6 +94,25 @@ Every direct Rust binding of `clone` and `fork` (`libc`, `nix`, `rustix`, `clone
 
 **Chosen design:** one thin audited `unsafe` module. `nix::sched::clone` sits behind `#![deny(unsafe_code)]` at the crate root and a single `#[allow(unsafe_code)]` module of about 30 lines with a `SAFETY` comment: a single-threaded caller, a heap-allocated stack, and a child closure that only calls nix syscall wrappers before `execve`. A separate `-sys` workspace crate is an alternative layout. This is the pattern youki's `libcontainer` uses: one audited clone module, safe nix wrappers everywhere else [13].
 
+### Binding choice: nix, rustix, or our own
+
+A spike built the same launcher three ways (`research/spike/`): `clone` into new PID, mount, UTS, and IPC namespaces, then private mounts, hostname, `/proc`, chroot, exec, and wait, with a `thiserror` error type. All three run, show PID 1 and the container hostname, and leave the host hostname unchanged. Measured on x86_64, kernel 6.18, root, against a rootfs copied from the host rather than `bookworm-slim`:
+
+| | `nix` 0.31 | `rustix` 1.1 plus `libc` for `clone` | `libc` only |
+|---|---|---|---|
+| `clone` | `sched::clone`, one `unsafe` call; nix handles the stack | none in rustix, so a hand-written trampoline | the same trampoline |
+| Lines | 84 | 75 | 107 |
+| `unsafe` blocks | 1 | 2 | 8 |
+| Release size | 491 KB | 499 KB | 461 KB |
+| Clean build | 5.9 s | 6.6 s | 4.8 s |
+| Error text for a missing rootfs | `ENOENT: No such file or directory` | `No such file or directory (os error 2)` | `errno 2`, until a `strerror` shim is added |
+
+rustix gives nothing here, because it has no `clone` and the trampoline brings back the `unsafe` it was meant to avoid. Rolling our own widens the audited surface from one call to eight and loses the errno text. The project uses nix.
+
+### Typed errors
+
+`thiserror` 2 supplies typed errors throughout. Each module has one error enum. Each syscall failure gets a variant that names the step (`Mount { target, source }`, `Hostname`, `Chroot`, `Exec`, `Wait`) and carries the errno as `#[source]`. `nix::errno::Errno` and `rustix::io::Errno` both implement `std::error::Error`, so they wrap directly. The child cannot return an error across the process boundary: it prints the typed error to stderr and exits 1, and the parent returns its own errors normally.
+
 ### I/O redirection
 
 - **Inherit stdio (the minimum).** The child keeps the parent's descriptors 0, 1, and 2 across `clone` and `exec`; runc calls this the pass-through mode, `terminal: false` [18]. It is enough for `bcdocker run tinysys /bin/bash` from an interactive shell, and it makes host-side redirection work unchanged: `bcdocker run c /bin/ls > out.txt` and `cat f | bcdocker run c /bin/wc` write to and read from the host's descriptors. Bash may print a job-control warning in this mode.
@@ -126,7 +145,8 @@ To type-check Linux code from macOS, `cargo check --target aarch64-unknown-linux
 Before doing any work in this feature, load these skills via the active harness's skill-loading mechanism: none. No published agentic skill ships with `nix`, `rustix`, `libc`, or std, and none was found in this harness.
 
 - **`nix` 0.31.3** [10]: `sched::{clone, unshare, CloneFlags}` (feature `sched`), `mount::{mount, MsFlags}` (`mount`), `unistd::{chroot, chdir, pivot_root, execve, sethostname}` (`fs`, `process`, `hostname`), `sys::wait::waitpid` (`process`). `clone` is `unsafe` and takes a caller-supplied stack slice; nix handles stack direction. Sched, mount, and `pivot_root` are Linux-only.
-- **`rustix` 1.1.5** [11] is the alternative to nix for everything except `clone`, which it lacks.
+- **`rustix` 1.1.5** [11] covers everything except `clone`; see the binding comparison.
+- **`thiserror` 2** for typed errors, as in `uefi_boot`.
 - **Closest worked examples:** Litchi Pi's "Writing a container in Rust" series (crabcan, using nix) [26]; Liz Rice's containers-from-scratch in Go, with the same clone, chroot, and proc-mount shape as the tutorial [27]; youki for reference only [13].
 - **Local convention:** the sibling `uefi_boot` project uses edition 2021, few dependencies, `panic = "abort"`, and a Makefile whose `install`, `build`, and `run` targets branch on `uname -s` for Darwin versus Debian. See `research/codebase.md`.
 
@@ -158,16 +178,6 @@ Before doing any work in this feature, load these skills via the active harness'
 - Run targets: Debian native, the `bookworm-slim` VM, and privileged `bookworm-slim` in Docker on Mac; macOS as the build host with a clean unsupported-platform exit.
 
 **Out of scope for now:** networking, `--memory` and `--pids-limit` cgroup limits, user, cgroup, and time namespaces, image pulling, overlayfs, OCI compatibility, rootless mode, the pty stretch goal, and submission logistics (repository layout, commits, report, slides, deadline).
-
-## Resolved Decisions
-
-- **Safe Rust.** One thin audited `unsafe` module wrapping `clone`; safe code everywhere else (decided by the user).
-- **Rootfs.** The extracted files of `bookworm-slim` (decided by the user).
-- **Submission logistics.** Deferred by the user.
-- **Assignment shape.** PID, UTS, and mount namespaces plus chroot and a fresh `/proc`; chroot alone does not meet it [1][2][3].
-- **Syscall and flags.** `clone`, not `clone3`; `CLONE_IO` is not in the starting set; start with the namespace flags above.
-- **Docker on Mac.** The demo needs elevated privileges, and `--privileged` is the setting that covers both capabilities and AppArmor [7][21].
-- **macOS native.** It cannot host the container.
 
 ## Sources
 
