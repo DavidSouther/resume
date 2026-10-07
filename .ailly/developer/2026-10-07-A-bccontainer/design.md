@@ -20,7 +20,7 @@ Feature test: `pages/course/cisc_7310/bccontainer/tests/run.sh`, run with `cargo
 **Journey.** The student works on Debian, or on a Mac: there the binary is built in a `rust:1-bookworm` container, the rootfs is built with Docker on the Mac, and `bcdocker` runs in a privileged `debian:bookworm-slim` container with the project bind-mounted. Either way, from the project directory.
 
 1. `cargo build`. A macOS build succeeds; running there is declined (see Failure modes).
-2. `scripts/mkrootfs.sh tinysys` extracts `debian:bookworm-slim` into `./containers/tinysys/`, using `docker export` or `crane export`.
+2. `scripts/mkrootfs.sh tinysys` extracts `debian:bookworm-slim` into `./containers/tinysys/`, using `docker export` or `crane export`. A second argument names another image (`scripts/mkrootfs.sh tinysys ubuntu:24.04`).
 3. `sudo target/debug/bcdocker run tinysys /bin/sh` opens a shell in the container:
    - `cat /proc/sys/kernel/hostname` prints `tinysys`.
    - `echo $$` prints `2`; the launcher is PID 1.
@@ -54,7 +54,7 @@ Feature test: `pages/course/cisc_7310/bccontainer/tests/run.sh`, run with `cargo
 | Container directory missing | the path it looked for |
 | Application missing or not executable | the application path, with the system's reason |
 
-**Building a rootfs.** `scripts/mkrootfs.sh <name>` creates `./containers/<name>/` from `debian:bookworm-slim` for the machine's architecture. It builds in a temporary directory and renames it into place, so a failed build leaves nothing behind, and it refuses to overwrite an existing container. It uses Docker if the Docker daemon is reachable, otherwise crane. A VM with neither installs one, or copies in a tarball made elsewhere.
+**Building a rootfs.** `scripts/mkrootfs.sh <name> [image]` creates `./containers/<name>/` from the image, `debian:bookworm-slim` by default, for the machine's architecture. It builds in a temporary directory and renames it into place, so a failed build leaves nothing behind, and it refuses to overwrite an existing container. It uses Docker if the Docker daemon is reachable, otherwise crane. A VM with neither installs one, or copies in a tarball made elsewhere.
 
 **Project layout.** One binary crate `bcdocker` in the project root, edition 2021 as in `uefi_boot`, with `thiserror` 2 and `nix` 0.31 as its only dependencies. `src/` holds the launcher, one `#[allow(unsafe_code)]` clone module under `#![deny(unsafe_code)]`, and the error enums.
 

@@ -153,7 +153,7 @@ fn resolve(arg: &str, cwd: &Path) -> Result<Container, container::Error> {
 
 **Enables:** the feature test's "build a container root" step, so it proceeds to the probe and fails there. `run.sh` now also reaches its missing-container assertion, which Step 1 already satisfies.
 
-`scripts/mkrootfs.sh <name>` extracts `debian:bookworm-slim` for the machine's architecture into `./containers/<name>/`. It creates `containers/` if needed, builds in a temporary directory beside the target and renames it into place, refuses to overwrite an existing container, uses `docker create` plus `docker export` when `docker info >/dev/null 2>&1` succeeds (the daemon is reachable, not just the CLI installed) and `crane export` otherwise, and leaves nothing behind on failure, including a created Docker container. The container's root directory is made mode 755 (a temporary directory is created 0700). Real extraction needs network, so the test stubs the tools.
+`scripts/mkrootfs.sh <name> [image]` extracts the image, `debian:bookworm-slim` by default, for the machine's architecture into `./containers/<name>/`. It creates `containers/` if needed, builds in a temporary directory beside the target and renames it into place, refuses to overwrite an existing container, uses `docker create` plus `docker export` when `docker info >/dev/null 2>&1` succeeds (the daemon is reachable, not just the CLI installed) and `crane export` otherwise, and leaves nothing behind on failure, including a created Docker container. The container's root directory is made mode 755 (a temporary directory is created 0700). Real extraction needs network, so the test stubs the tools.
 
 Pass the platform explicitly. crane defaults to `linux/amd64` on every host (go-containerregistry `remote.defaultPlatform`), so the script maps `uname -m` to `linux/amd64` or `linux/arm64` and passes `--platform` to both tools.
 
@@ -177,12 +177,13 @@ test_builds_the_container_directory() {
 - With a stub `docker` whose `info` fails and a stub `crane`, the script uses `crane`.
 - The stub `crane` records its arguments, which include `--platform linux/<arch>` for the host's `uname -m`.
 - With neither on the restricted `PATH`, the script exits non-zero and tells the user to install one.
+- A second argument replaces the default image for both tools; more than two arguments is a usage error.
 
 **Implementation Outline**
 
 ```bash
 set -euo pipefail
-name=$1; dest=containers/$name
+name=$1; image=${2:-debian:bookworm-slim}; dest=containers/$name
 [[ ! -e $dest ]] || die "$dest exists"
 case $(uname -m) in
   x86_64|amd64) arch=amd64 ;;
@@ -192,8 +193,8 @@ esac
 mkdir -p containers
 tmp=$(mktemp -d "containers/.$name.XXXXXX")
 trap 'rm -rf "$tmp"; [[ -z ${id:-} ]] || docker rm -f "$id" >/dev/null 2>&1 || true' EXIT
-if docker info >/dev/null 2>&1; then id=$(docker create --platform "linux/$arch" debian:bookworm-slim); docker export "$id" | tar -x -C "$tmp"
-elif have crane; then crane export --platform "linux/$arch" debian:bookworm-slim - | tar -x -C "$tmp"
+if docker info >/dev/null 2>&1; then id=$(docker create --platform "linux/$arch" "$image"); docker export "$id" | tar -x -C "$tmp"
+elif have crane; then crane export --platform "linux/$arch" "$image" - | tar -x -C "$tmp"
 else die "install docker or crane"; fi
 chmod 755 "$tmp"; mv "$tmp" "$dest"
 ```
