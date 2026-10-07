@@ -8,6 +8,12 @@
 >
 > Focus on requirement gathering for now, we can go beyond this chroot idea later.
 
+Follow-up request, same day (second research pass):
+
+> Language is rust, working folder is /pages/course/cisc_7310/bccontainer, host platforms are MacOS native & Debian native, and target platforms are bookworm-slim VM and bookworm-slim in docker on Mac.
+>
+> The core requirements are safe rust, clone and chroot sys calls, and preparing an appropriate chroot. During research and design, discuss clone vs clone3, flag choices, io redirection, etc. Probably start with CLONE_IO? Don't start with network at this time.
+
 The user wants the requirements for CISC 7310X Project 2 ("BCDocker") pinned down before any design: what the assignment actually asks for, whether a chroot jail is enough, what the PID requirement means, and which of three platforms (macOS native, Debian native, `bookworm-slim` in Docker on a Mac) can meet it. The tool will be written in Rust in `pages/course/cisc_7310/bccontainer`.
 
 ## Search/Expand
@@ -103,6 +109,42 @@ Honest presentation for macOS: treat it as the **dev/build host** whose runtime 
 
 **Smallest version that meets the intent:** `bcdocker run <rootfs-dir> <cmd> [args…]`. It clones into new PID + UTS + mount namespaces; in the child it sets the hostname, chroots (or pivot_roots), chdirs to `/`, and mounts proc; it then forks and execs the app as a child of PID 1 and waits for it. Ship it with two hand-built rootfs directories (`tinysys` with bash/ls/ps, `bctinysys`), verified on Debian native and in privileged `bookworm-slim` on the Mac, plus the report and slides.
 
+## Second Pass: clone, Safe Rust, Rootfs
+
+Full notes with sources: `research/clone.md`, `research/rust-safe.md`, `research/rootfs-platform.md`. Source numbers below are local to those files.
+
+### clone vs clone3, and CLONE_IO
+
+- **Use `clone`, not `clone3`.** `clone3` (Linux 5.3) has no glibc wrapper, so it needs `syscall(2)`. Docker's default seccomp profile cannot inspect flags inside `clone_args`, so Moby makes `clone3` return `ENOSYS` to force the fallback to `clone`, where flags can be filtered. Reconsider `clone3` only for `CLONE_INTO_CGROUP` or `CLONE_PIDFD` when cgroup limits arrive.
+- **`CLONE_IO` is not the place to start.** It shares the block-layer I/O scheduler context. It isolates nothing and does not redirect stdio. The first flag set is `CLONE_NEWPID | CLONE_NEWNS | CLONE_NEWUTS | CLONE_NEWIPC` plus `SIGCHLD` as the exit signal. `CLONE_NEWNET` is deferred as requested; `CLONE_NEWCGROUP` and `CLONE_NEWUSER` are later options.
+- **PID 1 duties.** Init ignores signals it has no handler for, reaps orphans, and its exit SIGKILLs the whole namespace.
+
+### Safe Rust
+
+The tension: **`clone` and `fork` are `unsafe` in every Rust binding.** `nix::sched::clone` is `unsafe fn`; so is `fork`. `rustix` has no public `clone`. Safe in nix 0.31.3: `unshare`, `setns`, `chroot`, `pivot_root`, `mount`, `sethostname`, `execve`, `waitpid`. `std::os::unix::fs::chroot` is also safe.
+
+Two ways to honor "safe Rust":
+
+| Option | Shape | Unsafe in our crate | Cost |
+|---|---|---|---|
+| **A. Safe pipeline** | Parent calls `unshare(NEWPID\|NEWNS\|NEWUTS\|NEWIPC)`, then spawns its own binary (`/proc/self/exe __init`) via `std::process::Command`. The child is PID 1 and does mounts, hostname, `/proc`, chroot, exec. | None: `#![forbid(unsafe_code)]` for the whole crate | Does not literally call `clone(2)`. Semantics differ (below). |
+| **B. Literal clone** | `nix::sched::clone` with a stack buffer. | One audited module (~30 lines, `#[allow(unsafe_code)]`, SAFETY comment) under `#![deny(unsafe_code)]` | Not "all safe", but matches the lecture's wording. |
+
+**How A differs from a raw `clone`:** (1) the parent is not moved into the new PID namespace, only its first child; (2) the mount and UTS namespaces do move the parent; (3) after the `unshare`, the parent cannot create threads (`EINVAL`); (4) once the first child exits, later forks fail with `ENOMEM`, so there is one container per parent process; (5) `/proc` reflects the PID namespace of whoever mounts it, so the re-exec'd child must mount it. The sample `ps` output in [1] shows the container's PID 1 carrying the launcher's argv, which Option B reproduces naturally and Option A shows as `__init` unless the arguments are arranged to match.
+
+### Rootfs and platform
+
+- **Rootfs.** Extract `debian:bookworm-slim` per architecture (`crane export --platform linux/arm64`, or `docker create` + `docker export`; about 28 MB compressed, pinnable by digest). debootstrap needs Linux and root and is not reproducible by default; mmdebstrap is better. Static BusyBox has no `/bin/bash`, so it suits only a second demo container. Keep `rootfs/` in `.gitignore` and ship a build script.
+- **`/dev`.** tmpfs plus `mknod` of null, zero, full, random, urandom, tty. Do not bind the whole host `/dev`.
+- **Child setup order.** Clone or re-exec with the namespace flags; make `/` private recursively (`MS_REC|MS_PRIVATE`, or mounts leak to the host); `sethostname`; bind the rootfs onto itself; mount proc; `chdir(rootfs)`; `chroot(".")`; `chdir("/")`; `execve`. Plain chroot is escapable (`cd ..` tricks, open fds, host `/proc`); `pivot_root(".", ".")` plus a detach-unmount closes that and is optional here.
+- **Docker on Mac.** Docker's defaults allow `chroot` (`CAP_SYS_CHROOT` is on) but the seccomp profile blocks namespace `clone`, `unshare`, `mount`, `pivot_root`. The first pass's hedge that `--cap-add SYS_ADMIN` "may be enough" is now answered: it relaxes seccomp, but the docker-default AppArmor profile still denies `mount`. Use `--privileged`. Rootless Docker and Enhanced Container Isolation use user namespaces, so the `/proc` mount fails with `EPERM`.
+- **macOS.** Gate Linux code behind `cfg(target_os = "linux")`, with `nix` as a Linux-only dependency. `cargo check --target aarch64-unknown-linux-gnu` type-checks with no linker; `cargo zigbuild` or the musl target produces a binary. Practical dev loop: a privileged `rust:1-bookworm` container with the repo bind-mounted, or a Lima/OrbStack Debian VM.
+- **I/O redirection.** Inheriting stdin, stdout and stderr is enough for the minimum (bash may warn "no job control"). A pty with `setsid` and `TIOCSCTTY` is a stretch goal. The parent waits, ignores or forwards SIGINT/SIGTERM, and returns the exit status, or 128 plus the signal number.
+
+### Not verified
+
+`pivot_root` and the `/proc` mount were not run in Docker Desktop. Whether Docker Desktop's VM enforces AppArmor is unconfirmed (moot under `--privileged`). Unpacked rootfs sizes are estimates (about 75 MB for bookworm-slim). The instructor video's exact rootfs recipe may expect a hand-copied tree built from `ldd` output. These need a run on the user's machines, or in this sandbox where root and Docker are available.
+
 ## Scope
 
 **In scope for design:**
@@ -121,6 +163,11 @@ Honest presentation for macOS: treat it as the **dev/build host** whose runtime 
 - PID: the container gets its own PID namespace; the launcher's cloned child is PID 1 and the application runs as its child [1], [3]; `/proc` must be freshly mounted for `ps` [4].
 - Rust is permitted [1]. Due date is Oct 14, 2026 [5].
 - macOS native cannot host the container (no namespaces, no Linux ELF). Debian native and `bookworm-slim` in Docker (privileged) can.
+
+**Open for the user, added by the second pass** (these outrank the list below)
+
+- **A. "Safe Rust" versus a literal `clone`.** Option A (unshare plus re-exec, zero `unsafe`) or Option B (`nix::sched::clone` behind one audited `unsafe` module)? Research recommends A for "safe Rust" and explaining the semantic differences in the report, but the lecture's wording is "Use clone()", and the instructor may expect the call by name. The course page says only "C or C++ or a language of your choice" and never mentions Rust or `unsafe`.
+- **B. Confirm `CLONE_IO` is dropped** in favor of the namespace flag set above.
 
 **Open for the user** (most blocking first)
 1. **Repository mapping.** The submission must be a GitHub Classroom repo with `README.md`, `.gitignore`, `src/`, and `doc/` at its top level, built from per-feature commits with `Co-authored-by` trailers [1]. Will `pages/course/cisc_7310/bccontainer` *be* that repo's root (for example its own git checkout, or a mirror pushed from this folder)? This decides whether the Cargo crate sits at the folder root, so that `src/` serves both Cargo and the rubric, and how commit history gets to the classroom repo.
