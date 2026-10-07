@@ -7,12 +7,12 @@ Before doing any work in this feature, load these skills via the active harness'
 **Constraint:** `unsafe` appears only in the clone module, as one call. Everything else uses std or nix's safe wrappers.
 
 **Steps:**
-- [ ] Step 0: API surface area
-- [ ] Step 1: Crate skeleton, command line, environment checks, and platform gating
-- [ ] Step 2: Rootfs builder script
-- [ ] Step 3: Clone into new namespaces and supervise the application
-- [ ] Step 4: Container filesystem, hostname, and `/proc`
-- [ ] Step 5: Descriptor hygiene, environment, orphans, and parent death
+- [x] Step 0: API surface area
+- [x] Step 1: Crate skeleton, command line, environment checks, and platform gating
+- [x] Step 2: Rootfs builder script
+- [x] Step 3: Clone into new namespaces and supervise the application
+- [x] Step 4: Container filesystem, hostname, and `/proc`
+- [x] Step 5: Descriptor hygiene, environment, orphans, and parent death
 - [ ] Step 6: Platform and manual verification
 
 Patterns applied (`patterns:using-patterns`): **newtype** for `Hostname` and `Status`, **parse-dont-validate** for turning the command line into `Args` and then `Run` once at the boundary, **errors-typed-untyped** for one `thiserror` enum per module under a top-level enum, **bootstrap-and-service** for a thin `main` that wires `cli::parse` to `launch::launch`, and **arrange-act-assert** for every test below. **Type-states** was considered for the setup order in `sandbox::enter` and left out: it is a fixed sequence of calls in one function, and the feature test covers the order.
@@ -476,7 +476,9 @@ On the Mac with Docker Desktop, in three parts:
 
 The bind-mounted repo lives on Docker Desktop's shared filesystem (virtiofs). Whether its bind mounts, `proc` and `tmpfs` mounts, and `chroot` behave as on a native filesystem is unverified. If they fail, copy the repo, rootfs included, into the container's own filesystem and run the tests from the copy (inside the container: `cp -a /src /work && /work/tests/run.sh`).
 
-Run by hand: Ctrl-C in an interactive `bcdocker run tinysys /bin/sh`, `bcdocker` without root, a rootfs built for the other architecture, and under Docker without `--privileged` (expect the `--privileged` hint). Force a panic in PID 1 once and record the status the host sees.
+Run by hand: Ctrl-C in an interactive `bcdocker run tinysys /bin/sh`, `bcdocker` without root, a rootfs built for the other architecture, and under Docker without `--privileged` (expect the `--privileged` hint). Force a panic in PID 1 once and record the status the host sees. Recorded on the Linux sandbox: a forced panic in PID 1 prints Rust's "panic in a function that cannot unwind", aborts, and the host sees exit 139 (not 134), as the abort in E6 predicts.
+
+Verified in the Linux sandbox (Ubuntu 24.04, kernel 6.18, x86_64, root, real `bookworm-slim` via crane, Docker daemon unavailable): `cargo test`, `cargo clippy --all-targets`, `tests/run.sh`, `tests/hardening.sh`, `tests/mkrootfs_test.sh`; `cargo check --target aarch64-apple-darwin`; no `CAP_SYS_ADMIN` gives the `--privileged` hint; running as a non-root user gives the privilege message; an arm64 rootfs gives `Exec format error`; Ctrl-C on a pseudo-terminal ends the container with nothing left behind. Not verified: Docker Desktop on a Mac, the Debian VM, Apple silicon, and a macOS `cargo build` and run.
 
 **Tests**
 
