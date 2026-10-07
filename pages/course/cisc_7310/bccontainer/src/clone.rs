@@ -9,7 +9,7 @@
 //! I1 (one thread): `spawn` calls `clone` only after `only_thread()` has seen exactly one
 //!    entry in a procfs `/proc/self/task`, and runs no code between the two that can create
 //!    a thread (moves of locals and, inside `only_thread`, one `ReadDir` drop; see I5).
-//! I2 (flags): every clone uses `FLAGS`; callers cannot choose flags.
+//! I2 (flags): every clone uses `CLONE_FLAGS`; callers cannot choose flags.
 //! I3 (stack): every clone uses a fresh heap `Vec` of `STACK` = 8 MiB bytes, alive in the
 //!    parent until `clone` returns. It has no guard page, by the one-`unsafe` constraint;
 //!    see A1.
@@ -50,7 +50,39 @@ fn privileged_hint(errno: &Errno) -> &'static str {
     }
 }
 
-const FLAGS: CloneFlags = CloneFlags::CLONE_NEWPID
+/// What PID 1 is cloned with: four new namespaces, and nothing shared with the parent.
+/// `SIGCHLD` is added at the call, as the exit signal, so the parent can `waitpid` it.
+///
+/// Created, because the container needs its own view of each:
+/// - `CLONE_NEWPID`: a process tree of its own, where the first process is PID 1. This is the
+///   assignment's "process IDs start from 1" and the lecture's minimum. `ps` shows only the
+///   container's processes once a procfs is mounted from inside it (pid_namespaces(7)).
+/// - `CLONE_NEWNS`: a private mount table. The container mounts `/proc` and a tmpfs `/dev` and
+///   changes its root, and none of that may reach the host. This is also why `sandbox::enter`
+///   first makes `/` private: a new mount namespace still starts with shared propagation.
+/// - `CLONE_NEWUTS`: a hostname of its own, so `sethostname` does not rename the host. This is
+///   the lecture's second required namespace.
+/// - `CLONE_NEWIPC`: its own SysV IPC objects and POSIX message queues. The assignment does not
+///   need it. It costs one flag and no setup, and it keeps a container from seeing or
+///   disturbing the host's shared memory segments.
+///
+/// Left out on purpose:
+/// - `CLONE_NEWNET`: networking is out of scope, so the container shares the host's network.
+/// - `CLONE_NEWUSER`: `bcdocker` runs as root and needs its real `CAP_SYS_ADMIN` for the
+///   mounts. A user namespace would remap that, and rootless operation is out of scope.
+/// - `CLONE_NEWCGROUP`, `CLONE_NEWTIME`: nothing in scope uses cgroups or a separate clock.
+///   `CLONE_NEWCGROUP` arrives with `--memory` and `--pids-limit`.
+/// - `CLONE_VM`, `CLONE_FILES`, `CLONE_FS`, `CLONE_SIGHAND`, `CLONE_THREAD`, `CLONE_PARENT`: the
+///   child is a process, not a thread. Sharing memory would break the argument in `spawn` (E2:
+///   the child runs in a copy). Sharing the descriptor table would let the child's closing of
+///   inherited descriptors close the parent's (I2). `CLONE_FS` is rejected together with
+///   `CLONE_NEWNS` and would share the chroot. `CLONE_THREAD` and `CLONE_PARENT` are rejected
+///   together with `CLONE_NEWPID`, and the parent must stay the child's parent to wait for it.
+/// - `CLONE_IO`: shares the disk scheduler's I/O context. It isolates nothing and does not
+///   redirect stdin, stdout, or stderr.
+/// - `CLONE_SETTLS`, `CLONE_PARENT_SETTID`, `CLONE_CHILD_SETTID`, `CLONE_CHILD_CLEARTID`,
+///   `CLONE_PIDFD`: they read arguments that nix does not pass (C4 in `spawn`).
+const CLONE_FLAGS: CloneFlags = CloneFlags::CLONE_NEWPID
     .union(CloneFlags::CLONE_NEWNS)
     .union(CloneFlags::CLONE_NEWUTS)
     .union(CloneFlags::CLONE_NEWIPC);
@@ -71,9 +103,9 @@ pub fn spawn(run: &Run) -> Result<Pid, Error> {
     let mut stack = vec![0u8; STACK];
     only_thread()?;
     // SAFETY:
-    // Operation: `nix::sched::clone(child, &mut stack, FLAGS, Some(SIGCHLD))`, nix =0.31.3
+    // Operation: `nix::sched::clone(child, &mut stack, CLONE_FLAGS, Some(SIGCHLD))`, nix =0.31.3
     // (audited src/sched.rs: calls libc `clone(callback, (end of stack) - (end % 16),
-    // FLAGS | SIGCHLD, &mut child)` with no ptid/tls/ctid; `callback` is a Rust
+    // CLONE_FLAGS | SIGCHLD, &mut child)` with no ptid/tls/ctid; `callback` is a Rust
     // `extern "C" fn` calling `(*child)()`).
     // Required contract:
     //  C1 (nix # Safety) the child must not overflow `stack`.
@@ -88,7 +120,7 @@ pub fn spawn(run: &Run) -> Result<Pid, Error> {
     //     most once per address space.
     //  C6 a panic in `child` must not unwind through the libc frame.
     // Evidence:
-    //  E1 (I2, LOCAL FACT) FLAGS is NEWPID|NEWNS|NEWUTS|NEWIPC: none of the C4 flags, and
+    //  E1 (I2, LOCAL FACT) CLONE_FLAGS is NEWPID|NEWNS|NEWUTS|NEWIPC: none of the C4 flags, and
     //     not CLONE_VM, CLONE_FILES or CLONE_FS. SIGCHLD (17) lies within the CSIGNAL byte
     //     0xff, so OR-ing it adds no flag. => C4.
     //  E2 (DEPENDENCY LEMMA, clone(2), glibc 2.36) without CLONE_VM the child runs in a
@@ -121,7 +153,7 @@ pub fn spawn(run: &Run) -> Result<Pid, Error> {
     //   `stack`; the caller must reap `pid`. Here, `child` has been dropped once and
     //   `stack` is freed when it goes out of scope.
     //  Err(e): no child exists (clone(2) returned -1), and `child` was dropped once, here.
-    let pid = unsafe { clone(child, &mut stack, FLAGS, Some(Signal::SIGCHLD as c_int)) };
+    let pid = unsafe { clone(child, &mut stack, CLONE_FLAGS, Some(Signal::SIGCHLD as c_int)) };
     pid.map_err(Error::Clone)
 }
 
@@ -151,6 +183,29 @@ mod tests {
     fn a_denied_clone_suggests_privileged_and_other_failures_do_not() {
         assert!(Error::Clone(Errno::EPERM).to_string().contains("--privileged"));
         assert!(!Error::Clone(Errno::ENOMEM).to_string().contains("--privileged"));
+    }
+
+    #[test]
+    fn the_clone_flags_are_the_four_namespaces_and_no_sharing() {
+        let namespaces = CloneFlags::CLONE_NEWPID
+            | CloneFlags::CLONE_NEWNS
+            | CloneFlags::CLONE_NEWUTS
+            | CloneFlags::CLONE_NEWIPC;
+        let ruled_out = CloneFlags::CLONE_VM
+            | CloneFlags::CLONE_FS
+            | CloneFlags::CLONE_FILES
+            | CloneFlags::CLONE_SIGHAND
+            | CloneFlags::CLONE_THREAD
+            | CloneFlags::CLONE_PARENT
+            | CloneFlags::CLONE_IO
+            | CloneFlags::CLONE_NEWNET
+            | CloneFlags::CLONE_NEWUSER
+            | CloneFlags::CLONE_NEWCGROUP;
+
+        // nix's `CloneFlags` cannot name CLONE_SETTLS, the *_SETTID flags, CLONE_CHILD_CLEARTID
+        // or CLONE_PIDFD, so those (C4 in `spawn`) cannot be in `CLONE_FLAGS` at all.
+        assert_eq!(CLONE_FLAGS, namespaces);
+        assert!(!CLONE_FLAGS.intersects(ruled_out));
     }
 
     #[test]

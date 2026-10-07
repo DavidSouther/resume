@@ -203,7 +203,7 @@ chmod 755 "$tmp"; mv "$tmp" "$dest"
 
 **Enables:** the feature test's exit-status assertions (`exit 7`, killed by SIGKILL), the missing and non-executable application messages, and `pid=2`.
 
-Fill in `clone::spawn` (the one `unsafe` call, with its `SAFETY` comment), `launch::launch`, and `supervise::container_main`. `clone.rs` clones with a fixed `FLAGS` constant (`CLONE_NEWPID | CLONE_NEWNS | CLONE_NEWUTS | CLONE_NEWIPC`) plus `SIGCHLD`; callers cannot choose flags. It builds the only closure it clones, which calls `supervise::container_main(run)`, and it refuses with `clone::Error::Threads` unless `/proc/self/task` is on procfs and lists exactly one thread. The host side waits for the child and converts its wait status to a `Status`.
+Fill in `clone::spawn` (the one `unsafe` call, with its `SAFETY` comment), `launch::launch`, and `supervise::container_main`. `clone.rs` clones with a fixed `CLONE_FLAGS` constant (`CLONE_NEWPID | CLONE_NEWNS | CLONE_NEWUTS | CLONE_NEWIPC`) plus `SIGCHLD`; callers cannot choose flags. It builds the only closure it clones, which calls `supervise::container_main(run)`, and it refuses with `clone::Error::Threads` unless `/proc/self/task` is on procfs and lists exactly one thread. The host side waits for the child and converts its wait status to a `Status`.
 
 The cloned child is PID 1. `container_main` runs PID 1's steps in order, prints any `supervise::Error` as `bcdocker: <error>` to stderr and returns 1, or returns the application's `Status` code. At this step `supervise`, which `container_main` calls, only starts the application with `std::process::Command` (so the application is PID 2) and waits for it with `waitpid`. A failed start becomes `supervise::Error::Exec`, naming the application and the system's reason. There is no chroot yet, so the application path is a host path at this step. A `clone` that fails with `EPERM` (no `CAP_SYS_ADMIN`, as in unprivileged Docker) says so and suggests `--privileged`. PID 1 writes only to stderr, or ends stdout writes with a newline; the child exits without flushing stdout.
 
@@ -244,7 +244,7 @@ fn a_signal_maps_to_128_plus_the_signal_number() {
 //! I1 (one thread): `spawn` calls `clone` only after `only_thread()` has seen exactly one
 //!    entry in a procfs `/proc/self/task`, and runs no code between the two that can create
 //!    a thread (moves of locals and, inside `only_thread`, one `ReadDir` drop; see I5).
-//! I2 (flags): every clone uses `FLAGS`; callers cannot choose flags.
+//! I2 (flags): every clone uses `CLONE_FLAGS`; callers cannot choose flags.
 //! I3 (stack): every clone uses a fresh heap `Vec` of `STACK` = 8 MiB bytes, alive in the
 //!    parent until `clone` returns. It has no guard page, by the one-`unsafe` constraint;
 //!    see A1.
@@ -255,7 +255,7 @@ fn a_signal_maps_to_128_plus_the_signal_number() {
 //! A1 (ASSUMPTION, not proved; design.md "Constraint for the plan"): the child's stack use
 //!    stays below `STACK`. Evidence only: see E5 in `spawn`.
 
-const FLAGS: CloneFlags = CloneFlags::CLONE_NEWPID
+const CLONE_FLAGS: CloneFlags = CloneFlags::CLONE_NEWPID
     .union(CloneFlags::CLONE_NEWNS)
     .union(CloneFlags::CLONE_NEWUTS)
     .union(CloneFlags::CLONE_NEWIPC);
@@ -276,9 +276,9 @@ pub fn spawn(run: &Run) -> Result<Pid, Error> {
     let mut stack = vec![0u8; STACK];
     only_thread()?;
     // SAFETY:
-    // Operation: `nix::sched::clone(child, &mut stack, FLAGS, Some(SIGCHLD))`, nix =0.31.3
+    // Operation: `nix::sched::clone(child, &mut stack, CLONE_FLAGS, Some(SIGCHLD))`, nix =0.31.3
     // (audited src/sched.rs: calls libc `clone(callback, (end of stack) - (end % 16),
-    // FLAGS | SIGCHLD, &mut child)` with no ptid/tls/ctid; `callback` is a Rust
+    // CLONE_FLAGS | SIGCHLD, &mut child)` with no ptid/tls/ctid; `callback` is a Rust
     // `extern "C" fn` calling `(*child)()`).
     // Required contract:
     //  C1 (nix # Safety) the child must not overflow `stack`.
@@ -293,7 +293,7 @@ pub fn spawn(run: &Run) -> Result<Pid, Error> {
     //     most once per address space.
     //  C6 a panic in `child` must not unwind through the libc frame.
     // Evidence:
-    //  E1 (I2, LOCAL FACT) FLAGS is NEWPID|NEWNS|NEWUTS|NEWIPC: none of the C4 flags, and
+    //  E1 (I2, LOCAL FACT) CLONE_FLAGS is NEWPID|NEWNS|NEWUTS|NEWIPC: none of the C4 flags, and
     //     not CLONE_VM, CLONE_FILES or CLONE_FS. SIGCHLD (17) lies within the CSIGNAL byte
     //     0xff, so OR-ing it adds no flag. => C4.
     //  E2 (DEPENDENCY LEMMA, clone(2), glibc 2.36) without CLONE_VM the child runs in a
@@ -326,7 +326,7 @@ pub fn spawn(run: &Run) -> Result<Pid, Error> {
     //   `stack`; the caller must reap `pid`. Here, `child` has been dropped once and
     //   `stack` is freed when it goes out of scope.
     //  Err(e): no child exists (clone(2) returned -1), and `child` was dropped once, here.
-    let pid = unsafe { nix::sched::clone(child, &mut stack, FLAGS, Some(Signal::SIGCHLD as c_int)) };
+    let pid = unsafe { nix::sched::clone(child, &mut stack, CLONE_FLAGS, Some(Signal::SIGCHLD as c_int)) };
     pid.map_err(Error::Clone)
 }
 
@@ -421,7 +421,7 @@ pub fn enter(c: &Container) -> Result<(), sandbox::Error> {
 
 **Enables:** design promises the feature test does not check: no inherited descriptors above 2, the `PATH` default, orphan reaping, and the container ending when the host-side process dies.
 
-This step adds `set_pdeathsig`, `close_extra_fds`, and the reap loop to `supervise`, which then runs, in order: `set_pdeathsig`, `sandbox::enter`, `close_extra_fds`, start the application, reap. As its first act, PID 1 requests `SIGKILL` when its parent dies (`prctl` parent-death signal), so killing the host-side `bcdocker` ends the container. The parent-death signal fires when the creating thread exits (prctl(2)); by I1 that thread is the host process's only thread, its main thread. A small window remains if the parent dies before the call; the usual check of the parent pid cannot close it, because the parent pid reads 0 inside a new PID namespace. After `sandbox::enter` (so `/proc` is mounted), PID 1 lists `/proc/self/fd`, collects the numbers, then closes every descriptor above 2. At the close point no live value in the child owns an fd above 2: values in the parent's frames above `callback` were copied but are never resumed or dropped in the child (E2 in `clone.rs`). The `ReadDir` over `/proc/self/fd` is collected and dropped before the loop, and its old number gives `EBADF`, which is expected. The parent's descriptors are unaffected because `FLAGS` excludes `CLONE_FILES` (I2). The application inherits the launcher's environment with `PATH` set to `/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin`. The reap loop replaces the wait on the application's pid: PID 1 waits for any child with `waitpid(None, None)` and returns when the pid matches the application's, so orphans are reaped and the application's status is not lost.
+This step adds `set_pdeathsig`, `close_extra_fds`, and the reap loop to `supervise`, which then runs, in order: `set_pdeathsig`, `sandbox::enter`, `close_extra_fds`, start the application, reap. As its first act, PID 1 requests `SIGKILL` when its parent dies (`prctl` parent-death signal), so killing the host-side `bcdocker` ends the container. The parent-death signal fires when the creating thread exits (prctl(2)); by I1 that thread is the host process's only thread, its main thread. A small window remains if the parent dies before the call; the usual check of the parent pid cannot close it, because the parent pid reads 0 inside a new PID namespace. After `sandbox::enter` (so `/proc` is mounted), PID 1 lists `/proc/self/fd`, collects the numbers, then closes every descriptor above 2. At the close point no live value in the child owns an fd above 2: values in the parent's frames above `callback` were copied but are never resumed or dropped in the child (E2 in `clone.rs`). The `ReadDir` over `/proc/self/fd` is collected and dropped before the loop, and its old number gives `EBADF`, which is expected. The parent's descriptors are unaffected because `CLONE_FLAGS` excludes `CLONE_FILES` (I2). The application inherits the launcher's environment with `PATH` set to `/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin`. The reap loop replaces the wait on the application's pid: PID 1 waits for any child with `waitpid(None, None)` and returns when the pid matches the application's, so orphans are reaped and the application's status is not lost.
 
 **Tests**
 
