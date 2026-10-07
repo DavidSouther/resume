@@ -15,6 +15,31 @@ pub enum Error {
     UnknownOption(String),
     #[error(transparent)]
     StackSize(#[from] stack::Error),
+    #[error("usage: {count} application arguments; the limit is {}", MAX_ARGS)]
+    TooManyArguments { count: usize },
+}
+
+/// The most arguments an application may be given. glibc's `execvp` can copy the argument
+/// array onto the stack `clone` gives PID 1 (E5(a) in `clone.rs`); at this count the copy is
+/// about 128 KiB, an eighth of `stack::MIN`.
+pub const MAX_ARGS: usize = 16384;
+
+/// The application's arguments, at most `MAX_ARGS` of them. Safety-usable invariant:
+/// `clone::spawn` relies on that bound, so `new` is the only constructor.
+#[derive(Debug, PartialEq, Eq)]
+pub struct AppArgs(Vec<String>);
+
+impl AppArgs {
+    pub fn new(args: Vec<String>) -> Result<AppArgs, Error> {
+        if args.len() > MAX_ARGS {
+            return Err(Error::TooManyArguments { count: args.len() });
+        }
+        Ok(AppArgs(args))
+    }
+
+    pub fn as_slice(&self) -> &[String] {
+        &self.0
+    }
 }
 
 /// The arguments as typed, before the container is looked up.
@@ -22,12 +47,12 @@ pub enum Error {
 pub struct Args {
     pub container: String,
     pub app: String,
-    pub args: Vec<String>,
+    pub args: AppArgs,
     pub stack_size: StackSize,
 }
 
-/// `bcdocker run [--stack-size <size>] <container> <app> [args...]`. Options come before the
-/// container; everything after the application is the application's own arguments.
+/// Options come before the container; everything after the application is the application's
+/// own arguments.
 pub fn parse(args: impl IntoIterator<Item = String>) -> Result<Args, Error> {
     let mut rest = args.into_iter().skip(1); // the program name
     if rest.next().as_deref() != Some("run") {
@@ -47,14 +72,15 @@ pub fn parse(args: impl IntoIterator<Item = String>) -> Result<Args, Error> {
         }
     };
     let app = rest.next().ok_or(Error::Usage)?;
-    Ok(Args { container, app, args: rest.collect(), stack_size })
+    let args = AppArgs::new(rest.collect())?;
+    Ok(Args { container, app, args, stack_size })
 }
 
 #[derive(Debug)]
 pub struct Run {
     pub container: Container,
     pub app: String,
-    pub args: Vec<String>,
+    pub args: AppArgs,
     pub stack_size: StackSize,
 }
 
@@ -88,7 +114,7 @@ mod tests {
             Args {
                 container: "tinysys".into(),
                 app: "/bin/ls".into(),
-                args: argv(&["-l", "--color"]),
+                args: AppArgs::new(argv(&["-l", "--color"])).unwrap(),
                 stack_size: StackSize::default(),
             }
         );
@@ -132,7 +158,7 @@ mod tests {
         let args = parse(argv(&["bcdocker", "run", "tinysys", "/bin/ls", "--stack-size", "3"])).unwrap();
 
         assert_eq!(args.stack_size, StackSize::default());
-        assert_eq!(args.args, argv(&["--stack-size", "3"]));
+        assert_eq!(args.args.as_slice(), argv(&["--stack-size", "3"]));
     }
 
     #[test]
@@ -142,6 +168,19 @@ mod tests {
             parse(argv(&["bcdocker", "run", "--bogus", "tinysys", "/bin/sh"])),
             Err(Error::UnknownOption(name)) if name == "--bogus"
         );
+    }
+
+    #[test]
+    fn more_than_max_args_application_arguments_are_a_usage_error() {
+        let mut line = argv(&["bcdocker", "run", "tinysys", "/bin/true"]);
+        line.extend(std::iter::repeat_n(String::new(), MAX_ARGS));
+        assert_eq!(parse(line.clone()).unwrap().args.as_slice().len(), MAX_ARGS);
+
+        line.push(String::new());
+        let err = parse(line).unwrap_err();
+
+        assert_matches!(err, Error::TooManyArguments { count } if count == MAX_ARGS + 1);
+        assert_eq!(err.to_string(), "usage: 16385 application arguments; the limit is 16384");
     }
 
     #[test]

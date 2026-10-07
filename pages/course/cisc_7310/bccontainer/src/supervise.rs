@@ -40,18 +40,19 @@ pub fn container_main(run: &Run) -> i32 {
     }
 }
 
-/// The parent-death signal fires when the thread that created PID 1 exits. By I1 in
-/// `clone.rs` that is the host process's only thread, so it fires when the host-side
-/// `bcdocker` dies. A short window remains if the parent dies before this call; the usual
-/// check of the parent pid cannot close it, because the parent pid reads 0 inside a new
-/// PID namespace.
+/// PID 1's work: enter the sandbox, start the application, and reap until it exits.
 fn supervise(run: &Run) -> Result<Status, Error> {
+    // The parent-death signal fires when the thread that created PID 1 exits. By I1 in
+    // `clone.rs` that is the host process's only thread, so it fires when the host-side
+    // `bcdocker` dies. A short window remains if the parent dies before this call; the usual
+    // check of the parent pid cannot close it, because the parent pid reads 0 inside a new
+    // PID namespace.
     set_pdeathsig(Signal::SIGKILL).map_err(Error::Pdeathsig)?;
     sandbox::enter(&run.container)?;
     // After enter: lists the container's own /proc and closes anything setup left open.
     close_extra_fds().map_err(Error::Fds)?;
     let child = Command::new(&run.app)
-        .args(&run.args)
+        .args(run.args.as_slice())
         .env("PATH", DEBIAN_PATH)
         .spawn()
         .map_err(|source| Error::Exec { app: run.app.clone(), source })?;
@@ -67,8 +68,8 @@ fn supervise(run: &Run) -> Result<Status, Error> {
     }
 }
 
-/// The descriptors above `min` that are open now. The directory handle used to list them is
-/// closed again before this returns.
+/// The descriptors above `min` that are open now. The result can include the number of the
+/// directory handle used to list them, which is closed again before this returns.
 fn open_fds_above(min: RawFd) -> io::Result<Vec<RawFd>> {
     let mut fds = Vec::new();
     for entry in std::fs::read_dir("/proc/self/fd")? {

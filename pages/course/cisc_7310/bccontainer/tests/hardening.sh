@@ -4,7 +4,7 @@
 #
 #     sudo tests/hardening.sh
 #
-# Shares target/test-work with run.sh and builds its container if it is absent.
+# Uses target/test-work/containers/bctest, building it if absent.
 
 set -u
 
@@ -16,6 +16,17 @@ failures=0
 
 fail() { echo "FAIL: $*" >&2; failures=$((failures + 1)); }
 check() { [[ "$2" == "$3" ]] || fail "$1: expected '$2', got '$3'"; }
+# child_of <pid>: a process whose parent is <pid>, read from /proc alone (no procps).
+child_of() {
+  local f line
+  for f in /proc/[0-9]*/status; do
+    while IFS= read -r line; do
+      [[ $line == PPid:* ]] || continue
+      [[ ${line#PPid:} =~ ^[[:space:]]*$1$ ]] && { f=${f#/proc/}; echo "${f%/status}"; return; }
+      break
+    done 2>/dev/null <"$f"
+  done
+}
 # run <container> <app> [args...]: bcdocker from the scratch working directory.
 run() { (cd "$work" && "$bcdocker" run "$@" </dev/null); }
 
@@ -69,21 +80,19 @@ bcdocker_pid=$!
 cd - >/dev/null || exit 1
 pid1='' app='' sleeper=''
 for _ in $(seq 50); do
-  pid1=$(pgrep -P "$bcdocker_pid" | head -1)
-  [[ -n $pid1 ]] && app=$(pgrep -P "$pid1" | head -1)
-  [[ -n $app ]] && sleeper=$(pgrep -P "$app" | head -1)
+  pid1=$(child_of "$bcdocker_pid")
+  [[ -n $pid1 ]] && app=$(child_of "$pid1")
+  [[ -n $app ]] && sleeper=$(child_of "$app")
   [[ -n $sleeper ]] && break
   sleep 0.1
 done
-# alive: either process exists and is not a zombie awaiting its new parent's wait.
-alive() {
-  local p state
-  for p in "$app" "$sleeper"; do
-    state=$(sed 's/.*) //' "/proc/$p/stat" 2>/dev/null | cut -c1)
-    [[ -n $state && $state != Z ]] && return 0
-  done
-  return 1
+# live <pid>: the process exists and is not a zombie awaiting its new parent's wait.
+live() {
+  local state
+  state=$(sed 's/.*) //' "/proc/$1/stat" 2>/dev/null | cut -c1)
+  [[ -n $state && $state != Z ]]
 }
+alive() { live "$app" || live "$sleeper"; }
 if [[ -z $sleeper ]]; then
   fail "the container's sleep never started"
   kill -9 "$bcdocker_pid" 2>/dev/null
@@ -94,7 +103,7 @@ else
   for _ in $(seq 20); do alive || break; sleep 0.1; done
   if alive; then
     fail "the container outlived the host-side bcdocker"
-    kill -9 "$app" "$sleeper" 2>/dev/null
+    for p in "$app" "$sleeper"; do live "$p" && kill -9 "$p" 2>/dev/null; done
   fi
 fi
 

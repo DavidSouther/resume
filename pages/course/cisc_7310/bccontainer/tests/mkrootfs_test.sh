@@ -34,7 +34,10 @@ echo "docker \$*" >>"$log"
 case \$1 in
   info) [[ -z \${STUB_DOCKER_INFO_FAIL:-} ]] ;;
   create) echo stubid ;;
-  export) tar -c -C "$work/fixture" .; [[ -z \${STUB_EXPORT_FAIL:-} ]] ;;
+  export)
+    tar -c -C "$work/fixture" .
+    [[ -z \${STUB_DEST_APPEARS:-} ]] || mkdir -p "$work/run/containers/\$STUB_DEST_APPEARS"
+    [[ -z \${STUB_EXPORT_FAIL:-} ]] ;;
   rm) ;;
 esac
 STUB
@@ -69,6 +72,12 @@ new_case "an export that fails midway leaves nothing behind"
 STUB_EXPORT_FAIL=1 mk tinysys >/dev/null 2>&1; [[ $? -ne 0 ]] || fail "failed export exited 0"
 [[ -z $(ls -A "$work/run/containers" 2>/dev/null) ]] || fail "left behind: $(ls -A "$work/run/containers")"
 grep -q "docker rm -f stubid" "$log" || fail "created container not removed: $(cat "$log")"
+done_case
+
+new_case "a container that appears during the build is not built into"
+STUB_DEST_APPEARS=tinysys mk tinysys >/dev/null 2>&1; [[ $? -ne 0 ]] || fail "exited 0"
+check "the other container's contents" "" "$(ls -A "$work/run/containers/tinysys")"
+check "containers" tinysys "$(ls -A "$work/run/containers")"
 done_case
 
 new_case "crane is used when docker is not on PATH"
@@ -109,6 +118,11 @@ for bad in "" . .. a/b ../x "$(printf 'a%.0s' $(seq 65))"; do
   [[ $code -ne 0 ]] || fail "${bad:0:10}: exited 0"
   [[ $err == *"name must be"* ]] || fail "${bad:0:10}: message: $err"
 done
+# The limit is in bytes, as the kernel counts: 33 two-byte characters are 66 bytes. Run under a
+# UTF-8 locale, where counting characters would accept the name.
+(LC_ALL=C.UTF-8; s=é; ((${#s} == 1))) || fail "no C.UTF-8 locale, so the byte count is untested"
+err=$(LC_ALL=C.UTF-8 mk "$(printf 'é%.0s' $(seq 33))" 2>&1 >/dev/null); code=$?
+[[ $code -ne 0 && $err == *"name must be"* ]] || fail "33 x é: exited $code: $err"
 [[ -z $(ls -A "$work/run" 2>/dev/null) ]] || fail "left behind: $(ls -A "$work/run")"
 [[ ! -s $log ]] || fail "tools ran: $(cat "$log")"
 done_case

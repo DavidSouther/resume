@@ -19,6 +19,8 @@ Patterns applied (`patterns:using-patterns`): **newtype** for `Hostname` and `St
 
 ## Step 0: API surface area
 
+The sketches in Step 0 and Step 1 are the plan's original; `src/` is authoritative. Since then `Args` and `Run` carry `stack_size: StackSize` and `args: AppArgs` (at most `cli::MAX_ARGS` = 16384), `cli::Error` adds `UnknownOption`, `StackSize` and `TooManyArguments`, the usage text includes `[--stack-size <size>]`, `clone::Error` adds `Stack(#[from] stack::Error)`, and nix also enables the `resource` feature (for `getrlimit`).
+
 Stubs only, no bodies. The Rust crate is `bcdocker`, edition 2021, with `rust-version = "1.96"` under `[package]` (E6 in `clone.rs` needs at least 1.81, where a panic unwinding out of an `extern "C"` function starts to abort; 1.96 also provides `std::assert_matches!` for the tests), `thiserror = "2"` and `nix = { version = "=0.31.3", features = ["sched", "mount", "hostname", "fs", "process", "signal", "user"] }`. nix is pinned exactly because the `SAFETY` comment in `clone.rs` relies on its audited source. nix is a normal dependency: its `Errno` is portable, and only the code that calls Linux-only functions is gated with `cfg(target_os = "linux")`.
 
 ```rust
@@ -207,7 +209,7 @@ Fill in `clone::spawn` (the one `unsafe` call, with its `SAFETY` comment), `laun
 
 The cloned child is PID 1. `container_main` runs PID 1's steps in order, prints any `supervise::Error` as `bcdocker: <error>` to stderr and returns 1, or returns the application's `Status` code. At this step `supervise`, which `container_main` calls, only starts the application with `std::process::Command` (so the application is PID 2) and waits for it with `waitpid`. A failed start becomes `supervise::Error::Exec`, naming the application and the system's reason. There is no chroot yet, so the application path is a host path at this step. A `clone` that fails with `EPERM` (no `CAP_SYS_ADMIN`, as in unprivileged Docker) says so and suggests `--privileged`. PID 1 writes only to stderr, or ends stdout writes with a newline; the child exits without flushing stdout.
 
-The child's stack is a heap `Vec` of `--stack-size` bytes (`stack::StackSize`: 1 MiB to 1 GiB, default 8 MiB). The zeroed allocation is lazily committed, so untouched pages cost nothing. The child runs only the crate's own non-recursive code, and `tests/stack.sh` measures the depth it reaches (16 KiB in a debug build, 12 to 16 KiB in release) and fails above 64 KiB. This is measured and tested, not proved: there is no guard page, so an overflow is not guaranteed to fault. A guard page would need four more `unsafe` calls (`mmap`, `mprotect`, `munmap`, `from_raw_parts_mut`), and the constraint allows one. So the stack bound is recorded as assumption A1 in `clone.rs` and as an accepted risk in design.md's "Constraint for the plan".
+The child's stack is a heap `Vec` of `--stack-size` bytes (`stack::StackSize`: 1 MiB to 1 GiB, default 8 MiB). The zeroed allocation is lazily committed, so untouched pages cost nothing. The child runs only the crate's own non-recursive code; the one input that can deepen it, the argument count (glibc's `execvp` can copy the argument array onto the stack), is capped at `cli::MAX_ARGS` = 16384. `tests/stack.sh` measures the depth it reaches (16 KiB in a debug build, 12 to 16 KiB in release) and fails above 64 KiB. This is measured and tested, not proved: there is no guard page, so an overflow is not guaranteed to fault. A guard page would need four more `unsafe` calls (`mmap`, `mprotect`, `munmap`, `from_raw_parts_mut`), and the constraint allows one. So the stack bound is recorded as assumption A1 in `clone.rs` and as an accepted risk in design.md's "Constraint for the plan".
 
 **Tests**
 
@@ -438,9 +440,9 @@ exec 9</; out=$(run bctest /bin/sh -c 'ls /proc/$$/fd')
 
 - `echo $PATH` inside prints the Debian default, and a host variable `FOO=bar` is visible inside.
 - An orphaned grandchild leaves no zombie: `out=$(run bctest /bin/sh -c '(true &); sleep 0.2; grep -l "^State:.Z" /proc/[0-9]*/status'); [[ -z $out ]]`. The test checks for empty output and ignores the exit status, because `grep -l` exits 1 when no file matches.
-- Starting `bcdocker run bctest /bin/sh -c 'sleep 30'` directly in the background with `&` (from `target/test-work`, not through `run()`, whose subshell would be `$!`) and killing bcdocker's own pid with `kill -9 $!` leaves no `sleep 30` on the host within two seconds. The kill must target the host-side `bcdocker` process itself (or use `pkill -x bcdocker` on the host), never a wrapper subshell.
-- A descriptor opened with close-on-exec already set is still absent.
+- Starting `bcdocker run bctest /bin/sh -c 'sleep 30'` directly in the background with `&` (from `target/test-work`, not through `run()`, whose subshell would be `$!`) and killing bcdocker's own pid with `kill -9 $!` leaves no `sleep 30` on the host within two seconds. The kill must target the host-side `bcdocker` process itself, never a wrapper subshell.
 - The application's exit status is still correct when an orphan exits first.
+- No test opens a descriptor with close-on-exec set: bash cannot open one, and the kernel closes such a descriptor at `exec` regardless.
 
 **Implementation Outline**
 

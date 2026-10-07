@@ -5,11 +5,15 @@
 //!
 //! The audit covers glibc only: the host's glibc at run time (bcdocker runs outside the
 //! rootfs). The clone wrapper and malloc were read against 2.36 and the stack was measured on
-//! 2.39. musl and Android are not audited and do not build.
+//! 2.39. The version is not checked at run time: a glibc older than 2.34, or one not audited,
+//! is outside this proof, so re-read the glibc claims in E3 and E5 after an upgrade. A musl
+//! build stops at the `compile_error!` below; Android is not `target_os = "linux"`, so it
+//! builds without this module and reports that it needs Linux.
 //!
 //! I1 (one thread): `spawn` calls `clone` only after `only_thread()` has seen exactly one
 //!    entry in a procfs `/proc/self/task`, and runs no code between the two that can create
-//!    a thread (moves of locals and, inside `only_thread`, one `ReadDir` drop; see I5).
+//!    a thread (moves of locals and, inside `only_thread`, the end of the directory listing
+//!    and its `closedir`: `getdents64`, `close` and a glibc `free`; see I5).
 //! I2 (flags): every clone uses `CLONE_FLAGS`; callers cannot choose flags.
 //! I3 (stack): every clone uses a fresh heap `Vec` of `run.stack_size.bytes()` bytes, alive
 //!    in the parent until `clone` returns. `StackSize` guarantees `stack::MIN` (1 MiB) <= that
@@ -21,8 +25,9 @@
 //! I5 (allocator): this crate declares no `#[global_allocator]`; allocation is glibc malloc,
 //!    which never creates threads.
 //! A1 (ASSUMPTION, measured and tested, not proved): the child's stack use stays below
-//!    `stack::MIN`, so below every accepted stack size. The basis is stated in E5 in `spawn`,
-//!    and `tests/stack.sh` repeats the measurement.
+//!    `stack::MIN`, so below every accepted stack size. Its one input-dependent term, a copy
+//!    of the argument array, is bounded by `cli::MAX_ARGS`, an invariant of `cli::AppArgs`.
+//!    The basis is stated in E5 in `spawn`, and `tests/stack.sh` repeats the measurement.
 
 #[cfg(not(target_env = "gnu"))]
 compile_error!("the clone audit in this module covers glibc only");
@@ -74,7 +79,7 @@ fn privileged_hint(errno: &Errno) -> &'static str {
 ///   no setup, and it keeps a container from seeing or disturbing the host's shared memory
 ///   segments.
 ///
-/// Left out on purpose:
+/// Every other flag is left out. The ones worth explaining:
 /// - `CLONE_NEWNET`: networking is out of scope, so the container shares the host's network.
 /// - `CLONE_NEWUSER`: `bcdocker` runs as root and needs its real `CAP_SYS_ADMIN` for the
 ///   mounts. A user namespace would remap that, and rootless operation is out of scope.
@@ -86,8 +91,7 @@ fn privileged_hint(errno: &Errno) -> &'static str {
 ///   `CLONE_NEWNS` and would share the chroot. `CLONE_THREAD` is rejected together with
 ///   `CLONE_NEWPID`; with `CLONE_PARENT` the child would belong to bcdocker's parent, and
 ///   bcdocker must stay its parent to wait for it.
-/// - `CLONE_IO`: shares the disk scheduler's I/O context. It isolates nothing and does not
-///   redirect stdin, stdout, or stderr.
+/// - `CLONE_IO`: shares the disk scheduler's I/O context; it isolates nothing.
 /// - `CLONE_SETTLS`, `CLONE_PARENT_SETTID`, `CLONE_CHILD_SETTID`, `CLONE_CHILD_CLEARTID`,
 ///   `CLONE_PIDFD`: they read arguments that nix does not pass (C4 in `spawn`).
 const CLONE_FLAGS: CloneFlags = CloneFlags::CLONE_NEWPID
@@ -95,19 +99,18 @@ const CLONE_FLAGS: CloneFlags = CloneFlags::CLONE_NEWPID
     .union(CloneFlags::CLONE_NEWUTS)
     .union(CloneFlags::CLONE_NEWIPC);
 
-/// Runs `supervise::container_main(run)` as PID 1 of new PID, mount, UTS and IPC
-/// namespaces and returns its host PID.
+/// Runs `supervise::container_main(run)` as PID 1 of the namespaces in `CLONE_FLAGS` and
+/// returns its host PID.
 ///
-/// Sound for every safe caller, given assumption A1: callers cannot choose clone flags,
-/// the stack, or the closure, `run`'s sizes do not affect the child's stack depth, and
-/// the call fails (without cloning) unless the process has exactly one thread.
-/// The child runs in a copy of this process's memory. The closure, and `run`, stay valid
-/// there until the child exits and are never dropped there. In this process the closure
-/// is dropped exactly once, before `spawn` returns. The child's exit status is
-/// `container_main`'s return value, truncated to 8 bits.
+/// Sound for every safe caller, given assumption A1: callers cannot choose clone flags, the
+/// stack, or the closure; `run`'s sizes affect the child's stack depth only through the
+/// argument count, which `cli::AppArgs` bounds (E5(a)); and the call fails, without cloning,
+/// unless the process has exactly one thread.
 ///
-/// The caller must `waitpid` the returned pid. Do not call while holding a std lock the child
-/// may also take: the child inherits it held.
+/// The caller must `waitpid` the returned pid. The child's exit status is `container_main`'s
+/// return value, truncated to 8 bits; a panic in the child gives 139 instead (see the
+/// postconditions). Do not call while holding a std lock the child may also take: the child
+/// inherits it held.
 pub fn spawn(run: &Run) -> Result<Pid, Error> {
     let child: CloneCb<'_> = Box::new(move || supervise::container_main(run) as isize);
     let mut stack = run.stack_size.allocate()?;
@@ -136,30 +139,42 @@ pub fn spawn(run: &Run) -> Result<Pid, Error> {
     //  E2 (DEPENDENCY LEMMA, clone(2), glibc; see the module doc) without CLONE_VM the child
     //     runs in a separate copy of this address space at the same addresses, so `child`,
     //     `&Run` and nix's frame exist unchanged there. "When the fn(arg) function returns,
-    //     the child process terminates" (clone(2)), so the child never resumes a frame above
-    //     `callback` and never frees them. Writes in either process are invisible to the other, so the
-    //     parent's drop of `child` (once, when nix's `clone` returns) and of `stack` do not
-    //     affect the child. => C5.
+    //     the child process terminates" (clone(2)): glibc's wrapper makes the raw `exit` system
+    //     call, so the child never resumes a frame above `callback`, never frees them, and
+    //     runs no atexit handler or thread-local destructor. Writes in either process are
+    //     invisible to the other, so the parent's drop of `child` (once, when nix's `clone`
+    //     returns) and of `stack` do not affect the child. => C5.
     //  E3 (I1, safety-usable invariant of `only_thread`; I5) the process had exactly one
     //     thread when `only_thread` read procfs. A thread is created only by a thread of
-    //     this process (clone(2)), and since then this thread has only dropped a `ReadDir`
-    //     (glibc `free`, I5) and moved locals, so it still has one. C2's antecedent is
-    //     false, and the child may allocate, lock, format and print. Locks this thread
+    //     this process (clone(2)). Since then this thread has finished the listing and
+    //     dropped the `ReadDir` (`getdents64`, `close`, glibc `free`; I5) and moved locals,
+    //     and the only code that can run asynchronously is std's SIGSEGV and SIGBUS handler.
+    //     None of that creates a thread, so it still has one. C2's antecedent is false, and
+    //     the child may allocate, lock, format and print. Locks this thread
     //     holds further up the stack (a std `Mutex`, a `OnceLock` init, the stdout lock)
     //     are copied as held; relocking them can deadlock or panic (std docs), which is
     //     not UB.
     //     Unlike fork(3), glibc's clone() runs no atfork handlers and leaves the cached thread
-    //     ID in the thread control block as the parent's. With one thread no glibc-internal lock
-    //     can be held, and nothing the child reaches reads that cached ID: std's locks use
-    //     futexes and a thread-local ThreadId, raise and abort ask the kernel (gettid), and
-    //     Command::spawn sets up its own child through fork or posix_spawn.
+    //     ID in the thread control block as the parent's. No glibc-internal lock is held: the
+    //     only thread is not inside glibc at the call, which is reached by plain calls from
+    //     `main`, not from a signal handler or a glibc callback. Nothing the child reaches
+    //     reads the cached ID: std's locks use futexes and a thread-local ThreadId, raise and
+    //     abort ask the kernel (gettid), and Command::spawn sets up its own child through
+    //     fork or posix_spawn. These glibc facts hold from 2.34 on.
     //  E4 (I3, LOCAL FACT) `stack.len() == run.stack_size.bytes()` by `StackSize::allocate`,
     //     and `>= stack::MIN = 1 MiB` by the `StackSize` type, so `>= 16`. => C3.
     //  E5 (ASSUMPTION A1; measured and tested, NOT proved) the child's stack use stays below
     //     `stack::MIN` = 1 MiB, so below any accepted size (I3). Basis:
     //     (a) the child runs only `container_main`: crate code with no recursion and no large
-    //         locals (I4). Everything of variable size (paths, arguments, environment, error
-    //         text) lives on the heap, so the stack depth does not depend on the input;
+    //         locals (I4). Paths, arguments, the environment and error text live on the heap,
+    //         and nix's path buffers are fixed at 1024 bytes, so the size of the input changes
+    //         only which bounded path runs (one page in release, per (b)). One term grows with
+    //         the input: for an application named without a `/`, std forks PID 1 and glibc's
+    //         `execvp` runs it there, and if the file is not an executable format, `execvp`
+    //         retries through `/bin/sh` with a copy of the argument array on the fork's copy
+    //         of this stack, (arguments + 3) * 8 bytes. `cli::AppArgs` caps the arguments at
+    //         `cli::MAX_ARGS` = 16384, so that copy is at most about 128 KiB, an eighth of
+    //         `stack::MIN`;
     //     (b) measured depth of the child's stack for the whole path (`sandbox::enter`,
     //         `close_extra_fds`, `Command::spawn`, the wait): 16 KiB in a debug build and
     //         12 to 16 KiB in release, on x86_64, glibc 2.39, rustc 1.97 (2026-10-07). The
@@ -167,21 +182,28 @@ pub fn spawn(run: &Run) -> Result<Pid, Error> {
     //         arguments plus a 100 KB environment it is the same in debug and one 4 KiB page
     //         (the measurement's granularity) deeper in release. `stack::MIN` is 64x the debug
     //         figure, the default 512x;
-    //     (c) `tests/stack.sh` repeats (b) on any machine and fails above `stack::MIN / 16` =
-    //         64 KiB, four times the debug figure, so growth fails a test long before it
-    //         nears the floor. It also runs the failing-exec path, which formats a long path
-    //         into an error, on a floor-sized stack.
+    //     (c) `tests/stack.sh` repeats (b) on any machine and fails above 64 KiB (hard-coded
+    //         there as `stack::MIN / 16`), four times the debug figure, so growth fails a test
+    //         long before it nears the floor. On a floor-sized stack it also runs the
+    //         failing-exec path, which formats a long path into an error, and the `execvp`
+    //         retry of (a) with `cli::MAX_ARGS` arguments.
     //     Not shown: other architectures or libc versions (run `tests/stack.sh` on each target
-    //     and after toolchain upgrades), and a proof for every path. There is no guard page, so
-    //     an overflow is not guaranteed to fault. C1 is NOT discharged; it rests on A1 (module
-    //     doc).
-    //  E6 (AXIOM, Reference, rustc >= 1.81, and Cargo.toml has `rust-version = "1.96"`: a panic
-    //     that would unwind out of a Rust-defined `extern "C"` function aborts) nix's
+    //     and after toolchain upgrades), and a proof for every path. Where the stack lies is
+    //     glibc malloc behaviour, not a guarantee: a block of 1 MiB or more gets its own
+    //     `mmap` unless freeing a block that large has raised malloc's mmap threshold, and
+    //     nothing bcdocker frees before allocating the stack is that large (measured: PID 1's
+    //     stack pointer is in an anonymous mapping, not `[heap]`, at 1 MiB and 8 MiB). That
+    //     mapping can sit directly above another, and there is no guard page, so an overflow
+    //     is not guaranteed to fault. C1 is NOT discharged; it rests on A1 (module doc).
+    //  E6 (AXIOM, Reference, rustc >= 1.81, and Cargo.toml's `rust-version` is at least that:
+    //     a panic that would unwind out of a Rust-defined `extern "C"` function aborts) nix's
     //     `callback` is such a function. => C6.
     // Postconditions:
     //  Ok(pid): the child is PID 1 of new namespaces, running `child` on its copy of
     //   `stack`; the caller must reap `pid`. Here, `child` has been dropped once and
-    //   `stack` is freed when it goes out of scope.
+    //   `stack` is freed when it goes out of scope. A panic in the child aborts it (E6); PID 1
+    //   ignores its own SIGABRT, so glibc's `abort` ends in a SIGSEGV, and the host sees
+    //   status 139.
     //  Err(e): no child exists (clone(2) returned -1), and `child` was dropped once, here.
     let pid = unsafe { clone(child, &mut stack, CLONE_FLAGS, Some(Signal::SIGCHLD as c_int)) };
     pid.map_err(Error::Clone)
@@ -195,11 +217,11 @@ pub fn spawn(run: &Run) -> Result<Pid, Error> {
 fn only_thread() -> Result<(), Error> {
     match statfs("/proc/self/task") {
         Ok(fs) if fs.filesystem_type() == PROC_SUPER_MAGIC => {}
-        _ => return Err(Error::Threads), // not procfs, or unreadable: refuse
+        _ => return Err(Error::Threads),
     }
     match std::fs::read_dir("/proc/self/task").map(|d| d.count()) {
         Ok(1) => Ok(()),
-        _ => Err(Error::Threads), // more than one thread, or /proc unreadable: refuse
+        _ => Err(Error::Threads),
     }
 }
 

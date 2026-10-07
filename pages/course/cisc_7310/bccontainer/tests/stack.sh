@@ -10,8 +10,8 @@
 #
 #     cargo build && sudo tests/stack.sh
 #
-# BCDOCKER overrides the binary under test. Debug builds use more stack than release builds,
-# so test the debug build too.
+# BCDOCKER overrides the binary under test. The default is the debug build, which uses more
+# stack; set BCDOCKER to check the release build as well.
 
 set -u
 
@@ -30,25 +30,39 @@ if [[ ! -d $work/containers/bctest ]]; then
   (cd "$work" && "$project/scripts/mkrootfs.sh" bctest) || { echo "mkrootfs.sh bctest failed" >&2; exit 1; }
 fi
 
+# child_of <pid>: a process whose parent is <pid>, read from /proc alone (no procps).
+child_of() {
+  local f line
+  for f in /proc/[0-9]*/status; do
+    while IFS= read -r line; do
+      [[ $line == PPid:* ]] || continue
+      [[ ${line#PPid:} =~ ^[[:space:]]*$1$ ]] && { f=${f#/proc/}; echo "${f%/status}"; return; }
+      break
+    done 2>/dev/null <"$f"
+  done
+}
+
 # touched <stack bytes> [application arguments...]: the kilobytes of the child's stack in use,
-# while PID 1 waits for the application. PID 1 is blocked in a system call, so
+# while PID 1 waits for the application, then "heap" if the stack pointer lies in the brk heap,
+# where an overflow would run into live allocations, or "own" otherwise. PID 1 is blocked in a system call, so
 # /proc/<pid>/syscall gives its stack pointer. The stack is a zeroed heap block, so pages the
 # child never wrote are not privately mapped. Counting the contiguous run of exclusive, present
 # pages (pagemap bits 63 and 56) downward from the stack pointer gives the depth the child
-# reached, plus one page above the pointer for the frames above it. This does not depend on
-# where the kernel merged the block with a neighbouring mapping.
+# reached. One page is added for the frames above the pointer, assuming the frames above the
+# waiting `waitpid` fit in one page. This does not depend on where the kernel merged the block
+# with a neighbouring mapping.
 touched() {
   local bytes=$1; shift
-  local host pid1='' app='' sleeper='' sp page first count=0 i e
+  local host pid1='' app='' sleeper='' sp page first count=0 i e range path where=own
   (cd "$work" && exec "$bcdocker" run --stack-size "$bytes" bctest /bin/sh -c 'sleep 20' sh "$@" \
     </dev/null >/dev/null 2>&1) &
   host=$!
   # Found by ancestry (bcdocker, PID 1, sh, sleep), never by name. Once sh has started sleep,
   # PID 1 is waiting.
   for _ in $(seq 100); do
-    pid1=$(pgrep -P "$host" | head -1)
-    [[ -n $pid1 ]] && app=$(pgrep -P "$pid1" | head -1)
-    [[ -n $app ]] && sleeper=$(pgrep -P "$app" | head -1)
+    pid1=$(child_of "$host")
+    [[ -n $pid1 ]] && app=$(child_of "$pid1")
+    [[ -n $app ]] && sleeper=$(child_of "$app")
     [[ -n $sleeper ]] && break
     sleep 0.1
   done
@@ -62,19 +76,23 @@ touched() {
       (((e >> 63) & 1 && (e >> 56) & 1)) || break
       count=$((count + 1))
     done
+    while read -r range _ _ _ _ path; do
+      [[ $path == '[heap]' ]] && ((sp >= 16#${range%-*} && sp < 16#${range#*-})) && where=heap
+    done <"/proc/$pid1/maps"
   fi
+  # PID 1's parent-death signal ends the container with the host process.
   kill -9 "$host" 2>/dev/null
   { wait "$host"; } 2>/dev/null
-  [[ -n $app ]] && kill -9 "$app" ${sleeper:+"$sleeper"} 2>/dev/null
-  [[ $sp == 0x* ]] && echo $(((count + 1) * 4))
+  [[ $sp == 0x* ]] && echo "$(((count + 1) * 4)) $where"
 }
 
 check_touched() { # check_touched <label> <stack bytes> [application arguments...]
-  local label=$1 bytes=$2 kb; shift 2
-  kb=$(touched "$bytes" "$@")
+  local label=$1 bytes=$2 kb where; shift 2
+  read -r kb where < <(touched "$bytes" "$@")
   if [[ -z $kb ]]; then fail "$label: could not read the child stack pointer"; return; fi
   echo "$label: $kb KiB used of $((bytes / 1024)) KiB (limit $limit_kb)"
   ((kb <= limit_kb)) || fail "$label: used $kb KiB, over $limit_kb"
+  [[ $where == own ]] || fail "$label: the stack lies in the brk heap, next to live allocations"
 }
 
 big_args=(); for i in $(seq 2000); do big_args+=("argument-number-$i-$(printf 'x%.0s' $(seq 80))"); done
@@ -89,6 +107,21 @@ long=/$(printf 'a%.0s' $(seq 3000))
 err=$(cd "$work" && "$bcdocker" run --stack-size 1M bctest "$long" 2>&1 >/dev/null </dev/null); code=$?
 [[ $code -eq 1 ]] || fail "failing exec with a long path exited $code, not 1"
 [[ $err == "bcdocker: exec $long: "* ]] || fail "failing exec message: ${err:0:80}"
+
+# An application named without a / is found on PATH by glibc's execvp in a fork of PID 1,
+# running on a copy of PID 1's stack. A file without #! makes execvp retry through /bin/sh with
+# a copy of the argument array on that stack, which grows with the argument count. Run it at
+# the floor with the most arguments the command line accepts, and check one more is refused.
+max_args=16384   # cli::MAX_ARGS
+noexec=$work/containers/bctest/usr/local/bin/bcdocker-noexec
+trap 'rm -f "$noexec"' EXIT
+printf 'echo ok\n' >"$noexec" && chmod 755 "$noexec"
+empties=(); for ((i = 0; i < max_args; i++)); do empties+=(''); done
+out=$(cd "$work" && "$bcdocker" run --stack-size 1M bctest bcdocker-noexec "${empties[@]}" 2>&1 </dev/null); code=$?
+[[ $code -eq 0 && $out == ok ]] || fail "script fallback with $max_args arguments exited $code: ${out:0:80}"
+err=$(cd "$work" && "$bcdocker" run --stack-size 1M bctest bcdocker-noexec "${empties[@]}" '' 2>&1 >/dev/null </dev/null); code=$?
+[[ $code -eq 1 && $err == "bcdocker: usage: "*"$max_args"* ]] || fail "$((max_args + 1)) arguments exited $code: ${err:0:80}"
+rm -f "$noexec"
 
 # A stack the address-space limit cannot hold is refused with a message, not an abort.
 err=$(cd "$work" && ulimit -v 400000 && "$bcdocker" run --stack-size 1G bctest /bin/true 2>&1 >/dev/null </dev/null); code=$?

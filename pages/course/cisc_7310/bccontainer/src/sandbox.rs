@@ -80,9 +80,10 @@ pub fn enter(container: &Container) -> Result<(), Error> {
     }
     umask(old_umask);
 
-    // chroot does not move the working directory: enter the root by path (after the bind mount,
-    // so this is the bind mount), make it the root, and land on `/`, so no working directory is
-    // left outside it. chroot does not confine a root process; a nested chroot climbs back out.
+    // chroot does not move the working directory: enter the root by path, make it the root, and
+    // land on `/`, so no working directory is left outside it. This follows the self bind mount,
+    // so the new root is that mount. chroot does not confine a root process; a nested chroot
+    // climbs back out.
     chdir(root).map_err(Error::Chroot)?;
     chroot(".").map_err(Error::Chroot)?;
     chdir("/").map_err(Error::Chroot)?;

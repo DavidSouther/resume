@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Extract a container image into ./containers/<name>/ for this machine's architecture.
-# The image defaults to debian:bookworm-slim.
+# The image defaults to debian:bookworm-slim. The name becomes the container's hostname, so it
+# must be 1 to 64 bytes of UTF-8, not . or .., with no /; this script does not check the UTF-8.
 #
 #     scripts/mkrootfs.sh tinysys
 #     scripts/mkrootfs.sh tinysys ubuntu:24.04
@@ -17,14 +18,15 @@ have() { command -v "$1" >/dev/null 2>&1; }
 
 [[ $# -eq 1 || $# -eq 2 ]] || die "usage: mkrootfs.sh <name> [image]"
 name=$1
-# The name becomes the container's hostname: bcdocker's hostname rule.
+# bcdocker's hostname rule. The C locale makes ${#name} count bytes, as the kernel does.
 [[ -n $name && $name != */* && $name != . && $name != .. && $(LC_ALL=C; echo ${#name}) -le 64 ]] ||
   die "name must be 1 to 64 bytes, not . or .., with no /"
 image=${2:-debian:bookworm-slim}
 dest=containers/$name
 [[ ! -e $dest ]] || die "$dest exists"
 
-# Docker and crane both need the platform spelled out: crane defaults to linux/amd64.
+# Spell out the platform so both fetch this machine's architecture: crane defaults to
+# linux/amd64, and docker may reuse a cached image of another platform.
 case $(uname -m) in
   x86_64 | amd64) arch=amd64 ;;
   aarch64 | arm64) arch=arm64 ;;
@@ -46,6 +48,7 @@ fi
 
 # mktemp creates the directory 0700; it becomes the container's /.
 chmod 755 "$tmp"
-# Checked again: mv into a directory that appeared during the build would nest inside it.
+# Checked again: mv into a directory that appeared during the build would nest inside it. This
+# narrows that window but does not close it.
 [[ ! -e $dest ]] || die "$dest exists"
 mv "$tmp" "$dest"

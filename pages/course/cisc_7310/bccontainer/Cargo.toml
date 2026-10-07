@@ -8,4 +8,4 @@ description = "A small container launcher: clone, namespaces, chroot, and /proc,
 [dependencies]
 thiserror = "2"
 # Pinned exactly: the SAFETY comment in src/clone.rs relies on nix's audited source.
-nix = { version = "=0.31.3", features = ["sched", "mount", "hostname", "fs", "process", "signal", "user"] }
+nix = { version = "=0.31.3", features = ["sched", "mount", "hostname", "fs", "process", "signal", "user", "resource"] }

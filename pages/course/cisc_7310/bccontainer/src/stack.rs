@@ -2,14 +2,21 @@
 
 use std::fmt;
 
+use nix::sys::resource::{getrlimit, Resource};
+
 /// The smallest accepted stack: the floor A1 in `clone.rs` depends on; lowering it weakens that
-/// argument. `tests/stack.sh` fails at `MIN / 16`.
+/// argument. `tests/stack.sh` hard-codes `MIN / 16` (64 KiB) as the depth it fails above, and
+/// E5 in `clone.rs` and `cli::MAX_ARGS` quote these figures: change them with this constant.
 pub const MIN: usize = 1 << 20;
 /// Used unless `--stack-size` says otherwise.
 pub const DEFAULT: usize = 8 << 20;
 /// The largest accepted stack. Untouched stack pages cost no memory, but a limit keeps a typo
 /// from asking for terabytes.
 pub const MAX: usize = 1 << 30;
+
+// `clone`'s stack alignment needs at least 16 bytes (C3 in `clone.rs`), and `Default` builds
+// `DEFAULT` without the range check.
+const _: () = assert!(16 <= MIN && MIN <= DEFAULT && DEFAULT <= MAX);
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -21,10 +28,13 @@ pub enum Error {
     Alloc { bytes: usize },
 }
 
-/// A stack size in bytes. Always within `MIN..=MAX`; `clone::spawn`'s safety argument relies
-/// on the lower bound, so every constructor must check it.
+/// A stack size in bytes.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct StackSize(usize);
+pub struct StackSize(
+    // Safety invariant: always within `MIN..=MAX`. `clone::spawn`'s safety argument relies on
+    // the lower bound, so every constructor must check it.
+    usize,
+);
 
 impl StackSize {
     /// Bytes, or a number followed by `K`, `M`, or `G` (powers of 1024, either case).
@@ -59,14 +69,20 @@ impl StackSize {
         self.0
     }
 
-    /// A zeroed buffer of exactly `bytes()` bytes, or `Alloc` if the address-space or commit
-    /// limit cannot hold it. The fallible reservation is released at once; `vec!` then gets the
-    /// same space as zeroed pages, committed only when touched.
+    /// A zeroed buffer of exactly `bytes()` bytes, or `Alloc` if that is more than the soft
+    /// address-space limit (`RLIMIT_AS`). Only that limit is checked: a size within it that the
+    /// remaining address space or a strict overcommit policy cannot hold still aborts the
+    /// process in `vec!`. Pages are backed by memory only when touched.
+    ///
+    /// # Safety-usable invariant
+    ///
+    /// An `Ok` buffer's length is exactly `bytes()`.
     pub fn allocate(self) -> Result<Vec<u8>, Error> {
-        Vec::<u8>::new()
-            .try_reserve_exact(self.bytes())
-            .map_err(|_| Error::Alloc { bytes: self.bytes() })?;
-        Ok(vec![0u8; self.bytes()])
+        let bytes = self.bytes();
+        if matches!(getrlimit(Resource::RLIMIT_AS), Ok((soft, _)) if soft < bytes as u64) {
+            return Err(Error::Alloc { bytes });
+        }
+        Ok(vec![0u8; bytes])
     }
 }
 
