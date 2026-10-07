@@ -1,32 +1,34 @@
-# BCDocker (CISC 7310X Project 2) — Research
+# BCDocker (CISC 7310X Project 2): Research
 
 *Draft 2026-10-07*
 
 ## Topic and Intent
 
+The request began as:
+
 > begin https://huichen-cs.github.io/course/CISC7310X/26FA/assignment/bccontainer and I'll be honest I'm not sure where to go beyond that? I can't tell if the assignment just wants basically a chroot jail? It seems so, so for research let's start going in that direction. Language is rust, working folder is /pages/course/cisc_7310/bccontainer, host platforms are MacOS native & Debian native, and target platforms are those and also bookworm-slim running itself in docker on Mac. The PID requirement is confusing, I'm not sure if it wants an entirely isolated process space as well? So build an isolated filesystem with /bin, parts of /etc, ??? And then start a new PID1 inside that environment?
 >
 > Focus on requirement gathering for now, we can go beyond this chroot idea later.
 
-Follow-up request, same day (second research pass):
+It was then restated and narrowed:
 
 > Language is rust, working folder is /pages/course/cisc_7310/bccontainer, host platforms are MacOS native & Debian native, and target platforms are bookworm-slim VM and bookworm-slim in docker on Mac.
 >
 > The core requirements are safe rust, clone and chroot sys calls, and preparing an appropriate chroot. During research and design, discuss clone vs clone3, flag choices, io redirection, etc. Probably start with CLONE_IO? Don't start with network at this time.
 
-The user wants the requirements for CISC 7310X Project 2 ("BCDocker") pinned down before any design: what the assignment actually asks for, whether a chroot jail is enough, what the PID requirement means, and which of three platforms (macOS native, Debian native, `bookworm-slim` in Docker on a Mac) can meet it. The tool will be written in Rust in `pages/course/cisc_7310/bccontainer`.
+In plain terms: pin down what CISC 7310X Project 2 ("BCDocker") requires, then settle the technical choices that follow from "safe Rust, `clone`, `chroot`, a prepared root filesystem": which `clone` variant and flags, how stdio is wired, how the rootfs is built, and which platforms can run the result. The tool is written in Rust in `pages/course/cisc_7310/bccontainer`. Networking is out of scope for now.
 
 ## Search/Expand
 
-Every course page the assignment links was fetched, plus the schedule's lecture for the same week. Full notes and quotes are in `research/public.md`. Sampled frames from the 110-minute tutorial video are in `research/video-frames/`.
+### What the assignment requires
 
-**Short answer to "is it just a chroot jail?": No.** The assignment page says "Process IDs start from 1 in the container" [1]. The lecture slides say what the minimum is:
+It is not a chroot jail alone. The assignment says "Process IDs start from 1 in the container" [1], and the lecture sets the minimum:
 
 > "Use clone() to create a child in at least two new namespaces (e.g., PID and UTS). Demonstrate that the child sees a different view from the parent: the child is PID 1 in its own PID namespace; the child can set its own hostname without affecting the parent; (optional) the child sees its own /proc. Explain, in writing, what each flag does and what would happen without it." [2]
 
-The same slides call for a separate filesystem root: "chroot() or pivot_root() gives the child its own filesystem root" [2]. So the minimum container is a **namespaced process (PID + UTS, plus mount so /proc can be remounted cleanly) that is also chrooted** into a hand-built root filesystem. The instructor's tutorial code uses `clone(…, CLONE_NEWNS | CLONE_NEWPID | CLONE_NEWUTS | SIGCHLD)`, `sethostname`, `chroot`, `chdir("/")`, `mount("proc", "proc", "proc", …)`, and then runs the app [3]. Your instinct ("isolated filesystem with /bin, parts of /etc, … and then start a new PID 1 inside that environment") is right. The extra piece is that PID 1 comes from a **PID namespace**, not from the chroot.
+The same slides call for a separate filesystem root: "chroot() or pivot_root() gives the child its own filesystem root" [2]. The minimum container is therefore a namespaced process (PID, UTS, and mount namespaces) that is chrooted into a hand-built root filesystem. The instructor's tutorial code does exactly this: `clone(…, CLONE_NEWNS | CLONE_NEWPID | CLONE_NEWUTS | SIGCHLD)`, then `sethostname`, `chroot`, `chdir("/")`, a `proc` mount, and the application [3]. The PID 1 comes from the PID namespace, not from the chroot.
 
-**What the PID requirement literally says and shows.** The text is one sentence: "Process IDs start from 1 in the container" [1]. The sample output narrows it down:
+The sample output shows the intended process shape [1]:
 
 ```
 $ sudo bccontainer/bcdocker run bctinysys /bin/ps axf
@@ -35,182 +37,218 @@ $ sudo bccontainer/bcdocker run bctinysys /bin/ps axf
   14 ?        R+     0:00 /bin/ps axf
 ```
 
-PID 1 is the launcher's own cloned child: it still carries the parent's argv because `clone` copies the process without an `exec`. The application is a *child* of that PID 1. The tutorial's final run shows the same shape (`1 bcdocker`, `2 bash`, `3 ps`) [3]. So the expected design is a launcher-as-init. The cloned child (PID 1 in the new namespace) does the setup, forks and execs the app, and waits for it. "An entirely isolated process space" is exactly what is required: a PID namespace in which `ps` sees only the container's processes. That works only if a fresh procfs is mounted at the container's `/proc` (pid_namespaces(7): "mount a new procfs instance at /proc so that tools such as ps(1) work correctly") [4]. The gap between PID 1 and PID 14 in the sample is unexplained; the tutorial gets 1/2/3, so the exact number does not matter.
+PID 1 still carries the launcher's argv, and the application is its child. The tutorial's final run has the same shape (`1 bcdocker`, `2 bash`, `3 ps`) [3]. The launcher's child is a small init that sets up the container, starts the application, and waits for it. `ps` shows only the container's processes only if a fresh procfs is mounted at the container's `/proc` [8].
 
 ### Requirements
 
-E = explicit in a course source; I = inferred. Sources: [1] assignment page, [2] lecture, [3] video, [5] assignments list, [6] syllabus.
+E marks a requirement stated in a course source; I marks one inferred. Sources: [1] assignment page, [2] lecture, [3] video, [4] assignments list, [5] syllabus.
 
-**Functional**
+**Behavior**
 
-1. **E** — A CLI whose "usage … mirrors … Docker; … only … a small subset": `bcdocker run <container> <application> [args…]` [1]. The tutorial requires `argc >= 4` and prints usage otherwise [3].
-2. **E** — Run as root via `sudo` (every example) [1]. **I** — rootless operation and user namespaces are not required.
-3. **E** — Launch "a Linux application container" and run "users' Linux applications"; containers "share the same underlying operating system kernel" [1].
-4. **E** — Pass application arguments through (`/bin/ls -l -t -r`) [1].
-5. **E** — At least two distinct containers in the samples (`tinysys`, `bctinysys`) [1]. **I** — the container name resolves to a root-filesystem directory. The tutorial passes a path (`./tinysys`) and does `chroot(argv[2])` [3].
-6. **E** — Isolated filesystem view: `ls` in the container shows only `bin etc lib proc usr` [1]; "chroot() or pivot_root()" [2].
-7. **E** — "Process IDs start from 1 in the container" [1]; "the child is PID 1 in its own PID namespace" [2]. **I** (from sample output) — the launcher's cloned child is PID 1 and the app is its child.
-8. **E** — `clone()` with "at least two new namespaces (e.g., PID and UTS)" [2]. **I** — CLONE_NEWNS as well, since the tutorial uses it [3] and remounting `/proc` without it would change the host's mounts.
-9. **E** — The child sets its own hostname without affecting the host [2]; the tutorial uses the fixed hostname `bcdocker` [3].
-10. **E (optional in [2]; shown in [1])** — `ps` inside works, i.e. procfs is mounted at the container's `/proc` [1], [2].
-11. **E** — Interactive shell works and `exit` returns to the host prompt [1]. **I** — the launcher waits for the container (`waitpid`) [3]; exit status propagation is not specified.
+1. **E.** A CLI that "mirrors … Docker" for a small subset: `bcdocker run <container> <application> [args…]` [1]. The tutorial requires `argc >= 4` and prints usage otherwise [3].
+2. **E.** It runs as root through `sudo` in every example [1]. **I.** Rootless operation and user namespaces are not required.
+3. **E.** It launches a Linux application container; containers "share the same underlying operating system kernel" [1]. Application arguments pass through (`/bin/ls -l -t -r`) [1].
+4. **E.** At least two distinct containers appear in the samples (`tinysys`, `bctinysys`) [1]. **I.** The container name resolves to a rootfs directory; the tutorial passes a path and calls `chroot(argv[2])` [3].
+5. **E.** The container sees an isolated filesystem: `ls /` shows only `bin etc lib proc usr` [1]; "chroot() or pivot_root()" [2].
+6. **E.** Process IDs start from 1 [1], and the child is PID 1 in its own PID namespace [2]. **I.** The launcher's child is PID 1 and the application is its child (sample output above).
+7. **E.** `clone()` creates the child in "at least two new namespaces (e.g., PID and UTS)" [2]. **I.** Mount namespace too: the tutorial uses it [3], and remounting `/proc` without it would alter the host's mounts.
+8. **E.** The child sets its own hostname without affecting the host [2]; the tutorial uses `bcdocker` [3].
+9. **E in [1], optional in [2].** `ps` works inside, so procfs is mounted at the container's `/proc`.
+10. **E.** An interactive shell works and `exit` returns to the host prompt [1]. **I.** The launcher waits for the container; the exit status is unspecified.
 
-**Container image (rootfs)**
+**Rootfs**
 
-12. **E** — "we will not automate the process; rather, we shall manually create application containers", starting from the Filesystem Hierarchy Standard (Rankin) [1]. **Source defect:** the published page breaks off mid-list here, so the step list is missing (confirmed in the raw HTML).
-13. **I** — Rootfs contents implied by the samples and tutorial: `bin` (or `bin -> /usr/bin`), `usr/bin`, `lib` with `ldd`-resolved libraries and the dynamic loader, `etc`, and an empty `proc` [1], [3]. `bash`, `ls`, `ps` are the demonstrated apps.
+11. **E.** "we will not automate the process; rather, we shall manually create application containers," starting from the Filesystem Hierarchy Standard [1]. The published page breaks off mid-list here, so the step list is missing.
+12. **I.** The samples and tutorial imply `bin` (or `bin -> usr/bin`), `usr/bin`, `lib` with `ldd`-resolved libraries and the dynamic loader, `etc`, and an empty `proc`; `bash`, `ls`, and `ps` are the demonstrated applications [1][3].
 
-**Deliverables and process**
+**Deliverables**
 
-14. **E** — GitHub Classroom repository: complete the survey, accept the invitation, push the work [1].
-15. **E** — Top-level `README.md` ("for student information"; "concise description of your work and the layout") and `.gitignore` [1].
-16. **E** — `src/` holds the source code; `doc/` holds the presentation slides [1].
-17. **E** — Not a single commit: "Commit each feature completed as a single commit." A single initial commit "will be treated as incomplete" [1].
-18. **E** — AI disclosure: a `Co-authored-by` trailer naming the tool on every AI-assisted commit [1]; the syllabus also asks for disclosure per assignment [6].
-19. **E** — Report in the ACM or IEEE conference template, with proper citations, covering: the design of the tool, the process of creating a Linux container for an application, and lessons learned [1]. **E** — "Explain, in writing, what each flag does and what would happen without it" [2]. **I** — the report lives in `doc/`. The page names no location.
-20. **E** — 10-minute in-class presentation (7 min talk, 3 min Q&A) with slides and a live demo [1].
+13. **E.** A GitHub Classroom repository with `README.md`, `.gitignore`, `src/` for code, and `doc/` for slides [1].
+14. **E.** Commit each completed feature separately; a single initial commit "will be treated as incomplete". AI use is disclosed by a `Co-authored-by` trailer on each assisted commit [1][5].
+15. **E.** An ACM or IEEE template report covering the tool's design, the process of building a Linux container for an application, and lessons learned, with citations [1]. **E.** The lecture asks for a written explanation of "what each flag does and what would happen without it" [2]. **I.** The report lives in `doc/`; the page names no location.
+16. **E.** A 10-minute in-class presentation (7 minutes talk, 3 minutes Q&A) with a live demo [1].
+17. **E.** Assigned Oct 7, 2026; due **Oct 14, 2026**, dates "subject to change" [4]. Late work loses one letter grade per day and scores 0 at five or more days; projects, presentations, and papers together are 40% of the course grade [5]. No per-project rubric is published.
+18. **E.** Language: "C or C++ or a language of your choice" [1]. The page never mentions Rust, `unsafe`, `clone`, or `chroot` as constraints on the implementation beyond the lecture's "use clone()" [2]; "safe Rust" comes from the project brief.
 
-**Schedule and grading**
+**Optional and deferred.** `--memory=512m`, `--pids-limit=20`, and networking (network namespace, veth pair, NAT) [1]. The lecture lists "image pulling, overlay filesystems, networking, resource limits" as "Not required for the minimum" [2].
 
-21. **E** — Assigned Oct 7, 2026; due **Oct 14, 2026** ("dates … subject to change") [5].
-22. **E** — Late penalty is one letter grade (10%) per day, and 0 at 5 or more days late. Projects, presentations, and papers together are 40% of the course grade [6]. No per-project rubric is published.
-23. **E** — Language: "C or C++ or a language of your choice" [1], so Rust is allowed.
+### clone versus clone3, and the flag set
 
-**Optional (not required for the minimum)**
+- **Use `clone`, not `clone3`.** `clone3` arrived in Linux 5.3 with a `struct clone_args` and 64-bit flags. glibc has no wrapper for it, so a caller must use `syscall(2)` [6]. Docker's default seccomp profile cannot inspect flags that sit inside `clone_args`, so Moby makes `clone3` fail with `ENOSYS` to force glibc's fallback to `clone`, where flags can be filtered [12]. Bookworm's kernel (6.1) supports `clone3`; availability is not the constraint, seccomp is. Reconsider `clone3` only for `CLONE_INTO_CGROUP` or `CLONE_PIDFD` when cgroup limits arrive.
+- **`CLONE_IO` is not the place to start.** The man page says the child "shares an I/O context with the calling process", where the I/O context is "the I/O scope of the disk scheduler" [10]. It tunes block-layer scheduling for threads doing I/O for one process. It isolates nothing and does not redirect stdin, stdout, or stderr.
+- **Starting set:** `CLONE_NEWPID | CLONE_NEWNS | CLONE_NEWUTS | CLONE_NEWIPC`, with `SIGCHLD` as the exit signal so the parent can `waitpid` [7]. Namespace creation requires `CAP_SYS_ADMIN` [6]. Deferred: `CLONE_NEWNET` (requested), `CLONE_NEWCGROUP`, `CLONE_NEWUSER`. `CLONE_NEWUSER` cannot combine with `CLONE_FS`, `CLONE_THREAD`, or `CLONE_PARENT`, and `CLONE_NEWPID` cannot combine with `CLONE_THREAD` or `CLONE_PARENT` [6].
+- **PID 1 duties.** The first process in a PID namespace is init: it receives only signals it has handlers for (SIGKILL and SIGSTOP from an ancestor namespace still work), orphans reparent to it, and when it exits the kernel SIGKILLs the whole namespace [8].
 
-24. **E** — `--memory=512m` (cgroup memory controller), `--pids-limit=20` (cgroup pids controller), and networking (network namespace + veth pair + NAT) [1]. The lecture lists "image pulling, overlay filesystems, networking, resource limits" as "Not required for the minimum" [2].
+### Child setup order
 
-## Libraries & Skills
+```
+parent: clone(child, stack, CLONE_NEWNS|CLONE_NEWPID|CLONE_NEWUTS|CLONE_NEWIPC|SIGCHLD)
+child:  mount(NULL, "/", NULL, MS_REC|MS_PRIVATE, NULL)      // stop mount propagation to the host
+        sethostname(name)
+        mount(rootfs, rootfs, NULL, MS_BIND|MS_REC, NULL)     // a mount point; required by pivot_root, harmless for chroot
+        mount("proc", rootfs/proc, "proc", MS_NOSUID|MS_NOEXEC|MS_NODEV, NULL)
+        chdir(rootfs); chroot("."); chdir("/")
+        execve(app, argv, envp)                               // or fork+exec and wait, to match the sample
+parent: waitpid(child) -> exit status
+```
 
-*"Before doing any work in this feature, load these skills via the active harness's skill-loading mechanism: none. No published agentic skill exists for the libraries this feature uses (`nix`, `libc`)."* This was checked, not skipped. No `SKILL.md`, MCP server, or `skills/` directory ships with `nix`, `libc`, or `caps`, and no Rust/systems skill is installed in this harness.
-
-- **`nix` 0.31.3** [7]. `sched::{clone, unshare, CloneFlags}` (feature `sched`), `mount::{mount, MsFlags}` (feature `mount`), `unistd::{chroot, chdir, pivot_root, fork, execvp, sethostname}` (features `fs`, `process`, `hostname`), `sys::wait::waitpid`. `clone` is `unsafe` and takes a caller-allocated stack slice; nix handles stack direction [7]. The no-manual-stack alternative is `unshare(NEWPID|NEWUTS|NEWNS)` followed by `fork()`. The forked child becomes PID 1; the caller does not [4]. `sched`, `mount`, and `pivot_root` are Linux-only, so macOS builds need `#[cfg(target_os = "linux")]` gating.
-- **`libc` 0.2.190**: raw fallback only.
-- **Closest worked examples:** Litchi Pi's "Writing a container in Rust" (crabcan) series, which uses nix for clone and namespaces [8]; Liz Rice's "containers-from-scratch" in Go, which has the same clone + chroot + mount-proc shape as the tutorial [9]; youki, a full OCI runtime in Rust, for reference only [10].
-- **Local convention** (`research/codebase.md`): `uefi_boot` uses edition 2021, few dependencies, `panic = "abort"`, and a Makefile with `install`/`build`/`run` targets that branch on `uname -s` for Darwin (Homebrew) versus Debian (apt). In that project macOS is a dev host and the real target runs elsewhere (QEMU).
-
-## Falsification/Refine
-
-**Claim tested: "a chroot jail satisfies the assignment."** Refuted by three independent sources: the assignment's PID requirement [1], the lecture's "at least two new namespaces" [2], and the tutorial's clone flags [3]. A plain chroot leaves the process in the host PID namespace, so `ps` would show host PIDs (or nothing, without /proc), and `sethostname` would rename the host.
-
-**Claim tested: "all three platforms can run the container."** Refuted for macOS native:
-
-| Platform | Namespaces (PID/UTS/mount) | chroot | Runs Linux apps | Verdict |
-|---|---|---|---|---|
-| **Debian native** (amd64/arm64) | Yes, with `sudo` | Yes | Yes | **Full target.** Every required and optional feature is possible (cgroup v2 for the optional limits). |
-| **`debian:bookworm-slim` in Docker on Mac** | Yes. Runs on Docker Desktop's Linux VM kernel. The default seccomp profile denies `clone`/`unshare` namespace flags, `mount`, and `pivot_root` unless the container has CAP_SYS_ADMIN [11] | Yes | Yes (arm64 on Apple Silicon, so the rootfs must be arm64) | **Full target with `docker run --privileged`.** `--cap-add SYS_ADMIN` may be enough but is unverified; a fresh procfs mount can still hit EPERM in hardened setups [12]. Optional cgroup limits need a writable cgroup (privileged). |
-| **macOS native** | **No.** Darwin has no PID, UTS, or mount namespaces and no `clone`/`unshare` | Yes, root only [13] | **No.** Darwin cannot exec Linux ELF binaries | **Cannot meet requirements 3, 7, 8, 9, or 10.** A Darwin chroot jail is also hard to populate: system dylibs live only in the dyld shared cache since Big Sur [14], and Apple does not support static binaries [15]. |
-
-Honest presentation for macOS: treat it as the **dev/build host** whose runtime target is the Docker container, the same split `uefi_boot` uses with QEMU. The binary can still *compile* on macOS behind `cfg(target_os = "linux")`, and `bcdocker run` there should exit with a clear "requires Linux namespaces; use `make docker-run`" message. A chroot-only "degraded mode" on macOS would not meet the spec and would cost real effort (populating a dyld-cache jail) for no grade benefit.
-
-**Testability.** In the agent's own Linux sandbox (root, kernel 6.18), `unshare --pid --fork --uts --mount --mount-proc` worked. Inside, `hostname` changed only in the namespace, the shell saw itself as PID 1, and `ps` listed only PIDs 1, 4, 5. `cargo`, `rustc`, and `docker` are installed. Later phases can therefore run real root-level integration tests here, not only on the user's machines.
-
-**Size.** A single feature-sized project: one small binary (a few hundred lines of Rust), one or two hand-built rootfs directories plus the script or notes that build them, a short report, and slides. Off-the-shelf tools (`unshare(1)` + `chroot(8)`, docker, runc, youki) already do this, but the assignment exists to build it, so they serve as references only.
-
-**Smallest version that meets the intent:** `bcdocker run <rootfs-dir> <cmd> [args…]`. It clones into new PID + UTS + mount namespaces; in the child it sets the hostname, chroots (or pivot_roots), chdirs to `/`, and mounts proc; it then forks and execs the app as a child of PID 1 and waits for it. Ship it with two hand-built rootfs directories (`tinysys` with bash/ls/ps, `bctinysys`), verified on Debian native and in privileged `bookworm-slim` on the Mac, plus the report and slides.
-
-## Second Pass: clone, Safe Rust, Rootfs
-
-Full notes with sources: `research/clone.md`, `research/rust-safe.md`, `research/rootfs-platform.md`. Source numbers below are local to those files.
-
-### clone vs clone3, and CLONE_IO
-
-- **Use `clone`, not `clone3`.** `clone3` (Linux 5.3) has no glibc wrapper, so it needs `syscall(2)`. Docker's default seccomp profile cannot inspect flags inside `clone_args`, so Moby makes `clone3` return `ENOSYS` to force the fallback to `clone`, where flags can be filtered. Reconsider `clone3` only for `CLONE_INTO_CGROUP` or `CLONE_PIDFD` when cgroup limits arrive.
-- **`CLONE_IO` is not the place to start.** It shares the block-layer I/O scheduler context. It isolates nothing and does not redirect stdio. The first flag set is `CLONE_NEWPID | CLONE_NEWNS | CLONE_NEWUTS | CLONE_NEWIPC` plus `SIGCHLD` as the exit signal. `CLONE_NEWNET` is deferred as requested; `CLONE_NEWCGROUP` and `CLONE_NEWUSER` are later options.
-- **PID 1 duties.** Init ignores signals it has no handler for, reaps orphans, and its exit SIGKILLs the whole namespace.
+The `MS_PRIVATE` step matters: on systemd hosts `/` is a shared mount, and without it the child's `/proc` mount leaks back to the host [20]. Plain `chroot` is not a security boundary: it does not change the working directory, and the man page shows the escape `mkdir foo; chroot foo; cd ..` [19]. `pivot_root(".", ".")` followed by `umount2(".", MNT_DETACH)` detaches the old tree and closes that escape; it requires the new root to be a mount point [18]. The assignment asks only for chroot, so `pivot_root` is an optional hardening step.
 
 ### Safe Rust
 
-The tension: **`clone` and `fork` are `unsafe` in every Rust binding.** `nix::sched::clone` is `unsafe fn`; so is `fork`. `rustix` has no public `clone`. Safe in nix 0.31.3: `unshare`, `setns`, `chroot`, `pivot_root`, `mount`, `sethostname`, `execve`, `waitpid`. `std::os::unix::fs::chroot` is also safe.
+`clone` and `fork` are `unsafe` in every Rust binding, which puts "safe Rust" and "clone" in tension. Verified against current crate sources (nix 0.31.3, rustix 1.1.5) and std docs [13][14][15]:
 
-Two ways to honor "safe Rust":
-
-| Option | Shape | Unsafe in our crate | Cost |
+| Operation | nix 0.31.3 | rustix 1.1.5 | std |
 |---|---|---|---|
-| **A. Safe pipeline** | Parent calls `unshare(NEWPID\|NEWNS\|NEWUTS\|NEWIPC)`, then spawns its own binary (`/proc/self/exe __init`) via `std::process::Command`. The child is PID 1 and does mounts, hostname, `/proc`, chroot, exec. | None: `#![forbid(unsafe_code)]` for the whole crate | Does not literally call `clone(2)`. Semantics differ (below). |
-| **B. Literal clone** | `nix::sched::clone` with a stack buffer. | One audited module (~30 lines, `#[allow(unsafe_code)]`, SAFETY comment) under `#![deny(unsafe_code)]` | Not "all safe", but matches the lecture's wording. |
+| `clone` | `sched::clone` is `unsafe fn` (stack overflow and post-fork constraints) | none public | none |
+| `fork` | `unistd::fork` is `unsafe fn` | `kernel_fork` is unsafe and hidden | none |
+| `unshare` | `sched::unshare` is safe | deprecated since 1.1.0; `unshare_unsafe` is `unsafe` because `CLONE_FILES` can split fd tables between threads | none |
+| `chroot` | `unistd::chroot` safe | `process::chroot` safe | `std::os::unix::fs::chroot` safe, stable since 1.56 |
+| `pivot_root`, `mount`, `sethostname`, `waitpid` | safe | safe | none (except `Child::wait`) |
+| `execve` | safe | unsafe | `CommandExt::exec` safe |
 
-**How A differs from a raw `clone`:** (1) the parent is not moved into the new PID namespace, only its first child; (2) the mount and UTS namespaces do move the parent; (3) after the `unshare`, the parent cannot create threads (`EINVAL`); (4) once the first child exits, later forks fail with `ENOMEM`, so there is one container per parent process; (5) `/proc` reflects the PID namespace of whoever mounts it, so the re-exec'd child must mount it. The sample `ps` output in [1] shows the container's PID 1 carrying the launcher's argv, which Option B reproduces naturally and Option A shows as `__init` unless the arguments are arranged to match.
+`CommandExt::pre_exec` is `unsafe`, and `CommandExt::chroot` is nightly only. Other crates: `libc` is entirely unsafe; `clone3` 0.2.3 has an `unsafe` `call()`; `unshare` 0.7.0 offers a safe `Command`-like builder with namespaces and chroot but was last released in 2021 and pins nix 0.20 [16]; youki's `libcontainer` keeps one audited `unsafe` clone module and uses safe nix wrappers everywhere else [17].
 
-### Rootfs and platform
+Two ways to meet "safe Rust":
 
-- **Rootfs.** Extract `debian:bookworm-slim` per architecture (`crane export --platform linux/arm64`, or `docker create` + `docker export`; about 28 MB compressed, pinnable by digest). debootstrap needs Linux and root and is not reproducible by default; mmdebstrap is better. Static BusyBox has no `/bin/bash`, so it suits only a second demo container. Keep `rootfs/` in `.gitignore` and ship a build script.
-- **`/dev`.** tmpfs plus `mknod` of null, zero, full, random, urandom, tty. Do not bind the whole host `/dev`.
-- **Child setup order.** Clone or re-exec with the namespace flags; make `/` private recursively (`MS_REC|MS_PRIVATE`, or mounts leak to the host); `sethostname`; bind the rootfs onto itself; mount proc; `chdir(rootfs)`; `chroot(".")`; `chdir("/")`; `execve`. Plain chroot is escapable (`cd ..` tricks, open fds, host `/proc`); `pivot_root(".", ".")` plus a detach-unmount closes that and is optional here.
-- **Docker on Mac.** Docker's defaults allow `chroot` (`CAP_SYS_CHROOT` is on) but the seccomp profile blocks namespace `clone`, `unshare`, `mount`, `pivot_root`. The first pass's hedge that `--cap-add SYS_ADMIN` "may be enough" is now answered: it relaxes seccomp, but the docker-default AppArmor profile still denies `mount`. Use `--privileged`. Rootless Docker and Enhanced Container Isolation use user namespaces, so the `/proc` mount fails with `EPERM`.
-- **macOS.** Gate Linux code behind `cfg(target_os = "linux")`, with `nix` as a Linux-only dependency. `cargo check --target aarch64-unknown-linux-gnu` type-checks with no linker; `cargo zigbuild` or the musl target produces a binary. Practical dev loop: a privileged `rust:1-bookworm` container with the repo bind-mounted, or a Lima/OrbStack Debian VM.
-- **I/O redirection.** Inheriting stdin, stdout and stderr is enough for the minimum (bash may warn "no job control"). A pty with `setsid` and `TIOCSCTTY` is a stretch goal. The parent waits, ignores or forwards SIGINT/SIGTERM, and returns the exit status, or 128 plus the signal number.
+- **Option A, unshare plus re-exec (no `unsafe` in our crate).**
+  1. The parent calls `unshare(NEWPID|NEWNS|NEWUTS|NEWIPC)`.
+  2. It spawns its own binary (`/proc/self/exe __init …`) with `std::process::Command`. That child is PID 1.
+  3. The child makes `/` private, sets the hostname, mounts proc, chroots, changes to `/`, and execs or forks the application.
+  4. The whole crate can use `#![forbid(unsafe_code)]`. In edition 2024, `std::env::set_var` is unsafe, so the child's environment is set with `Command::env`.
+- **Option B, literal `clone` (one audited `unsafe` module).** `nix::sched::clone` behind `#![deny(unsafe_code)]` and one `#[allow(unsafe_code)]` module of about 30 lines with a `SAFETY` comment (single-threaded caller, heap-allocated stack, child closure that only calls nix syscall wrappers before `execve`), or a separate `-sys` crate. This is youki's design [17].
 
-### Not verified
+Option A differs from a raw `clone` in ways the report must explain [8][9]:
 
-`pivot_root` and the `/proc` mount were not run in Docker Desktop. Whether Docker Desktop's VM enforces AppArmor is unconfirmed (moot under `--privileged`). Unpacked rootfs sizes are estimates (about 75 MB for bookworm-slim). The instructor video's exact rootfs recipe may expect a hand-copied tree built from `ldd` output. These need a run on the user's machines, or in this sandbox where root and Docker are available.
+1. The caller is not moved into the new PID namespace; only its first child is.
+2. The mount and UTS namespaces do move the caller, so the parent's own mounts and hostname changes affect the container.
+3. After `unshare(CLONE_NEWPID)` the parent cannot create threads (`clone` returns `EINVAL` for `CLONE_THREAD`) [7].
+4. Once the first child exits, later forks fail with `ENOMEM`, so each parent process hosts one container [8].
+5. `/proc` shows the PID namespace of whoever mounts it, so the re-exec'd child must mount it [8].
+6. std's `Command` spawns through `posix_spawn`, `pidfd_spawnp`, or `fork` internally, so a `clone` still happens, just not by name in our code.
+
+### I/O redirection
+
+- **Inherit stdio (the minimum).** The child keeps the parent's descriptors 0, 1, and 2 across `clone` and `exec`; runc calls this the pass-through mode, `terminal: false` [22]. It is enough for `bcdocker run tinysys /bin/bash` from an interactive shell. Bash may warn "no job control" because there is no new session or controlling terminal.
+- **Pipes.** Needed only to capture or log output; the runtime must pump them and the application loses terminal detection.
+- **Pseudo-terminal (stretch).** Allocate a pty in the container's devpts, `setsid()`, `ioctl(TIOCSCTTY)`, `dup2` the slave onto 0, 1, 2, and proxy bytes between the parent's raw-mode terminal and the master [22].
+- **Exit status and signals.** The parent waits and returns the exit code, or 128 plus the signal number if the child was killed (the shell and Docker convention). While waiting it ignores or forwards SIGINT and SIGTERM, because an init that has no handler for a signal ignores it.
+
+### Rootfs preparation
+
+| Option | How | Notes |
+|---|---|---|
+| **Extract `debian:bookworm-slim`** (recommended) | `docker create` + `docker export`, or `crane export --platform linux/arm64 debian:bookworm-slim` (no daemon; works on macOS) [24] | About 28 MB compressed per architecture; same userland as the run target; pin by digest for reproducibility [23] |
+| `debootstrap --variant=minbase bookworm` | Linux and root required [25] | Larger than slim; not reproducible by default; cross-architecture needs `--foreign`/`--second-stage` or qemu |
+| `mmdebstrap` | `--mode=unshare` runs without root [25] | Supports `SOURCE_DATE_EPOCH`; better than debootstrap if building from packages |
+| Static BusyBox | Copy `busybox`, run `busybox --install -s` | Has no `/bin/bash`, which the assignment examples use [1]; suits a second demo container only |
+
+The rootfs must match the VM's architecture (Apple silicon runs arm64 Linux). Keep `rootfs/` in `.gitignore` and ship a script that builds it, so each host builds its own. The extracted image already holds the FHS skeleton (`bin sbin lib usr etc dev proc sys tmp var run root home`); bookworm uses merged `/usr`, so `/bin` and `/lib` are symlinks.
+
+For `/dev`, mount a tmpfs and `mknod` null, zero, full, random, urandom, and tty, which OCI requires [21]. Do not bind the whole host `/dev`, and avoid `devtmpfs`, which exposes every host device. For `/etc`, the image already ships `passwd` and `group`; write `/etc/hostname` to match `sethostname`. `resolv.conf` is moot without networking.
+
+### Platforms
+
+| Platform | Namespaces, chroot, Linux binaries | Verdict |
+|---|---|---|
+| **Debian VM** (`bookworm-slim` VM, native) | All available with root | Full target |
+| **`bookworm-slim` in Docker on Mac** | Runs on Docker Desktop's Linux VM kernel. The default seccomp profile denies namespace `clone`/`unshare`, `mount`, and `pivot_root` [11]; `chroot` is allowed (`CAP_SYS_CHROOT` is a default capability) [11] | Full target with `docker run --privileged`. `--cap-add SYS_ADMIN` relaxes seccomp, but Docker's default AppArmor profile still denies `mount` [26]. Rootless Docker and Enhanced Container Isolation use user namespaces, which block a fresh `/proc` mount with `EPERM` [28] |
+| **macOS native** | None: Darwin has no PID, UTS, or mount namespaces and cannot execute Linux ELF binaries | Build and edit host only. Gate Linux code with `cfg(target_os = "linux")`, declare `nix` under `[target.'cfg(target_os = "linux")'.dependencies]`, and have `bcdocker run` exit with a clear message on Darwin |
+
+For development from macOS, `cargo check --target aarch64-unknown-linux-gnu` type-checks without a linker; `cargo zigbuild` or the musl target produces a binary [27]. The practical loop is a privileged `rust:1-bookworm` container with the repo bind-mounted, or a Lima/OrbStack Debian VM. A Darwin chroot jail would be hard to populate (system libraries live only in the dyld shared cache since Big Sur) and could not meet the PID or hostname requirements [29][30].
+
+## Libraries & Skills
+
+Before doing any work in this feature, load these skills via the active harness's skill-loading mechanism: none. No published agentic skill ships with `nix`, `rustix`, `libc`, or std, and none was found in this harness. This was checked, not skipped.
+
+- **`nix` 0.31.3** [13]: `sched::{clone, unshare, CloneFlags}` (feature `sched`), `mount::{mount, MsFlags}` (`mount`), `unistd::{chroot, chdir, pivot_root, execve, sethostname}` (`fs`, `process`, `hostname`), `sys::wait::waitpid` (`process`). `clone` is `unsafe` and takes a caller-supplied stack slice; nix handles stack direction. Sched, mount, and `pivot_root` are Linux-only.
+- **`rustix` 1.1.5** [14] is the alternative to nix for everything except `clone`, which it lacks.
+- **Closest worked examples:** Litchi Pi's "Writing a container in Rust" series (crabcan, using nix) [31]; Liz Rice's containers-from-scratch in Go, with the same clone, chroot, and proc-mount shape as the tutorial [32]; youki for reference only [17].
+- **Local convention:** the sibling `uefi_boot` project uses edition 2021, few dependencies, `panic = "abort"`, and a Makefile whose `install`, `build`, and `run` targets branch on `uname -s` for Darwin versus Debian. macOS is a dev host there too. See `research/codebase.md`.
+
+## Falsification/Refine
+
+**"A chroot jail satisfies the assignment."** Refuted by the PID requirement [1], the lecture's "at least two new namespaces" [2], and the tutorial's flags [3]. A plain chroot leaves the process in the host PID namespace, so `ps` shows host PIDs, and `sethostname` renames the host.
+
+**"Start with `CLONE_IO`."** Refuted by the man page [10]: it concerns disk scheduling, not isolation or stdio.
+
+**"`clone3` is the modern choice."** True of the kernel interface, false of this environment: glibc has no wrapper [6], and Docker's seccomp profile makes it unusable without a fallback [12]. For a runtime that must run in Docker on Mac, `clone` is the practical choice.
+
+**"All three platforms can run the container."** Refuted for macOS native, as the platform table shows.
+
+**"Safe Rust and `clone` are compatible."** Only partly. A literal `clone(2)` call needs at least one `unsafe` block in any Rust binding [13][14]. Option A satisfies "safe" completely and reaches the same kernel behavior through `unshare` plus a spawn, at the cost of the semantic differences listed above. Option B satisfies "clone" literally and confines the `unsafe` to one reviewable module.
+
+**Size.** One feature-sized project: a small binary (a few hundred lines), a rootfs build script and notes, a report, and slides. Off-the-shelf tools (`unshare(1)` with `chroot(8)`, Docker, runc, youki) already do this, but the assignment is to build it, so they serve as references only.
+
+**Smallest version that meets the intent:** `bcdocker run <rootfs-dir> <cmd> [args…]` creates new PID, UTS, mount, and IPC namespaces, sets the hostname, makes mounts private, mounts `/proc`, chroots, and runs the application as a child of PID 1, waiting for it and returning its exit status. It ships with a rootfs build script producing at least two containers (`bookworm-slim` extract plus a smaller second one), verified on the Debian VM and in privileged `bookworm-slim` on the Mac, with the report and slides.
+
+**Not yet verified.** `pivot_root` and the `/proc` mount have not been run in Docker Desktop. Whether Docker Desktop's VM enforces AppArmor is unknown (moot under `--privileged`). Unpacked rootfs sizes are estimates. The instructor video may expect a hand-copied rootfs built from `ldd` output rather than an image extract. This sandbox has root and Docker, so the first two can be tested here during design or build; the Mac itself needs the user.
 
 ## Scope
 
 **In scope for design:**
-- The `run` subcommand and the PID-namespace + UTS + mount-namespace launcher with chroot (or pivot_root) and a procfs mount (requirements 1–11).
-- The launcher-as-init process shape that matches the sample `ps` output.
-- A manual, documented rootfs build for at least two containers, per host architecture (requirements 12–13).
-- The platform strategy: Debian native and privileged Docker on Mac as runtime targets; macOS as the build host with a clean unsupported-platform exit.
-- Repository and deliverable layout: README, `.gitignore`, `src/`, `doc/`, per-feature commits with AI trailers, report, and slides (requirements 14–20).
+- The `run` subcommand and the launcher: new PID, UTS, mount, and IPC namespaces, hostname, private mounts, `/proc`, chroot, and PID 1 behavior (requirements 1 to 10).
+- The choice between Option A and Option B, and the report's explanation of the differences.
+- A documented, scripted rootfs build per host architecture, for at least two containers (requirements 11 and 12).
+- stdio inheritance, exit-status propagation, and signal handling in the launcher.
+- The platform strategy: Debian VM and privileged Docker on Mac as run targets, macOS as the build host with a clean unsupported-platform exit.
+- Repository and deliverable layout, per-feature commits with AI trailers, the report, and the slides (requirements 13 to 16).
 
-**Out of scope (deferred, per the user's "we can go beyond this chroot idea later" and the lecture's "Not required for the minimum"):** `--memory`, `--pids-limit`, networking, IPC/user/cgroup/time namespaces, image pulling, overlayfs, OCI compatibility, and rootless mode.
+**Out of scope for now:** networking, `--memory` and `--pids-limit` cgroup limits, user, cgroup, and time namespaces, image pulling, overlayfs, OCI compatibility, rootless mode, and the pty stretch goal.
 
 ## Resolved Decisions
 
-**Resolved by research**
-- It is not chroot-only. A PID namespace (CLONE_NEWPID) plus UTS is the stated minimum [2]; mount namespace plus chroot and procfs are needed for the samples [1], [3].
-- PID: the container gets its own PID namespace; the launcher's cloned child is PID 1 and the application runs as its child [1], [3]; `/proc` must be freshly mounted for `ps` [4].
-- Rust is permitted [1]. Due date is Oct 14, 2026 [5].
-- macOS native cannot host the container (no namespaces, no Linux ELF). Debian native and `bookworm-slim` in Docker (privileged) can.
+**Settled by research**
+- The assignment needs PID, UTS, and mount namespaces plus chroot and a fresh `/proc`; chroot alone does not meet it [1][2][3].
+- Use `clone` (or its equivalent through `unshare`), not `clone3`; drop `CLONE_IO`; start with the namespace flags above.
+- The Docker-on-Mac demo runs with `--privileged`.
+- macOS native cannot host the container.
+- Rust is permitted [1]; the due date is Oct 14, 2026 [4].
 
-**Open for the user, added by the second pass** (these outrank the list below)
+**For you to decide**, most blocking first:
 
-- **A. "Safe Rust" versus a literal `clone`.** Option A (unshare plus re-exec, zero `unsafe`) or Option B (`nix::sched::clone` behind one audited `unsafe` module)? Research recommends A for "safe Rust" and explaining the semantic differences in the report, but the lecture's wording is "Use clone()", and the instructor may expect the call by name. The course page says only "C or C++ or a language of your choice" and never mentions Rust or `unsafe`.
-- **B. Confirm `CLONE_IO` is dropped** in favor of the namespace flag set above.
-
-**Open for the user** (most blocking first)
-1. **Repository mapping.** The submission must be a GitHub Classroom repo with `README.md`, `.gitignore`, `src/`, and `doc/` at its top level, built from per-feature commits with `Co-authored-by` trailers [1]. Will `pages/course/cisc_7310/bccontainer` *be* that repo's root (for example its own git checkout, or a mirror pushed from this folder)? This decides whether the Cargo crate sits at the folder root, so that `src/` serves both Cargo and the rubric, and how commit history gets to the classroom repo.
-2. **macOS role.** Accept macOS as build/dev host only, with runtime via Docker and a clear error from `bcdocker run` on Darwin? Or do you want a chroot-only degraded mode there, knowing it cannot run Linux apps or isolate PIDs?
-3. **PID 1 shape.** Match the sample (launcher child is PID 1 and forks/reaps the app), or exec the app directly as PID 1 (simpler, also "starts from 1")? Research recommends matching the sample.
-4. **Rootfs construction.** Hand-built `ldd`-copy rootfs, as in the tutorial and matching "manually create", built by a documented script or by hand? Is a BusyBox-static or `docker export` rootfs acceptable as a second container? Which apps beyond `bash`/`ls`/`ps`?
-5. **Docker run flags.** Is `docker run --privileged` acceptable for the Mac demo, or should design aim for the minimal `--cap-add SYS_ADMIN` (+ seccomp/AppArmor adjustments) and treat it as something to demonstrate?
-6. **Namespace set.** Minimum PID + UTS + mount, or also IPC (cheap, one flag) so the written "what each flag does" section covers more?
-7. **Report and missing steps.** The assignment page is truncated where the "Creating a Tiny Linux System" steps should be. Ask the instructor? And confirm the report (ACM/IEEE template) goes in `doc/` beside the slides, and whether design should plan the report and slides or only the code.
-8. **Host architectures.** Is the Debian machine amd64 or arm64? Apple Silicon Docker is arm64. A different architecture means the `ldd`-copied rootfs has to be built on each host, by a repeatable step, and cannot be committed once and shared.
-9. **Presentation questions.** The demo must include "the discussion about the questions in this assignment" [1], but the published page has no question list (possibly lost in the truncation). Ask the instructor, or plan around the lecture's "what each flag does and what would happen without it" [2]?
-10. **Optional tasks.** Confirm that `--memory`, `--pids-limit`, and networking stay deferred.
+1. **Safe Rust versus a literal `clone`.** Option A has no `unsafe` and never names `clone(2)`; Option B names it and confines one `unsafe` module. I recommend A, with the report explaining the semantic differences, because it satisfies "safe Rust" without qualification. Choose B if the instructor expects `clone` in the source.
+2. **Repository mapping.** The submission is a GitHub Classroom repo with `README.md`, `.gitignore`, `src/`, and `doc/` at its root [1]. Will `pages/course/cisc_7310/bccontainer` be that repo's root, or a mirror? This decides whether the Cargo crate sits at the folder root and how commit history reaches the classroom repo.
+3. **PID 1 shape.** Match the sample (the launcher's child is PID 1 and forks, waits for, and reaps the application) or exec the application directly as PID 1. I recommend matching the sample.
+4. **Rootfs.** Is a `docker export` or `crane export` of `bookworm-slim` acceptable, given the assignment's "manually create" wording and the tutorial's `ldd`-copy method [1][3]? Which applications beyond `bash`, `ls`, and `ps`? What is the second container?
+5. **macOS role.** Is build-host-only, with a clear error from `bcdocker run` on Darwin, acceptable? A chroot-only degraded mode there would not meet the spec.
+6. **Host architecture.** Is the Debian machine amd64 or arm64? Apple silicon Docker is arm64. A mismatch means the rootfs is built per host.
+7. **Missing course text.** The assignment page is truncated where the "Creating a Tiny Linux System" steps belong, and the demo is to include "the discussion about the questions in this assignment" [1], but no question list is published. Ask the instructor, or plan around the lecture's "what each flag does and what would happen without it" [2]?
+8. **Report and slides.** Confirm the report goes in `doc/` beside the slides, and whether design should plan them or only the code.
+9. **Commit history.** The repository's history starts now and is graded. Should the first plan step set up the classroom repository, `README.md`, and `.gitignore` before any feature work?
+10. **Namespace set.** Does PID, UTS, mount, and IPC suit you, or do you want the minimum (PID, UTS, mount)? IPC costs one flag and adds one more behavior to explain.
 
 ## Sources
 
 [1] H. Chen, "Project 2: Application Container," CISC 7310X Operating Systems I, CUNY Brooklyn College, Fall 2026. [Online]. Available: https://huichen-cs.github.io/course/CISC7310X/26FA/assignment/bccontainer (accessed Oct. 7, 2026).
-
 [2] H. Chen, "Process Abstraction and Isolation in Linux," lecture slides, CISC 7310X, Sep. 30, 2026. [Online]. Available: https://huichen-cs.github.io/course/CISC7310X/26FA/lecture/processisolation.pdf
-
 [3] H. Chen, "A Tutorial for BC Docker Project (OS Application Container)," video, 2023. [Online]. Available: http://www.sci.brooklyn.cuny.edu/~chen/uploads/course/CISC7310X/video/bcdocker.html (frames at 57:00, 1:17:00, 1:32:00, 1:47:00 in `research/video-frames/`).
-
-[4] M. Kerrisk, "pid_namespaces(7)," Linux man-pages. [Online]. Available: https://man7.org/linux/man-pages/man7/pid_namespaces.7.html
-
-[5] H. Chen, "Assignments," CISC 7310X, Fall 2026. [Online]. Available: https://huichen-cs.github.io/course/CISC7310X/26FA/assignments/
-
-[6] H. Chen, "Syllabus," CISC 7310X, Fall 2026. [Online]. Available: https://huichen-cs.github.io/course/CISC7310X/26FA/syllabus/
-
-[7] nix-rust, "nix" v0.31.3, docs.rs. [Online]. Available: https://docs.rs/nix/latest/nix/sched/fn.clone.html
-
-[8] Litchi Pi, "Writing a container in Rust," blog series. [Online]. Available: https://litchipi.github.io/series/container_in_rust
-
-[9] L. Rice, "containers-from-scratch," GitHub. [Online]. Available: https://github.com/lizrice/containers-from-scratch
-
-[10] youki-dev, "youki," GitHub. [Online]. Available: https://github.com/youki-dev/youki
-
-[11] Docker, "Seccomp security profiles for Docker." [Online]. Available: https://docs.docker.com/engine/security/seccomp/
-
-[12] E. W. Biederman et al., "Re: [PATCH] [RFC][WIP] namespace.c: Allow some unprivileged proc mounts when not fully visible," LKML, Apr. 2018. [Online]. Available: https://lkml.iu.edu/hypermail/linux/kernel/1804.0/02206.html
-
-[13] Apple, "chroot(2)," macOS System Calls Manual. [Online]. Available: https://keith.github.io/xcode-man-pages/chroot.2.html
-
-[14] Apple Developer Forums, thread 667340 (Big Sur dynamic linker cache). [Online]. Available: https://developer.apple.com/forums/thread/667340
-
-[15] Apple, "Technical Q&A QA1118: Statically linked binaries on Mac OS X." [Online]. Available: https://developer.apple.com/library/archive/qa/qa1118/_index.html
-
-Additional references in `research/public.md`: namespaces(7), chroot(2) (Linux), pivot_root(2), the penumbra23 Rust runtime series, and the G. Sharma Code Mesh talk.
+[4] H. Chen, "Assignments," CISC 7310X, Fall 2026. [Online]. Available: https://huichen-cs.github.io/course/CISC7310X/26FA/assignments/
+[5] H. Chen, "Syllabus," CISC 7310X, Fall 2026. [Online]. Available: https://huichen-cs.github.io/course/CISC7310X/26FA/syllabus/
+[6] M. Kerrisk et al., "clone3(2)," Debian manpages, unstable. [Online]. Available: https://manpages.debian.org/unstable/manpages-dev/clone3.2.en.html
+[7] M. Kerrisk, "clone(2)," Linux man-pages. [Online]. Available: https://man7.org/linux/man-pages/man2/clone.2.html
+[8] M. Kerrisk, "pid_namespaces(7)," Linux man-pages. [Online]. Available: https://man7.org/linux/man-pages/man7/pid_namespaces.7.html
+[9] M. Kerrisk, "unshare(2)," Linux man-pages. [Online]. Available: https://man7.org/linux/man-pages/man2/unshare.2.html
+[10] M. Kerrisk, "clone(2) - Linux man page." [Online]. Available: https://linux.die.net/man/2/clone
+[11] Docker Inc., "Seccomp security profiles for Docker." [Online]. Available: https://docs.docker.com/engine/security/seccomp/
+[12] Moby, "seccomp: add support for clone3 syscall in default policy." [Online]. Available: https://git.causa-arcana.com/kotovalexarian-likes-github/moby--moby/commit/9f6b562dd12ef7b1f9e2f8e6f2ab6477790a6594
+[13] nix-rust, "nix 0.31.3," docs.rs. [Online]. Available: https://docs.rs/nix/0.31.3/nix/
+[14] bytecodealliance, "rustix 1.1.5," docs.rs. [Online]. Available: https://docs.rs/rustix/1.1.5/rustix/
+[15] The Rust Project, "std::os::unix::process::CommandExt" and "std::os::unix::fs::chroot." [Online]. Available: https://doc.rust-lang.org/std/os/unix/process/trait.CommandExt.html
+[16] P. Colomiets, "unshare 0.7.0," docs.rs. [Online]. Available: https://docs.rs/unshare/0.7.0/unshare/
+[17] youki-dev, "youki" and "libcontainer 0.7.0." [Online]. Available: https://github.com/youki-dev/youki
+[18] M. Kerrisk, "pivot_root(2)," Linux man-pages. [Online]. Available: https://man7.org/linux/man-pages/man2/pivot_root.2.html
+[19] M. Kerrisk, "chroot(2)," Linux man-pages. [Online]. Available: https://man7.org/linux/man-pages/man2/chroot.2.html
+[20] M. Kerrisk, "mount_namespaces(7)," Linux man-pages. [Online]. Available: https://man7.org/linux/man-pages/man7/mount_namespaces.7.html
+[21] Open Container Initiative, "Linux Container Configuration," runtime-spec. [Online]. Available: https://github.com/opencontainers/runtime-spec/blob/main/config-linux.md
+[22] Open Container Initiative, "Terminals and Standard IO," runc docs. [Online]. Available: https://github.com/opencontainers/runc/blob/main/docs/terminals.md
+[23] Docker Library, "repo-info: debian:bookworm-slim." [Online]. Available: https://github.com/docker-library/repo-info/blob/master/repos/debian/remote/bookworm-slim.md
+[24] Google, "crane export," go-containerregistry. [Online]. Available: https://github.com/google/go-containerregistry/blob/main/cmd/crane/doc/crane_export.md
+[25] Debian, "debootstrap(8)" and J. Schauer, "mmdebstrap(1)," bookworm manpages. [Online]. Available: https://manpages.debian.org/bookworm/mmdebstrap/mmdebstrap.1.en.html
+[26] Moby, "AppArmor docker-default template," moby/profiles. [Online]. Available: https://raw.githubusercontent.com/moby/profiles/main/apparmor/template.go
+[27] rust-cross, "cargo-zigbuild." [Online]. Available: https://github.com/rust-cross/cargo-zigbuild
+[28] A. Crequy, "[PATCH] namespace.c: Allow some unprivileged proc mounts when not fully visible," LKML, Apr. 2018. [Online]. Available: https://lkml.iu.edu/hypermail/linux/kernel/1804.0/02051.html
+[29] Apple, "chroot(2)," macOS System Calls Manual. [Online]. Available: https://keith.github.io/xcode-man-pages/chroot.2.html
+[30] Apple Developer Forums, thread 667340 (Big Sur dynamic linker cache), and Apple, "Technical Q&A QA1118." [Online]. Available: https://developer.apple.com/forums/thread/667340
+[31] Litchi Pi, "Writing a container in Rust." [Online]. Available: https://litchipi.github.io/series/container_in_rust
+[32] L. Rice, "containers-from-scratch." [Online]. Available: https://github.com/lizrice/containers-from-scratch
