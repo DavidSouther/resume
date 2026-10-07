@@ -1,7 +1,5 @@
 # BCDocker (CISC 7310X Project 2): Research
 
-*Draft 2026-10-07*
-
 ## Topic and Intent
 
 The request began as:
