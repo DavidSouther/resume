@@ -19,7 +19,7 @@ sched-name() {
 }
 
 get-pids() {
-    for f in $(ls /proc) ; do if [[ $f == $PID_PATTERN ]] ; then echo $f ; fi ; done
+    for f in $(ls -1v /proc) ; do if [[ $f == $PID_PATTERN ]] ; then echo $f ; fi ; done
 }
 
 pid-sched() {
@@ -27,12 +27,6 @@ pid-sched() {
 }
 
 list-short() {
-    PID="$1"
-    COMM="$(cat /proc/$PID/comm)"
-    STAT="$(cat /proc/$PID/stat | grep -o "$STATE_PATTERN" | head -1)"
-    LINE="$(cat /proc/$PID/cmdline | tr '\0' ' ' | cut -d ' ' -f 2-)"
-
-    echo "$PID $COMM $STAT $LINE"
     echo "PID"
     for pid in $(get-pids) ; do
         echo $pid
