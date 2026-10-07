@@ -4,7 +4,7 @@
 
 Before doing any work in this feature, load these skills via the active harness's skill-loading mechanism: none. No published agentic skill ships with `nix`, `rustix`, `libc`, `thiserror`, or std, and none was found in this harness (see `research.md`, Libraries & Skills).
 
-Feature test: `pages/course/cisc_7310/bccontainer/tests/run.rs`.
+Feature test: `pages/course/cisc_7310/bccontainer/tests/run.sh`, run with `cargo build && sudo tests/run.sh`.
 
 ## Purpose
 
@@ -35,7 +35,7 @@ Feature test: `pages/course/cisc_7310/bccontainer/tests/run.rs`.
 ## Specification
 
 **Command line.** `bcdocker run <container> <app> [args…]`.
-- `<container>` without a `/` names the directory `./containers/<container>`. With a `/` it is a path. The hostname is the final path component.
+- `<container>` without a `/` names the directory `./containers/<container>`, which is listed in `.gitignore`. With a `/` it is a path. The hostname is the final path component.
 - `<app>` is a path inside the container; arguments pass through unchanged.
 - A missing argument prints usage and exits non-zero.
 
@@ -58,6 +58,8 @@ Feature test: `pages/course/cisc_7310/bccontainer/tests/run.rs`.
 
 **Building a rootfs.** `scripts/mkrootfs.sh <name>` creates `./containers/<name>/` from `debian:bookworm-slim` for the machine's architecture. It builds in a temporary directory and renames it into place, so a failed build leaves nothing behind, and it refuses to overwrite an existing container. It uses Docker if available, otherwise crane. A VM with neither installs one, or copies in a tarball made elsewhere.
 
+**Project layout.** One binary crate `bcdocker` in the project root, edition 2021 as in `uefi_boot`, with `thiserror` 2 and `nix` 0.31 as its only dependencies. `src/` holds the launcher, one `#[allow(unsafe_code)]` clone module under `#![deny(unsafe_code)]`, and the error enums.
+
 **Out of scope.** Networking, cgroup limits, user namespaces, image pulling, overlayfs, a pseudo-terminal, reserved exit codes, an architecture check, signal forwarding, and the written explanation of each `clone` flag (report material, deferred with the submission logistics).
 
 **Verification.** Automated: the feature test builds a rootfs and checks PID 1 and PID 2, `/proc` contents, hostname isolation, filesystem isolation, no leftover mounts, the exit status of a normal exit and of a signal, and the failure messages for a missing application, a non-executable application, and a missing container. Manual: run it once on the `bookworm-slim` VM and once in privileged `bookworm-slim` on Docker Desktop, including Ctrl-C in an interactive shell, running without root, and a rootfs built for the other architecture.
@@ -74,16 +76,3 @@ The chosen approach keeps the small in-process launcher, matches the assignment'
 **Deferred.** `clone3` for `CLONE_INTO_CGROUP` when cgroup limits arrive; `pivot_root` hardening in place of plain `chroot`; a pseudo-terminal; networking; image pulling; reserved exit codes; signal forwarding; an architecture check for foreign rootfs directories.
 
 **Constraint for the plan.** The `clone` module is the only place `unsafe` appears. Starting the application, waiting for it, and any signal handling use safe routes (`std::process::Command`, nix's safe wrappers) or are left out.
-
-### Open Artifact Decisions
-
-**`./containers/<name>/`:** where named containers live.
-Proposed: relative to the current directory, with `/containers` in `.gitignore`.
-
-**`scripts/mkrootfs.sh`:** the rootfs builder's name and interface.
-Proposed: `scripts/mkrootfs.sh <name>`, bash, preferring `docker export` and falling back to `crane export`.
-
-**Crate layout:** name and shape.
-Proposed: one binary crate `bcdocker`, edition 2021 as in `uefi_boot`, `thiserror` 2 and `nix` 0.31 as the only dependencies, `Cargo.toml` at the project root, `src/` holding the launcher, one `#[allow(unsafe_code)]` clone module under `#![deny(unsafe_code)]`, and the error enums.
-
-**Test path and command:** `tests/run.rs`, the cargo integration-test convention, run with `sudo env "PATH=$PATH" cargo test --test run` so root finds the user's `cargo`.
