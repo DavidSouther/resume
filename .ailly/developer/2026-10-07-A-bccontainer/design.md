@@ -45,7 +45,7 @@ Feature test: `pages/course/cisc_7310/bccontainer/tests/run.sh`, run with `cargo
 
 **Exit status.** The host-side `bcdocker` exits with the application's exit code, or 128 plus the signal number if a signal ended it. Ctrl-C ends the application and the container.
 
-**Failure modes.** Each ends with `bcdocker: <step>: <reason>` on stderr, from a typed error, and a non-zero exit.
+**Failure modes.** Each ends with one line on stderr, `bcdocker: <step>: <reason>`, where `<step>` names the operation that failed (such as `privilege`, `container`, `clone`, or `exec /bin/sh`), from a typed error, and a non-zero exit.
 
 | Situation | Message names |
 |---|---|
