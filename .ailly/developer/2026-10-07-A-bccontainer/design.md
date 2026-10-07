@@ -17,7 +17,7 @@ Feature test: `pages/course/cisc_7310/bccontainer/tests/run.sh`, run with `cargo
 
 ## User Journey and Metrics
 
-**Journey.** The student works on Debian or in a privileged `bookworm-slim` container on a Mac, from the project directory.
+**Journey.** The student works on Debian, or on a Mac: there the binary is built in a `rust:1-bookworm` container, the rootfs is built with Docker on the Mac, and `bcdocker` runs in a privileged `debian:bookworm-slim` container with the project bind-mounted. Either way, from the project directory.
 
 1. `cargo build`. A macOS build succeeds; running there is declined (see Failure modes).
 2. `scripts/mkrootfs.sh tinysys` extracts `debian:bookworm-slim` into `./containers/tinysys/`, using `docker export` or `crane export`.
@@ -28,7 +28,7 @@ Feature test: `pages/course/cisc_7310/bccontainer/tests/run.sh`, run with `cargo
    - `exit 3` returns to the host prompt, and `echo $?` prints `3`.
 4. `sudo target/debug/bcdocker run tinysys /bin/ls -l /etc` prints the container's `/etc`, and `> out.txt` or `| wc` on the host side work as in any shell.
 
-**Metrics.** The feature test passes on a Debian host and in privileged `bookworm-slim` on Docker Desktop. After a run, the host has no leftover mounts and an unchanged hostname, and the rootfs directory is unchanged. Every failure ends with one line on stderr naming the step and the reason.
+**Metrics.** The feature test passes on a Debian host and in privileged `bookworm-slim` on Docker Desktop. After a run, the host has no leftover mounts and an unchanged hostname, and `bcdocker`'s own setup has not modified the rootfs directory (the application can write to it as it would to any root filesystem). Every failure ends with one line on stderr naming the step and the reason.
 
 ## Specification
 
@@ -37,7 +37,7 @@ Feature test: `pages/course/cisc_7310/bccontainer/tests/run.sh`, run with `cargo
 - `<app>` is a path inside the container; arguments pass through unchanged.
 - A missing argument prints usage and exits non-zero.
 
-**Isolation.** The container gets new PID, mount, UTS, and IPC namespaces, created by one `clone`. Its mounts are private, so nothing it mounts is visible to the host and everything it mounts disappears when it exits. Inside, `/` is the container's directory (changed with `chroot`), `/proc` is a fresh procfs for the container's PID namespace, and `/dev` is a tmpfs holding `null`, `zero`, `full`, `random`, `urandom`, and `tty`. The rootfs directory itself is never modified by a run.
+**Isolation.** The container gets new PID, mount, UTS, and IPC namespaces, created by one `clone`. Its mounts are private, so nothing it mounts is visible to the host and everything it mounts disappears when it exits. Inside, `/` is the container's directory (changed with `chroot`), `/proc` is a fresh procfs for the container's PID namespace, and `/dev` is a tmpfs holding `null`, `zero`, `full`, `random`, `urandom`, and `tty`. `bcdocker`'s own setup never modifies the rootfs directory; the application can write to it as it would to any root filesystem.
 
 **Process shape.** The process `bcdocker run …` on the host starts the container and waits. In the container, PID 1 is that same `bcdocker` program with its original command line; it starts the application as PID 2, reaps any orphaned processes, and exits with the application's status. When PID 1 exits, the kernel ends every process in the container. The container also ends if the host-side `bcdocker` is killed.
 
@@ -54,7 +54,7 @@ Feature test: `pages/course/cisc_7310/bccontainer/tests/run.sh`, run with `cargo
 | Container directory missing | the path it looked for |
 | Application missing or not executable | the application path, with the system's reason |
 
-**Building a rootfs.** `scripts/mkrootfs.sh <name>` creates `./containers/<name>/` from `debian:bookworm-slim` for the machine's architecture. It builds in a temporary directory and renames it into place, so a failed build leaves nothing behind, and it refuses to overwrite an existing container. It uses Docker if available, otherwise crane. A VM with neither installs one, or copies in a tarball made elsewhere.
+**Building a rootfs.** `scripts/mkrootfs.sh <name>` creates `./containers/<name>/` from `debian:bookworm-slim` for the machine's architecture. It builds in a temporary directory and renames it into place, so a failed build leaves nothing behind, and it refuses to overwrite an existing container. It uses Docker if the Docker daemon is reachable, otherwise crane. A VM with neither installs one, or copies in a tarball made elsewhere.
 
 **Project layout.** One binary crate `bcdocker` in the project root, edition 2021 as in `uefi_boot`, with `thiserror` 2 and `nix` 0.31 as its only dependencies. `src/` holds the launcher, one `#[allow(unsafe_code)]` clone module under `#![deny(unsafe_code)]`, and the error enums.
 
@@ -73,4 +73,4 @@ The chosen approach keeps the small in-process launcher, matches the assignment'
 
 **Deferred.** `clone3` for `CLONE_INTO_CGROUP` when cgroup limits arrive; `pivot_root` hardening in place of plain `chroot`; a pseudo-terminal; networking; image pulling; reserved exit codes; signal forwarding; an architecture check for foreign rootfs directories.
 
-**Constraint for the plan.** The `clone` module is the only place `unsafe` appears. Starting the application, waiting for it, and any signal handling use safe routes (`std::process::Command`, nix's safe wrappers) or are left out.
+**Constraint for the plan.** The `clone` module is the only place `unsafe` appears. Starting the application, waiting for it, and any signal handling use safe routes (`std::process::Command`, nix's safe wrappers) or are left out. The child's stack is a heap buffer with no guard page, because a guard page would need four more `unsafe` calls; this is an accepted risk. Its proof therefore rests on one named assumption: the child's stack use stays below 8 MiB. That figure is evidence (a margin over std's 2 MiB thread default), not proof, and no caller input affects it. Toolchain: rustc 1.81 or later.

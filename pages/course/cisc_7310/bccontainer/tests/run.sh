@@ -60,7 +60,7 @@ for dir in bin etc usr proc; do
   [[ " $(field root) " == *" $dir "* ]] || fail "$dir missing from container root: $(field root)"
 done
 check "host filesystem" sealed "$(field hostfs)"
-# Nothing the container mounted is left on the host, and the rootfs is untouched.
+# Nothing the container mounted is left on the host, and setup left the rootfs's /proc an empty directory.
 grep -q "$rootfs" /proc/mounts && fail "leftover mount under $rootfs"
 [[ -z $(ls -A "$rootfs/proc") ]] || fail "rootfs /proc is not an empty directory"
 
