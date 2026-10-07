@@ -9,14 +9,14 @@ mod stack;
 mod status;
 
 #[cfg(target_os = "linux")]
+#[allow(unsafe_code)]
+mod clone;
+#[cfg(target_os = "linux")]
 mod launch;
 #[cfg(target_os = "linux")]
 mod sandbox;
 #[cfg(target_os = "linux")]
 mod supervise;
-#[cfg(target_os = "linux")]
-#[allow(unsafe_code)]
-mod clone;
 
 use std::process::ExitCode;
 

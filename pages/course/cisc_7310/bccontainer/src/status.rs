@@ -27,7 +27,11 @@ mod tests {
 
     #[test]
     fn a_signal_maps_to_128_plus_the_signal_number() {
-        let status = Status::from_wait(WaitStatus::Signaled(Pid::from_raw(2), Signal::SIGKILL, false));
+        let status = Status::from_wait(WaitStatus::Signaled(
+            Pid::from_raw(2),
+            Signal::SIGKILL,
+            false,
+        ));
 
         assert_eq!(status.unwrap().code(), 137);
     }
@@ -43,7 +47,10 @@ mod tests {
     fn stopped_and_continued_are_not_final() {
         let pid = Pid::from_raw(2);
 
-        assert_eq!(Status::from_wait(WaitStatus::Stopped(pid, Signal::SIGSTOP)), None);
+        assert_eq!(
+            Status::from_wait(WaitStatus::Stopped(pid, Signal::SIGSTOP)),
+            None
+        );
         assert_eq!(Status::from_wait(WaitStatus::Continued(pid)), None);
     }
 }

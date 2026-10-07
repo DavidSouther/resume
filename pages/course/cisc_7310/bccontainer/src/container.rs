@@ -41,17 +41,29 @@ impl Container {
     /// `cwd.join(arg)`.
     pub fn resolve(arg: &str, cwd: &Path) -> Result<Container, Error> {
         if arg == "." || arg == ".." {
-            return Err(Error::BadHostname { name: arg.to_owned() });
+            return Err(Error::BadHostname {
+                name: arg.to_owned(),
+            });
         }
-        let rootfs = if arg.contains('/') { cwd.join(arg) } else { cwd.join("containers").join(arg) };
+        let rootfs = if arg.contains('/') {
+            cwd.join(arg)
+        } else {
+            cwd.join("containers").join(arg)
+        };
         if !rootfs.is_dir() {
             return Err(Error::Missing { path: rootfs });
         }
-        let name = rootfs
-            .file_name()
-            .and_then(OsStr::to_str)
-            .ok_or_else(|| Error::BadHostname { name: arg.to_owned() })?;
-        Ok(Container { hostname: Hostname::parse(name)?, rootfs })
+        let name =
+            rootfs
+                .file_name()
+                .and_then(OsStr::to_str)
+                .ok_or_else(|| Error::BadHostname {
+                    name: arg.to_owned(),
+                })?;
+        Ok(Container {
+            hostname: Hostname::parse(name)?,
+            rootfs,
+        })
     }
 
     pub fn hostname(&self) -> &Hostname {
@@ -77,8 +89,11 @@ pub(crate) mod tests {
     impl Scratch {
         pub(crate) fn new() -> Scratch {
             static N: AtomicUsize = AtomicUsize::new(0);
-            let dir = std::env::temp_dir()
-                .join(format!("bcdocker-test-{}-{}", std::process::id(), N.fetch_add(1, Ordering::Relaxed)));
+            let dir = std::env::temp_dir().join(format!(
+                "bcdocker-test-{}-{}",
+                std::process::id(),
+                N.fetch_add(1, Ordering::Relaxed)
+            ));
             fs::create_dir_all(&dir).unwrap();
             Scratch(dir)
         }
@@ -114,7 +129,11 @@ pub(crate) mod tests {
         let cwd = Scratch::new().with_dir("elsewhere/bctinysys");
 
         let relative = Container::resolve("elsewhere/bctinysys/", cwd.path()).unwrap();
-        let absolute = Container::resolve(cwd.path().join("elsewhere/bctinysys").to_str().unwrap(), Path::new("/nonexistent")).unwrap();
+        let absolute = Container::resolve(
+            cwd.path().join("elsewhere/bctinysys").to_str().unwrap(),
+            Path::new("/nonexistent"),
+        )
+        .unwrap();
 
         assert_eq!(relative.hostname().as_str(), "bctinysys");
         assert_eq!(relative.rootfs(), cwd.path().join("elsewhere/bctinysys/"));
@@ -136,7 +155,11 @@ pub(crate) mod tests {
         assert!(Hostname::parse("tinysys").is_ok());
         assert!(Hostname::parse(&"a".repeat(64)).is_ok());
         for bad in ["", &"a".repeat(65), "a\0b", "a/b"] {
-            assert_matches!(Hostname::parse(bad), Err(Error::BadHostname { .. }), "{bad:?}");
+            assert_matches!(
+                Hostname::parse(bad),
+                Err(Error::BadHostname { .. }),
+                "{bad:?}"
+            );
         }
     }
 
@@ -145,7 +168,11 @@ pub(crate) mod tests {
         let cwd = Scratch::new().with_dir("containers");
 
         for arg in [".", ".."] {
-            assert_matches!(Container::resolve(arg, cwd.path()), Err(Error::BadHostname { .. }), "{arg:?}");
+            assert_matches!(
+                Container::resolve(arg, cwd.path()),
+                Err(Error::BadHostname { .. }),
+                "{arg:?}"
+            );
         }
     }
 

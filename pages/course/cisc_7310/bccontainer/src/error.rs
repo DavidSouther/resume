@@ -40,6 +40,9 @@ mod tests {
     fn a_usage_error_passes_through_without_a_second_prefix() {
         let e = Error::from(cli::Error::Usage);
 
-        assert_eq!(e.to_string(), "usage: bcdocker run [--stack-size <size>] <container> <app> [args...]");
+        assert_eq!(
+            e.to_string(),
+            "usage: bcdocker run [--stack-size <size>] <container> <app> [args...]"
+        );
     }
 }

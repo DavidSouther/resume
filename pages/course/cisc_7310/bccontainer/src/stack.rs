@@ -39,8 +39,12 @@ pub struct StackSize(
 impl StackSize {
     /// Bytes, or a number followed by `K`, `M`, or `G` (powers of 1024, either case).
     pub fn parse(text: &str) -> Result<StackSize, Error> {
-        let invalid = || Error::Invalid { text: text.to_owned() };
-        let out_of_range = || Error::OutOfRange { text: text.to_owned() };
+        let invalid = || Error::Invalid {
+            text: text.to_owned(),
+        };
+        let out_of_range = || Error::OutOfRange {
+            text: text.to_owned(),
+        };
 
         let digits = text.trim_end_matches(|c: char| c.is_ascii_alphabetic());
         if digits.is_empty() || !digits.bytes().all(|b| b.is_ascii_digit()) {
@@ -128,14 +132,24 @@ mod tests {
     #[test]
     fn sizes_below_the_floor_or_above_the_ceiling_are_out_of_range() {
         for text in ["0", "1", "512K", "1048575", "2G", "99999999999G"] {
-            assert_matches!(StackSize::parse(text), Err(Error::OutOfRange { .. }), "{text:?}");
+            assert_matches!(
+                StackSize::parse(text),
+                Err(Error::OutOfRange { .. }),
+                "{text:?}"
+            );
         }
     }
 
     #[test]
     fn text_that_is_not_a_size_is_invalid() {
-        for text in ["", "M", "abc", "8X", "-8M", "+8M", " 8M", "8M ", "8 M", "1.5M", "8MB"] {
-            assert_matches!(StackSize::parse(text), Err(Error::Invalid { .. }), "{text:?}");
+        for text in [
+            "", "M", "abc", "8X", "-8M", "+8M", " 8M", "8M ", "8 M", "1.5M", "8MB",
+        ] {
+            assert_matches!(
+                StackSize::parse(text),
+                Err(Error::Invalid { .. }),
+                "{text:?}"
+            );
         }
     }
 

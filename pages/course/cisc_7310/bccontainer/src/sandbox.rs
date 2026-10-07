@@ -31,12 +31,36 @@ pub struct DevNode {
 /// The OCI runtime spec's default devices, less `/dev/console` and `/dev/ptmx`: there is no
 /// pseudo-terminal, so `tty` reports "not a tty".
 pub const DEV_NODES: [DevNode; 6] = [
-    DevNode { name: "null", major: 1, minor: 3 },
-    DevNode { name: "zero", major: 1, minor: 5 },
-    DevNode { name: "full", major: 1, minor: 7 },
-    DevNode { name: "random", major: 1, minor: 8 },
-    DevNode { name: "urandom", major: 1, minor: 9 },
-    DevNode { name: "tty", major: 5, minor: 0 },
+    DevNode {
+        name: "null",
+        major: 1,
+        minor: 3,
+    },
+    DevNode {
+        name: "zero",
+        major: 1,
+        minor: 5,
+    },
+    DevNode {
+        name: "full",
+        major: 1,
+        minor: 7,
+    },
+    DevNode {
+        name: "random",
+        major: 1,
+        minor: 8,
+    },
+    DevNode {
+        name: "urandom",
+        major: 1,
+        minor: 9,
+    },
+    DevNode {
+        name: "tty",
+        major: 5,
+        minor: 0,
+    },
 ];
 
 /// Must run in a process with its own mount and UTS namespaces (see `clone::CLONE_FLAGS`);
@@ -49,13 +73,26 @@ pub fn enter(container: &Container) -> Result<(), Error> {
     let (proc_dir, dev_dir) = (root.join("proc"), root.join("dev"));
 
     // Stop mount propagation, or everything below leaks to the host.
-    mount(none, "/", none, MsFlags::MS_REC | MsFlags::MS_PRIVATE, none)
-        .map_err(|source| Error::Mount { target: "/", source })?;
+    mount(none, "/", none, MsFlags::MS_REC | MsFlags::MS_PRIVATE, none).map_err(|source| {
+        Error::Mount {
+            target: "/",
+            source,
+        }
+    })?;
     sethostname(container.hostname().as_str()).map_err(Error::Hostname)?;
     // Bind the rootfs onto itself so the container's `/` is a mount point: otherwise its mount
     // table has no entry for `/`, and `findmnt /` or `df /` inside cannot describe it.
-    mount(Some(root), root, none, MsFlags::MS_BIND | MsFlags::MS_REC, none)
-        .map_err(|source| Error::Mount { target: "rootfs", source })?;
+    mount(
+        Some(root),
+        root,
+        none,
+        MsFlags::MS_BIND | MsFlags::MS_REC,
+        none,
+    )
+    .map_err(|source| Error::Mount {
+        target: "rootfs",
+        source,
+    })?;
     mount(
         Some("proc"),
         &proc_dir,
@@ -63,9 +100,21 @@ pub fn enter(container: &Container) -> Result<(), Error> {
         MsFlags::MS_NOSUID | MsFlags::MS_NOEXEC | MsFlags::MS_NODEV,
         none,
     )
-    .map_err(|source| Error::Mount { target: "/proc", source })?;
-    mount(Some("tmpfs"), &dev_dir, Some("tmpfs"), MsFlags::MS_NOSUID, none)
-        .map_err(|source| Error::Mount { target: "/dev", source })?;
+    .map_err(|source| Error::Mount {
+        target: "/proc",
+        source,
+    })?;
+    mount(
+        Some("tmpfs"),
+        &dev_dir,
+        Some("tmpfs"),
+        MsFlags::MS_NOSUID,
+        none,
+    )
+    .map_err(|source| Error::Mount {
+        target: "/dev",
+        source,
+    })?;
 
     // mknod applies the umask; the nodes must be 0666. Restore it for the application.
     let old_umask = umask(Mode::empty());
@@ -76,7 +125,10 @@ pub fn enter(container: &Container) -> Result<(), Error> {
             Mode::from_bits_truncate(0o666),
             makedev(device.major, device.minor),
         )
-        .map_err(|source| Error::Mknod { device: device.name, source })?;
+        .map_err(|source| Error::Mknod {
+            device: device.name,
+            source,
+        })?;
     }
     umask(old_umask);
 
@@ -96,11 +148,21 @@ mod tests {
 
     #[test]
     fn the_dev_table_lists_the_six_oci_devices_with_their_numbers() {
-        let table: Vec<_> = DEV_NODES.iter().map(|d| (d.name, d.major, d.minor)).collect();
+        let table: Vec<_> = DEV_NODES
+            .iter()
+            .map(|d| (d.name, d.major, d.minor))
+            .collect();
 
         assert_eq!(
             table,
-            [("null", 1, 3), ("zero", 1, 5), ("full", 1, 7), ("random", 1, 8), ("urandom", 1, 9), ("tty", 5, 0)]
+            [
+                ("null", 1, 3),
+                ("zero", 1, 5),
+                ("full", 1, 7),
+                ("random", 1, 8),
+                ("urandom", 1, 9),
+                ("tty", 5, 0)
+            ]
         );
     }
 }

@@ -73,7 +73,12 @@ pub fn parse(args: impl IntoIterator<Item = String>) -> Result<Args, Error> {
     };
     let app = rest.next().ok_or(Error::Usage)?;
     let args = AppArgs::new(rest.collect())?;
-    Ok(Args { container, app, args, stack_size })
+    Ok(Args {
+        container,
+        app,
+        args,
+        stack_size,
+    })
 }
 
 #[derive(Debug)]
@@ -107,7 +112,10 @@ mod tests {
 
     #[test]
     fn run_container_app_and_arguments_parse() {
-        let args = parse(argv(&["bcdocker", "run", "tinysys", "/bin/ls", "-l", "--color"])).unwrap();
+        let args = parse(argv(&[
+            "bcdocker", "run", "tinysys", "/bin/ls", "-l", "--color",
+        ]))
+        .unwrap();
 
         assert_eq!(
             args,
@@ -122,7 +130,12 @@ mod tests {
 
     #[test]
     fn too_few_arguments_or_another_subcommand_is_usage() {
-        for bad in [&["bcdocker"][..], &["bcdocker", "run"], &["bcdocker", "run", "tinysys"], &["bcdocker", "ps", "a", "b"]] {
+        for bad in [
+            &["bcdocker"][..],
+            &["bcdocker", "run"],
+            &["bcdocker", "run", "tinysys"],
+            &["bcdocker", "ps", "a", "b"],
+        ] {
             assert_matches!(parse(argv(bad)), Err(Error::Usage), "{bad:?}");
         }
     }
@@ -155,7 +168,15 @@ mod tests {
 
     #[test]
     fn options_after_the_container_belong_to_the_application() {
-        let args = parse(argv(&["bcdocker", "run", "tinysys", "/bin/ls", "--stack-size", "3"])).unwrap();
+        let args = parse(argv(&[
+            "bcdocker",
+            "run",
+            "tinysys",
+            "/bin/ls",
+            "--stack-size",
+            "3",
+        ]))
+        .unwrap();
 
         assert_eq!(args.stack_size, StackSize::default());
         assert_eq!(args.args.as_slice(), argv(&["--stack-size", "3"]));
@@ -163,7 +184,10 @@ mod tests {
 
     #[test]
     fn a_missing_option_value_is_usage_and_an_unknown_option_is_named() {
-        assert_matches!(parse(argv(&["bcdocker", "run", "--stack-size"])), Err(Error::Usage));
+        assert_matches!(
+            parse(argv(&["bcdocker", "run", "--stack-size"])),
+            Err(Error::Usage)
+        );
         assert_matches!(
             parse(argv(&["bcdocker", "run", "--bogus", "tinysys", "/bin/sh"])),
             Err(Error::UnknownOption(name)) if name == "--bogus"
@@ -180,12 +204,23 @@ mod tests {
         let err = parse(line).unwrap_err();
 
         assert_matches!(err, Error::TooManyArguments { count } if count == MAX_ARGS + 1);
-        assert_eq!(err.to_string(), "usage: 16385 application arguments; the limit is 16384");
+        assert_eq!(
+            err.to_string(),
+            "usage: 16385 application arguments; the limit is 16384"
+        );
     }
 
     #[test]
     fn a_bad_stack_size_reports_the_size_error() {
-        let err = parse(argv(&["bcdocker", "run", "--stack-size", "64K", "tinysys", "/bin/sh"])).unwrap_err();
+        let err = parse(argv(&[
+            "bcdocker",
+            "run",
+            "--stack-size",
+            "64K",
+            "tinysys",
+            "/bin/sh",
+        ]))
+        .unwrap_err();
 
         assert_matches!(err, Error::StackSize(stack::Error::OutOfRange { .. }));
         assert_eq!(err.to_string(), "stack size: 64K is outside 1M to 1G");

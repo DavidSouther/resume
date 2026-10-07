@@ -1,4 +1,7 @@
-#![deny(clippy::undocumented_unsafe_blocks, clippy::multiple_unsafe_ops_per_block)]
+#![deny(
+    clippy::undocumented_unsafe_blocks,
+    clippy::multiple_unsafe_ops_per_block
+)]
 //! The only module allowed to use `unsafe`.
 //!
 //! # Invariants
@@ -205,7 +208,14 @@ pub fn spawn(run: &Run) -> Result<Pid, Error> {
     //   ignores its own SIGABRT, so glibc's `abort` ends in a SIGSEGV, and the host sees
     //   status 139.
     //  Err(e): no child exists (clone(2) returned -1), and `child` was dropped once, here.
-    let pid = unsafe { clone(child, &mut stack, CLONE_FLAGS, Some(Signal::SIGCHLD as c_int)) };
+    let pid = unsafe {
+        clone(
+            child,
+            &mut stack,
+            CLONE_FLAGS,
+            Some(Signal::SIGCHLD as c_int),
+        )
+    };
     pid.map_err(Error::Clone)
 }
 
@@ -233,8 +243,12 @@ mod tests {
 
     #[test]
     fn a_denied_clone_suggests_privileged_and_other_failures_do_not() {
-        assert!(Error::Clone(Errno::EPERM).to_string().contains("--privileged"));
-        assert!(!Error::Clone(Errno::ENOMEM).to_string().contains("--privileged"));
+        assert!(Error::Clone(Errno::EPERM)
+            .to_string()
+            .contains("--privileged"));
+        assert!(!Error::Clone(Errno::ENOMEM)
+            .to_string()
+            .contains("--privileged"));
     }
 
     #[test]

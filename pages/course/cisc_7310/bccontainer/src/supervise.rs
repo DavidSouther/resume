@@ -55,7 +55,10 @@ fn supervise(run: &Run) -> Result<Status, Error> {
         .args(run.args.as_slice())
         .env("PATH", DEBIAN_PATH)
         .spawn()
-        .map_err(|source| Error::Exec { app: run.app.clone(), source })?;
+        .map_err(|source| Error::Exec {
+            app: run.app.clone(),
+            source,
+        })?;
     let app = Pid::from_raw(child.id() as i32);
     // Orphans are reparented to PID 1: wait for any child, and finish with the application's.
     loop {
