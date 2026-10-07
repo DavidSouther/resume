@@ -19,7 +19,7 @@ Patterns applied (`patterns:using-patterns`): **newtype** for `Hostname` and `St
 
 ## Step 0: API surface area
 
-Stubs only, no bodies. The Rust crate is `bcdocker`, edition 2021, with `rust-version = "1.81"` under `[package]` (E6 in `clone.rs` relies on it: from rustc 1.81 a panic unwinding out of an `extern "C"` function aborts), `thiserror = "2"` and `nix = { version = "=0.31.3", features = ["sched", "mount", "hostname", "fs", "process", "signal", "user"] }`. nix is pinned exactly because the `SAFETY` comment in `clone.rs` relies on its audited source. nix is a normal dependency: its `Errno` is portable, and only the code that calls Linux-only functions is gated with `cfg(target_os = "linux")`.
+Stubs only, no bodies. The Rust crate is `bcdocker`, edition 2021, with `rust-version = "1.96"` under `[package]` (E6 in `clone.rs` needs at least 1.81, where a panic unwinding out of an `extern "C"` function starts to abort; 1.96 also provides `std::assert_matches!` for the tests), `thiserror = "2"` and `nix = { version = "=0.31.3", features = ["sched", "mount", "hostname", "fs", "process", "signal", "user"] }`. nix is pinned exactly because the `SAFETY` comment in `clone.rs` relies on its audited source. nix is a normal dependency: its `Errno` is portable, and only the code that calls Linux-only functions is gated with `cfg(target_os = "linux")`.
 
 ```rust
 // src/main.rs
@@ -318,7 +318,7 @@ pub fn spawn(run: &Run) -> Result<Pid, Error> {
     //     There is no guard page, so an overflow is not guaranteed to fault. No safe caller
     //     can raise the child's stack depth. C1 is NOT discharged; it rests on A1, accepted
     //     in design.md.
-    //  E6 (AXIOM, Reference, rustc >= 1.81 per Cargo.toml `rust-version = "1.81"`: a panic
+    //  E6 (AXIOM, Reference, rustc >= 1.81, and Cargo.toml has `rust-version = "1.96"`: a panic
     //     that would unwind out of a Rust-defined `extern "C"` function aborts) nix's
     //     `callback` is such a function. => C6.
     // Postconditions:

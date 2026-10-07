@@ -43,6 +43,8 @@ impl Run {
 
 #[cfg(test)]
 mod tests {
+    use std::assert_matches;
+
     use super::*;
 
     fn argv(a: &[&str]) -> Vec<String> {
@@ -62,7 +64,7 @@ mod tests {
     #[test]
     fn too_few_arguments_or_another_subcommand_is_usage() {
         for bad in [&["bcdocker"][..], &["bcdocker", "run"], &["bcdocker", "run", "tinysys"], &["bcdocker", "ps", "a", "b"]] {
-            assert!(matches!(parse(argv(bad)), Err(Error::Usage)), "{bad:?}");
+            assert_matches!(parse(argv(bad)), Err(Error::Usage), "{bad:?}");
         }
     }
 

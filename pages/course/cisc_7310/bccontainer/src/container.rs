@@ -60,6 +60,8 @@ impl Container {
 
 #[cfg(test)]
 pub(crate) mod tests {
+    use std::assert_matches;
+
     use super::*;
     use std::fs;
     use std::sync::atomic::{AtomicUsize, Ordering};
@@ -120,7 +122,7 @@ pub(crate) mod tests {
 
         let err = Container::resolve("nope", cwd.path()).unwrap_err();
 
-        assert!(matches!(&err, Error::Missing { path } if *path == cwd.path().join("containers/nope")));
+        assert_matches!(&err, Error::Missing { path } if *path == cwd.path().join("containers/nope"));
         assert!(err.to_string().contains("nope"));
     }
 
@@ -129,7 +131,7 @@ pub(crate) mod tests {
         assert!(Hostname::parse("tinysys").is_ok());
         assert!(Hostname::parse(&"a".repeat(64)).is_ok());
         for bad in ["", &"a".repeat(65), "a\0b", "a/b"] {
-            assert!(matches!(Hostname::parse(bad), Err(Error::BadHostname { .. })), "{bad:?}");
+            assert_matches!(Hostname::parse(bad), Err(Error::BadHostname { .. }), "{bad:?}");
         }
     }
 
@@ -139,6 +141,6 @@ pub(crate) mod tests {
 
         let err = Container::resolve("/", cwd.path()).unwrap_err();
 
-        assert!(matches!(err, Error::BadHostname { .. }));
+        assert_matches!(err, Error::BadHostname { .. });
     }
 }

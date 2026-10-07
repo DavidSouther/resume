@@ -113,7 +113,7 @@ pub fn spawn(run: &Run) -> Result<Pid, Error> {
     //     There is no guard page, so an overflow is not guaranteed to fault. No safe caller
     //     can raise the child's stack depth. C1 is NOT discharged; it rests on A1, accepted
     //     in design.md.
-    //  E6 (AXIOM, Reference, rustc >= 1.81 per Cargo.toml `rust-version = "1.81"`: a panic
+    //  E6 (AXIOM, Reference, rustc >= 1.81, and Cargo.toml has `rust-version = "1.96"`: a panic
     //     that would unwind out of a Rust-defined `extern "C"` function aborts) nix's
     //     `callback` is such a function. => C6.
     // Postconditions:
@@ -143,6 +143,8 @@ fn only_thread() -> Result<(), Error> {
 
 #[cfg(test)]
 mod tests {
+    use std::assert_matches;
+
     use super::*;
 
     #[test]
@@ -160,7 +162,7 @@ mod tests {
 
         let result = only_thread();
 
-        assert!(matches!(result, Err(Error::Threads)));
+        assert_matches!(result, Err(Error::Threads));
         drop(stop);
         helper.join().unwrap();
     }
