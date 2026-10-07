@@ -19,76 +19,71 @@ Feature test: `pages/course/cisc_7310/bccontainer/tests/run.rs`.
 
 ## User Journey and Metrics
 
-**Journey.** The student works on Debian or in a privileged `bookworm-slim` container on a Mac.
+**Journey.** The student works on Debian or in a privileged `bookworm-slim` container on a Mac, from the project directory.
 
-1. `cargo build` (a macOS build succeeds; running there is declined, see Failure modes).
-2. `scripts/mkrootfs.sh tinysys` extracts `debian:bookworm-slim` into `containers/tinysys/`, using `docker export` or `crane export`.
+1. `cargo build`. A macOS build succeeds; running there is declined (see Failure modes).
+2. `scripts/mkrootfs.sh tinysys` extracts `debian:bookworm-slim` into `./containers/tinysys/`, using `docker export` or `crane export`.
 3. `sudo target/debug/bcdocker run tinysys /bin/sh` opens a shell in the container:
-   - `hostname` prints `tinysys`.
+   - `cat /proc/sys/kernel/hostname` prints `tinysys`.
    - `echo $$` prints `2`; the launcher is PID 1.
-   - `ls /proc` shows only the container's processes.
+   - Only the container's processes appear in `/proc`.
    - `exit 3` returns to the host prompt, and `echo $?` prints `3`.
 4. `sudo target/debug/bcdocker run tinysys /bin/ls -l /etc` prints the container's `/etc`, and `> out.txt` or `| wc` on the host side work as in any shell.
 
-**Metrics.** The feature test passes on a Debian host and in privileged `bookworm-slim` on Docker Desktop. Startup, excluding the one-time rootfs build, is under one second. Every failure in the table below ends with one line on stderr naming the step and the reason. After the run, no mounts, files, or hostname changes remain on the host.
+**Metrics.** The feature test passes on a Debian host and in privileged `bookworm-slim` on Docker Desktop. After a run, the host has no leftover mounts and an unchanged hostname, and the rootfs directory is unchanged. Every failure ends with one line on stderr naming the step and the reason.
 
 ## Specification
 
 **Command line.** `bcdocker run <container> <app> [args…]`.
-- `<container>` without a `/` names a directory under `$BCDOCKER_HOME` (default `./containers`). With a `/` it is a path. The hostname is the final path component.
+- `<container>` without a `/` names the directory `./containers/<container>`. With a `/` it is a path. The hostname is the final path component.
 - `<app>` is a path inside the container; arguments pass through unchanged.
-- A missing argument prints usage and exits 2.
+- A missing argument prints usage and exits non-zero.
 
 **Isolation.** The container gets new PID, mount, UTS, and IPC namespaces, created by one `clone`. Its mounts are private, so nothing it mounts is visible to the host and everything it mounts disappears when it exits. Inside, `/` is the container's directory (changed with `chroot`), `/proc` is a fresh procfs for the container's PID namespace, and `/dev` is a tmpfs holding `null`, `zero`, `full`, `random`, `urandom`, and `tty`. The rootfs directory itself is never modified by a run.
 
-**Process shape.** The process `bcdocker run …` on the host starts the container and waits. In the container, PID 1 is that same `bcdocker` program with its original command line; it starts the application as PID 2, forwards termination signals to it, reaps any orphaned processes, and exits with the application's status. When PID 1 exits, the kernel ends every process in the container.
+**Process shape.** The process `bcdocker run …` on the host starts the container and waits. In the container, PID 1 is that same `bcdocker` program with its original command line; it starts the application as PID 2, reaps any orphaned processes, and exits with the application's status. When PID 1 exits, the kernel ends every process in the container. The container also ends if the host-side `bcdocker` is killed.
 
-**Application environment.** The application inherits stdin, stdout, and stderr, so terminal use and host-side redirection behave as with any command. It sees no other host file descriptors. Its environment is cleared except for `PATH` (the Debian default), `HOME=/root`, `HOSTNAME`, and `TERM` if the host set it.
+**Application environment.** The application inherits stdin, stdout, and stderr, so terminal use and host-side redirection behave as with any command. It sees no other host file descriptors. It inherits the launcher's environment, with `PATH` set to the Debian default so programs in the container are found.
 
-**Exit status.** The host-side `bcdocker` exits with the application's exit code, or 128 plus the signal number if a signal ended it. It reserves three codes, as Docker does: 125 for a `bcdocker` setup failure, 126 for an application that exists but cannot be executed, 127 for an application that is not found. Ctrl-C reaches every process in the foreground group; the host-side `bcdocker` ignores `SIGINT` while it waits, and PID 1 forwards `SIGINT`, `SIGTERM`, and `SIGHUP` to the application.
+**Exit status.** The host-side `bcdocker` exits with the application's exit code, or 128 plus the signal number if a signal ended it. Ctrl-C ends the application and the container.
 
-**Failure modes.** Each ends with `bcdocker: <step>: <reason>` on stderr, from a typed error.
+**Failure modes.** Each ends with `bcdocker: <step>: <reason>` on stderr, from a typed error, and a non-zero exit.
 
-| Situation | Behavior |
+| Situation | Message names |
 |---|---|
-| Not Linux | `bcdocker run` exits 125 saying it needs Linux namespaces; the macOS build otherwise works |
-| Not root or missing privilege | exits 125 saying it needs root; under Docker, the message suggests `--privileged` |
-| Container directory missing | exits 125 naming the path it looked for |
-| Rootfs built for another architecture | exits 125 naming both architectures, instead of failing later with `Exec format error` |
-| Application missing, or not executable | exits 127, or 126 |
+| Not Linux | that bcdocker needs Linux namespaces; the macOS build otherwise works |
+| Not root or missing privilege | that bcdocker needs root; under Docker, the message suggests `--privileged` |
+| Container directory missing | the path it looked for |
+| Application missing or not executable | the application path, with the system's reason |
 
-**Building a rootfs.** `scripts/mkrootfs.sh <name>` creates `containers/<name>/` from `debian:bookworm-slim` for the machine's architecture, records that architecture in `containers/<name>/.arch`, and refuses to overwrite an existing directory. It uses Docker if available, otherwise crane. A VM without either installs one, or copies in a tarball made elsewhere.
+**Building a rootfs.** `scripts/mkrootfs.sh <name>` creates `./containers/<name>/` from `debian:bookworm-slim` for the machine's architecture. It builds in a temporary directory and renames it into place, so a failed build leaves nothing behind, and it refuses to overwrite an existing container. It uses Docker if available, otherwise crane. A VM with neither installs one, or copies in a tarball made elsewhere.
 
-**Out of scope.** Networking, cgroup limits, user namespaces, image pulling, overlayfs, a pseudo-terminal, and submission logistics.
+**Out of scope.** Networking, cgroup limits, user namespaces, image pulling, overlayfs, a pseudo-terminal, reserved exit codes, an architecture check, signal forwarding, and the written explanation of each `clone` flag (report material, deferred with the submission logistics).
 
-**Verification.** Automated: the feature test builds a rootfs and checks PID 1 and PID 2, `/proc` contents, hostname isolation, filesystem isolation, and every exit code in the table. Manual: run it once on the `bookworm-slim` VM and once in privileged `bookworm-slim` on Docker Desktop, including Ctrl-C in an interactive shell.
+**Verification.** Automated: the feature test builds a rootfs and checks PID 1 and PID 2, `/proc` contents, hostname isolation, filesystem isolation, no leftover mounts, the exit status of a normal exit and of a signal, and the failure messages for a missing application, a non-executable application, and a missing container. Manual: run it once on the `bookworm-slim` VM and once in privileged `bookworm-slim` on Docker Desktop, including Ctrl-C in an interactive shell, running without root, and a rootfs built for the other architecture.
 
 ## Alternatives
 
-- **A. Path only, in-process.** `bcdocker run <rootfs-path> <app>`, no name resolution, no architecture stamp, no reserved exit codes. Simplest, but it differs from the assignment's command line, a wrong-architecture rootfs fails obscurely, and setup failures cannot be told apart from the application's own exit codes.
-- **C. Named containers with metadata, `bcdocker mkrootfs`, re-exec init.** A `config.toml` per container, a Rust tar extractor, and PID 1 re-executing itself. Closest to real Docker, but it adds a tar crate and a TOML parser, drifts toward image pulling, and makes PID 1's command line differ from the sample unless copied over.
+- **Path only.** `bcdocker run <rootfs-path> <app>`, with no name resolution. Simplest, but it differs from the assignment's command line (`run bctinysys …`).
+- **Named containers with metadata, `bcdocker mkrootfs`, re-exec init.** A `config.toml` per container, a Rust tar extractor, and PID 1 re-executing itself. Closest to real Docker, but it adds a tar crate and a TOML parser, drifts toward image pulling, and makes PID 1's command line differ from the sample unless copied over.
 
-Approach B, described above, keeps A's small in-process launcher, matches the assignment's command line and sample output, and adds only the architecture stamp and reserved exit codes.
+The chosen approach keeps the small in-process launcher, matches the assignment's command line and sample output, and adds only name resolution.
 
 ## Summary
 
-**Deferred.** `clone3` for `CLONE_INTO_CGROUP` when cgroup limits arrive; `pivot_root` hardening in place of plain `chroot`; a pseudo-terminal; networking; image pulling.
+**Deferred.** `clone3` for `CLONE_INTO_CGROUP` when cgroup limits arrive; `pivot_root` hardening in place of plain `chroot`; a pseudo-terminal; networking; image pulling; reserved exit codes; signal forwarding; an architecture check for foreign rootfs directories.
+
+**Constraint for the plan.** The `clone` module is the only place `unsafe` appears. Starting the application, waiting for it, and any signal handling use safe routes (`std::process::Command`, nix's safe wrappers) or are left out.
 
 ### Open Artifact Decisions
 
-**`containers/` and `$BCDOCKER_HOME`:** where named containers live and how to override it.
-Proposed: `./containers/<name>/`, overridable by `BCDOCKER_HOME`, and `/containers` in `.gitignore`.
-
-**`containers/<name>/.arch`:** how the architecture stamp is stored.
-Proposed: a one-line file holding `uname -m` output (`x86_64` or `aarch64`), written by `mkrootfs.sh` and read before `clone`.
+**`./containers/<name>/`:** where named containers live.
+Proposed: relative to the current directory, with `/containers` in `.gitignore`.
 
 **`scripts/mkrootfs.sh`:** the rootfs builder's name and interface.
 Proposed: `scripts/mkrootfs.sh <name>`, bash, preferring `docker export` and falling back to `crane export`.
 
-**Exit codes 125, 126, 127:** reserved meanings.
-Proposed: the Docker convention, documented in the README.
-
 **Crate layout:** name and shape.
-Proposed: one binary crate `bcdocker`, edition 2021 as in `uefi_boot`, `thiserror` 2 and `nix` 0.31 as the only dependencies, `Cargo.toml` and `Makefile` at the project root with `build` and `run` targets that branch on `uname -s` as `uefi_boot`'s do. `src/` holds the launcher, one `#[allow(unsafe_code)]` clone module under `#![deny(unsafe_code)]`, and the error enums.
+Proposed: one binary crate `bcdocker`, edition 2021 as in `uefi_boot`, `thiserror` 2 and `nix` 0.31 as the only dependencies, `Cargo.toml` at the project root, `src/` holding the launcher, one `#[allow(unsafe_code)]` clone module under `#![deny(unsafe_code)]`, and the error enums.
 
-**Test path:** `tests/run.rs`, the cargo integration-test convention, run with `sudo -E cargo test --test run`.
+**Test path and command:** `tests/run.rs`, the cargo integration-test convention, run with `sudo env "PATH=$PATH" cargo test --test run` so root finds the user's `cargo`.
