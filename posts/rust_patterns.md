@@ -3,7 +3,7 @@ title: Thinking In Rust
 date: 2026-09-19
 summary: "Lecture 3: Rust Forms of Common Patterns"
 slides: true
-# show: false
+show: false
 ---
 
 ## Roadmap
