@@ -1,0 +1,8 @@
+-rw-r--r--@ 1 davidsouther  staff   1.8G Feb 11  2014 data/cts.dump.csv
+-rw-r--r--@ 1 davidsouther  staff   6.9M Feb 11  2014 data/dividends.dump.csv
+-rw-r--r--@ 1 davidsouther  staff   152K Feb 11  2014 data/splits.dump.csv
+
+ 44314948 44314948 1888022055 data/cts.dump.csv
+  320742  320742 7285031 data/dividends.dump.csv
+    8471    8471  155289 data/splits.dump.csv
+ 44644161 44644161 1895462375 total
