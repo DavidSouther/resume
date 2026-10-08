@@ -1,0 +1,2 @@
+docker build . -t debian-ps
+docker run -v .:/psstat -it debian-ps /bin/bash
