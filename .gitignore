@@ -25,3 +25,8 @@ docs/
 
 # Raw traveler document numbers sidecar — never committed, never imported by render
 trips/*/documents.local.yaml
+
+# NYC polling generated reports, Python bytecode, and local keys
+pages/nyc_polling/*.report.json
+__pycache__/
+.env
