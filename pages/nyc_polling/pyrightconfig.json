@@ -1,0 +1,6 @@
+{
+  "include": ["nyc_tracts", "tests", "*.py"],
+  "pythonVersion": "3.12",
+  "typeCheckingMode": "strict",
+  "reportMissingTypeStubs": false
+}
