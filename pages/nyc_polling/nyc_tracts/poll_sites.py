@@ -1,10 +1,13 @@
 """Early voting poll sites: parse the public My Maps KML, geocode sites without a Point."""
 
+import json
 import re
 import time
 import urllib.parse
 import xml.etree.ElementTree as ET
+from collections.abc import Mapping
 from dataclasses import dataclass, field, replace
+from pathlib import Path
 from typing import NotRequired, TypedDict, cast
 
 import httpx
@@ -137,10 +140,32 @@ def geocode_google(site: PollSite, key: str) -> tuple[LonLat | None, str]:
     return None, last
 
 
-def geocode_sites(sites: list[PollSite], google_key: str | None, pause: float = 0.05) -> tuple[list[PollSite], list[Geocoded], list[GeocodeFailure]]:
-    """Locate every site without a Point in the source with the Google Geocoding API (answers are kept in the source cache, so a rerun does not call it again).
+def site_id(site: PollSite) -> str:
+    return site.ext.get("Poll Site ID", "")
 
-    Returns (sites with lonlat filled in where located, geocoded report, failed report)."""
+
+def read_locations(path: Path) -> dict[str, Geocoded]:
+    """Geocoder answers kept in the repo, by Poll Site ID. Missing file means none yet."""
+    if not path.exists():
+        return {}
+    raw = json.loads(path.read_text(encoding="utf-8"))
+    return {k: {"name": v["name"], "matched": v["matched"], "lonlat": (v["lonlat"][0], v["lonlat"][1])} for k, v in raw.items()}
+
+
+def write_locations(path: Path, known: Mapping[str, Geocoded]) -> None:
+    """Sorted by site ID with one site per line, so a new answer is a one line diff."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    rows = [f"  {json.dumps(k)}: {json.dumps({'name': v['name'], 'matched': v['matched'], 'lonlat': list(v['lonlat'])})}" for k, v in sorted(known.items())]
+    path.write_text("{\n" + ",\n".join(rows) + "\n}\n", encoding="utf-8")
+
+
+def geocode_sites(sites: list[PollSite], google_key: str | None, known: dict[str, Geocoded] | None = None, pause: float = 0.05) -> tuple[list[PollSite], list[Geocoded], list[GeocodeFailure]]:
+    """Locate every site without a Point in the source.
+
+    A site already in `known` (by Poll Site ID) is located from that answer with no API call. Any other site goes to the Google
+    Geocoding API (whose answers are also kept in the source cache), and its answer is added to `known` in place.
+    Returns (sites with lonlat filled in where located, geocoded report of every geocoded site, failed report)."""
+    known = known if known is not None else {}
     out: list[PollSite] = []
     geocoded: list[Geocoded] = []
     failed: list[GeocodeFailure] = []
@@ -148,10 +173,16 @@ def geocode_sites(sites: list[PollSite], google_key: str | None, pause: float = 
         if s.lonlat is not None:
             out.append(s)
             continue
+        if (hit := known.get(site_id(s))) is not None:
+            out.append(replace(s, lonlat=hit["lonlat"], source="google", matched=hit["matched"]))
+            geocoded.append(hit)
+            continue
         ll, info = geocode_google(s, google_key or "")
         if ll:
+            answer: Geocoded = {"name": s.name, "matched": info, "lonlat": ll}
+            known[site_id(s)] = answer
             out.append(replace(s, lonlat=ll, source="google", matched=info))
-            geocoded.append({"name": s.name, "matched": info, "lonlat": ll})
+            geocoded.append(answer)
         else:
             out.append(s)
             failed.append({"name": s.name, "borough": s.ext.get("Borough"), "reason": info})

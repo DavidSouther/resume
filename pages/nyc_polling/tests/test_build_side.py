@@ -1,4 +1,6 @@
+import tempfile
 import unittest
+from pathlib import Path
 from typing import cast
 from unittest import mock
 
@@ -10,7 +12,7 @@ from nyc_tracts.boundaries import Geometry, polygons_of
 from nyc_tracts.census import clean_number, fetch_acs, parse_acs_row
 from nyc_tracts.dataset import Dataset, LoadOptions, load_dataset, locate_sites
 from nyc_tracts.geo import PointLocator
-from nyc_tracts.poll_sites import PollSite, election_flag, geocode_sites, google_queries, parse_poll_sites
+from nyc_tracts.poll_sites import Geocoded, PollSite, election_flag, geocode_sites, google_queries, parse_poll_sites, read_locations, write_locations
 from nyc_tracts.poverty import class_index
 
 from . import fakes
@@ -98,6 +100,39 @@ class PollSites(unittest.TestCase):
         self.assertEqual([g["name"] for g in geocoded], ["Needs Geocode"])
         self.assertEqual([f["name"] for f in failed], ["Unlocatable"])
 
+    def test_known_sites_are_located_without_calling_the_geocoder(self) -> None:
+        sites, _, _ = parse_poll_sites(fakes.poll_kml())
+        known: dict[str, Geocoded] = {"2": {"name": "Needs Geocode", "matched": "1 Main St, Bronx, NY", "lonlat": (-73.9, 40.9)}}
+
+        with mock.patch("nyc_tracts.poll_sites.geocode_google", return_value=(None, "no match")) as google:
+            located, geocoded, failed = geocode_sites(sites, None, known, pause=0)
+
+        self.assertEqual([s.lonlat for s in located][1], (-73.9, 40.9))
+        self.assertEqual(([g["name"] for g in geocoded], [f["name"] for f in failed]), (["Needs Geocode"], ["Unlocatable"]))
+        self.assertEqual(google.call_count, 1)  # only the site that is not known
+
+    def test_new_answers_are_added_to_known(self) -> None:
+        sites, _, _ = parse_poll_sites(fakes.poll_kml())
+        known: dict[str, Geocoded] = {}
+
+        with fakes.fake_http():
+            geocode_sites(sites, "key", known, pause=0)
+
+        self.assertEqual(list(known), ["2"])
+        self.assertEqual(known["2"]["matched"], "1 Main St, Bronx, NY")
+
+    def test_locations_file_round_trips_sorted_one_site_per_line(self) -> None:
+        known: dict[str, Geocoded] = {"20": {"name": "B", "matched": "b", "lonlat": (-73.9, 40.8)}, "10": {"name": "A", "matched": "a", "lonlat": (-74.0, 40.7)}}
+
+        with tempfile.TemporaryDirectory() as d:
+            path = Path(d) / "data" / "locations.json"
+            write_locations(path, known)
+            text = path.read_text(encoding="utf-8")
+
+            self.assertEqual(read_locations(path), known)
+        self.assertEqual([line.split(":")[0].strip() for line in text.splitlines()[1:-1]], ['"10"', '"20"'])
+        self.assertEqual(read_locations(Path(d) / "missing.json"), {})
+
 
 class Net(unittest.TestCase):
     def test_missing_key_redirect_raises(self) -> None:
@@ -135,8 +170,8 @@ class Net(unittest.TestCase):
 
 
 class Build(unittest.TestCase):
-    def load(self, skip_polls: bool = False, google_key: str | None = "g") -> Dataset:
-        opts = LoadOptions(census_key="k", google_key=google_key, counties=("005", "061"), skip_polls=skip_polls)
+    def load(self, skip_polls: bool = False, google_key: str | None = "g", locations: Path | None = None) -> Dataset:
+        opts = LoadOptions(census_key="k", google_key=google_key, counties=("005", "061"), skip_polls=skip_polls, locations=locations)
         with fakes.fake_http(), mock.patch("time.sleep"), mock.patch("builtins.print"):
             return load_dataset(opts)
 
@@ -189,6 +224,19 @@ class Build(unittest.TestCase):
     def test_sites_that_need_a_key_stop_the_load(self) -> None:
         with self.assertRaises(RuntimeError):
             self.load(google_key=None)
+
+    def test_new_geocoder_answers_are_saved_and_reused_without_a_key(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            path = Path(d) / "locations.json"
+            self.load(locations=path)
+
+            self.assertEqual(list(read_locations(path)), ["2"])
+            # The second load has no Google key: the one site that needs geocoding comes from the file. The other unlocatable site still fails.
+            with self.assertRaises(RuntimeError):
+                self.load(google_key=None, locations=path)
+            sites_needing = [s for s in parse_poll_sites(fakes.poll_kml())[0] if s.lonlat is None]
+            located, _, failed = geocode_sites(sites_needing, None, read_locations(path), pause=0)
+        self.assertEqual(([s.lonlat is not None for s in located], [f["name"] for f in failed]), ([True, False], ["Unlocatable"]))
 
     def test_options_validate(self) -> None:
         with self.assertRaises(ValueError):

@@ -16,7 +16,10 @@ from .census import COUNTIES, AcsRow, fetch_acs
 from .domain import Site, Tract
 from .geo import PointLocator
 from .layers import LOW_POPULATION, TractLayers, build_layers
-from .poll_sites import POLL_URL, Excluded, Geocoded, GeocodeFailure, PollSite, election_flag, geocode_sites, parse_poll_sites
+from .poll_sites import POLL_URL, Excluded, Geocoded, GeocodeFailure, PollSite, election_flag, geocode_sites, parse_poll_sites, read_locations, write_locations
+
+# Geocoder answers for the poll sites, kept in the repo so a build never needs the paid API (see poll_sites.geocode_sites).
+LOCATIONS_PATH = Path(__file__).resolve().parent.parent / "data" / "poll_site_locations.json"
 
 
 class FlaggedSite(TypedDict):
@@ -56,6 +59,7 @@ class LoadOptions:
     counties: tuple[str, ...] = tuple(COUNTIES)
     boundaries: str = "shoreline"  # or "tiger"
     low_population: int = LOW_POPULATION
+    locations: Path | None = LOCATIONS_PATH  # None keeps answers in memory only
 
     def validate(self) -> None:
         bad = [c for c in self.counties if c not in COUNTIES]
@@ -136,11 +140,17 @@ def load_dataset(opts: LoadOptions) -> Dataset:
     sites, excluded, total = parse_poll_sites(net.get(POLL_URL).content)
     print(f"  Source placemarks: {total}; poll sites: {len(sites)}; excluded: {len(excluded)}")
     flagged: list[FlaggedSite] = [{"name": s.name, "borough": s.ext.get("Borough"), "flag": flag} for s in sites if (flag := election_flag(s.ext.get("Election", "")))]
-    sites, geocoded, failed = geocode_sites(sites, opts.google_key)
+    known = read_locations(opts.locations) if opts.locations else {}
+    answered = len(known)
+    sites, geocoded, failed = geocode_sites(sites, opts.google_key, known)
+    if opts.locations and len(known) > answered:
+        write_locations(opts.locations, known)
+        print(f"  Added {len(known) - answered} geocoder answers to {opts.locations.name}: commit it")
     if failed and not opts.google_key:
         first = failed[0]
         raise RuntimeError(
-            f"{len(failed)} poll sites are not in the source cache and need a Google Geocoding API key (--google-key or GOOGLE_MAPS_API_KEY), for example {first['name']!r}: {first['reason']}"
+            f"{len(failed)} poll sites are not in the locations file or the source cache and need a Google Geocoding API key "
+            f"(--google-key or GOOGLE_MAPS_API_KEY), for example {first['name']!r}: {first['reason']}"
         )
     sites, no_tract = locate_sites(sites, feats, acs)
     data.polls = [s for s in sites if s.lonlat]

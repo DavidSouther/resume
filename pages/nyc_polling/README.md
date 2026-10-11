@@ -6,14 +6,14 @@ Census tract poverty and early voting poll sites for NYC, as a web map at `/nyc_
 
 ```sh
 export CENSUS_API_KEY=...        # free: https://api.census.gov/data/key_signup.html
-export GOOGLE_MAPS_API_KEY=...   # Geocoding API; locates poll sites
+export GOOGLE_MAPS_API_KEY=...   # Geocoding API; only for poll sites not yet in data/poll_site_locations.json
 uv run nyc_tracts_geojson.py            # the map: writes public/nyc_polling/*.geojson
 uv run nyc_tracts_poll_disparity.py     # in-tract tests: writes the report next to the script
 uv run nyc_tracts_poll_assignment.py    # assignment tests: writes the report next to the script
 uv run nyc_tracts_poll_sites.py         # source load report (joins, geocoded sites, failures, exclusions)
 ```
 
-Every script takes `--counties` (005 Bronx, 047 Brooklyn, 061 Manhattan, 081 Queens, 085 Staten Island), `--boundaries`, `--low-population`, `--census-key`, `--google-key`, and the cache flags (see Source cache). The keys are needed only for sources that are not in the cache yet: the first run downloads and geocodes, and later runs need no network and no keys. `nyc_tracts_poll_sites.py` also takes `--skip-polls`. Its gitignored `nyc_tracts_poll_sites.report.json` lists joins, geocoded sites, failures, and exclusions.
+Every script takes `--counties` (005 Bronx, 047 Brooklyn, 061 Manhattan, 081 Queens, 085 Staten Island), `--boundaries`, `--low-population`, `--census-key`, `--google-key`, and the cache flags (see Source cache). The Census key is needed only when the ACS tables are not in the cache, and the Google key only for a poll site that is not in `data/poll_site_locations.json` (see below). A rerun with a warm cache needs no network and no keys. `nyc_tracts_poll_sites.py` also takes `--skip-polls`. Its gitignored `nyc_tracts_poll_sites.report.json` lists joins, geocoded sites, failures, and exclusions.
 
 ## Sources
 
@@ -103,6 +103,14 @@ Parsing covers all 4,285 EDs (the water-included district layer; the shoreline l
 ### Subdivision pieces
 
 `nyc_tracts_geojson.py` writes each tract by election district subdivision as a piece of the map, with its distance to the assigned early voting site (bands: within 1/4 mile, 1/4 to 1/2, 1/2 to 1, over 1 mile). Low population tracts are split the same way but left out of the analysis, and zero population tracts are drawn whole. Slivers under 10 meters wide are dropped, so the piece count (about 7,750 analyzed) moves by a few with geometry precision.
+
+## Geocoder answers
+
+Geocoding is the one paid source, so its answers are data in the repo: `data/poll_site_locations.json` holds a location per Poll Site ID (name, matched address, longitude, latitude), sorted so a new answer is a one line diff. `geocode_sites` reads it first and calls Google only for a site that is missing. When it does, the answer is added to the file and the run prints a reminder to commit it. A build with no Google key fails, naming the site, rather than guessing.
+
+## Deploy
+
+The GeoJSON is not committed (`public/nyc_polling/*.geojson` is ignored). `.github/workflows/deploy.yml` generates it before `npm run build`: it installs `poppler-utils` and `uv`, restores the source cache (`.cache/`, about 18 MB) with `actions/cache`, and runs `nyc_tracts_geojson.py` with the `CENSUS_API_KEY` repository secret. A cold run takes about 25 seconds with only the Census key. The cache key is `nyc-polling-sources-v1-<year-month>`; bump `v1` to throw it away, for example when BOE posts a revised poll site list.
 
 ## Source cache
 
