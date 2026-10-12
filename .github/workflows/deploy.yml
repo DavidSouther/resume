@@ -41,6 +41,39 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # The NYC polling map's GeoJSON (public/nyc_polling/*.geojson) is generated
+      # here, not committed. pdftotext (poppler) reads the BOE assignment PDFs and
+      # uv runs the PEP 723 scripts.
+      - name: Install NYC polling tools
+        run: sudo apt-get update && sudo apt-get install -y poppler-utils
+
+      - uses: astral-sh/setup-uv@v6
+
+      - name: Get the month for the source cache key
+        id: month
+        run: echo "month=$(date -u +%Y-%m)" >> "$GITHUB_OUTPUT"
+
+      # Source downloads (Census tables, tract boundaries, BOE PDFs, election
+      # districts), about 18 MB. A new month saves a fresh entry that starts from
+      # last month's, and the script re-downloads anything older than 30 days.
+      # Bump v1 to v2 to throw the cache away, for example when BOE posts a
+      # revised poll site list. Geocoder answers are not in here: they are
+      # committed in pages/nyc_polling/data/poll_site_locations.json, so no Google
+      # key is needed. A poll site that is not in that file fails the build.
+      - name: Restore NYC polling source cache
+        uses: actions/cache@v4
+        with:
+          path: pages/nyc_polling/.cache
+          key: nyc-polling-sources-v1-${{ steps.month.outputs.month }}
+          restore-keys: nyc-polling-sources-v1-
+
+      # Needs the CENSUS_API_KEY repository secret only when the Census tables
+      # are not in the cache.
+      - name: Build NYC polling map data
+        env:
+          CENSUS_API_KEY: ${{ secrets.CENSUS_API_KEY }}
+        run: uv run pages/nyc_polling/nyc_tracts_geojson.py
+
       # prebuild (npm run check: tsc + biome) runs first via the npm lifecycle,
       # then css:bundle + sitemap + the jiffies SSG write the site into docs/.
       - name: Build site

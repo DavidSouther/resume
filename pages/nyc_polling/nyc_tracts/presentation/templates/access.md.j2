@@ -1,0 +1,99 @@
+{% macro group_table(groups, head) %}
+| {{ head }} | Tract districts | Adverse | Rate |
+|---|---:|---:|---:|
+{% for g in groups %}
+| {{ g.group }} | {{ g.n }} | {{ g.adverse }} | {{ g.rate | pct }} |
+{% endfor %}
+{% endmacro %}
+{% macro class_table(r, field) %}
+| Poverty class | Tract districts |{% for m in r.measures %} {{ m.short }} |{% endfor %}
+
+|---|---:|{% for m in r.measures %}---:|{% endfor %}
+
+{% for g in r.by_class %}
+| {{ g.group }} | {{ g.n }} |{% for m in r.measures %} {{ g[field][m.key] | pct }} |{% endfor %}
+
+{% endfor %}
+{% endmacro %}
+{% set b = r.primary %}
+{% set c = b.chi_squared %}
+{% set di = b.disparate_impact %}
+{% set pm = s.primary_measure %}
+# Do higher poverty parts of NYC have differential access to early voting sites?
+
+## Executive summary
+
+**Question.** Are higher poverty parts of NYC more likely to be assigned, by election district, to an early voting site that is harder to reach? The unit is a tract district, the overlap of one tract with one election district, which keeps its tract's poverty rate. ({{ r.tract_districts }} tract districts from {{ r.tracts }} tracts, {{ r.poll_sites }} early voting sites.) Access is measured {{ r.measures | length }} ways: {% for m in r.measures %}"{{ m.short | lower }}"{{ ", " if not loop.last }}{% endfor %}. These are variants of one question, not separate studies.
+
+**Answer.** {% if s.supported %}Yes on the primary measure ({{ pm.short | lower }}): higher poverty tract districts are more likely to be assigned {{ pm.phrase }}.{% else %}Not on the primary measure ({{ pm.short | lower }}): higher poverty tract districts are not more likely to be assigned {{ pm.phrase }}.{% if s.opposite_and_significant %} The association runs the opposite way.{% endif %}{% endif %}
+
+- Primary measure, across the five poverty classes: {{ s.first.rate | pct }} of {{ s.first.group | lower }} tract districts are assigned {{ pm.phrase }}, against {{ s.last.rate | pct }} of {{ s.last.group | lower }} tract districts. Chi-squared = {{ "%.2f" | format(c.chi2) }}, p = {{ c.p | p }}, Cramér's V = {{ "%.3f" | format(c.cramers_v) }}, trend test one-sided p = {{ b.trend.p_one_sided | p }}.
+- Disparate impact: tract districts at {{ "%.0f" | format(HIGH_POVERTY) }}% poverty or above avoid that outcome {{ di.favorable_rate_high | pct }} of the time, those below {{ di.favorable_rate_lower | pct }}. The impact ratio is {{ "%.2f" | format(di.impact_ratio) }}, which {{ "fails" if di.fails_four_fifths else "passes" }} the four-fifths rule.
+- Overall, {% for m in r.measures %}{{ r.overall_rates[m.key] | pct }} of tract districts have "{{ m.short | lower }}"{{ ", " if not loop.last }}{% endfor %}.
+- Of the other {{ r.tests | length }} tests (Holm corrected together), {{ s.toward | length }} are significant and consistent with the hypothesis, {{ s.opposite | length }} are significant and contradict it, and {{ s.not_significant }} are not significant. See All other tests.
+
+**Caution.** Neighboring tract districts are not independent, and tract districts of one tract share a poverty rate, so p-values are probably too small. Tract districts are counted equally whatever their size or population. See Limits.
+
+## Access by poverty class
+
+Share of tract districts with each adverse outcome.
+
+{{ class_table(r, "rates") }}
+Share of area with each adverse outcome.
+
+{{ class_table(r, "area_shares") }}
+## Primary test: {{ b.name }}
+
+{{ b.question }}
+
+{{ group_table(b.groups, "Poverty class") }}
+Verdict: direction {{ b | direction }}.
+Chi-squared = {{ "%.2f" | format(c.chi2) }}, df = {{ c.df }}, p = {{ c.p | p }}, Cramér's V = {{ "%.3f" | format(c.cramers_v) }} (minimum expected count {{ "%.1f" | format(c.min_expected) }}).
+Cochran-Armitage trend (higher poverty, more adverse): z = {{ "%.2f" | format(b.trend.z) }}, one-sided p = {{ b.trend.p_one_sided | p }}.
+Disparate impact, poverty {{ "%.0f" | format(HIGH_POVERTY) }}% and over vs under: favorable rate {{ di.favorable_rate_high | pct }} vs {{ di.favorable_rate_lower | pct }}, impact ratio {{ "%.2f" | format(di.impact_ratio) }} ({{ "fails" if di.fails_four_fifths else "passes" }} the four-fifths rule), adverse risk ratio {{ "%.2f" | format(di.risk_ratio_adverse) }}.
+
+## All other tests
+
+Holm correction over {{ r.tests | length }} tests, alpha = {{ ALPHA }}. The tests are one battery run on every access measure.
+
+| Test | Chi-squared | df | p | Holm p | Significant | Direction |
+|---|---:|---:|---:|---:|---|---|
+{% for h in r.tests %}
+| {{ h.name }} | {{ "%.2f" | format(h.chi_squared.chi2) }} | {{ h.chi_squared.df }} | {{ h.chi_squared.p | p }} | {{ h.holm_p | p }} | {{ "yes" if h.significant_after_holm else "no" }} | {{ h | direction }} |
+{% endfor %}
+{% for h in r.tests %}
+
+### {{ h.name }}
+
+{{ h.question }}
+
+{% if h.groups and not h.by_borough %}
+{{ group_table(h.groups, "Group") }}
+{% endif %}
+{% if h.trend %}
+Trend z = {{ "%.2f" | format(h.trend.z) }}, one-sided p = {{ h.trend.p_one_sided | p }}.
+{% endif %}
+{% if h.by_borough %}
+| Borough | High-poverty rate | Lower-poverty rate | p |
+|---|---:|---:|---:|
+{% for bb in h.by_borough %}
+{% set hi_g, lo_g = bb.groups %}
+| {{ bb.borough }} | {{ "%s (%d/%d)" | format(hi_g.rate | pct, hi_g.adverse, hi_g.n) if hi_g.n else "n/a" }} | {{ "%s (%d/%d)" | format(lo_g.rate | pct, lo_g.adverse, lo_g.n) if lo_g.n else "n/a" }} | {{ bb.chi_squared.p | p if bb.chi_squared else "n/a" }} |
+{% endfor %}
+
+Mantel-Haenszel common odds ratio of the adverse outcome (high vs lower poverty) = {{ "%.2f" | format(h.mantel_haenszel.common_odds_ratio) }}, chi-squared = {{ "%.2f" | format(h.mantel_haenszel.chi2) }}, p = {{ h.mantel_haenszel.p | p }}.
+{% endif %}
+{% endfor %}
+
+## Data
+
+{{ r.tract_districts }} tract districts with a poverty rate ({{ r.tract_districts_with_income }} also with median income), from {{ r.tracts }} tracts. {{ r.split_tracts }} tracts span more than one election district and are split; the rest are one tract district. {{ r.tracts_without_district }} tracts overlap no election district. Overlaps narrower than 10 meters, where tract and district boundaries disagree, are dropped: {{ r.slivers_dropped }} slivers, {{ r.sliver_area_share | pct }} of the overlap area. {{ r.poll_sites_outside_tracts }} of the {{ r.poll_sites }} assigned sites lie outside every analyzed tract.
+
+## Limits
+
+- Assignments come from the BOE early voting poll site list PDFs for the 2026 General Election ("subject to change"), joined to DCP election district polygons (shoreline clipped) by AD * 1000 + ED.
+- Distance is from the tract district's centroid to its assigned site in a straight line, not a walking route. A quarter mile is a rule of thumb for limited mobility.
+- Tracts and election districts do not nest, so a tract spanning districts is split. Each piece keeps the whole tract's poverty rate and income, which assumes the rate holds on both sides of the split. Pieces are counted equally; they differ in area and population.
+- Early voting sites were located with the Google Geocoding API from their addresses. A site placed on the wrong parcel can change which tract it sits in.
+- Poverty rates are ACS 5-year estimates with margins of error; tracts near a class boundary can be misclassified.
+- Tract districts are not independent (neighbors share sites and pieces of a tract share a poverty rate), so p-values are likely too small. Read effect sizes alongside them.

@@ -25,3 +25,11 @@ docs/
 
 # Raw traveler document numbers sidecar — never committed, never imported by render
 trips/*/documents.local.yaml
+
+# NYC polling output files: the map's GeoJSON, report data, the source download cache, and Python bytecode
+public/nyc_polling/*.geojson
+pages/nyc_polling/*.report.json
+pages/nyc_polling/.cache/
+__pycache__/
+
+.env
