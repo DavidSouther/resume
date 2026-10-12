@@ -43,5 +43,3 @@ Next-step queue for `developer:ailly` sessions in this repo.
   folder-wins). **Trigger:** any post needs colocated assets / a folder home — the
   manifold post already does, and `posts/llm_manifold/post.md` will not render until
   this lands.
-
-- **nyc_polling domain drift** — From the 2026-10-11 domain review (PR #34). Remaining: move the stats result TypedDicts (ChiSquared, Trend, MantelHaenszel) from `disparity_hypotheses/results.py` into `generic/stats.py`, which removes the one known upward import in `tests/test_context_boundaries.py` (`KNOWN_DEBT`); separate poverty class and distance band definitions from their colors (`kernel/poverty.py`, `presentation/bands.py`); rename the front end "piece" (`kind: "piece"`, `pieces-fill`) to tract district if wanted. The DDD drafts (`docs/ddd/domain-model.md`, `glossary.md`, `contexts/`) exist only locally because `docs/` is gitignored; move them to a tracked path and get human sign-off to clear `[DRAFT]`. Open questions: weight tract districts by population, and whether to keep `generic/stats.py` hand written.
