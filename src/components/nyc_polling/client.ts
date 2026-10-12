@@ -317,7 +317,7 @@ async function boot() {
 				map.queryRenderedFeatures(e.point, { layers: ["pieces-fill"] })[0];
 			if (!f) return;
 			new ml.Popup({ maxWidth: "340px" })
-				.setLngLat(e.lngLat)
+				.setLngLat(f.properties.centroid ?? e.lngLat)
 				.setDOMContent(card(f.properties))
 				.addTo(map);
 		});

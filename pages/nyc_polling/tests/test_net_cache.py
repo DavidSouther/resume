@@ -8,7 +8,7 @@ from unittest import mock
 
 import httpx
 
-from nyc_tracts import net
+from nyc_tracts.generic import net
 
 
 class Transport:

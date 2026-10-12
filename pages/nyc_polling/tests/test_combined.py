@@ -1,9 +1,9 @@
 import itertools
 import unittest
 
-from nyc_tracts.bands import BANDS
-from nyc_tracts.combined import COMBINED, cells, combined_fill
-from nyc_tracts.poverty import CLASSES, MISSING_COLOR
+from nyc_tracts.kernel.poverty import CLASSES, MISSING_COLOR
+from nyc_tracts.presentation.bands import BANDS
+from nyc_tracts.presentation.combined import COMBINED, cells, combined_fill
 
 
 class CombinedFill(unittest.TestCase):

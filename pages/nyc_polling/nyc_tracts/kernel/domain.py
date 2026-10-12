@@ -48,12 +48,8 @@ class Tract:
 
 @dataclass(frozen=True)
 class Observation:
-    """A tract with the poll site facts the hypotheses test."""
+    """One unit of analysis: a tract (or a piece of it) with the early voting site its voters are assigned to."""
 
     tract: Tract
-    has_site: bool  # a poll site point lies inside the tract
-    nearest_mi: float  # centroid to nearest poll site
-
-    @property
-    def needs_out(self) -> bool:
-        return not self.has_site
+    site_in_tract: bool  # the assigned site lies inside the tract
+    miles: float  # centroid to the assigned site

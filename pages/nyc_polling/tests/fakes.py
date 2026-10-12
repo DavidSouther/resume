@@ -8,7 +8,7 @@ from unittest import mock
 
 import httpx
 
-from nyc_tracts import net
+from nyc_tracts.generic import net
 
 # One square tract per (county, kind). Counties 005 (Bronx) and 061 (Manhattan) get all five kinds.
 KINDS = {
@@ -28,7 +28,7 @@ def tract_square(county: str, kind: str) -> list[list[float]]:
 
 
 def acs_response(county: str) -> list[list[str]]:
-    from nyc_tracts.census import ACS_VARS
+    from nyc_tracts.geography.census import ACS_VARS
 
     head = ["NAME", *ACS_VARS, "state", "county", "tract"]
     rows: list[list[str]] = [head]

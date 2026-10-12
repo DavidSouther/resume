@@ -15,10 +15,10 @@ import argparse
 import os
 from pathlib import Path
 
-from nyc_tracts.assignment import analyze_assignment, assigned_sites, read_election_districts, subdivide
-from nyc_tracts.dataset import add_dataset_arguments, load_from_args
-from nyc_tracts.early_voting import read_assignments
-from nyc_tracts.geojson import build
+from nyc_tracts.assembly.dataset import add_dataset_arguments, load_from_args
+from nyc_tracts.geography.boe import assigned_sites, read_assignments, read_election_districts
+from nyc_tracts.geography.tract_district import overlay_tracts
+from nyc_tracts.presentation.geojson import build
 
 
 def main() -> None:
@@ -30,8 +30,9 @@ def main() -> None:
     args = ap.parse_args()
     data = load_from_args(args)
     districts, assignments = read_election_districts(), read_assignments()
-    _, _, pieces = analyze_assignment(data.tracts(), districts, assignments, data.sites())
-    low = subdivide(data.excluded_tracts().get("low population", []), districts, assigned_sites(districts, assignments, data.sites())).subdivisions
+    site_of = assigned_sites(districts, assignments, data.sites())
+    pieces = overlay_tracts(data.tracts(), districts, site_of).tract_districts
+    low = overlay_tracts(data.excluded_tracts().get("low population", []), districts, site_of).tract_districts
     os.makedirs(args.out_dir, exist_ok=True)
     for name, n in build(data, pieces, low, args.out_dir, args.precision).items():
         print(f"{name}: {n} features")

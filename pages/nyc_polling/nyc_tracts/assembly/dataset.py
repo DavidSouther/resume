@@ -10,16 +10,29 @@ from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import NotRequired, TypedDict
 
-from . import net
-from .boundaries import TractFeature, fetch_tracts, fetch_tracts_shoreline
-from .census import COUNTIES, AcsRow, fetch_acs
-from .domain import Site, Tract
-from .geo import PointLocator
-from .layers import LOW_POPULATION, TractLayers, build_layers
-from .poll_sites import POLL_URL, Excluded, Geocoded, GeocodeFailure, PollSite, election_flag, geocode_sites, parse_poll_sites, read_locations, write_locations
+from ..generic import net
+from ..generic.geo import PointLocator
+from ..geography.boundaries import TractFeature, fetch_tracts, fetch_tracts_shoreline
+from ..geography.census import COUNTIES, AcsRow, fetch_acs
+from ..geography.layers import LOW_POPULATION, TractLayers, build_layers
+from ..kernel.domain import Site, Tract
+from ..poll_site_registry.poll_sites import (
+    POLL_URL,
+    Excluded,
+    Geocoded,
+    GeocodeFailure,
+    Geocoder,
+    GoogleGeocoder,
+    PollSite,
+    election_flag,
+    geocode_sites,
+    parse_poll_sites,
+    read_locations,
+    write_locations,
+)
 
 # Geocoder answers for the poll sites, kept in the repo so a build never needs the paid API (see poll_sites.geocode_sites).
-LOCATIONS_PATH = Path(__file__).resolve().parent.parent / "data" / "poll_site_locations.json"
+LOCATIONS_PATH = Path(__file__).resolve().parent.parent.parent / "data" / "poll_site_locations.json"
 
 
 class FlaggedSite(TypedDict):
@@ -54,7 +67,8 @@ class LoadReport(TypedDict):
 @dataclass(frozen=True)
 class LoadOptions:
     census_key: str = ""
-    google_key: str | None = None
+    google_key: str | None = None  # builds a GoogleGeocoder unless `geocoder` is given
+    geocoder: Geocoder | None = None
     skip_polls: bool = False
     counties: tuple[str, ...] = tuple(COUNTIES)
     boundaries: str = "shoreline"  # or "tiger"
@@ -142,11 +156,12 @@ def load_dataset(opts: LoadOptions) -> Dataset:
     flagged: list[FlaggedSite] = [{"name": s.name, "borough": s.ext.get("Borough"), "flag": flag} for s in sites if (flag := election_flag(s.ext.get("Election", "")))]
     known = read_locations(opts.locations) if opts.locations else {}
     answered = len(known)
-    sites, geocoded, failed = geocode_sites(sites, opts.google_key, known)
+    geocoder = opts.geocoder or GoogleGeocoder(opts.google_key or "")
+    sites, geocoded, failed = geocode_sites(sites, geocoder, known)
     if opts.locations and len(known) > answered:
         write_locations(opts.locations, known)
         print(f"  Added {len(known) - answered} geocoder answers to {opts.locations.name}: commit it")
-    if failed and not opts.google_key:
+    if failed and isinstance(geocoder, GoogleGeocoder) and not geocoder.has_key:
         first = failed[0]
         raise RuntimeError(
             f"{len(failed)} poll sites are not in the locations file or the source cache and need a Google Geocoding API key "

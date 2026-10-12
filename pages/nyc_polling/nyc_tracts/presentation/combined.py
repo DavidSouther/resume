@@ -5,8 +5,8 @@ The palette is a search over four hues and a shared lightness ramp, maximizing t
 protan, deutan, and tritan simulation (OKLab distance x 100, opaque fill: worst pair 6.5 under simulation, 7.1 normal).
 """
 
+from ..kernel.poverty import CLASSES, MISSING_COLOR, class_index
 from .bands import BANDS
-from .poverty import CLASSES, MISSING_COLOR, class_index
 
 # COMBINED[poverty class][distance band]: rows light to dark, columns near to far.
 COMBINED: tuple[tuple[str, ...], ...] = (

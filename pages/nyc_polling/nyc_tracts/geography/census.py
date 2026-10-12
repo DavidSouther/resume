@@ -4,7 +4,7 @@ import urllib.parse
 from dataclasses import dataclass
 from typing import cast
 
-from . import net
+from ..generic import net
 
 STATE = "36"
 COUNTIES = {"005": "Bronx", "047": "Brooklyn", "061": "Manhattan", "081": "Queens", "085": "Staten Island"}

@@ -6,14 +6,14 @@ import unittest
 from shapely import MultiPolygon, box
 from shapely.geometry import GeometryCollection, LineString
 
-from nyc_tracts.assignment import Subdivision
-from nyc_tracts.census import AcsRow
-from nyc_tracts.combined import COMBINED
-from nyc_tracts.dataset import Dataset
-from nyc_tracts.domain import Borough, GeoId, Site, Tract
-from nyc_tracts.geojson import build, piece_feature, polygon_geometry, site_feature, zero_population_feature
-from nyc_tracts.layers import TractLayers
-from nyc_tracts.poll_sites import PollSite
+from nyc_tracts.assembly.dataset import Dataset
+from nyc_tracts.geography.census import AcsRow
+from nyc_tracts.geography.layers import TractLayers
+from nyc_tracts.geography.tract_district import TractDistrict
+from nyc_tracts.kernel.domain import Borough, GeoId, Site, Tract
+from nyc_tracts.poll_site_registry.poll_sites import PollSite
+from nyc_tracts.presentation.combined import COMBINED
+from nyc_tracts.presentation.geojson import build, piece_feature, polygon_geometry, site_feature, zero_population_feature
 
 
 def tract(geoid: str = "36005000200", poverty: float | None = 25.0, population: float | None = 5061.0) -> Tract:
@@ -21,8 +21,8 @@ def tract(geoid: str = "36005000200", poverty: float | None = 25.0, population: 
     return Tract(GeoId(geoid), Borough("Bronx"), poverty, 123729.4, geom, (1, 0.5), population)
 
 
-def piece(miles: float = 0.88, t: Tract | None = None) -> Subdivision:
-    return Subdivision(t or tract(), 85002, box(0, 0, 1, 1), Site("1980 Lafayette Avenue", 0.5, 0.5), False, miles)
+def piece(miles: float = 0.88, t: Tract | None = None) -> TractDistrict:
+    return TractDistrict(t or tract(), 85002, box(0, 0, 1, 1), Site("1980 Lafayette Avenue", 0.5, 0.5), False, miles)
 
 
 class Pieces(unittest.TestCase):
@@ -33,6 +33,7 @@ class Pieces(unittest.TestCase):
             p,
             {
                 "name": "36005000200 / AD 85 ED 002",
+                "centroid": [0.5, 0.5],
                 "layer": "Bronx",
                 "kind": "piece",
                 "geoid": "36005000200",
@@ -46,6 +47,11 @@ class Pieces(unittest.TestCase):
                 "combinedFill": COMBINED[2][2],
             },
         )
+
+    def test_piece_carries_the_centroid_of_its_shape_for_the_popup(self) -> None:
+        p = piece_feature(piece(), "Bronx")["properties"]
+
+        self.assertEqual(p["centroid"], [0.5, 0.5])
 
     def test_combined_fill_uses_the_exact_distance_not_the_rounded_one(self) -> None:
         near = piece_feature(piece(miles=0.9996), "Bronx")["properties"]
@@ -79,6 +85,7 @@ class Pieces(unittest.TestCase):
         p = zero_population_feature(tract(poverty=None, population=0.0))["properties"]
 
         self.assertEqual((p["kind"], p["population"], p["layer"]), ("tract", 0, "Zero population"))
+        self.assertEqual(p["centroid"], [1.0, 0.5])
         self.assertNotIn("povertyPct", p)
 
 

@@ -24,8 +24,8 @@ import os
 import sys
 from pathlib import Path
 
-from nyc_tracts.dataset import add_dataset_arguments, load_from_args
-from nyc_tracts.net import MissingKeyError
+from nyc_tracts.assembly.dataset import add_dataset_arguments, load_from_args
+from nyc_tracts.generic.net import MissingKeyError
 
 
 def main() -> None:

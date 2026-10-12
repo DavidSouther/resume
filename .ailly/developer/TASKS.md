@@ -43,3 +43,5 @@ Next-step queue for `developer:ailly` sessions in this repo.
   folder-wins). **Trigger:** any post needs colocated assets / a folder home — the
   manifold post already does, and `posts/llm_manifold/post.md` will not render until
   this lands.
+
+- **nyc_polling domain drift** — From [.ailly/developer/2026-10-11-C-nyc-polling-domain-review/design.md](2026-10-11-C-nyc-polling-domain-review/design.md), Deferred list: move stats result types into stats.py, separate poverty class and band definitions from colors.

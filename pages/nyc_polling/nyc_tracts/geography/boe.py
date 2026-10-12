@@ -1,4 +1,4 @@
-"""NYC Election district to Early Voting Site assignment.
+"""BOE data: election district geometry and the election district to early voting site assignments.
 
 The Board of Elections publishes one PDF per county ("Poll Site List ... Early Voting <county>") on
 https://www.vote.nyc/elections. For each assembly district (AD) it lists the site assigned to every
@@ -12,9 +12,14 @@ import re
 import subprocess
 from collections.abc import Sequence
 from dataclasses import dataclass
+from typing import cast
 
-from . import net
-from .domain import Site
+from shapely import make_valid
+from shapely.geometry import shape
+from shapely.geometry.base import BaseGeometry
+
+from ..generic import net
+from ..kernel.domain import Site
 
 PDF_URL = "https://www.vote.nyc/sites/default/files/pdf/poll_site_list/GE2026/Poll_Site_List_Nov_General_2026_Early_Voting_{county}.pdf"
 COUNTIES = {"Bronx": "Bronx", "Kings": "Brooklyn", "New_York": "Manhattan", "Queens": "Queens", "Richmond": "Staten Island"}
@@ -148,3 +153,29 @@ def sites_by_assignment(assignments: Sequence[EdAssignment], sites: Sequence[Sit
     if missing:
         raise RuntimeError(f"{len(missing)} assigned early voting addresses match no poll site: {missing}")
     return {k: by_address[k] for k in sorted(wanted)}  # sorted: a set's order changes between runs
+
+
+# ------------------------------------------------------------- election districts
+
+ED_URL = "https://data.cityofnewyork.us/resource/wwxk-38u4.geojson?$limit=5000"  # DCP election districts, shoreline clipped
+
+
+@dataclass(frozen=True)
+class ElectionDistrict:
+    elect_dist: int  # AD * 1000 + ED
+    geometry: BaseGeometry
+
+
+def read_election_districts() -> list[ElectionDistrict]:
+    features = cast(list[dict[str, dict[str, object]]], cast(dict[str, object], net.get_json(ED_URL, timeout=180))["features"])
+    return [ElectionDistrict(int(str(f["properties"]["elect_dist"])), make_valid(shape(f["geometry"]))) for f in features]
+
+
+def assigned_sites(districts: Sequence[ElectionDistrict], assignments: Sequence[EdAssignment], sites: Sequence[Site]) -> dict[int, Site]:
+    """The early voting site each election district is assigned to."""
+    by_address = sites_by_assignment(assignments, sites)
+    site_of = {a.elect_dist: by_address[normalize_address(a.site_address)] for a in assignments}
+    missing = {d.elect_dist for d in districts} - site_of.keys()
+    if missing:
+        raise RuntimeError(f"{len(missing)} election districts have no assigned early voting site, for example {sorted(missing)[:5]}")
+    return site_of

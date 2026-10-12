@@ -8,12 +8,12 @@ import xml.etree.ElementTree as ET
 from collections.abc import Mapping
 from dataclasses import dataclass, field, replace
 from pathlib import Path
-from typing import NotRequired, TypedDict, cast
+from typing import NotRequired, Protocol, TypedDict, cast
 
 import httpx
 
-from . import net
-from .census import AcsRow
+from ..generic import net
+from ..geography.census import AcsRow
 
 POLL_URL = "https://www.google.com/maps/d/kml?mid=1IDPJI3AG9iMFvYT-1tOGKr8nNSiwSzg&forcekml=1"
 GOOGLE_GEOCODER_URL = "https://maps.googleapis.com/maps/api/geocode/json"
@@ -119,25 +119,45 @@ def google_queries(site: PollSite) -> list[str]:
     return list(dict.fromkeys(qs))
 
 
-def geocode_google(site: PollSite, key: str) -> tuple[LonLat | None, str]:
-    """Returns (lonlat, formatted address) on a match, else (None, reason)."""
-    south, west, north, east = NYC_BOUNDS
-    last = "no match"
-    for q in google_queries(site):
-        params = {"address": q, "key": key, "region": "us", "components": "administrative_area:NY|country:US", "bounds": f"{south},{west}|{north},{east}"}
-        try:
-            data = cast(GeocoderResponse, net.get_json(f"{GOOGLE_GEOCODER_URL}?{urllib.parse.urlencode(params)}"))
-        except (httpx.HTTPError, RuntimeError) as e:
-            return None, str(e)
-        status = data["status"]
-        if status in ("REQUEST_DENIED", "OVER_QUERY_LIMIT", "INVALID_REQUEST"):
-            return None, f"Google Geocoding {status}: {data.get('error_message', '')}"
-        for r in data.get("results", []):
-            loc = r["geometry"]["location"]
-            if south <= loc["lat"] <= north and west <= loc["lng"] <= east:
-                return (loc["lng"], loc["lat"]), str(r["formatted_address"])
-        last = f"{status} for {q!r}"
-    return None, last
+class Geocoder(Protocol):
+    """Locates a poll site. Returns (lonlat, matched address) on a match, else (None, reason)."""
+
+    def geocode(self, site: PollSite) -> tuple[LonLat | None, str]: ...
+
+
+class GoogleGeocoder:
+    """Google Geocoding API. Holds the API key, which never appears in a repr, a log line, or the source cache (net drops the `key` parameter from cache keys).
+
+    An empty key is allowed: answers already in the source cache are served without it, and any other request fails with the API's REQUEST_DENIED."""
+
+    def __init__(self, key: str = "") -> None:
+        self._key = key
+
+    def __repr__(self) -> str:
+        return f"GoogleGeocoder(key={'set' if self._key else 'unset'})"
+
+    @property
+    def has_key(self) -> bool:
+        return bool(self._key)
+
+    def geocode(self, site: PollSite) -> tuple[LonLat | None, str]:
+        south, west, north, east = NYC_BOUNDS
+        last = "no match"
+        for q in google_queries(site):
+            params = {"address": q, "key": self._key, "region": "us", "components": "administrative_area:NY|country:US", "bounds": f"{south},{west}|{north},{east}"}
+            try:
+                data = cast(GeocoderResponse, net.get_json(f"{GOOGLE_GEOCODER_URL}?{urllib.parse.urlencode(params)}"))
+            except (httpx.HTTPError, RuntimeError) as e:
+                return None, str(e)
+            status = data["status"]
+            if status in ("REQUEST_DENIED", "OVER_QUERY_LIMIT", "INVALID_REQUEST"):
+                return None, f"Google Geocoding {status}: {data.get('error_message', '')}"
+            for r in data.get("results", []):
+                loc = r["geometry"]["location"]
+                if south <= loc["lat"] <= north and west <= loc["lng"] <= east:
+                    return (loc["lng"], loc["lat"]), str(r["formatted_address"])
+            last = f"{status} for {q!r}"
+        return None, last
 
 
 def site_id(site: PollSite) -> str:
@@ -159,11 +179,11 @@ def write_locations(path: Path, known: Mapping[str, Geocoded]) -> None:
     path.write_text("{\n" + ",\n".join(rows) + "\n}\n", encoding="utf-8")
 
 
-def geocode_sites(sites: list[PollSite], google_key: str | None, known: dict[str, Geocoded] | None = None, pause: float = 0.05) -> tuple[list[PollSite], list[Geocoded], list[GeocodeFailure]]:
+def geocode_sites(sites: list[PollSite], geocoder: Geocoder, known: dict[str, Geocoded] | None = None, pause: float = 0.05) -> tuple[list[PollSite], list[Geocoded], list[GeocodeFailure]]:
     """Locate every site without a Point in the source.
 
-    A site already in `known` (by Poll Site ID) is located from that answer with no API call. Any other site goes to the Google
-    Geocoding API (whose answers are also kept in the source cache), and its answer is added to `known` in place.
+    A site already in `known` (by Poll Site ID) is located from that answer with no API call. Any other site goes to the geocoder
+    (the Google one also keeps its answers in the source cache), and its answer is added to `known` in place.
     Returns (sites with lonlat filled in where located, geocoded report of every geocoded site, failed report)."""
     known = known if known is not None else {}
     out: list[PollSite] = []
@@ -177,7 +197,7 @@ def geocode_sites(sites: list[PollSite], google_key: str | None, known: dict[str
             out.append(replace(s, lonlat=hit["lonlat"], source="google", matched=hit["matched"]))
             geocoded.append(hit)
             continue
-        ll, info = geocode_google(s, google_key or "")
+        ll, info = geocoder.geocode(s)
         if ll:
             answer: Geocoded = {"name": s.name, "matched": info, "lonlat": ll}
             known[site_id(s)] = answer

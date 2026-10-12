@@ -2,9 +2,9 @@ import unittest
 
 from shapely import Polygon
 
-from nyc_tracts.domain import Borough, GeoId, Site, Tract
-from nyc_tracts.hypotheses import disparate_impact, site_tracts
-from nyc_tracts.stats import chi_squared, holm, mantel_haenszel, trend_test
+from nyc_tracts.disparity_hypotheses.hypotheses import disparate_impact, site_tracts
+from nyc_tracts.generic.stats import chi_squared, holm, mantel_haenszel, trend_test
+from nyc_tracts.kernel.domain import Borough, GeoId, Site, Tract
 
 
 def square(geoid: str, x0: float, y0: float, x1: float, y1: float, hole: list[tuple[float, float]] | None = None) -> Tract:

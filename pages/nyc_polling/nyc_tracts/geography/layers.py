@@ -3,11 +3,11 @@
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 
+from ..generic.geo import centroid_of
+from ..kernel.domain import Borough, GeoId, Tract
+from ..kernel.poverty import CLASSES, MISSING_LABEL, class_index
 from .boundaries import TractFeature
 from .census import COUNTIES, AcsRow
-from .domain import Borough, GeoId, Tract
-from .geo import centroid_of
-from .poverty import CLASSES, MISSING_LABEL, class_index
 
 LOW_POPULATION = 1200
 # Census designs a standard tract to hold 1,200 to 8,000 people (optimum 4,000). A tract whose

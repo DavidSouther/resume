@@ -13,13 +13,13 @@ from shapely import MultiPolygon, Polygon
 from shapely.geometry.base import BaseGeometry
 from shapely.geometry.polygon import orient
 
-from .assignment import Subdivision
+from ..assembly.dataset import Dataset
+from ..geography.tract_district import TractDistrict
+from ..kernel.domain import Tract
+from ..kernel.poverty import CLASSES, MISSING_COLOR, MISSING_LABEL, ZERO_POP_COLOR, class_index
+from ..poll_site_registry.poll_sites import PollSite
 from .bands import BANDS, band_index
 from .combined import cells, combined_fill
-from .dataset import Dataset
-from .domain import Tract
-from .poll_sites import PollSite
-from .poverty import CLASSES, MISSING_COLOR, MISSING_LABEL, ZERO_POP_COLOR, class_index
 
 LOW = "Low population"
 ZERO = "Zero population"
@@ -46,6 +46,12 @@ def _whole(n: float | None) -> int | None:
     return None if n is None else round(n)
 
 
+def _centroid(geom: BaseGeometry) -> list[float]:
+    """[lon, lat] where the page opens a popup for this shape."""
+    c = geom.centroid
+    return [c.x, c.y]
+
+
 def _clean(props: dict[str, Any]) -> dict[str, Any]:
     return {k: v for k, v in props.items() if v is not None}
 
@@ -55,11 +61,12 @@ def _poverty_fill(poverty: float | None) -> str:
     return CLASSES[i][1] if i is not None else MISSING_COLOR
 
 
-def piece_feature(s: Subdivision, layer: str, low_population: bool = False) -> dict[str, Any]:
+def piece_feature(s: TractDistrict, layer: str, low_population: bool = False) -> dict[str, Any]:
     t, (ad, ed) = s.tract, divmod(s.elect_dist, 1000)
     band = band_index(s.miles)
     props = {
         "name": f"{t.geoid} / AD {ad} ED {ed:03d}",
+        "centroid": _centroid(s.geometry),
         "layer": layer,
         "kind": "piece",
         "geoid": str(t.geoid),
@@ -82,6 +89,7 @@ def zero_population_feature(t: Tract) -> dict[str, Any]:
         "layer": ZERO,
         "kind": "tract",
         "geoid": str(t.geoid),
+        "centroid": _centroid(t.geometry),
         "population": 0,
         "povertyFill": ZERO_POP_COLOR,
         "distanceFill": ZERO_POP_COLOR,
@@ -125,7 +133,7 @@ def _write(path: str, collection: dict[str, Any], precision: int) -> None:
         fh.write(text)
 
 
-def build(dataset: Dataset, pieces: Sequence[Subdivision], low_pieces: Sequence[Subdivision], out_dir: str, precision: int = 5) -> dict[str, int]:
+def build(dataset: Dataset, pieces: Sequence[TractDistrict], low_pieces: Sequence[TractDistrict], out_dir: str, precision: int = 5) -> dict[str, int]:
     """Write the two files the page loads. Returns feature counts by file.
 
     `pieces` are the tract by election district pieces the analysis uses.

@@ -6,7 +6,7 @@ tests/test_stats_crosscheck.py compares each function with scipy and statsmodels
 import math
 from collections.abc import Sequence
 
-from .results import ChiSquared, MantelHaenszel, Trend
+from ..disparity_hypotheses.results import ChiSquared, MantelHaenszel, Trend
 
 Table = Sequence[Sequence[float]]
 

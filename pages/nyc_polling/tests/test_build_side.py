@@ -7,13 +7,13 @@ from unittest import mock
 import httpx
 from tenacity import wait_none
 
-from nyc_tracts import net
-from nyc_tracts.boundaries import Geometry, polygons_of
-from nyc_tracts.census import clean_number, fetch_acs, parse_acs_row
-from nyc_tracts.dataset import Dataset, LoadOptions, load_dataset, locate_sites
-from nyc_tracts.geo import PointLocator
-from nyc_tracts.poll_sites import Geocoded, PollSite, election_flag, geocode_sites, google_queries, parse_poll_sites, read_locations, write_locations
-from nyc_tracts.poverty import class_index
+from nyc_tracts.assembly.dataset import Dataset, LoadOptions, load_dataset, locate_sites
+from nyc_tracts.generic import net
+from nyc_tracts.generic.geo import PointLocator
+from nyc_tracts.geography.boundaries import Geometry, polygons_of
+from nyc_tracts.geography.census import clean_number, fetch_acs, parse_acs_row
+from nyc_tracts.kernel.poverty import class_index
+from nyc_tracts.poll_site_registry.poll_sites import Geocoded, GoogleGeocoder, PollSite, election_flag, geocode_sites, google_queries, parse_poll_sites, read_locations, write_locations
 
 from . import fakes
 
@@ -94,7 +94,7 @@ class PollSites(unittest.TestCase):
         sites, _, _ = parse_poll_sites(fakes.poll_kml())
 
         with fakes.fake_http():
-            located, geocoded, failed = geocode_sites(sites, "key", pause=0)
+            located, geocoded, failed = geocode_sites(sites, GoogleGeocoder("key"), pause=0)
 
         self.assertEqual([s.source for s in located], ["kml", "google", None])
         self.assertEqual([g["name"] for g in geocoded], ["Needs Geocode"])
@@ -104,8 +104,8 @@ class PollSites(unittest.TestCase):
         sites, _, _ = parse_poll_sites(fakes.poll_kml())
         known: dict[str, Geocoded] = {"2": {"name": "Needs Geocode", "matched": "1 Main St, Bronx, NY", "lonlat": (-73.9, 40.9)}}
 
-        with mock.patch("nyc_tracts.poll_sites.geocode_google", return_value=(None, "no match")) as google:
-            located, geocoded, failed = geocode_sites(sites, None, known, pause=0)
+        with mock.patch.object(GoogleGeocoder, "geocode", return_value=(None, "no match")) as google:
+            located, geocoded, failed = geocode_sites(sites, GoogleGeocoder(), known, pause=0)
 
         self.assertEqual([s.lonlat for s in located][1], (-73.9, 40.9))
         self.assertEqual(([g["name"] for g in geocoded], [f["name"] for f in failed]), (["Needs Geocode"], ["Unlocatable"]))
@@ -116,7 +116,7 @@ class PollSites(unittest.TestCase):
         known: dict[str, Geocoded] = {}
 
         with fakes.fake_http():
-            geocode_sites(sites, "key", known, pause=0)
+            geocode_sites(sites, GoogleGeocoder("key"), known, pause=0)
 
         self.assertEqual(list(known), ["2"])
         self.assertEqual(known["2"]["matched"], "1 Main St, Bronx, NY")
@@ -235,7 +235,7 @@ class Build(unittest.TestCase):
             with self.assertRaises(RuntimeError):
                 self.load(google_key=None, locations=path)
             sites_needing = [s for s in parse_poll_sites(fakes.poll_kml())[0] if s.lonlat is None]
-            located, _, failed = geocode_sites(sites_needing, None, read_locations(path), pause=0)
+            located, _, failed = geocode_sites(sites_needing, GoogleGeocoder(), read_locations(path), pause=0)
         self.assertEqual(([s.lonlat is not None for s in located], [f["name"] for f in failed]), ([True, False], ["Unlocatable"]))
 
     def test_options_validate(self) -> None:
@@ -250,3 +250,24 @@ class Build(unittest.TestCase):
 
         self.assertEqual(no_tract, ["out"])
         self.assertIsNone(located[0].geoid)
+
+
+class GeocoderInterface(unittest.TestCase):
+    def test_google_geocoder_does_not_reveal_its_key(self) -> None:
+        self.assertNotIn("secret", repr(GoogleGeocoder("secret")))
+        self.assertEqual((GoogleGeocoder("secret").has_key, GoogleGeocoder().has_key), (True, False))
+
+    def test_any_geocoder_can_locate_sites(self) -> None:
+        class Fixed:
+            def geocode(self, site: PollSite) -> tuple[tuple[float, float] | None, str]:
+                return (-73.9, 40.8), "fixed"
+
+        located, _, failed = geocode_sites(parse_poll_sites(fakes.poll_kml())[0], Fixed(), pause=0)
+        self.assertEqual((failed, [s.source for s in located if s.lonlat is not None]), ([], ["kml", "google", "google"]))
+
+
+class LocationsFile(unittest.TestCase):
+    def test_default_locations_file_is_the_one_in_the_repo(self) -> None:
+        from nyc_tracts.assembly.dataset import LOCATIONS_PATH
+
+        self.assertTrue(LOCATIONS_PATH.exists(), LOCATIONS_PATH)

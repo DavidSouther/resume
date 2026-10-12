@@ -6,7 +6,7 @@ import random
 import unittest
 from typing import Any
 
-from nyc_tracts import stats
+from nyc_tracts.generic import stats
 
 sp: Any = None
 np: Any = None

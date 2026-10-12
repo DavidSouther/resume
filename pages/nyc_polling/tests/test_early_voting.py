@@ -1,7 +1,7 @@
 import unittest
 
-from nyc_tracts.domain import Site
-from nyc_tracts.early_voting import EdAssignment, normalize_address, parse_county, sites_by_assignment, split_site
+from nyc_tracts.geography.boe import EdAssignment, normalize_address, parse_county, sites_by_assignment, split_site
+from nyc_tracts.kernel.domain import Site
 
 
 def word(x0: float, y0: float, text: str) -> str:

@@ -8,7 +8,7 @@ from typing import Literal, NotRequired, TypedDict, cast
 from shapely import Polygon
 from shapely.geometry import MultiPolygon
 
-from . import net
+from ..generic import net
 from .census import STATE
 
 # Layer 10 is "Census Tracts; 2020 Census - January 1, 2020 vintage". Layer 0 is the

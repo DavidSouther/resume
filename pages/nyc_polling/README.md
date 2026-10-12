@@ -1,6 +1,6 @@
 # NYC tracts and early voting poll sites
 
-Census tract poverty and early voting poll sites for NYC, as a web map at `/nyc_polling/` and as disparate impact tests. Every script loads the sources straight into typed objects (`nyc_tracts/dataset.py`) and nothing is written between steps: no KML, no intermediate files. The map loads two GeoJSON files, `nyc_assignment.geojson` and `nyc_poll_sites.geojson`, in `public/nyc_polling/`.
+Census tract poverty and early voting poll sites for NYC, as a web map at `/nyc_polling/` and as disparate impact tests. Every script loads the sources straight into typed objects (`nyc_tracts/assembly/dataset.py`) and nothing is written between steps: no KML, no intermediate files. The map loads two GeoJSON files, `nyc_assignment.geojson` and `nyc_poll_sites.geojson`, in `public/nyc_polling/`.
 
 ## Run
 
@@ -8,8 +8,7 @@ Census tract poverty and early voting poll sites for NYC, as a web map at `/nyc_
 export CENSUS_API_KEY=...        # free: https://api.census.gov/data/key_signup.html
 export GOOGLE_MAPS_API_KEY=...   # Geocoding API; only for poll sites not yet in data/poll_site_locations.json
 uv run nyc_tracts_geojson.py            # the map: writes public/nyc_polling/*.geojson
-uv run nyc_tracts_poll_disparity.py     # in-tract tests: writes the report next to the script
-uv run nyc_tracts_poll_assignment.py    # assignment tests: writes the report next to the script
+uv run nyc_tracts_poll_access.py        # differential access tests: writes the report next to the script
 uv run nyc_tracts_poll_sites.py         # source load report (joins, geocoded sites, failures, exclusions)
 ```
 
@@ -65,9 +64,25 @@ The Census Geocoder is no longer used. It matched 135 of the 146 sites without a
 
 ## Web map
 
-`uv run nyc_tracts_geojson.py` writes `nyc_assignment.geojson` and `nyc_poll_sites.geojson` to `public/nyc_polling/`, the only files the page loads, from the objects `load_dataset` builds and the BOE assignment (`nyc_tracts/geojson.py`). `page.ts` renders `/nyc_polling/` with MapLibre GL JS (pinned CDN version) over the OpenFreeMap positron basemap, and `src/components/nyc_polling/client.ts` draws a full-page map of the tract by election district pieces and poll sites, with a Poverty / Distance / Combined toggle. Combined gives every poverty class by distance band cell its own color, 5 x 4 = 20 (`nyc_tracts/combined.py`, colors computed in Python): darker is higher poverty, and blue through violet and amber to red runs from the nearest to the farthest band. Low population tracts are split by election district like the rest, colored normally, and faded so they recede; they are left out of the analysis. Zero population tracts are drawn whole in a blue grey. Features carry raw numbers, not HTML, and the cards are built in the page (`src/components/nyc_polling/cards.ts`): a population row always, and the poverty rate and income rows unless the population is 0. Data sources and definitions are listed once, in the map's info box (the `SOURCES` list in the client module).
+`uv run nyc_tracts_geojson.py` writes `nyc_assignment.geojson` and `nyc_poll_sites.geojson` to `public/nyc_polling/`, the only files the page loads, from the objects `load_dataset` builds and the BOE assignment (`nyc_tracts/presentation/geojson.py`). `page.ts` renders `/nyc_polling/` with MapLibre GL JS (pinned CDN version) over the OpenFreeMap positron basemap, and `src/components/nyc_polling/client.ts` draws a full-page map of the tract by election district pieces and poll sites, with a Poverty / Distance / Combined toggle. Combined gives every poverty class by distance band cell its own color, 5 x 4 = 20 (`nyc_tracts/presentation/combined.py`, colors computed in Python): darker is higher poverty, and blue through violet and amber to red runs from the nearest to the farthest band. Low population tracts are split by election district like the rest, colored normally, and faded so they recede; they are left out of the analysis. Zero population tracts are drawn whole in a blue grey. Features carry raw numbers, not HTML, and the cards are built in the page (`src/components/nyc_polling/cards.ts`): a population row always, and the poverty rate and income rows unless the population is 0. Data sources and definitions are listed once, in the map's info box (the `SOURCES` list in the client module).
 
 The GeoJSON in `public/nyc_polling/` is untracked, so the live site shows the map only after it is committed.
+
+## Domain folders
+
+`nyc_tracts/` has one folder per domain; `docs/ddd/domain-model.md` has the map.
+
+| Folder | Layer | Modules |
+| --- | --- | --- |
+| `disparity_hypotheses` | Core | `measures.py` (access measures), `hypotheses.py` (the test battery), `access.py` (`analyze_access`), `results.py` |
+| `geography` | Supporting | `census.py` and `boundaries.py` (ACS and tracts), `boe.py` (assignment PDFs and election districts), `layers.py` (the layers container), `tract_district.py` (tract by election district split) |
+| `poll_site_registry` | Supporting | `poll_sites.py`: `Geocoder` interface, `GoogleGeocoder` (holds the API key) |
+| `assembly` | Supporting | `dataset.py` |
+| `presentation` | Presentation | `geojson.py`, `combined.py`, `bands.py`, `report.py`, `templates/` |
+| `kernel` | Shared kernel | `domain.py`, `poverty.py` |
+| `generic` | Generic | `net.py`, `stats.py`, `geo.py` |
+
+A folder imports only from its own layer or lower. `tests/test_context_boundaries.py` enforces it.
 
 ## Code layout
 
@@ -79,30 +94,26 @@ uvx ruff format . && uvx ruff check . # ruff.toml sets line length 200
 uv run --with pyright --with shapely --with jinja2 --with httpx --with tenacity --with types-shapely pyright   # pyrightconfig.json: strict
 ```
 
-| Module | Role |
-| --- | --- |
-| `net` | `httpx` GET with `tenacity` retries (tests set `net.TRANSPORT` to an `httpx.MockTransport`) |
-| `census`, `boundaries`, `poll_sites` | Sources: `AcsRow`, `TractFeature`, `PollSite` and their fetch/parse/geocode functions |
-| `poverty` | Class breaks and colors, shared by the map and the analysis |
-| `layers`, `dataset` | Borough, low, and zero population layers as `Tract` objects; `load_dataset` loads every source into a `Dataset` (tracts, located poll sites, load report), the one entry point for every script |
-| `bands`, `combined`, `geojson` | Distance bands, the 5 x 4 combined palette, and the GeoJSON the page loads |
-| `geo` | `PointLocator`: point in polygon over shapely geometries |
-| `domain` | Analysis types (`GeoId`, `Borough`, `Tract`, `Site`, `Observation`) |
-| `stats`, `hypotheses`, `results`, `report` + `templates/disparity.md.j2` | Tests in plain Python (chi-squared, Cochran-Armitage, Mantel-Haenszel, Holm; no scipy or statsmodels), H0 to H6, typed results (`Hypothesis`, `Report`), jinja2 rendering |
+## Differential access to early voting
 
-## Disparate impact tests
+One question: do higher poverty parts of NYC have differential access to early voting sites? `nyc_tracts_poll_access.py` loads the dataset (from the cache, so no network and no keys on a rerun) and measures access several ways, all on the same units and in one report (`nyc_tracts_poll_access.report.md` and `.report.json`):
 
-`nyc_tracts_poll_disparity.py` loads the dataset (from the cache, so no network and no keys on a rerun). Baseline H0: higher poverty tracts are more likely to have no poll site inside the tract. H1 to H6 (two group collapse, within borough, centroid distance over 0.25, 0.5 and 1 mile, income quintiles) are Holm corrected. Dependencies: statsmodels (brings scipy and numpy), shapely, jinja2, httpx, tenacity.
+- **Unit:** the tract district, one tract within one election district, assigned the site its district is assigned to.
+- **Access measures** (`disparity_hypotheses/measures.py`): the assigned site is outside the tract; more than a quarter mile away (the primary measure); more than half a mile; more than a mile.
+- **Tests, run identically on every measure:** poverty gradient (five classes, chi-squared and Cochran-Armitage trend, plus disparate impact of 20% poverty and over against under), high against lower poverty (Yates), the same gap within each borough (Mantel-Haenszel), and median income quintiles in place of poverty.
+- **Multiple comparisons:** the poverty gradient on the primary measure is pre-specified and not adjusted. The other 15 tests are one family, Holm corrected.
+
+Tests are plain Python (`generic/stats.py`, cross-checked against scipy and statsmodels in the tests). Dependencies: shapely, jinja2, httpx, tenacity.
 
 ## Early voting site assignment
 
-The in-tract tests above use a site inside the tract as a proxy for assignment. BOE assigns every election district (ED) to one early voting site and publishes the assignments as one PDF per county ("Poll Site List ... Early Voting", linked from https://www.vote.nyc/elections). `uv run nyc_tracts_poll_assignment.py` downloads them (once, into `.cache/`; needs `pdftotext` from poppler), reads each row's AD, ED, site name and address from word positions (`pdftotext -bbox-layout`), downloads the DCP election district polygons (shoreline clipped, key `elect_dist` = AD * 1000 + ED), and repartitions the tracts along the district boundaries. The unit of analysis is the subdivision, one tract within one election district. A tract inside one district is one subdivision; a tract spanning districts is split, and every piece keeps the whole tract's poverty rate and income. Each subdivision is assigned its district's site, and its outcome is whether that site lies in its own tract. Overlaps under 10 meters wide, where tract and district boundaries disagree by a few meters, are dropped as slivers (0.1% of the overlap area). The same H0 to H6 tests run on subdivisions, written to `nyc_tracts_poll_assignment.report.md` and `.report.json`.
+BOE assigns every election district (ED) to one early voting site and publishes the assignments as one PDF per county ("Poll Site List ... Early Voting", linked from https://www.vote.nyc/elections). `uv run nyc_tracts_poll_access.py` downloads them (once, into `.cache/`; needs `pdftotext` from poppler), reads each row's AD, ED, site name and address from word positions (`pdftotext -bbox-layout`), downloads the DCP election district polygons (shoreline clipped, key `elect_dist` = AD * 1000 + ED), and repartitions the tracts along the district boundaries. The unit of analysis is the tract district, one tract within one election district. A tract inside one district is one tract district; a tract spanning districts is split, and every piece keeps the whole tract's poverty rate and income. Each tract district is assigned its district's site, and its outcome is whether that site lies in its own tract. Overlaps under 10 meters wide, where tract and district boundaries disagree by a few meters, are dropped as slivers (0.1% of the overlap area). The tests on tract districts are written to `nyc_tracts_poll_access.report.md` and `.report.json`.
 
-Parsing covers all 4,285 EDs (the water-included district layer; the shoreline layer has 4,214) and 157 distinct sites, the same sites as the poll site map. Two PDF addresses are aliased to the map's spelling (`ADDRESS_ALIASES` in `nyc_tracts/early_voting.py`); the run stops with a list when any assigned address matches no site.
+Parsing covers all 4,285 EDs (the water-included district layer; the shoreline layer has 4,214) and 157 distinct sites, the same sites as the poll site map. Two PDF addresses are aliased to the map's spelling (`ADDRESS_ALIASES` in `nyc_tracts/geography/boe.py`); the run stops with a list when any assigned address matches no site.
 
-### Subdivision pieces
+### Tract district pieces
 
-`nyc_tracts_geojson.py` writes each tract by election district subdivision as a piece of the map, with its distance to the assigned early voting site (bands: within 1/4 mile, 1/4 to 1/2, 1/2 to 1, over 1 mile). Low population tracts are split the same way but left out of the analysis, and zero population tracts are drawn whole. Slivers under 10 meters wide are dropped, so the piece count (about 7,750 analyzed) moves by a few with geometry precision.
+`nyc_tracts_geojson.py` writes each tract by election district tract district as a piece of the map, with its distance to the assigned early voting site (bands: within 1/4 mile, 1/4 to 1/2, 1/2 to 1, over 1 mile). Low population tracts are split the same way but left out of the analysis, and zero population tracts are drawn whole. Slivers under 10 meters wide are dropped, so the piece count (about 7,750 analyzed) moves by a few with geometry precision.
 
 ## Geocoder answers
 

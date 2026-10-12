@@ -16,6 +16,8 @@ export interface CardProps {
 	incomeUsd?: number;
 	incomeMoe?: number;
 	lowPopulation?: boolean;
+	/** [lon, lat] of the shape's centroid, where its popup opens. */
+	centroid?: [number, number];
 }
 
 export type Row = readonly [label: string, value: string];
