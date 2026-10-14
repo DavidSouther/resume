@@ -8,6 +8,7 @@
 #
 # Uses Docker when its daemon is reachable, otherwise crane. The container is built in a
 # temporary directory and renamed into place, so a failed build leaves nothing behind.
+# The psstat.sh program from ../psstat is installed as /usr/local/bin/psstat.sh in the container.
 # Run as root to keep the image's owners and setuid bits; as another user every file belongs
 # to that user, which is enough for running commands as root inside.
 
@@ -23,6 +24,8 @@ name=$1
   die "name must be 1 to 64 bytes, not . or .., with no /"
 image=${2:-debian:bookworm-slim}
 dest=containers/$name
+psstat=$(cd "$(dirname "${BASH_SOURCE[0]}")/../../psstat" && pwd)/psstat.sh
+[[ -f $psstat ]] || die "missing $psstat"
 [[ ! -e $dest ]] || die "$dest exists"
 
 # Spell out the platform so both fetch this machine's architecture: crane defaults to
@@ -45,6 +48,10 @@ elif have crane; then
 else
   die "install docker or crane"
 fi
+
+mkdir -p "$tmp/usr/local/bin"
+cp "$psstat" "$tmp/usr/local/bin/psstat.sh"
+chmod 755 "$tmp/usr/local/bin/psstat.sh"
 
 # mktemp creates the directory 0700; it becomes the container's /.
 chmod 755 "$tmp"

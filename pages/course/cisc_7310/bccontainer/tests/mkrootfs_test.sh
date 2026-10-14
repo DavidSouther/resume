@@ -48,7 +48,7 @@ tar -c -C "$work/fixture" .
 STUB
   chmod +x "$stubs/docker" "$stubs/crane"
   # A PATH with only the tools the script needs, so the host's real docker is not found.
-  for t in bash tar mktemp uname chmod mv rm mkdir cat; do ln -s "$(command -v $t)" "$minimal/$t"; done
+  for t in bash tar mktemp uname chmod mv rm mkdir cat cp dirname; do ln -s "$(command -v $t)" "$minimal/$t"; done
 }
 
 mk() { (cd "$work/run" && PATH="$stubs:$PATH" "$bash_bin" "$script" "$@"); }
@@ -60,6 +60,12 @@ mk tinysys >/dev/null 2>&1; check "exit status" 0 $?
 [[ -f $work/run/containers/tinysys/etc/os-release ]] || fail "os-release not extracted"
 check "mode" 755 "$(stat -c %a "$work/run/containers/tinysys")"
 grep -q "docker create --platform linux/$arch debian:bookworm-slim" "$log" || fail "docker create platform: $(cat "$log")"
+done_case
+
+new_case "psstat.sh is installed executable"
+mk tinysys >/dev/null 2>&1
+cmp -s "$project/../psstat/psstat.sh" "$work/run/containers/tinysys/usr/local/bin/psstat.sh" || fail "psstat.sh missing or different"
+check "psstat.sh mode" 755 "$(stat -c %a "$work/run/containers/tinysys/usr/local/bin/psstat.sh")"
 done_case
 
 new_case "a second run leaves the first build untouched"

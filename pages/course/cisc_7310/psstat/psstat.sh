@@ -34,7 +34,9 @@ list-short() {
 list-long() {
     echo "PID CMD ST CMD_ARGS"
     for PID in $(get-pids) ; do
-        if [[ -d /proc/$PID && $(cat "/proc/$PID/comm") == "$1" ]] ; then
+        # $1 is a glob pattern (e.g. *name_part*), so it must stay unquoted to match.
+        # shellcheck disable=SC2053
+        if [[ -d /proc/$PID && $(cat "/proc/$PID/comm") == $1 ]] ; then
             COMM="$(cat "/proc/$PID/comm")" || continue
             STAT="$(sed -E 's/.*\) (.).*/\1/' "/proc/$PID/stat")" || continue
             LINE="$(cat "/proc/$PID/cmdline" | tr '\0' ' ' | cut -d ' ' -f 2-)" || continue
