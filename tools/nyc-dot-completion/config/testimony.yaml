@@ -1,0 +1,51 @@
+# DOT Council testimony figures — manual transcription, used as a
+# validation/cross-check layer only, never as the primary source for the
+# final table. Each entry names its exact source document; none of these
+# URLs have been verified to resolve (this pipeline was authored in an
+# environment where nyc.gov is not reachable — see notes). Verify every
+# URL before citing it in published output.
+
+documents:
+  fy25_prelim:
+    title: "FY25 Preliminary Budget / FY24-33 Capital Plan testimony"
+    filename: testimony-fy25-preliminary-budget-fy24-33-capital-plan.pdf
+    url: "https://www.nyc.gov/html/dot/downloads/pdf/testimony-fy25-preliminary-budget-fy24-33-capital-plan.pdf"
+    url_verified: false
+    figures:
+      - metric: protected_bike_lane_miles
+        calendar_year: 2023
+        value_mi: 31.9
+        note: "DOT's own full-year figure, as stated in testimony."
+
+  fy26_prelim:
+    title: "FY26 Preliminary Budget / FY25-35 Capital Plan testimony"
+    filename: testimony-fy26-preliminary-budget-fy25-35-capital-plan.pdf
+    url: "https://www.nyc.gov/html/dot/downloads/pdf/testimony-fy26-preliminary-budget-fy25-35-capital-plan.pdf"
+    url_verified: false
+    figures:
+      - metric: protected_bike_lane_miles_hardened
+        calendar_year: null # named corridors only, no full-year total given
+        value_mi: 4.4
+        note: >
+          "Hardened" mileage on named corridors only. Not a full-year
+          protected-bike-lane total — do not compare directly against the
+          31.9 mi FY25-prelim figure without noting the scope difference.
+
+  fy27_executive:
+    title: "FY27 Executive Budget / FY26-35 Capital Plan testimony"
+    filename: testimony-fy27-executive-budget-fy26-35-capital-plan-may2026.pdf
+    url: "https://www.nyc.gov/html/dot/downloads/pdf/testimony-fy27-executive-budget-fy26-35-capital-plan-may2026.pdf"
+    url_verified: false
+    speaker: "Commissioner Mike Flynn"
+    date: "2026-05-29"
+    figures: [] # first Mamdani-era testimony; no mileage or intersection
+                # totals given at all. Re-check any newer testimony before
+                # concluding this gap still holds.
+
+cross_check:
+  # Which pipeline metric each testimony figure should be compared
+  # against, and the variance threshold that triggers a printed warning
+  # instead of silent acceptance of either number.
+  protected_bike_lane_miles:
+    compare_to_pipeline_metric: bike_lane_miles_or_count
+    variance_warn_threshold_pct: 10

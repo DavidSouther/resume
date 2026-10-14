@@ -1,0 +1,40 @@
+# Human-reviewable classification of Street Construction Permits
+# (tqtj-sjs8) permit_type / work_type values into pipeline categories.
+#
+# THIS FILE IS EMPTY AND MUST BE FILLED IN FROM REAL DATA. It is not
+# safe to guess these mappings from field names alone: run
+#
+#     python src/inspect_schema.py
+#
+# first. It hits the dataset's metadata endpoint, prints the full field
+# list, then prints every distinct value of each categorical field that
+# looks relevant (permit_type, work_type, and any sibling field the
+# metadata reveals), together with its row count. It also writes
+# config/classification.generated.yaml: the same distinct values, each
+# pre-mapped to "UNCLASSIFIED". Copy entries from that generated file
+# into the `mapping` section below, assigning each one a real category —
+# do not leave anything as UNCLASSIFIED in the version that feeds
+# aggregate.py; classify.py refuses to run against unresolved entries.
+#
+# Categories:
+#   bike_lane_install   - installs a protected/painted bike lane
+#   daylighting         - daylighting / corner clearing work
+#   other               - anything else (kept for completeness, excluded
+#                         from the bike-lane and daylighting metrics)
+#   ambiguous           - genuinely can't tell from the value alone; flag
+#                         for a human decision rather than guessing which
+#                         of the above it is
+
+# Which field(s) hold the categorical value(s) to classify. Confirm
+# against inspect_schema.py output — this is a starting guess based on
+# the task brief's field names, not a confirmed schema.
+source_fields:
+  - permit_type
+  - work_type
+
+mapping: {}
+# Example of a filled-in entry, once inspect_schema.py has told you the
+# real values:
+#   "Bike Lane Installation": bike_lane_install
+#   "Curb Extension / Daylighting": daylighting
+#   "Sidewalk Repair": other
