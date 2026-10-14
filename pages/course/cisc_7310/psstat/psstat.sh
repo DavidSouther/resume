@@ -2,9 +2,6 @@
 
 set -euo pipefail
 
-PID_PATTERN='+([0123456789])'
-STATE_PATTERN='[RSDZTtWXxKkPI]' # From https://www.man7.org/linux/man-pages//man5/proc_pid_stat.5.html
-
 # https://github.com/torvalds/linux/blob/551c722f40809618230001baccf219193e22fc5a/include/uapi/linux/sched.h#L124
 sched-name() {
     case $1 in
@@ -20,27 +17,27 @@ sched-name() {
 }
 
 get-pids() {
-    for f in $(ls -1v /proc) ; do if [[ $f == $PID_PATTERN ]] ; then echo $f ; fi ; done
+    (for f in /proc/[0-9]* ; do echo "${f##*/}" ; done) | sort -n
 }
 
 pid-sched() {
-    sed -E 's/.*\) //' /proc/$1/stat | cut -d ' ' -f 39
+    sed -E 's/.*\) //' "/proc/$1/stat" | cut -d ' ' -f 39
 }
 
 list-short() {
     echo "PID"
     for pid in $(get-pids) ; do
-        echo $pid
+        echo "$pid"
     done
 }
 
 list-long() {
     echo "PID CMD ST CMD_ARGS"
     for PID in $(get-pids) ; do
-        if [[ -d /proc/$PID && $(cat /proc/$PID/comm) == $1 ]] ; then
-            COMM="$(cat /proc/$PID/comm)" || continue
-            STAT="$(sed -E 's/.*\) (.).*/\1/' /proc/$PID/stat)" || continue
-            LINE="$(cat /proc/$PID/cmdline | tr '\0' ' ' | cut -d ' ' -f 2-)" || continue
+        if [[ -d /proc/$PID && $(cat "/proc/$PID/comm") == "$1" ]] ; then
+            COMM="$(cat "/proc/$PID/comm")" || continue
+            STAT="$(sed -E 's/.*\) (.).*/\1/' "/proc/$PID/stat")" || continue
+            LINE="$(cat "/proc/$PID/cmdline" | tr '\0' ' ' | cut -d ' ' -f 2-)" || continue
 
             echo "$PID $COMM $STAT $LINE"
         fi
@@ -48,45 +45,45 @@ list-long() {
 }
 
 list-pid-is() {
-    # From https://www.man7.org/linux/man-pages//man5/proc_pid_stat.5.html
+    # From https://www.man7.org/linux/man-pages/man5/proc_pid_stat.5.html
     
     # Bash expansion shenanigans to get the first and last parens to separate out (comm)
-    stat=$(cat /proc/$1/stat)
+    stat=$(cat "/proc/$1/stat")
     pid=${stat%% (*}
     stat=${stat#* (}
     comm=${stat%)*}
     rest=${stat##*) }
 
-    read -r state ppid pgrp session tty_nr tpgid flags minflt cminflt majflt cmajflt \
-            utime stime cutime cstime priority nice num_threads itrealvalue starttime vsize rss \
-            rsslim startcode endcode startstack kstkesp kstkeip signal blocked sigignore sigcatch \
-            wchan nswap cnswap exit_signal processor rt_priority policy delayacct_blkio_ticks \
-            guest_time cguest_time start_data end_data start_brk arg_start arg_end env_start \
-            env_end exit_code \
+    read -r state _ppid _pgrp _session _tty_nr _tpgid _flags minflt _cminflt majflt _cmajflt \
+            utime stime _cutime _cstime _priority _nice num_threads _itrealvalue _starttime vsize rss \
+            _rsslim _startcode _endcode _startstack _kstkesp _kstkeip _signal _blocked _sigignore _sigcatch \
+            _wchan _nswap _cnswap _exit_signal _processor _rt_priority _policy _delayacct_blkio_ticks \
+            _guest_time _cguest_time _start_data _end_data _start_brk _arg_start _arg_end _env_start \
+            _env_end _exit_code \
         <<< "$rest"
 
     cat <<EOF
-        pid: ${pid}
-       comm: ${comm}
-      state: ${state}
-     minflt: ${minflt} 
-     majflt: ${majflt}
-      utime: ${utime} clock ticks
-      stime: ${stime} clock ticks
-num_threads: ${num_threads} 
-      vsize: ${vsize} bytes
-        rss: ${rss} pages
+     pid: ${pid}
+    comm: ${comm}
+   state: ${state}
+  minflt: ${minflt} 
+  majflt: ${majflt}
+   utime: ${utime} clock ticks
+   stime: ${stime} clock ticks
+nthreads: ${num_threads} 
+   vsize: ${vsize} bytes
+     rss: ${rss} pages
 EOF
 }
 
 list-sched-policy-is() {
     echo "PID CMD ST SCHED_POLICY CMD_ARGS"
     for PID in $(get-pids) ; do
-        if [[ -d /proc/$PID && $(pid-sched $PID) == $1 ]] ; then
-            COMM="$(cat /proc/$PID/comm)" || continue
-            STAT="$(sed -E 's/.*\) (.).*/\1/' /proc/$PID/stat)" || continue
-            LINE="$(cat /proc/$PID/cmdline | tr '\0' ' ' | cut -d ' ' -f 2-)" || continue
-            SCHED="$(sched-name $1)"
+        if [[ -d /proc/$PID && $(pid-sched "$PID") == "$1" ]] ; then
+            COMM="$(cat "/proc/$PID/comm")" || continue
+            STAT="$(sed -E 's/.*\) (.).*/\1/' "/proc/$PID/stat")" || continue
+            LINE="$(cat "/proc/$PID/cmdline" | tr '\0' ' ' | cut -d ' ' -f 2-)" || continue
+            SCHED="$(sched-name "$1")"
             echo "$PID $COMM $STAT $SCHED $LINE"
         fi
     done
@@ -107,7 +104,7 @@ EOF
 
 case "${1:-}" in
     --help)
-        usage
+        usage "$0"
         ;;
     --list-short)
         list-short
