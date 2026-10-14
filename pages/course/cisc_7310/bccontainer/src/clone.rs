@@ -2,34 +2,28 @@
     clippy::undocumented_unsafe_blocks,
     clippy::multiple_unsafe_ops_per_block
 )]
-//! The only module allowed to use `unsafe`.
-//!
 //! # Invariants
 //!
-//! The audit covers glibc only: the host's glibc at run time (bcdocker runs outside the
-//! rootfs). The clone wrapper and malloc were read against 2.36 and the stack was measured on
-//! 2.39. The version is not checked at run time: a glibc older than 2.34, or one not audited,
+//! The audit covers glibc 2.36 only, specifically `clone(2)` and `malloc`.
+//! The version is not checked at run time! An unaudited glibc
 //! is outside this proof, so re-read the glibc claims in E3 and E5 after an upgrade. A musl
-//! build stops at the `compile_error!` below; Android is not `target_os = "linux"`, so it
-//! builds without this module and reports that it needs Linux.
+//! build stops at the `compile_error!` below.
 //!
-//! I1 (one thread): `spawn` calls `clone` only after `only_thread()` has seen exactly one
+//! I1 (only thread): `spawn` calls `clone` only after `only_thread()` has seen exactly one
 //!    entry in a procfs `/proc/self/task`, and runs no code between the two that can create
 //!    a thread (moves of locals and, inside `only_thread`, the end of the directory listing
 //!    and its `closedir`: `getdents64`, `close` and a glibc `free`; see I5).
 //! I2 (flags): every clone uses `CLONE_FLAGS`; callers cannot choose flags.
 //! I3 (stack): every clone uses a fresh heap `Vec` of `run.stack_size.bytes()` bytes, alive
-//!    in the parent until `clone` returns. `StackSize` guarantees `stack::MIN` (1 MiB) <= that
-//!    <= `stack::MAX`, and defaults to `stack::DEFAULT` (8 MiB). The `Vec` has no guard page:
-//!    adding one needs `mmap` and `mprotect`, more `unsafe` than this module's single block;
-//!    see A1.
+//!    in the parent until `clone` returns. `StackSize` guarantees `stack::MIN` (1 MiB) <= `run.stack_size.bytes()`
+//!    <= `stack::MAX`, and defaults to `stack::DEFAULT` (8 MiB). The `Vec` has no guard page.
+//!    Adding one needs `mmap` and `mprotect`.
 //! I4 (callback): the only closure cloned is built here, from `&Run`, and calls
 //!    `supervise::container_main`. No safe caller can change what the child runs.
 //! I5 (allocator): this crate declares no `#[global_allocator]`; allocation is glibc malloc,
 //!    which never creates threads.
 //! A1 (ASSUMPTION, measured and tested, not proved): the child's stack use stays below
-//!    `stack::MIN`, so below every accepted stack size. Its one input-dependent term, a copy
-//!    of the argument array, is bounded by `cli::MAX_ARGS`, an invariant of `cli::AppArgs`.
+//!    `stack::MIN`
 //!    The basis is stated in E5 in `spawn`, and `tests/stack.sh` repeats the measurement.
 
 #[cfg(not(target_env = "gnu"))]
@@ -67,10 +61,10 @@ fn privileged_hint(errno: &Errno) -> &'static str {
     }
 }
 
-/// What PID 1 is cloned with: four new namespaces, and nothing shared with the parent.
+/// PID 1 is cloned with four new namespaces, and nothing is shared with the parent.
 /// `SIGCHLD` is added at the call, as the exit signal, so the parent can `waitpid` it.
 ///
-/// Created, because the container needs its own view of each:
+/// New namespaces:
 /// - `CLONE_NEWPID`: a process tree of its own, where the first process is PID 1. `ps` shows
 ///   only the container's processes once a procfs is mounted from inside it (pid_namespaces(7)).
 /// - `CLONE_NEWNS`: a private mount table. The container mounts `/proc` and a tmpfs `/dev` and
@@ -82,7 +76,7 @@ fn privileged_hint(errno: &Errno) -> &'static str {
 ///   no setup, and it keeps a container from seeing or disturbing the host's shared memory
 ///   segments.
 ///
-/// Every other flag is left out. The ones worth explaining:
+/// Other flags are excluded. Specifically:
 /// - `CLONE_NEWNET`: networking is out of scope, so the container shares the host's network.
 /// - `CLONE_NEWUSER`: `bcdocker` runs as root and needs its real `CAP_SYS_ADMIN` for the
 ///   mounts. A user namespace would remap that, and rootless operation is out of scope.
@@ -112,8 +106,8 @@ const CLONE_FLAGS: CloneFlags = CloneFlags::CLONE_NEWPID
 ///
 /// The caller must `waitpid` the returned pid. The child's exit status is `container_main`'s
 /// return value, truncated to 8 bits; a panic in the child gives 139 instead (see the
-/// postconditions). Do not call while holding a std lock the child may also take: the child
-/// inherits it held.
+/// postconditions). Do not call while holding an std lock that the child may also take, as the child
+/// would inherit it held.
 pub fn spawn(run: &Run) -> Result<Pid, Error> {
     let child: CloneCb<'_> = Box::new(move || supervise::container_main(run) as isize);
     let mut stack = run.stack_size.allocate()?;
