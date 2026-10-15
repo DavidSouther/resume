@@ -1,0 +1,14 @@
+[package]
+name = "ctxswitch"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.92"
+description = "Kernel versus user-level task switching cost: Rust ports of the umcontext and umthread examples, plus a benchmark."
+
+[dependencies]
+libc = "0.2"
+thiserror = "2"
+nix = { version = "0.31", features = ["sched", "resource", "process", "signal"] }
+
+[profile.release]
+debug = true

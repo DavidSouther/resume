@@ -1,0 +1,2 @@
+sizeof(ucontext_t) = 4560 bytes (includes a 128 byte signal mask)
+regswitch saved frame = 176 bytes (callee saved registers; the stack pointer is the handle)

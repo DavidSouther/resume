@@ -1,0 +1,85 @@
+Function func1 is at: 0xaaaae6d6abf0
+Function func2 is at: 0xaaaae6d6ae8c
+Function main is at:  0xaaaae6d6a248
+Func1 ucontext: -----------------------
+-------------------------------------------
+The (incomplete) user context:
+	Register PC:  ffff7ffacac0
+	Register SP:  ffff80197000
+	Register X0:  0
+	Register X1:  0
+	Register X2:  0
+	Register X3:  0
+	Register X4:  0
+	Register X5:  0
+	Register X6:  0
+	Register X7:  0
+	Register X8:  0
+	Register X9:  0
+	Register X10:  0
+	Register X11:  0
+	Register X12:  0
+	Register X13:  0
+	Register X14:  0
+	Register X15:  0
+	Register X16:  0
+	Register X17:  0
+	Register X18:  d6d08295d6879dd6
+	Register X19:  aaaaf8fa4da0
+	Register X20:  aaaae6d6abf0
+	Register X21:  aaaaf8fa5f80
+	Register X22:  aaaae6d6abf0
+	Register X23:  ffff8019c740
+	Register X24:  ffffc275b000
+	Register X25:  18
+	Register X26:  0
+	Register X27:  ffffc2f5b02e
+	Register X28:  ffff8019c740
+	Register FP:  0
+	Register LR:  0
+-------------------------------------------
+Func2 ucontext: -----------------------
+-------------------------------------------
+The (incomplete) user context:
+	Register PC:  ffff7ffacac0
+	Register SP:  ffff80168000
+	Register X0:  0
+	Register X1:  0
+	Register X2:  0
+	Register X3:  0
+	Register X4:  0
+	Register X5:  0
+	Register X6:  0
+	Register X7:  0
+	Register X8:  0
+	Register X9:  0
+	Register X10:  0
+	Register X11:  0
+	Register X12:  0
+	Register X13:  0
+	Register X14:  0
+	Register X15:  0
+	Register X16:  0
+	Register X17:  0
+	Register X18:  c49292cdc3cec492
+	Register X19:  aaaaf8fa5fd0
+	Register X20:  aaaae6d6ae8c
+	Register X21:  aaaaf8fa71b0
+	Register X22:  aaaae6d6ae8c
+	Register X23:  ffff8019c740
+	Register X24:  ffffc2f5af10
+	Register X25:  18
+	Register X26:  ffffc2f5ae20
+	Register X27:  ffffc2f5b02e
+	Register X28:  ffff8019c740
+	Register FP:  0
+	Register LR:  0
+-------------------------------------------
+main: swapcontext(&uctx_main, &uctx_func2)
+func2: started
+func2: swapcontext(&uctx_func2, &uctx_func1)
+func1: started
+func1: swapcontext(&uctx_func1, &uctx_func2)
+func2: returning
+func1: returning
+main: exiting

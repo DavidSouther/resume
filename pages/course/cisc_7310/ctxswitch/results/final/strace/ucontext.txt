@@ -1,0 +1,28 @@
+% time     seconds  usecs/call     calls    errors syscall
+------ ----------- ----------- --------- --------- ------------------
+ 99.53    0.016140           0     40001           rt_sigprocmask
+  0.21    0.000034           2        14           mmap
+  0.05    0.000008           1         8           mprotect
+  0.04    0.000006           1         4           openat
+  0.04    0.000006           1         5           read
+  0.04    0.000006           3         2           write
+  0.03    0.000005           1         4           getrusage
+  0.01    0.000002           2         1           ppoll
+  0.01    0.000002           2         1           sched_setaffinity
+  0.01    0.000002           1         2           sched_getaffinity
+  0.01    0.000002           1         2           sigaltstack
+  0.01    0.000001           0         4           close
+  0.01    0.000001           1         1           gettid
+  0.01    0.000001           0         3           brk
+  0.00    0.000000           0         1         1 faccessat
+  0.00    0.000000           0         4           fstat
+  0.00    0.000000           0         1           set_tid_address
+  0.00    0.000000           0         1           set_robust_list
+  0.00    0.000000           0         5           rt_sigaction
+  0.00    0.000000           0         5           munmap
+  0.00    0.000000           0         1           execve
+  0.00    0.000000           0         2           prlimit64
+  0.00    0.000000           0         1           getrandom
+  0.00    0.000000           0         1           rseq
+------ ----------- ----------- --------- --------- ------------------
+100.00    0.016216           0     40074         1 total

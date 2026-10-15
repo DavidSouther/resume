@@ -1,0 +1,35 @@
+[000]: Hello, User!
+[000]: Hello, World!
+[001]: Hello, User!
+[001]: Hello, World!
+[002]: Hello, User!
+[002]: Hello, World!
+[003]: Hello, User!
+[003]: Hello, World!
+[004]: Hello, User!
+[004]: Hello, World!
+[005]: Hello, User!
+[005]: Hello, World!
+[006]: Hello, User!
+[006]: Hello, World!
+[007]: Hello, User!
+[007]: Hello, World!
+[008]: Hello, User!
+[008]: Hello, World!
+[009]: Hello, User!
+[009]: Hello, World!
+[010]: Hello, User!
+hw exiting ...
+The hello world thread has exited.
+[011]: Hello, User!
+[012]: Hello, User!
+[013]: Hello, User!
+[014]: Hello, User!
+[015]: Hello, User!
+[016]: Hello, User!
+[017]: Hello, User!
+[018]: Hello, User!
+[019]: Hello, User!
+hu exiting ...
+The hello user thread has exited.
+The hello world thread has exited.

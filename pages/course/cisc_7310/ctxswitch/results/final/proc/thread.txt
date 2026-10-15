@@ -1,0 +1,138 @@
+mechanism,working_set_bytes,switches_per_rep,reps,ns_per_switch,nvcsw,nivcsw
+== /proc/1/task/1/stat ==
+1 (switchbench) R 0 1 1 0 -1 4194560 1214 0 0 0 3 22 0 0 20 0 2 0 494086 72335360 473 18446744073709551615 187650409299968 187650409781744 281474647384032 0 0 0 0 4096 1088 0 0 0 17 0 0 0 0 0 0 187650409872184 187650409892528 187650460323840 281474647387933 281474647388026 281474647388026 281474647388125 0
+== /proc/1/task/1/status ==
+Name:	switchbench
+Umask:	0022
+State:	R (running)
+Tgid:	1
+Ngid:	0
+Pid:	1
+PPid:	0
+TracerPid:	0
+Uid:	0	0	0	0
+Gid:	0	0	0	0
+FDSize:	64
+Groups:	0 
+NStgid:	1
+NSpid:	1
+NSpgid:	1
+NSsid:	1
+Kthread:	0
+VmPeak:	  136156 kB
+VmSize:	   70640 kB
+VmLck:	       0 kB
+VmPin:	       0 kB
+VmHWM:	    1964 kB
+VmRSS:	    1964 kB
+RssAnon:	     136 kB
+RssFile:	    1828 kB
+RssShmem:	       0 kB
+VmData:	    2436 kB
+VmStk:	     132 kB
+VmExe:	     472 kB
+VmLib:	    1940 kB
+VmPTE:	      48 kB
+VmSwap:	       0 kB
+HugetlbPages:	       0 kB
+CoreDumping:	0
+THP_enabled:	1
+untag_mask:	0xffffffffffffff
+Threads:	2
+SigQ:	0/63881
+SigPnd:	0000000000000000
+ShdPnd:	0000000000000000
+SigBlk:	0000000000000000
+SigIgn:	0000000000001000
+SigCgt:	0000000100000440
+CapInh:	0000000000000000
+CapPrm:	00000000a80425fb
+CapEff:	00000000a80425fb
+CapBnd:	00000000a80425fb
+CapAmb:	0000000000000000
+NoNewPrivs:	0
+Seccomp:	2
+Seccomp_filters:	1
+Speculation_Store_Bypass:	vulnerable
+SpeculationIndirectBranch:	unknown
+Cpus_allowed:	01
+Cpus_allowed_list:	0
+Mems_allowed:	1
+Mems_allowed_list:	0
+voluntary_ctxt_switches:	269661
+nonvoluntary_ctxt_switches:	34343
+== /proc/1/task/1/syscall ==
+running
+== /proc/1/task/1/wchan ==
+0
+== /proc/1/task/1/stack ==
+(error: Permission denied (os error 13))
+== /proc/1/task/8/stat ==
+8 (switchbench) S 0 1 1 0 -1 4194368 3 0 0 0 2 22 0 0 20 0 2 0 494089 72335360 473 18446744073709551615 187650409299968 187650409781744 281474647384032 0 0 0 0 4096 1088 1 0 0 -1 0 0 0 0 0 0 187650409872184 187650409892528 187650460323840 281474647387933 281474647388026 281474647388026 281474647388125 0
+== /proc/1/task/8/status ==
+Name:	switchbench
+Umask:	0022
+State:	S (sleeping)
+Tgid:	1
+Ngid:	0
+Pid:	8
+PPid:	0
+TracerPid:	0
+Uid:	0	0	0	0
+Gid:	0	0	0	0
+FDSize:	64
+Groups:	0 
+NStgid:	1
+NSpid:	8
+NSpgid:	1
+NSsid:	1
+Kthread:	0
+VmPeak:	  136156 kB
+VmSize:	   70640 kB
+VmLck:	       0 kB
+VmPin:	       0 kB
+VmHWM:	    1964 kB
+VmRSS:	    1964 kB
+RssAnon:	     136 kB
+RssFile:	    1828 kB
+RssShmem:	       0 kB
+VmData:	    2436 kB
+VmStk:	     132 kB
+VmExe:	     472 kB
+VmLib:	    1940 kB
+VmPTE:	      48 kB
+VmSwap:	       0 kB
+HugetlbPages:	       0 kB
+CoreDumping:	0
+THP_enabled:	1
+untag_mask:	0xffffffffffffff
+Threads:	2
+SigQ:	0/63881
+SigPnd:	0000000000000000
+ShdPnd:	0000000000000000
+SigBlk:	0000000000000000
+SigIgn:	0000000000001000
+SigCgt:	0000000100000440
+CapInh:	0000000000000000
+CapPrm:	00000000a80425fb
+CapEff:	00000000a80425fb
+CapBnd:	00000000a80425fb
+CapAmb:	0000000000000000
+NoNewPrivs:	0
+Seccomp:	2
+Seccomp_filters:	1
+Speculation_Store_Bypass:	vulnerable
+SpeculationIndirectBranch:	unknown
+Cpus_allowed:	01
+Cpus_allowed_list:	0
+Mems_allowed:	1
+Mems_allowed_list:	0
+voluntary_ctxt_switches:	293748
+nonvoluntary_ctxt_switches:	10228
+== /proc/1/task/8/syscall ==
+207 0x4 0xffff97a8e63c 0x1 0x0 0x0 0x0 0xffff97a8e580 0xffff97b1f22c
+== /proc/1/task/8/wchan ==
+unix_stream_read_generic
+== /proc/1/task/8/stack ==
+(error: Permission denied (os error 13))
+thread,0,2000000,1,860.3,4000180,350782

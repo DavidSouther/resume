@@ -1,0 +1,54 @@
+#0 building with "desktop-linux" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 712B done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/debian:stable-slim
+#2 DONE 0.0s
+
+#3 [internal] load metadata for docker.io/library/rust:1-slim
+#3 DONE 0.6s
+
+#4 [internal] load .dockerignore
+#4 transferring context: 61B done
+#4 DONE 0.0s
+
+#5 [build 1/5] FROM docker.io/library/rust:1-slim@sha256:2752b332db73fdbb7dc576f06c82ed1f312005784ef913d7e04a28f5f55dc581
+#5 DONE 0.0s
+
+#6 [stage-1 1/4] FROM docker.io/library/debian:stable-slim
+#6 DONE 0.0s
+
+#7 [internal] load build context
+#7 transferring context: 662B done
+#7 DONE 0.0s
+
+#8 [build 2/5] WORKDIR /src
+#8 CACHED
+
+#9 [build 5/5] RUN cargo build --release --locked 2>/dev/null || cargo build --release
+#9 CACHED
+
+#10 [stage-1 2/4] RUN apt-get update  && apt-get install -y --no-install-recommends strace procps  && rm -rf /var/lib/apt/lists/*
+#10 CACHED
+
+#11 [build 3/5] COPY Cargo.toml Cargo.lock* ./
+#11 CACHED
+
+#12 [build 4/5] COPY src ./src
+#12 CACHED
+
+#13 [stage-1 3/4] COPY --from=build /src/target/release/ /opt/ctxswitch-build/
+#13 CACHED
+
+#14 [stage-1 4/4] RUN for b in uctxswitch uctxmake uctxswap uctxrestore umthreaddemo switchbench; do       install -m 0755 /opt/ctxswitch-build/$b /usr/local/bin/$b;     done && rm -rf /opt/ctxswitch-build
+#14 CACHED
+
+#15 exporting to image
+#15 exporting layers done
+#15 writing image sha256:8659a6f66537ee2df19c93f3889ece1279e1e7e30d6208a8b87219b8e4ba6c73 done
+#15 naming to docker.io/library/ctxswitch:test done
+#15 DONE 0.0s
+
+View build details: docker-desktop://dashboard/build/desktop-linux/desktop-linux/3nw1mdsqxujrpunn000c60dgv
