@@ -41,7 +41,8 @@ def main() -> None:
     districts = read_election_districts()
     site_of = assigned_sites(districts, read_assignments(), data.sites())
     tracts = data.tracts()
-    report = analyze_access(tracts, overlay_tracts(tracts, districts, site_of), distinct_sites(site_of))
+    divided = overlay_tracts(tracts, districts, site_of)
+    report = analyze_access(tracts, divided, distinct_sites(site_of))
     with open(os.path.join(args.out_dir, "nyc_tracts_poll_access.report.json"), "w", encoding="utf-8") as fh:
         json.dump(report.to_json(), fh, indent=2)
     md = render_md(report)

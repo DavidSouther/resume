@@ -9,7 +9,7 @@ from collections.abc import Mapping, Sequence
 from ..geography.tract_district import TractDistrict, TractDistricts
 from ..kernel.domain import Observation, Site, Tract
 from ..kernel.poverty import POVERTY_LABELS, class_index
-from .hypotheses import run_tests, site_tracts
+from .hypotheses import poverty_regression, run_tests, site_tracts
 from .measures import MEASURES, PRIMARY, AccessMeasure
 from .results import AccessReport, ClassAccess, MeasureInfo
 
@@ -62,6 +62,7 @@ def analyze_access(tracts: Sequence[Tract], divided: TractDistricts, sites: Sequ
         primary_measure=primary.key,
         overall_rates={m.key: r for m in measures if (r := _rate(pov, m)) is not None},
         by_class=by_class([s for s in subs if s.tract.poverty is not None], measures),
+        regression=poverty_regression(obs),
         primary=lead,
         tests=rest,
     )

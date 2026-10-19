@@ -9,15 +9,17 @@ A test takes observations and one access measure (see measures.py), whose advers
 """
 
 from collections.abc import Callable, Sequence
+from itertools import pairwise
 
 from ..generic.geo import PointLocator
-from ..generic.stats import chi_squared, holm, mantel_haenszel, trend_test
+from ..generic.stats import chi_squared, holm, mantel_haenszel, nested_f_test, polyfit, trend_test
 from ..geography.census import COUNTIES
 from ..kernel.domain import Observation, Site, Tract
 from ..kernel.poverty import POVERTY_LABELS, class_index
 from .measures import MEASURES, PRIMARY, AccessMeasure
-from .results import BoroughRow, DisparateImpact, Group, Hypothesis
+from .results import BoroughRow, DisparateImpact, Group, Hypothesis, Regression
 
+MAX_DEGREE = 3  # linear, quadratic, cubic
 HIGH_POVERTY = 20.0  # "high poverty" group: at or above this rate
 ALPHA = 0.05
 FOUR_FIFTHS = 0.8
@@ -157,6 +159,24 @@ def income_gradient(with_income: Sequence[Observation], m: AccessMeasure) -> Hyp
     )
     h.trend = trend_test(table)
     return h
+
+
+def poverty_regression(obs: Sequence[Observation]) -> Regression:
+    """Distance to the assigned site against poverty rate, fit as a line, a quadratic, and a cubic.
+
+    The class table is not monotonic (the middle classes are closest), which a line cannot show, so the degrees
+    compete: each nested F test asks whether the extra term earns its place, and BIC and adjusted R-squared pick one."""
+    pov = [o for o in obs if o.tract.poverty is not None]
+    x = [_poverty(o) for o in pov]
+    y = [o.miles for o in pov]
+    fits = [polyfit(x, y, d) for d in range(1, MAX_DEGREE + 1)]
+    return Regression(
+        len(pov),
+        fits,
+        [nested_f_test(a, b) for a, b in pairwise(fits)],
+        min(fits, key=lambda f: f.bic).degree,
+        max(fits, key=lambda f: f.adj_r2).degree,
+    )
 
 
 def run_tests(obs: Sequence[Observation], measures: Sequence[AccessMeasure] = MEASURES, primary: AccessMeasure = PRIMARY) -> tuple[Hypothesis, list[Hypothesis]]:

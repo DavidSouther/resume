@@ -46,6 +46,46 @@ class BoroughRow(TypedDict):
     chi_squared: ChiSquared | None
 
 
+class NestedTest(TypedDict):
+    degrees: str  # "1 to 2": adding the quadratic term to a line
+    f: float
+    df1: int
+    df2: int
+    p: float
+
+
+@dataclass
+class PolynomialFit:
+    """Least squares polynomial of miles on poverty rate. Coefficients are lowest order first, in z = (x - mean) / scale."""
+
+    degree: int
+    coefficients: list[float]
+    mean: float
+    scale: float
+    n: int
+    rss: float
+    r2: float
+    adj_r2: float
+    aic: float
+    bic: float
+    vertex: float | None  # poverty rate where a quadratic turns
+
+    def predict(self, x: float) -> float:
+        z = (x - self.mean) / self.scale
+        return sum(c * z**k for k, c in enumerate(self.coefficients))
+
+
+@dataclass
+class Regression:
+    """Distance to the assigned site against poverty rate, one point per tract district, at each polynomial degree."""
+
+    n: int
+    fits: list[PolynomialFit]
+    tests: list[NestedTest]  # each degree against the one below
+    best_by_bic: int  # degree
+    best_by_adj_r2: int
+
+
 @dataclass
 class Hypothesis:
     """One test of one access measure."""
@@ -105,6 +145,7 @@ class AccessReport:
     primary_measure: str
     overall_rates: dict[str, float]
     by_class: list[ClassAccess]
+    regression: Regression
     primary: Hypothesis  # pre-specified: poverty gradient on the primary measure, not Holm adjusted
     tests: list[Hypothesis] = field(default_factory=list[Hypothesis])  # every other test on every measure, Holm adjusted together
 

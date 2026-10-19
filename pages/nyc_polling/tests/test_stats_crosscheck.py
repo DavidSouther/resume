@@ -36,6 +36,18 @@ class CrossCheck(unittest.TestCase):
         for z in (-4.0, -1.0, 0.0, 0.7, 2.5, 6.0):
             self.assertAlmostEqual(stats.normal_sf(z), float(sp.norm.sf(z)), delta=1e-14)
 
+    def test_f_sf_and_polyfit_match_scipy_and_numpy(self) -> None:
+        for df1, df2 in ((1, 10), (2, 50), (1, 7000), (5, 300)):
+            for x in (0.1, 1.0, 3.9, 12.0, 80.0):
+                self.assertAlmostEqual(stats.f_sf(x, df1, df2), float(sp.f.sf(x, df1, df2)), delta=1e-12)
+        xs = [self.rng.uniform(0, 80) for _ in range(300)]
+        ys = [0.3 + 0.01 * (x - 30) ** 2 / 30 + self.rng.gauss(0, 0.2) for x in xs]
+        for degree in (1, 2, 3):
+            fit = stats.polyfit(xs, ys, degree)
+            expected = np.polyval(np.polyfit(xs, ys, degree), xs)
+            for x, e in zip(xs[:20], expected[:20], strict=True):
+                self.assertAlmostEqual(fit.predict(x), float(e), delta=1e-8)
+
     def test_chi_squared_matches_scipy_with_and_without_yates(self) -> None:
         for table in [*self.tables(5, 2, 20), *self.tables(2, 2, 20), *self.tables(3, 4, 10)]:
             for correction in (False, True):
