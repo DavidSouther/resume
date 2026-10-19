@@ -6,7 +6,7 @@ tests/test_stats_crosscheck.py compares each function with scipy and statsmodels
 import math
 from collections.abc import Sequence
 
-from ..disparity_hypotheses.results import ChiSquared, MantelHaenszel, Trend
+from ..disparity_hypotheses.results import ChiSquared, MantelHaenszel, NestedTest, PolynomialFit, Trend
 
 Table = Sequence[Sequence[float]]
 
@@ -134,3 +134,101 @@ def holm(pvals: Sequence[float]) -> list[float]:
         running = max(running, min(1.0, (len(pvals) - rank) * pvals[i]))
         adjusted[i] = running
     return adjusted
+
+
+def _betacf(a: float, b: float, x: float) -> float:
+    """Continued fraction for the incomplete beta function (modified Lentz)."""
+    tiny = 1e-300
+    qab, qap, qam = a + b, a + 1, a - 1
+    c = 1.0
+    d = 1 - qab * x / qap
+    d = 1 / (tiny if abs(d) < tiny else d)
+    h = d
+    for m in range(1, 1000):
+        m2 = 2 * m
+        for an in (m * (b - m) * x / ((qam + m2) * (a + m2)), -(a + m) * (qab + m) * x / ((a + m2) * (qap + m2))):
+            d = 1 + an * d
+            d = 1 / (tiny if abs(d) < tiny else d)
+            c = 1 + an / c
+            c = tiny if abs(c) < tiny else c
+            delta = d * c
+            h *= delta
+        if abs(delta - 1) < 1e-15:
+            break
+    return h
+
+
+def betainc(a: float, b: float, x: float) -> float:
+    """Regularized incomplete beta function I_x(a, b)."""
+    if x <= 0:
+        return 0.0
+    if x >= 1:
+        return 1.0
+    ln_front = math.lgamma(a + b) - math.lgamma(a) - math.lgamma(b) + a * math.log(x) + b * math.log1p(-x)
+    if x < (a + 1) / (a + b + 2):
+        return math.exp(ln_front) * _betacf(a, b, x) / a
+    return 1 - math.exp(ln_front) * _betacf(b, a, 1 - x) / b
+
+
+def f_sf(f: float, df1: int, df2: int) -> float:
+    """F distribution survival function."""
+    if f <= 0:
+        return 1.0
+    return betainc(df2 / 2, df1 / 2, df2 / (df2 + df1 * f))
+
+
+def _solve(a: list[list[float]], b: list[float]) -> list[float]:
+    """Solve a x = b by Gaussian elimination with partial pivoting."""
+    n = len(b)
+    m = [[*row, v] for row, v in zip(a, b, strict=True)]
+    for col in range(n):
+        pivot = max(range(col, n), key=lambda r: abs(m[r][col]))
+        if abs(m[pivot][col]) < 1e-12:
+            raise ValueError("singular design matrix: too few distinct x values for this degree")
+        m[col], m[pivot] = m[pivot], m[col]
+        for r in range(col + 1, n):
+            factor = m[r][col] / m[col][col]
+            for k in range(col, n + 1):
+                m[r][k] -= factor * m[col][k]
+    x = [0.0] * n
+    for r in range(n - 1, -1, -1):
+        x[r] = (m[r][n] - sum(m[r][k] * x[k] for k in range(r + 1, n))) / m[r][r]
+    return x
+
+
+def polyfit(x: Sequence[float], y: Sequence[float], degree: int) -> PolynomialFit:
+    """Ordinary least squares polynomial of `degree` through (x, y).
+
+    The fit is in z = (x - mean) / scale so the normal equations stay well conditioned. `vertex` is the x
+    where a quadratic turns, in the units of x, or None for any other degree."""
+    n = len(x)
+    if n != len(y) or n <= degree + 1:
+        raise ValueError(f"degree {degree} needs more than {degree + 1} points, got {n}")
+    mean = sum(x) / n
+    scale = math.sqrt(sum((v - mean) ** 2 for v in x) / n) or 1.0
+    z = [(v - mean) / scale for v in x]
+    powers = [sum(v**k for v in z) for k in range(2 * degree + 1)]
+    gram = [[powers[i + j] for j in range(degree + 1)] for i in range(degree + 1)]
+    moments = [sum(yv * v**k for v, yv in zip(z, y, strict=True)) for k in range(degree + 1)]
+    coefficients = _solve(gram, moments)
+    fit = PolynomialFit(degree, coefficients, mean, scale, n, 0.0, 0.0, 0.0, 0.0, 0.0, None)
+    ybar = sum(y) / n
+    rss = sum((yv - fit.predict(xv)) ** 2 for xv, yv in zip(x, y, strict=True))
+    tss = sum((yv - ybar) ** 2 for yv in y)
+    k = degree + 1
+    fit.rss = rss
+    fit.r2 = 1 - rss / tss if tss else 0.0
+    fit.adj_r2 = 1 - (rss / (n - k)) / (tss / (n - 1)) if tss else 0.0
+    fit.aic = n * math.log(rss / n) + 2 * k if rss > 0 else -math.inf
+    fit.bic = n * math.log(rss / n) + k * math.log(n) if rss > 0 else -math.inf
+    if degree == 2 and coefficients[2] != 0:
+        fit.vertex = mean + scale * (-coefficients[1] / (2 * coefficients[2]))
+    return fit
+
+
+def nested_f_test(small: PolynomialFit, large: PolynomialFit) -> NestedTest:
+    """Does the higher degree polynomial fit significantly better than the lower one it contains?"""
+    df1 = large.degree - small.degree
+    df2 = large.n - large.degree - 1
+    f = ((small.rss - large.rss) / df1) / (large.rss / df2) if large.rss > 0 else math.inf
+    return {"degrees": f"{small.degree} to {large.degree}", "f": f, "df1": df1, "df2": df2, "p": f_sf(f, df1, df2) if math.isfinite(f) else 0.0}

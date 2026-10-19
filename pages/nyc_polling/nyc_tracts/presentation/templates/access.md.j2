@@ -52,6 +52,26 @@ Chi-squared = {{ "%.2f" | format(c.chi2) }}, df = {{ c.df }}, p = {{ c.p | p }},
 Cochran-Armitage trend (higher poverty, more adverse): z = {{ "%.2f" | format(b.trend.z) }}, one-sided p = {{ b.trend.p_one_sided | p }}.
 Disparate impact, poverty {{ "%.0f" | format(HIGH_POVERTY) }}% and over vs under: favorable rate {{ di.favorable_rate_high | pct }} vs {{ di.favorable_rate_lower | pct }}, impact ratio {{ "%.2f" | format(di.impact_ratio) }} ({{ "fails" if di.fails_four_fifths else "passes" }} the four-fifths rule), adverse risk ratio {{ "%.2f" | format(di.risk_ratio_adverse) }}.
 
+## Distance against poverty rate
+
+The scatter is at `/nyc_polling/regression/`. Each point is one tract district: x is its tract's poverty rate, y is the straight line distance from the tract district's centroid to its assigned site. Ordinary least squares at three degrees, {{ r.regression.n }} points.
+
+| Degree | R² | Adjusted R² | AIC | BIC |
+|---|---:|---:|---:|---:|
+{% for f in r.regression.fits %}
+| {{ ["Linear", "Quadratic", "Cubic"][f.degree - 1] }} | {{ "%.4f" | format(f.r2) }} | {{ "%.4f" | format(f.adj_r2) }} | {{ "%.1f" | format(f.aic) }} | {{ "%.1f" | format(f.bic) }} |
+{% endfor %}
+
+Does the higher degree earn its place? Nested F tests.
+
+| Added term | F | df | p |
+|---|---:|---:|---:|
+{% for t in r.regression.tests %}
+| {{ t.degrees }} | {{ "%.2f" | format(t.f) }} | {{ t.df1 }}, {{ t.df2 }} | {{ t.p | p }} |
+{% endfor %}
+
+Best by BIC: {{ ["linear", "quadratic", "cubic"][r.regression.best_by_bic - 1] }}. Best by adjusted R²: {{ ["linear", "quadratic", "cubic"][r.regression.best_by_adj_r2 - 1] }}.{% set q = r.regression.fits[1] %}{% if q.vertex is not none %} The quadratic turns at {{ "%.1f" | format(q.vertex) }}% poverty{% if 0 <= q.vertex <= 100 %}, inside the observed range{% else %}, outside 0 to 100%, so over the observed range it is monotonic{% endif %}.{% endif %}
+
 ## All other tests
 
 Holm correction over {{ r.tests | length }} tests, alpha = {{ ALPHA }}. The tests are one battery run on every access measure.

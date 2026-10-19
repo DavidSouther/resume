@@ -1,6 +1,6 @@
 # NYC tracts and early voting poll sites
 
-Census tract poverty and early voting poll sites for NYC, as a web map at `/nyc_polling/` and as disparate impact tests. Every script loads the sources straight into typed objects (`nyc_tracts/assembly/dataset.py`) and nothing is written between steps: no KML, no intermediate files. The map loads two GeoJSON files, `nyc_assignment.geojson` and `nyc_poll_sites.geojson`, in `public/nyc_polling/`.
+Census tract poverty and early voting poll sites for NYC, as a web map at `/nyc_polling/` and as disparate impact tests. Every script loads the sources straight into typed objects (`nyc_tracts/assembly/dataset.py`) and nothing is written between steps: no KML, no intermediate files. The map loads two GeoJSON files, `nyc_assignment.geojson` and `nyc_poll_sites.geojson`, in `public/nyc_polling/`. The regression page at `/nyc_polling/regression/` loads `nyc_scatter.json` from the same folder.
 
 ## Run
 
@@ -122,6 +122,10 @@ Geocoding is the one paid source, so its answers are data in the repo: `data/pol
 ## Deploy
 
 The GeoJSON is not committed (`public/nyc_polling/*.geojson` is ignored). `.github/workflows/deploy.yml` generates it before `npm run build`: it installs `poppler-utils` and `uv`, restores the source cache (`.cache/`, about 18 MB) with `actions/cache`, and runs `nyc_tracts_geojson.py` with the `CENSUS_API_KEY` repository secret. A cold run takes about 25 seconds with only the Census key. The cache key is `nyc-polling-sources-v1-<year-month>`; bump `v1` to throw it away, for example when BOE posts a revised poll site list.
+
+## Regression page
+
+`/nyc_polling/regression/` plots each tract district's poverty rate (x) against the miles from its centroid to its assigned site (y), with linear, quadratic and cubic least squares curves. The class table is not monotonic (the 30% to 40% class is closest, the 40% and over class jumps back up), so a line is not expected to fit, and the page compares the degrees: R-squared, adjusted R-squared, BIC, and a nested F test for each added term. The fits are computed in Python (`generic/stats.py` `polyfit` and `nested_f_test`, `disparity_hypotheses/hypotheses.py` `poverty_regression`) and the same results are in the access report. `nyc_tracts_geojson.py` writes `nyc_scatter.json` (points, curves, tests; `presentation/scatter.py`), and `src/components/nyc_polling/regression.ts` draws it with Plotly. Plotly (`plotly.js-dist-min`) is a devDependency that holds the version pin, like mermaid: the page loads it from jsDelivr (`src/lib/plotly-bundle.ts`). Tract districts of one tract share an x, so the F tests overstate significance; read R-squared and the curves first.
 
 ## Source cache
 
