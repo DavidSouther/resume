@@ -35,6 +35,14 @@ export default {
 				a({ href: "/nyc_polling/" }, "Back to the map"),
 				".",
 			),
+			p(
+				{},
+				a(
+					{ href: "/nyc_polling/nyc_tract_districts.csv", download: "" },
+					"Download the data (CSV)",
+				),
+				", one row per tract district: tract, borough, election district, assigned site, miles, poverty rate and margin, median income, population.",
+			),
 			div({
 				id: "nyc-scatter",
 				ariaLabel: "Scatter plot with regression curves",

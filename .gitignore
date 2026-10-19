@@ -29,6 +29,7 @@ trips/*/documents.local.yaml
 # NYC polling output files: the map's GeoJSON, report data, the source download cache, and Python bytecode
 public/nyc_polling/*.geojson
 public/nyc_polling/nyc_scatter.json
+public/nyc_polling/nyc_tract_districts.csv
 pages/nyc_polling/*.report.json
 pages/nyc_polling/.cache/
 __pycache__/

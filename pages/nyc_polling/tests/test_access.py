@@ -1,3 +1,5 @@
+import csv
+import io
 import unittest
 
 from shapely import box
@@ -8,7 +10,7 @@ from nyc_tracts.disparity_hypotheses.measures import MEASURES, OUT_OF_TRACT, PRI
 from nyc_tracts.geography.boe import ElectionDistrict
 from nyc_tracts.geography.tract_district import overlay_tracts
 from nyc_tracts.kernel.domain import Borough, GeoId, Observation, Site, Tract
-from nyc_tracts.presentation.scatter import build_scatter
+from nyc_tracts.presentation.scatter import CSV_COLUMNS, build_scatter, csv_rows
 
 
 def tract(geoid: str, x0: float, x1: float, poverty: float = 10.0) -> Tract:
@@ -97,3 +99,16 @@ class ScatterData(unittest.TestCase):
         self.assertEqual({len(v) for v in data["points"].values()}, {30})
         self.assertEqual([f["degree"] for f in data["fits"]], [1, 2, 3])
         self.assertTrue(all(len(f["x"]) == len(f["y"]) == 101 for f in data["fits"]))
+
+    def test_csv_has_a_header_row_width_and_one_row_per_tract_district(self) -> None:
+        tracts = [tract(str(i), i, i + 1, poverty=2.0 + 1.5 * i) for i in range(3)]
+        districts = [ElectionDistrict(i, box(i, 0, i + 1, 1)) for i in range(3)]
+        site_of = {i: Site("A, B", 0.5, 0.5) for i in range(3)}
+
+        rows = csv_rows(overlay_tracts(tracts, districts, site_of).tract_districts)
+
+        self.assertEqual(len(rows), 3)
+        self.assertTrue(all(len(r) == len(CSV_COLUMNS) for r in rows))
+        out = io.StringIO()
+        csv.writer(out).writerows(rows)
+        self.assertEqual(next(csv.reader(io.StringIO(out.getvalue())))[3], "A, B")  # a comma in a site name stays one cell
