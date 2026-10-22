@@ -1,0 +1,38 @@
+# Run from hw5/:  docker compose up -d db && docker compose run --rm migrate
+# Database files live in ./data/pgdata (gitignored). Migrations live in ./migrations.
+x-pg-env: &pg-env
+  PGHOST: db
+  PGUSER: postgres
+  PGPASSWORD: pw
+  PGDATABASE: junkyard
+
+services:
+  db:
+    build: .
+    image: hw5-pgvector
+    environment:
+      POSTGRES_PASSWORD: pw
+      POSTGRES_DB: junkyard
+      PGDATA: /data/pgdata
+    volumes:
+      - ./data:/data
+      - ./migrations:/migrations:ro
+    ports:
+      - "5434:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d junkyard"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  migrate:
+    image: hw5-pgvector
+    depends_on:
+      db:
+        condition: service_healthy
+    environment: *pg-env
+    volumes:
+      - ./data:/data
+      - ./migrations:/migrations:ro
+    entrypoint: ["/migrations/run.sh"]
+    profiles: ["migrate"]
