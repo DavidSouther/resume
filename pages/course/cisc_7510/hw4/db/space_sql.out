@@ -1,0 +1,16 @@
+VACUUM
+  table   | approx_rows | heap_bytes |  heap   | indexes |  total  
+----------+-------------+------------+---------+---------+---------
+ cts      |    44313916 | 3344064512 | 3189 MB | 0 bytes | 3190 MB
+ dividend |      320742 |   14311424 | 14 MB   | 0 bytes | 14 MB
+ splits   |        8471 |     417792 | 408 kB  | 0 bytes | 448 kB
+(3 rows)
+
+ database_size 
+---------------
+ 3212 MB
+(1 row)
+
+
+sql rows: 44314948
+csv rows: 44313916
