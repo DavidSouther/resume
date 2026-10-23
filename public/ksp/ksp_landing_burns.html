@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mun suicide burn tuner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,400..800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #eef1f5;
+  --surface: #f9fafc;
+  --ink: #17202b;
+  --muted: #566272;
+  --line: #cdd5df;
+  --coast: #2b68b0;
+  --burn: #cf6f00;
+  --warn: #a8231b;
+  --warn-bg: #fbe9e7;
+  --focus: #2b68b0;
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f151c; --surface: #161e27; --ink: #e7ecf2; --muted: #9aa6b5; --line: #2a3541;
+    --coast: #6aa8ea; --burn: #f2a443; --warn: #ff9a90; --warn-bg: #3a1d1b; --focus: #6aa8ea;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f151c; --surface: #161e27; --ink: #e7ecf2; --muted: #9aa6b5; --line: #2a3541;
+  --coast: #6aa8ea; --burn: #f2a443; --warn: #ff9a90; --warn-bg: #3a1d1b; --focus: #6aa8ea;
+  color-scheme: dark;
+}
+html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font-family: "Archivo", system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-variant-numeric: tabular-nums; line-height: 1.45;
+}
+.wrap { max-width: 1000px; margin: 0 auto; padding: 24px 16px 40px; }
+h1 { font-size: 1.5rem; font-weight: 700; font-stretch: 88%; margin: 0 0 16px; letter-spacing: -0.01em; }
+h2 { font-size: 0.95rem; font-weight: 650; margin: 0 0 6px; }
+.grid { display: grid; grid-template-columns: 290px 1fr; gap: 20px; align-items: start; }
+@media (max-width: 780px) { .grid { grid-template-columns: 1fr; } }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
+.controls { display: grid; gap: 18px; }
+.ctl label.t { display: flex; justify-content: space-between; align-items: baseline; font-weight: 600; margin-bottom: 6px; gap: 8px; }
+.hint { font-weight: 400; color: var(--muted); font-size: 0.8rem; }
+.row { display: grid; grid-template-columns: 1fr 88px; gap: 10px; align-items: center; }
+input[type="range"] { width: 100%; accent-color: var(--burn); min-width: 0; }
+input[type="number"] {
+  width: 100%; font: inherit; color: var(--ink); background: var(--bg);
+  border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; text-align: right;
+}
+input:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+.hidden { display: none !important; }
+.sub-controls { display: grid; gap: 18px; }
+.switch { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+.hrow { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 6px; }
+.hrow h2 { margin: 0; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.seg button { font: inherit; font-size: 0.8rem; padding: 3px 12px; background: var(--bg); color: var(--muted); border: 0; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--surface); }
+.seg button:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+.right { display: grid; gap: 20px; min-width: 0; }
+.cards { display: flex; flex-wrap: wrap; gap: 14px 32px; }
+.card .lbl { color: var(--muted); font-size: 0.85rem; }
+.card .big { font-size: 2.1rem; font-weight: 750; font-stretch: 85%; letter-spacing: -0.02em; line-height: 1.1; }
+.card .big small { font-size: 0.95rem; font-weight: 500; color: var(--muted); margin-left: 4px; }
+.card .sub { color: var(--muted); font-size: 0.85rem; }
+.card.burn .big { color: var(--burn); }
+.notice { margin-top: 12px; padding: 10px 12px; border-radius: 8px; background: var(--warn-bg); color: var(--warn); font-weight: 550; display: none; }
+.notice.show { display: block; }
+.chart { width: 100%; height: auto; display: block; }
+.chart text { fill: var(--muted); font-family: inherit; font-size: 11px; }
+.chart .gl { stroke: var(--line); stroke-width: 1; }
+.chart .axis { stroke: var(--muted); stroke-width: 1; }
+.chart .ground { stroke: var(--ink); stroke-width: 2; }
+.chart .coast { fill: none; stroke: var(--coast); stroke-width: 2.5; stroke-linejoin: round; }
+.chart .burn { fill: none; stroke: var(--burn); stroke-width: 4; stroke-linejoin: round; }
+.chart .mark { stroke: var(--burn); stroke-width: 1.25; stroke-dasharray: 5 4; }
+.chart .markstop { stroke: var(--muted); stroke-width: 1.25; stroke-dasharray: 2 4; }
+.chart .dot { fill: var(--surface); stroke: var(--burn); stroke-width: 2.5; }
+.chart .dotstop { fill: var(--surface); stroke: var(--muted); stroke-width: 2.5; }
+.chart .tag { fill: var(--ink); font-weight: 650; font-size: 12px; stroke: var(--surface); stroke-width: 4px; paint-order: stroke; stroke-linejoin: round; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 18px; font-size: 0.85rem; color: var(--muted); margin-top: 6px; }
+.legend i { display: inline-block; width: 18px; height: 4px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
+.charts { display: grid; gap: 18px; }
+dl { margin: 0; }
+.grp { font-weight: 650; padding: 14px 0 4px; }
+.grp:first-child { padding-top: 0; }
+.stat { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-bottom: 1px solid var(--line); }
+.stat dt { color: var(--muted); }
+.stat dd { margin: 0; font-weight: 650; text-align: right; }
+.note { color: var(--muted); font-size: 0.85rem; margin: 0; max-width: 80ch; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Mun suicide burn tuner</h1>
+  <div class="grid">
+    <section class="panel controls" aria-label="Inputs">
+      <label class="switch"><input type="checkbox" id="adv"> Advanced mode</label>
+      <div class="ctl" id="basic-box">
+        <label class="t" for="twr-n">Thrust weight ratio <span class="hint">vs Mun gravity</span></label>
+        <div class="row"><input type="range" id="twr-r" min="1" max="10" step="0.05" value="2" aria-label="TWR slider"><input type="number" id="twr-n" min="0.1" step="0.05" value="2"></div>
+      </div>
+      <div class="sub-controls hidden" id="adv-box">
+        <div class="ctl">
+          <label class="t" for="thr-n">Engine thrust <span class="hint">kN, total</span></label>
+          <div class="row"><input type="range" id="thr-r" min="1" max="600" step="0.5" value="32.6" aria-label="Thrust slider"><input type="number" id="thr-n" min="0.1" step="0.1" value="32.6"></div>
+        </div>
+        <div class="ctl">
+          <label class="t" for="mass-n">Craft mass <span class="hint">tonnes, at ignition</span></label>
+          <div class="row"><input type="range" id="mass-r" min="0.1" max="60" step="0.1" value="10" aria-label="Mass slider"><input type="number" id="mass-n" min="0.01" step="0.1" value="10"></div>
+        </div>
+        <div class="ctl">
+          <label class="t" for="isp-n">Engine Isp <span class="hint">s, vacuum</span></label>
+          <div class="row"><input type="range" id="isp-r" min="100" max="500" step="1" value="345" aria-label="Isp slider"><input type="number" id="isp-n" min="1" step="1" value="345"></div>
+        </div>
+      </div>
+      <div class="ctl">
+        <label class="t" for="alt-n">Deorbit burn altitude <span class="hint">km</span></label>
+        <div class="row"><input type="range" id="alt-r" min="5" max="200" step="1" value="30" aria-label="Orbit altitude slider"><input type="number" id="alt-n" min="1" step="1" value="30"></div>
+      </div>
+      <div class="ctl">
+        <label class="t" for="spd-n">Velocity after deorbit burn <span class="hint">m/s</span></label>
+        <div class="row"><input type="range" id="spd-r" min="200" max="1000" step="1" value="513" aria-label="Orbit speed slider"><input type="number" id="spd-n" min="1" step="1" value="513"></div>
+      </div>
+      <div class="ctl">
+        <label class="t" for="h-n">Safety stop height <span class="hint">m, 0 = none</span></label>
+        <div class="row"><input type="range" id="h-r" min="0" max="10000" step="50" value="2000" aria-label="Safety stop height slider"><input type="number" id="h-n" min="0" step="50" value="2000"></div>
+      </div>
+      <div class="ctl">
+        <label class="t" for="v-n">Velocity at safety stop <span class="hint">m/s, 0 = full stop</span></label>
+        <div class="row"><input type="range" id="v-r" min="0" max="200" step="1" value="0" aria-label="Speed at stop slider"><input type="number" id="v-n" min="0" step="1" value="0"></div>
+      </div>
+    </section>
+
+    <div class="right">
+      <section class="panel" aria-live="polite">
+        <div class="cards" id="cards"></div>
+        <div class="notice" id="notice"></div>
+      </section>
+
+      <section class="panel">
+        <div class="charts">
+          <div><div class="hrow"><h2>Whole Descent</h2><div class="seg" role="group" aria-label="Vertical axis scale"><button type="button" id="sc-lin" aria-pressed="true">Linear</button><button type="button" id="sc-log" aria-pressed="false">Log</button></div></div><svg class="chart" id="chart-full" viewBox="0 0 640 330" role="img" aria-label="Radar altitude against velocity for the whole descent"></svg></div>
+          <div><h2 id="zoom-title">Final Approach</h2><svg class="chart" id="chart-zoom" viewBox="0 0 640 330" role="img" aria-label="Radar altitude against velocity for the final approach"></svg></div>
+        </div>
+        <div class="legend"><span><i style="background:var(--coast)"></i>Coast</span><span><i style="background:var(--burn)"></i>Burn (retrograde, full throttle)</span></div>
+      </section>
+
+      <section class="panel"><dl id="stats"></dl></section>
+
+      <p class="note">Light the engine when your radar altitude reaches a dashed line, then hold retrograde at full throttle. Simulated in 2D around the Mun with real gravity, no drag, and surface velocity ignoring the Mun’s spin.</p>
+      <p class="note">Simple mode holds mass constant, so thrust acceleration never rises. A real craft gets lighter as it burns, so the final stop will end up above the surface. Advanced mode uses Isp to track mass loss and accounts for this.</p>
+      <p class="note">Radar altitude is measured from the root part, not from your landing legs. Subtract that offset from every altitude here. Very tall craft can have peculiarities when landing, such as the legs touching down while radar still reads well above zero.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var G = 1.63, MU = 6.5138398e10, R = 200000;
+  var DT_C = 0.1, DT_B = 0.05, V_STOP = 0.3;
+  var $ = function (id) { return document.getElementById(id); };
+
+  ["twr", "thr", "mass", "isp", "alt", "spd", "h", "v"].forEach(function (k) {
+    var n = $(k + "-n"), r = $(k + "-r");
+    n.addEventListener("input", function () { r.value = n.value; update(); });
+    r.addEventListener("input", function () { n.value = r.value; update(); });
+  });
+
+  var scaleLog = false;
+  function setScale(log) {
+    scaleLog = log;
+    $("sc-lin").setAttribute("aria-pressed", String(!log));
+    $("sc-log").setAttribute("aria-pressed", String(log));
+    update();
+  }
+  $("sc-lin").addEventListener("click", function () { setScale(false); });
+  $("sc-log").addEventListener("click", function () { setScale(true); });
+  $("adv").addEventListener("change", function () {
+    var m = parseFloat($("mass-n").value);
+    if (this.checked) {
+      var tw = parseFloat($("twr-n").value);
+      if (tw > 0 && m > 0) { $("thr-n").value = $("thr-r").value = Math.round(tw * m * G * 10) / 10; }
+    } else {
+      var th = parseFloat($("thr-n").value);
+      if (th > 0 && m > 0) { $("twr-n").value = $("twr-r").value = Math.round(th / (m * G) * 100) / 100; }
+    }
+    update();
+  });
+
+  function fmt(x, d) {
+    if (!isFinite(x)) return "–";
+    return x.toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
+  }
+
+  /* ---------- physics ---------- */
+  // K = fraction of the starting mass burned per second at full throttle (0 = constant acceleration).
+  var K = 0;
+
+  function deriv(s, a0, th) {
+    var x = s[0], y = s[1], vx = s[2], vy = s[3];
+    var r2 = x * x + y * y, r3 = r2 * Math.sqrt(r2);
+    var ax = -MU * x / r3, ay = -MU * y / r3, df = 0;
+    if (th) {
+      var sp = Math.sqrt(vx * vx + vy * vy);
+      var a = a0 / Math.max(s[4], 0.02);
+      if (sp > 1e-9) { ax -= a * vx / sp; ay -= a * vy / sp; }
+      df = -K;
+    }
+    return [vx, vy, ax, ay, df];
+  }
+  function step(s, dt, a, th) {
+    var k1 = deriv(s, a, th), k2, k3, k4, i, t = [], o = [];
+    for (i = 0; i < 5; i++) t[i] = s[i] + k1[i] * dt / 2;
+    k2 = deriv(t, a, th);
+    for (i = 0; i < 5; i++) t[i] = s[i] + k2[i] * dt / 2;
+    k3 = deriv(t, a, th);
+    for (i = 0; i < 5; i++) t[i] = s[i] + k3[i] * dt;
+    k4 = deriv(t, a, th);
+    for (i = 0; i < 5; i++) o[i] = s[i] + dt / 6 * (k1[i] + 2 * k2[i] + 2 * k3[i] + k4[i]);
+    return o;
+  }
+  function alt(s) { return Math.sqrt(s[0] * s[0] + s[1] * s[1]) - R; }
+  function spd(s) { return Math.sqrt(s[2] * s[2] + s[3] * s[3]); }
+
+  // Unpowered trajectory, sampled every DT_C seconds. State is [x, y, vx, vy, massFraction, t].
+  function coastArray(s0, tmax, breakAscent) {
+    var arr = [s0.concat([0])], s = s0, t = 0, a0;
+    while (t < tmax) {
+      s = step(s, DT_C, 0, false); t += DT_C;
+      arr.push(s.concat([t]));
+      a0 = alt(s);
+      if (a0 <= 0) return { arr: arr, ground: true };
+      if (breakAscent && t > 2 && (s[0] * s[2] + s[1] * s[3]) > 0) break;
+    }
+    return { arr: arr, ground: false };
+  }
+
+  // Full throttle, thrust along retrograde, until speed <= vT or the ground.
+  function burnSim(s0, a, vT, rec) {
+    var s = s0.slice(0, 5), t = 0, path = rec ? [] : null, i, al, sp;
+    for (i = 0; i < 24000; i++) {
+      al = alt(s); sp = spd(s);
+      if (rec && i % 4 === 0) path.push([sp, al]);
+      if (al <= 0) return { stopped: false, t: t, alt: al, speed: sp, state: s, path: path };
+      if (sp <= vT) { if (rec) path.push([sp, al]); return { stopped: true, t: t, alt: al, speed: sp, state: s, path: path }; }
+      s = step(s, DT_B, a, true); t += DT_B;
+    }
+    return { stopped: false, t: t, alt: alt(s), speed: spd(s), state: s, path: path };
+  }
+
+  // Latest ignition sample whose burn still stops at or above altitude hT.
+  function findIgnition(arr, a, vT, hT) {
+    function ok(i) { var r = burnSim(arr[i], a, vT, false); return r.stopped && r.alt >= hT; }
+    if (!ok(0)) return -1;
+    var lo = 0, hi = arr.length - 1;
+    if (ok(hi)) return hi;
+    while (hi - lo > 1) {
+      var mid = (lo + hi) >> 1;
+      if (ok(mid)) lo = mid; else hi = mid;
+    }
+    return lo;
+  }
+
+  // Refine an ignition sample to a fraction of DT_C for a tighter stop.
+  function refine(arr, i, a, vT, hT) {
+    var base = arr[i].slice(0, 5);
+    if (i >= arr.length - 1) return base;
+    var lo = 0, hi = 1, k, mid, r;
+    for (k = 0; k < 14; k++) {
+      mid = (lo + hi) / 2;
+      r = burnSim(step(base, mid * DT_C, 0, false), a, vT, false);
+      if (r.stopped && r.alt >= hT) lo = mid; else hi = mid;
+    }
+    return step(base, lo * DT_C, 0, false);
+  }
+
+  function periapsisAlt(ro, vo) {
+    var eps = vo * vo / 2 - MU / ro, hh = ro * vo;
+    if (eps >= 0) return Infinity;
+    var disc = MU * MU + 2 * eps * hh * hh;
+    if (disc < 0) return ro - R;
+    return (MU - Math.sqrt(disc)) / (-2 * eps) - R;
+  }
+
+  function toPts(arr, from, to) {
+    var out = [], stride = 8, i;
+    for (i = from; i <= to; i += stride) out.push([spd(arr[i]), alt(arr[i])]);
+    out.push([spd(arr[to]), alt(arr[to])]);
+    return out;
+  }
+
+  function compute(twr, hOrb, vo, H, v0, k) {
+    K = k || 0;
+    var a = twr * G, ro = R + hOrb, res = { a: a, twr: twr };
+    // Delta-v of a burn: rocket equation when mass is tracked, else acceleration times time.
+    function dvOf(b, f0) { return K > 0 ? (a / K) * Math.log(f0 / b.state[4]) : a * b.t; }
+    res.peri = periapsisAlt(ro, vo);
+    if (a <= G) { res.err = "TWR is " + fmt(twr, 2) + ". The engine can’t hold you up, so you can’t land."; return res; }
+
+    var c1 = coastArray([0, ro, vo, 0, 1], 4500, true);
+    var minAlt = Infinity, i;
+    for (i = 0; i < c1.arr.length; i++) minAlt = Math.min(minAlt, alt(c1.arr[i]));
+    if (H === 0 && !c1.ground) { res.err = "This orbit doesn’t reach the surface. Periapsis is " + fmt(res.peri / 1000, 1) + " km. Lower the velocity after the deorbit burn."; return res; }
+    if (H > 0 && minAlt > H) { res.err = "This orbit doesn’t reach " + fmt(H, 0) + " m. Periapsis is " + fmt(res.peri / 1000, 1) + " km. Lower the velocity after the deorbit burn or raise the stop height."; return res; }
+
+    var iT = c1.ground ? findIgnition(c1.arr, a, V_STOP, 0) : -1;
+    var tTrue = null, trueBurn = null;
+    var sT = iT >= 0 ? refine(c1.arr, iT, a, V_STOP, 0) : null;
+    if (iT >= 0) { trueBurn = burnSim(sT, a, V_STOP, H === 0); tTrue = trueBurn.t; }
+    if (H === 0 && iT < 0) { res.err = "Not enough thrust to stop before the ground from this orbit. Add TWR."; return res; }
+    res.tTrue = tTrue;
+
+    if (H === 0) {
+      res.mode = "single";
+      res.ign1 = { alt: alt(sT), speed: spd(sT) };
+      res.t1 = tTrue;
+      res.fEnd1 = trueBurn.state[4];
+      res.dvTotal = dvOf(trueBurn, 1);
+      res.segs = [
+        { cls: "coast", pts: toPts(c1.arr, 0, iT).concat([[spd(sT), alt(sT)]]) },
+        { cls: "burn", pts: trueBurn.path }
+      ];
+      res.marks = [{ kind: "burn", alt: res.ign1.alt, speed: res.ign1.speed, text: "Burn 1: " + fmt(res.ign1.alt, 0) + " m, " + fmt(res.ign1.speed, 0) + " m/s" }];
+      return res;
+    }
+
+    var vT = Math.max(v0, V_STOP);
+    var i1 = findIgnition(c1.arr, a, vT, H);
+    if (i1 < 0) { res.err = "Burn 1 can’t get down to " + fmt(vT, 1) + " m/s above " + fmt(H, 0) + " m with this TWR."; return res; }
+    var s1 = refine(c1.arr, i1, a, vT, H);
+    var b1 = burnSim(s1, a, vT, true);
+    var c2 = coastArray(b1.state, 900, false);
+    var i2 = findIgnition(c2.arr, a, V_STOP, 0);
+    if (i2 < 0) { res.err = "Too fast to stop below the safety stop. Raise the stop height, lower the speed at the stop, or add thrust."; return res; }
+    var s2 = refine(c2.arr, i2, a, V_STOP, 0);
+    var b2 = burnSim(s2, a, V_STOP, true);
+
+    res.mode = "stop";
+    res.ign1 = { alt: alt(s1), speed: spd(s1) };
+    res.stop = { alt: b1.alt, speed: b1.speed };
+    res.ign2 = { alt: alt(s2), speed: spd(s2) };
+    res.t1 = b1.t; res.t2 = b2.t;
+    res.fEnd1 = b1.state[4]; res.fEnd2 = b2.state[4];
+    res.dv1 = dvOf(b1, 1); res.dv2 = dvOf(b2, s2[4]);
+    res.dvTotal = res.dv1 + res.dv2;
+    res.dvTrue = tTrue === null ? null : dvOf(trueBurn, 1);
+    res.extra = res.dvTrue === null ? null : res.dvTotal - res.dvTrue;
+    res.segs = [
+      { cls: "coast", pts: toPts(c1.arr, 0, i1).concat([[spd(s1), alt(s1)]]) },
+      { cls: "burn", pts: b1.path },
+      { cls: "coast", pts: toPts(c2.arr, 0, i2).concat([[spd(s2), alt(s2)]]) },
+      { cls: "burn", pts: b2.path }
+    ];
+    res.marks = [
+      { kind: "burn", alt: res.ign1.alt, speed: res.ign1.speed, text: "Burn 1: " + fmt(res.ign1.alt, 0) + " m, " + fmt(res.ign1.speed, 0) + " m/s" },
+      { kind: "stop", alt: res.stop.alt, speed: res.stop.speed, text: "Stop: " + fmt(res.stop.alt, 0) + " m" },
+      { kind: "burn", alt: res.ign2.alt, speed: res.ign2.speed, text: "Burn 2: " + fmt(res.ign2.alt, 0) + " m, " + fmt(res.ign2.speed, 0) + " m/s" }
+    ];
+    return res;
+  }
+
+  /* ---------- chart ---------- */
+  function niceTicks(max, target) {
+    var raw = max / target, p = Math.pow(10, Math.floor(Math.log10(raw))), f = raw / p;
+    var st = (f < 1.5 ? 1 : f < 3 ? 2 : f < 7 ? 5 : 10) * p, t = [];
+    for (var v = 0; v <= max + 1e-9; v += st) t.push(v);
+    return t;
+  }
+
+  function logTicks(max) { var t = [], v = 1; while (v <= max) { t.push(v); v *= 10; } return t; }
+
+  function drawChart(svg, segs, marks, yTop, logY) {
+    var W = 640, Hh = 330, ml = 62, mr = 14, mt = 12, mb = 40;
+    var iw = W - ml - mr, ih = Hh - mt - mb, i, j;
+    var clipped = segs.map(function (sg) {
+      return { cls: sg.cls, pts: sg.pts.filter(function (p) { return p[1] <= yTop; }) };
+    });
+    var xmax = 1;
+    clipped.forEach(function (sg) { sg.pts.forEach(function (p) { if (p[0] > xmax) xmax = p[0]; }); });
+    marks.forEach(function (m) { if (m.alt <= yTop && m.speed > xmax) xmax = m.speed; });
+    xmax *= 1.1;
+    var X = function (v) { return ml + (v / xmax) * iw; };
+    var Y = function (h) {
+      if (logY) return mt + ih - (Math.log10(Math.max(h, 1)) / Math.log10(yTop)) * ih;
+      return mt + ih - (Math.max(h, 0) / yTop) * ih;
+    };
+    var s = "";
+    (logY ? logTicks(yTop) : niceTicks(yTop, 5)).forEach(function (t) {
+      s += '<line class="gl" x1="' + ml + '" x2="' + (W - mr) + '" y1="' + Y(t) + '" y2="' + Y(t) + '"/>';
+      s += '<text x="' + (ml - 8) + '" y="' + (Y(t) + 4) + '" text-anchor="end">' + fmt(t, 0) + '</text>';
+    });
+    niceTicks(xmax, 6).forEach(function (t) {
+      s += '<line class="gl" x1="' + X(t) + '" x2="' + X(t) + '" y1="' + mt + '" y2="' + (mt + ih) + '"/>';
+      s += '<text x="' + X(t) + '" y="' + (mt + ih + 16) + '" text-anchor="middle">' + fmt(t, 0) + '</text>';
+    });
+    s += '<line class="ground" x1="' + ml + '" x2="' + (W - mr) + '" y1="' + Y(0) + '" y2="' + Y(0) + '"/>';
+    s += '<line class="axis" x1="' + ml + '" x2="' + ml + '" y1="' + mt + '" y2="' + (mt + ih) + '"/>';
+    s += '<text x="' + (ml + iw / 2) + '" y="' + (Hh - 6) + '" text-anchor="middle">Velocity (m/s)</text>';
+    s += '<text transform="translate(13 ' + (mt + ih / 2) + ') rotate(-90)" text-anchor="middle">' + (logY ? "Radar Altitude (m, log scale)" : "Radar Altitude (m)") + '</text>';
+
+    var shown = marks.filter(function (m) { return m.alt <= yTop; });
+    var usedY = [];
+    shown.forEach(function (m) {
+      var y = Y(m.alt), cls = m.kind === "burn" ? "mark" : "markstop";
+      s += '<line class="' + cls + '" x1="' + ml + '" x2="' + (W - mr) + '" y1="' + y + '" y2="' + y + '"/>';
+    });
+    clipped.forEach(function (sg) {
+      if (sg.pts.length < 2) return;
+      var d = "";
+      for (j = 0; j < sg.pts.length; j++) d += (j ? "L" : "M") + X(sg.pts[j][0]).toFixed(1) + " " + Y(sg.pts[j][1]).toFixed(1);
+      s += '<path class="' + sg.cls + '" d="' + d + '"/>';
+    });
+    shown.forEach(function (m) {
+      var x = X(m.speed), y = Y(m.alt);
+      s += '<circle class="' + (m.kind === "burn" ? "dot" : "dotstop") + '" cx="' + x + '" cy="' + y + '" r="5.5"/>';
+      var clash = usedY.some(function (u) { return Math.abs(u - y) < 15; });
+      if (!clash) {
+        usedY.push(y);
+        s += '<text class="tag" x="' + (W - mr - 4) + '" y="' + (y - 6) + '" text-anchor="end">' + m.text + '</text>';
+      }
+    });
+    svg.innerHTML = s;
+  }
+
+  /* ---------- UI ---------- */
+  function card(label, big, unit, sub, burn) {
+    return '<div class="card' + (burn ? ' burn' : '') + '"><div class="lbl">' + label + '</div><div class="big">' + big +
+      (unit ? '<small>' + unit + '</small>' : '') + '</div>' + (sub ? '<div class="sub">' + sub + '</div>' : '') + '</div>';
+  }
+  function stat(label, value) { return '<div class="stat"><dt>' + label + '</dt><dd>' + value + '</dd></div>'; }
+
+  function update() {
+    var adv = $("adv").checked;
+    $("basic-box").classList.toggle("hidden", adv);
+    $("adv-box").classList.toggle("hidden", !adv);
+    var thrust = parseFloat($("thr-n").value), mass = parseFloat($("mass-n").value), isp = parseFloat($("isp-n").value);
+    var twr = adv ? thrust / (mass * G) : parseFloat($("twr-n").value), altKm = parseFloat($("alt-n").value);
+    var vo = parseFloat($("spd-n").value), H = parseFloat($("h-n").value), v0 = parseFloat($("v-n").value);
+    var notice = $("notice"), cards = $("cards");
+    if (!(twr > 0 && altKm > 0 && vo > 0 && H >= 0 && v0 >= 0 && (!adv || isp > 0))) {
+      notice.textContent = "Enter positive values. Safety stop height and velocity at the stop can be 0.";
+      notice.className = "notice show"; return;
+    }
+    var kBurn = adv ? twr * G / (isp * 9.80665) : 0;
+    var res = compute(twr, altKm * 1000, vo, H, v0, kBurn);
+    if (res.err) {
+      notice.textContent = res.err; notice.className = "notice show";
+      cards.innerHTML = ""; $("stats").innerHTML = "";
+      $("chart-full").innerHTML = ""; $("chart-zoom").innerHTML = ""; return;
+    }
+    notice.className = "notice";
+
+    var st = "", hOrb = altKm * 1000, zoomTop;
+    if (res.mode === "single") {
+      cards.innerHTML =
+        card("Burn 1: Landing", fmt(res.ign1.alt, 0), "m", "Velocity " + fmt(res.ign1.speed, 0) + " m/s", true) +
+        card("Burn Time", fmt(res.t1, 1), "s", "Δv " + fmt(res.dvTotal, 0) + " m/s");
+      st += '<div class="grp">Burn 1: Landing</div>';
+      st += stat("Radar Altitude", fmt(res.ign1.alt, 0) + " m");
+      st += stat("Velocity", fmt(res.ign1.speed, 1) + " m/s");
+      st += stat("Burn Time", fmt(res.t1, 1) + " s");
+      st += stat("Δv", fmt(res.dvTotal, 1) + " m/s");
+      if (adv) {
+        st += stat("Mass", fmt(mass, 2) + " t to " + fmt(mass * res.fEnd1, 2) + " t");
+        st += stat("TWR", fmt(twr, 2) + " to " + fmt(twr / res.fEnd1, 2));
+      }
+      zoomTop = res.ign1.alt * 1.35;
+    } else {
+      cards.innerHTML =
+        card("Burn 1: Safety Stop", fmt(res.ign1.alt, 0), "m", "Velocity " + fmt(res.ign1.speed, 0) + " m/s", true) +
+        card("Burn 2: Landing", fmt(res.ign2.alt, 0), "m", "Velocity " + fmt(res.ign2.speed, 0) + " m/s", true) +
+        card("Extra Δv", res.extra === null ? "–" : fmt(res.extra, 1), "m/s", "vs no safety stop");
+      st += '<div class="grp">Burn 1: Safety Stop</div>';
+      st += stat("Radar Altitude", fmt(res.ign1.alt, 0) + " m");
+      st += stat("Velocity", fmt(res.ign1.speed, 1) + " m/s");
+      st += stat("Burn Time", fmt(res.t1, 1) + " s");
+      if (adv) {
+        st += stat("Mass", fmt(mass, 2) + " t to " + fmt(mass * res.fEnd1, 2) + " t");
+        st += stat("TWR", fmt(twr, 2) + " to " + fmt(twr / res.fEnd1, 2));
+      }
+      st += '<div class="grp">Burn 2: Landing</div>';
+      st += stat("Radar Altitude", fmt(res.ign2.alt, 0) + " m");
+      st += stat("Velocity", fmt(res.ign2.speed, 1) + " m/s");
+      st += stat("Burn Time", fmt(res.t2, 1) + " s");
+      if (adv) {
+        st += stat("Mass", fmt(mass * res.fEnd1, 2) + " t to " + fmt(mass * res.fEnd2, 2) + " t");
+        st += stat("TWR", fmt(twr / res.fEnd1, 2) + " to " + fmt(twr / res.fEnd2, 2));
+      }
+      st += '<div class="grp">Total</div>';
+      st += stat("Burn Time", fmt(res.t1 + res.t2, 1) + " s");
+      st += stat("Δv", fmt(res.dvTotal, 1) + " m/s");
+      if (res.dvTrue !== null) st += stat("Δv, No Safety Stop", fmt(res.dvTrue, 1) + " m/s");
+      zoomTop = Math.max(res.ign2.alt, res.stop.alt) * 1.3;
+    }
+    if (adv) {
+      var mdot = thrust * 1000 / (isp * 9.80665);
+      st += '<div class="grp">Fuel</div>';
+      st += stat("Fuel Rate", fmt(mdot, 2) + " kg/s");
+      if (res.mode === "single") {
+        st += stat("Fuel Used", fmt(mdot * res.t1, 0) + " kg");
+      } else {
+        st += stat("Burn 1", fmt(mdot * res.t1, 0) + " kg");
+        st += stat("Burn 2", fmt(mdot * res.t2, 0) + " kg");
+        st += stat("Total", fmt(mdot * (res.t1 + res.t2), 0) + " kg");
+        if (res.dvTrue !== null) st += stat("Extra vs No Safety Stop", fmt(mdot * (res.t1 + res.t2 - res.tTrue), 0) + " kg");
+      }
+    }
+    $("stats").innerHTML = st;
+
+    zoomTop = Math.min(Math.max(zoomTop, 100), hOrb * 1.04);
+    $("zoom-title").textContent = "Final Approach (below " + fmt(zoomTop, 0) + " m)";
+    drawChart($("chart-full"), res.segs, res.marks, hOrb * 1.04, scaleLog);
+    drawChart($("chart-zoom"), res.segs, res.marks, zoomTop);
+  }
+
+  update();
+})();
+</script>
+</body>
+</html>
