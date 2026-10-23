@@ -1,0 +1,4 @@
+metric,unit,adams_total,mamdani_to_date_total,mamdani_annualized_total,confidence,completion_semantics,notes
+Protected bike lane,unknown,,,,unavailable,issued,Not pulled yet — run pull_permits.py and classify.py.
+Daylighted intersections,unknown,,,,unavailable,issued,Not pulled yet — run pull_permits.py and classify.py.
+Pedestrian plazas / Open Streets,plazas,,,,unavailable,in_place_as_of_extraction,Not pulled yet — run pull_plazas.py.
