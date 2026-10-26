@@ -1,4 +1,5 @@
-import { join, resolve } from "node:path";
+import { copyFileSync, mkdirSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
 import {
 	buildPandocCommand,
 	buildTypstCommand,
@@ -10,6 +11,7 @@ import {
 
 const PAPER_DIR = resolve(import.meta.dirname, "..");
 const OUTPUT_PDF = join(PAPER_DIR, "build", "rrf-coverage-normalization.pdf");
+const PUBLIC_PDF = resolve(PAPER_DIR, "../../public/papers/rrf-coverage-normalization.pdf");
 
 export function createRrfPaperPdfPaths(): PaperPdfPaths {
 	return createPaperPdfPaths({ paperDir: PAPER_DIR, outputPdf: OUTPUT_PDF, typstSourceName: "rrf-coverage-normalization.typ" });
@@ -19,6 +21,8 @@ export { buildPandocCommand, buildTypstCommand, listPaperSections };
 
 export function compileRrfCoverageNormalizationPaper(): void {
 	compilePaper({ paperDir: PAPER_DIR, outputPdf: OUTPUT_PDF, typstSourceName: "rrf-coverage-normalization.typ", cslName: "ieee.csl" });
+	mkdirSync(dirname(PUBLIC_PDF), { recursive: true });
+	copyFileSync(OUTPUT_PDF, PUBLIC_PDF);
 }
 
 if (import.meta.main) {
