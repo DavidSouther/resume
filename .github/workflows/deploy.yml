@@ -34,8 +34,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Provision Node from mise.toml (node 24), matching local dev — not
-      # actions/setup-node, per the mise-node decision.
+      # Provision Node and the paper compiler tools from mise.toml.
       - uses: jdx/mise-action@v2
 
       - name: Install dependencies
@@ -73,6 +72,9 @@ jobs:
         env:
           CENSUS_API_KEY: ${{ secrets.CENSUS_API_KEY }}
         run: uv run pages/nyc_polling/nyc_tracts_geojson.py
+
+      - name: Build RRF preprint
+        run: node posts/rrf_coverage_normalization/scripts/compile-rrf-coverage-normalization.ts
 
       # prebuild (npm run check: tsc + biome) runs first via the npm lifecycle,
       # then css:bundle + sitemap + the jiffies SSG write the site into docs/.

@@ -18,6 +18,7 @@
   title: none,
   authors: (),
   date: none,
+  disclaimer: none,
   abstract-title: none,
   abstract: none,
   margin: (x: 0.68in, y: 0.7in),
@@ -67,6 +68,7 @@
         ]))
       }
       #if date != none { align(center)[#block(inset: 0.45em)[#date]] }
+      #if disclaimer != none { align(center)[#text(size: 9pt, style: "italic")[#disclaimer]] }
       #if abstract != none {
         block(inset: (x: 0.4in, y: 0.55em))[#text(weight: "bold")[#abstract-title] #h(0.75em) #abstract]
       }
@@ -92,6 +94,9 @@ $endfor$
 $endif$
 $if(date)$
   date: [$date$],
+$endif$
+$if(disclaimer)$
+  disclaimer: [$disclaimer$],
 $endif$
 $if(lang)$
   lang: "$lang$",
