@@ -1,0 +1,6 @@
+emp_id,emp_name,dept_id,dept_name,office,projects,skills,languages
+1,Ana,D1,Engineering,Brooklyn,"P1 Apollo (12h), P2 Zephyr (8h)","SQL, Rust","English, Spanish"
+2,Ben,D1,Engineering,Brooklyn,P1 Apollo (20h),SQL,English
+3,Cy,D2,Operations,Queens,P2 Zephyr (15h),Excel,"English, Hindi"
+4,Di,D2,Operations,Queens,P1 Apollo (5h),Excel,English
+5,Eli,,,,,Rust,Spanish
