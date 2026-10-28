@@ -1,0 +1,29 @@
+#!/bin/bash
+# Start a privileged debian:stable-slim container with ../ mounted at /work, and run in
+# /work/bccontainer, where `cargo build` and `target/debug/bcdocker run ...` work without sudo.
+#
+#     ./linux                 # interactive shell
+#     ./linux cargo build     # run one command instead
+#
+# Container roots are built here on the host, which has Docker, because the dev container has
+# no Docker or crane. They land in ./containers, which the mount shares. The rustup and cargo
+# directories are named volumes, so the toolchain and crate downloads survive between runs.
+
+set -euo pipefail
+cd "$(dirname "$0")"
+
+image=bcdocker-dev
+docker build -t "$image" .
+
+[[ -d containers/tinysys ]] || scripts/mkrootfs.sh tinysys debian:stable-slim
+if [[ ! -d containers/psstat ]]; then
+  docker build -t debian-ps ../psstat
+  scripts/mkrootfs.sh psstat debian-ps
+fi
+
+# --privileged: clone with new namespaces and mounting /proc need CAP_SYS_ADMIN. The shell is
+# already root, so bcdocker runs without sudo.
+exec docker run --rm -it --privileged \
+  -v "$PWD/..":/work -w /work/bccontainer \
+  -v bcdocker-rustup:/opt/rustup -v bcdocker-cargo:/opt/cargo \
+  "$image" "${@:-/bin/bash}"
