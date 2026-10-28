@@ -24,7 +24,7 @@
 //!    which never creates threads.
 //! A1 (ASSUMPTION, measured and tested, not proved): the child's stack use stays below
 //!    `stack::MIN`
-//!    The basis is stated in E5 in `spawn`, and `tests/stack.sh` repeats the measurement.
+//!    The basis is stated in E5 in `spawn`, and `scripts/stack.sh` repeats the measurement.
 
 #[cfg(not(target_env = "gnu"))]
 compile_error!("the clone audit in this module covers glibc only");
@@ -179,12 +179,12 @@ pub fn spawn(run: &Run) -> Result<Pid, Error> {
     //         arguments plus a 100 KB environment it is the same in debug and one 4 KiB page
     //         (the measurement's granularity) deeper in release. `stack::MIN` is 64x the debug
     //         figure, the default 512x;
-    //     (c) `tests/stack.sh` repeats (b) on any machine and fails above 64 KiB (hard-coded
+    //     (c) `scripts/stack.sh` repeats (b) on any machine and fails above 64 KiB (hard-coded
     //         there as `stack::MIN / 16`), four times the debug figure, so growth fails a test
     //         long before it nears the floor. On a floor-sized stack it also runs the
     //         failing-exec path, which formats a long path into an error, and the `execvp`
     //         retry of (a) with `cli::MAX_ARGS` arguments.
-    //     Not shown: other architectures or libc versions (run `tests/stack.sh` on each target
+    //     Not shown: other architectures or libc versions (run `scripts/stack.sh` on each target
     //     and after toolchain upgrades), and a proof for every path. Where the stack lies is
     //     glibc malloc behaviour, not a guarantee: a block of 1 MiB or more gets its own
     //     `mmap` unless freeing a block that large has raised malloc's mmap threshold, and

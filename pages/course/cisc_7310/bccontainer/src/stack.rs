@@ -5,7 +5,7 @@ use std::fmt;
 use nix::sys::resource::{getrlimit, Resource};
 
 /// The smallest accepted stack: the floor A1 in `clone.rs` depends on; lowering it weakens that
-/// argument. `tests/stack.sh` hard-codes `MIN / 16` (64 KiB) as the depth it fails above, and
+/// argument. `scripts/stack.sh` hard-codes `MIN / 16` (64 KiB) as the depth it fails above, and
 /// E5 in `clone.rs` and `cli::MAX_ARGS` quote these figures: change them with this constant.
 pub const MIN: usize = 1 << 20;
 /// Used unless `--stack-size` says otherwise.

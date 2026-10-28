@@ -8,7 +8,7 @@
 # It fails above MIN / 16 = 64 KiB, so growth shows up here long before it nears the floor.
 # Run it on every platform bcdocker targets:
 #
-#     cargo build && sudo tests/stack.sh
+#     cargo build && sudo scripts/stack.sh
 #
 # BCDOCKER overrides the binary under test. The default is the debug build, which uses more
 # stack; set BCDOCKER to check the release build as well.
@@ -23,7 +23,7 @@ failures=0
 
 fail() { echo "FAIL: $*" >&2; failures=$((failures + 1)); }
 
-[[ $(id -u) == 0 ]] || { echo "bcdocker needs root: sudo tests/stack.sh" >&2; exit 1; }
+[[ $(id -u) == 0 ]] || { echo "bcdocker needs root: sudo scripts/stack.sh" >&2; exit 1; }
 [[ -x $bcdocker ]] || { echo "no binary at $bcdocker: run cargo build first" >&2; exit 1; }
 mkdir -p "$work"
 if [[ ! -d $work/containers/bctest ]]; then

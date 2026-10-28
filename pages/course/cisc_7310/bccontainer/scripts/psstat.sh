@@ -7,7 +7,7 @@
 #
 # Run on a Linux host with Docker or crane:
 #
-#     cargo build && sudo tests/psstat.sh
+#     cargo build && sudo scripts/psstat.sh
 #
 # BCDOCKER overrides the binary under test.
 
@@ -24,7 +24,7 @@ has() { [[ $3 == *"$2"* ]] || fail "$1: missing '$2' in: $3"; }
 # psstat <args...>: psstat.sh in the container, from the scratch working directory.
 psstat() { (cd "$work" && "$bcdocker" run bctest /usr/local/bin/psstat.sh "$@" </dev/null); }
 
-[[ $(id -u) == 0 ]] || { echo "bcdocker needs root: sudo tests/psstat.sh" >&2; exit 1; }
+[[ $(id -u) == 0 ]] || { echo "bcdocker needs root: sudo scripts/psstat.sh" >&2; exit 1; }
 [[ -x $bcdocker ]] || { echo "no binary at $bcdocker: run cargo build first" >&2; exit 1; }
 
 mkdir -p "$work"

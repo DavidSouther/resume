@@ -2,7 +2,7 @@
 # Isolation checks beyond run.sh: /dev, descriptors, PATH, orphan reaping, and parent death.
 # Run on a Linux host with Docker or crane, after `cargo build`:
 #
-#     sudo tests/hardening.sh
+#     sudo scripts/hardening.sh
 #
 # Uses target/test-work/containers/bctest, building it if absent.
 
@@ -30,7 +30,7 @@ child_of() {
 # run <container> <app> [args...]: bcdocker from the scratch working directory.
 run() { (cd "$work" && "$bcdocker" run "$@" </dev/null); }
 
-[[ $(id -u) == 0 ]] || { echo "bcdocker needs root: sudo tests/hardening.sh" >&2; exit 1; }
+[[ $(id -u) == 0 ]] || { echo "bcdocker needs root: sudo scripts/hardening.sh" >&2; exit 1; }
 [[ -x $bcdocker ]] || { echo "no binary at $bcdocker: run cargo build first" >&2; exit 1; }
 mkdir -p "$work"
 if [[ ! -d $work/containers/bctest ]]; then

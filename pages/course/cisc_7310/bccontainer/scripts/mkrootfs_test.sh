@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Tests for scripts/mkrootfs.sh. docker and crane are stubs, so no network is used.
 #
-#     tests/mkrootfs_test.sh
+#     scripts/mkrootfs_test.sh
 
 set -u
 

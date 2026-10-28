@@ -7,7 +7,7 @@
 #
 # Run on a Linux host with Docker or crane:
 #
-#     cargo build && sudo tests/run.sh
+#     cargo build && sudo scripts/run.sh
 #
 # BCDOCKER overrides the binary under test.
 
@@ -24,7 +24,7 @@ hostname_now() { cat /proc/sys/kernel/hostname; }
 # run <container> <app> [args...]: bcdocker from the scratch working directory.
 run() { (cd "$work" && "$bcdocker" run "$@" </dev/null); }
 
-[[ $(id -u) == 0 ]] || { echo "bcdocker needs root: sudo tests/run.sh" >&2; exit 1; }
+[[ $(id -u) == 0 ]] || { echo "bcdocker needs root: sudo scripts/run.sh" >&2; exit 1; }
 [[ -x $bcdocker ]] || { echo "no binary at $bcdocker: run cargo build first" >&2; exit 1; }
 
 # 1. Build a container root from bookworm-slim, in a scratch working directory.
