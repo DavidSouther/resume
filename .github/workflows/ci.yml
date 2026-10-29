@@ -40,7 +40,10 @@ jobs:
       - uses: ./.github/actions/build-site
 
       # posttest runs the check script again, so this also covers lint.
+      # The build above already wrote docs/, so the test run skips its own build.
       - name: Test
+        env:
+          SKIP_SITE_BUILD: "1"
         run: npm test
 
       - uses: actions/upload-artifact@v4
