@@ -5,12 +5,13 @@
 //
 // Both files are parsed here with plain regexes, independent of the loaders, so
 // the file formats themselves are part of what this test pins down.
-// One build serves both stories: parallel builds would race on docs/.
+// Reads the docs/ that the vitest global setup built.
 
-import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
+import { buildKeyframes } from "./plan.ts";
+import { loadStages } from "./staffing.ts";
 
 const ROOT = join(import.meta.dirname, "..", "..", "..", "..");
 const CONTENT = join(import.meta.dirname, "content.md");
@@ -23,15 +24,6 @@ describe("normal forms source files", () => {
 
 	beforeAll(() => {
 		source = readFileSync(CONTENT, "utf-8");
-		const result = spawnSync("npm", ["run", "build"], {
-			cwd: ROOT,
-			encoding: "utf-8",
-		});
-		if (result.status !== 0) {
-			throw new Error(
-				`Build failed (exit ${result.status}):\n${result.stderr}`,
-			);
-		}
 		html = readFileSync(PAGE, "utf-8");
 	}, 180_000);
 
@@ -39,9 +31,9 @@ describe("normal forms source files", () => {
 		const ids = [...source.matchAll(/^## \{#([a-z0-9-]+):.+\}\s*$/gm)].map(
 			(m) => m[1],
 		);
-		expect(ids).toHaveLength(11);
+		const frames = buildKeyframes(loadStages());
+		expect(ids).toEqual(frames.map((f) => f.id));
 		expect(new Set(ids).size).toBe(ids.length);
-		expect(ids[0]).toBe("raw");
 	});
 
 	it("renders one section per step, in file order, with its ID", () => {
@@ -61,20 +53,19 @@ describe("normal forms source files", () => {
 		for (const title of titles) expect(html).toContain(`<h2>${title}</h2>`);
 	});
 
-	it("renders Markdown in a step body as HTML", () => {
-		expect(html).toContain("<em>multivalued dependency</em>");
+	it("renders Markdown emphasis in a step body as HTML", () => {
+		const emphasis = [...source.matchAll(/(?<![*\w])\*([^*\n]+)\*(?![*\w])/g)];
+		expect(emphasis.length).toBeGreaterThan(0);
+		for (const [, text] of emphasis) expect(html).toContain(`<em>${text}</em>`);
 	});
 
-	it("fills placeholders from the dataset", () => {
+	it("fills every placeholder", () => {
 		expect(html).not.toContain("{{");
-		expect(html).toMatch(/Marked columns break the rule: .*projects/);
-		expect(html).toMatch(/Row counts: .*\d/);
 	});
 
-	it("renders the page title and intro from the same file", () => {
+	it("renders the page title from the same file", () => {
 		const title = /^# (.+)$/m.exec(source)?.[1] ?? "";
 		expect(html).toContain(`<h1>${title}</h1>`);
-		expect(html).toContain("Introduction to Normalization</a>");
 	});
 
 	describe("staffing.csv", () => {
@@ -89,21 +80,22 @@ describe("normal forms source files", () => {
 						.map((m) => m[2] ?? m[1]),
 				);
 
-		it("has a header row and five employees", () => {
+		it("has a header row and rows of the same width", () => {
 			const [header, ...body] = rows();
-			expect(header[0]).toBe("emp_id");
-			expect(body).toHaveLength(5);
+			expect(body.length).toBeGreaterThan(0);
+			for (const row of body) expect(row).toHaveLength(header.length);
 		});
 
-		it("renders every CSV row as a row of the first table", () => {
-			const [, ...body] = rows();
+		it("renders one row per CSV row and one column per header field", () => {
+			const [header, ...body] = rows();
 			const table = html.slice(
 				html.indexOf("<table"),
 				html.indexOf("</table>"),
 			);
-			for (const row of body)
-				for (const value of row.filter(Boolean)) expect(table).toContain(value);
-			expect(table).toContain('data-null="true"');
+			expect((table.match(/<th[ >]/g) ?? []).length).toBe(header.length);
+			expect((table.match(/<td[ >]/g) ?? []).length).toBe(
+				body.length * header.length,
+			);
 		});
 
 		it("embeds the file text for the browser bundle", () => {

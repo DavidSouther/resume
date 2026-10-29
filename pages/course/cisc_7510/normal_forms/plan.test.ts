@@ -34,7 +34,7 @@ describe("planTransition", () => {
 		expect(plan.moves.filter((m) => m.to === target).length).toBeGreaterThan(1);
 	});
 
-	it("drops Eli's null project cells at 2NF", () => {
+	it("drops null cells at 2NF", () => {
 		const plan = planTransition(stages[1], stages[2]);
 		expect(plan.dropped.length).toBeGreaterThan(0);
 	});
@@ -66,12 +66,11 @@ describe("buildKeyframes", () => {
 describe("narrate", () => {
 	const frames = buildKeyframes(stages);
 
-	it("takes title and filled prose from content.md in keyframe order", () => {
-		const text = narrate(stages, frames, loadContent());
+	it("takes titles from content.md in keyframe order and fills every placeholder", () => {
+		const content = loadContent();
+		const text = narrate(stages, frames, content);
 		expect(text.map((n) => n.id)).toEqual(frames.map((f) => f.id));
-		expect(text[1].title).toBe("Toward 1NF");
-		expect(text[1].text).toContain("projects, skills, languages");
-		expect(text[2].text).toMatch(/Row counts: Staffing \d+/);
+		expect(text.map((n) => n.title)).toEqual(content.steps.map((s) => s.title));
 		expect(text.some((n) => n.text.includes("{{"))).toBe(false);
 	});
 

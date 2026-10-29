@@ -1,25 +1,12 @@
-import { spawnSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { beforeAll, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { JIFFIES_CSS_BUNDLE as UNPKG_JIFFIES_CSS } from "./lib/jiffies-css-bundle.ts";
 import { getPostPaths } from "./lib/posts.ts";
 
 const ROOT = join(import.meta.dirname, "..");
 
 describe("Next.js → Jiffies migration", () => {
-	beforeAll(() => {
-		const result = spawnSync("npm", ["run", "build"], {
-			cwd: ROOT,
-			encoding: "utf-8",
-		});
-		if (result.status !== 0) {
-			throw new Error(
-				`Build failed (exit ${result.status}):\n${result.stderr}`,
-			);
-		}
-	}, 120_000);
-
 	it("removes React and Next.js from package.json", () => {
 		const pkg = JSON.parse(readFileSync(join(ROOT, "package.json"), "utf-8"));
 		const all = { ...pkg.dependencies, ...pkg.devDependencies };

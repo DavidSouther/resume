@@ -6,7 +6,6 @@
 // actual page modules, deck data, and client bundling together rather than
 // each in isolation.
 
-import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
@@ -24,15 +23,6 @@ describe("flashcards: SSG pipeline produces the hub and per-deck pages", () => {
 	let rustHtml: string;
 
 	beforeAll(() => {
-		const result = spawnSync("npm", ["run", "build"], {
-			cwd: ROOT,
-			encoding: "utf-8",
-		});
-		if (result.status !== 0) {
-			throw new Error(
-				`Build failed (exit ${result.status}):\n${result.stderr}`,
-			);
-		}
 		hubHtml = readFileSync(HUB_PAGE, "utf-8");
 		rustHtml = readFileSync(RUST_PAGE, "utf-8");
 	}, 120_000);

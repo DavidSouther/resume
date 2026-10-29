@@ -6,7 +6,8 @@
 			"src/**/*.tsx",
 			"pages/**/*.ts",
 			"scripts/**/*.ts",
-			"vitest.config.ts"
+			"vitest.config.ts",
+			"!**/containers"
 		]
 	},
 	"formatter": {

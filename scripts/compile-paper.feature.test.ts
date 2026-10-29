@@ -21,13 +21,6 @@ const rrfOutput = resolve(
 	"build",
 	"rrf-coverage-normalization.pdf",
 );
-const manifoldCompiler = resolve(
-	repositoryRoot,
-	"posts",
-	"llm_manifold",
-	"scripts",
-	"compile-manifold-paper.ts",
-);
 const rrfCompiler = resolve(
 	rrfPaperDir,
 	"scripts",
@@ -41,7 +34,7 @@ afterEach(() => {
 });
 
 describe("shared paper compiler feature", () => {
-	it("routes both stable wrappers through the shared compiler and writes the RRF PDF", () => {
+	it("routes the RRF wrapper through the shared compiler and writes its PDF", () => {
 		const logDirectory = mkdtempSync(
 			resolve(tmpdir(), "compile-paper-feature-"),
 		);
@@ -53,33 +46,17 @@ describe("shared paper compiler feature", () => {
 			PAPER_COMPILER_INVOCATION_LOG: invocationLog,
 		};
 
-		const manifold = spawnSync(process.execPath, [manifoldCompiler], {
-			cwd: repositoryRoot,
-			env: environment,
-		});
 		const rrf = spawnSync(process.execPath, [rrfCompiler], {
 			cwd: repositoryRoot,
 			env: environment,
 		});
 
-		expect(manifold.status).toBe(0);
 		expect(rrf.status).toBe(0);
 		const invocations = readFileSync(invocationLog, "utf8")
 			.trim()
 			.split("\n")
 			.map((line) => JSON.parse(line) as { paperDir: string });
 		expect(invocations).toEqual([
-			{
-				paperDir: resolve(repositoryRoot, "posts", "llm_manifold"),
-				outputPdf: resolve(
-					repositoryRoot,
-					"posts",
-					"llm_manifold",
-					"build",
-					"llm_manifold",
-					"manifold-paper.pdf",
-				),
-			},
 			{ paperDir: rrfPaperDir, outputPdf: rrfOutput },
 		]);
 		expect(existsSync(rrfOutput)).toBe(true);

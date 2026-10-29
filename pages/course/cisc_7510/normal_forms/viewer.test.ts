@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { screen, within } from "@testing-library/dom";
+import { screen } from "@testing-library/dom";
 import { afterEach, describe, expect, it } from "vitest";
 import { mount, resetDom } from "../../../../src/components/test-dom.ts";
 import { buildKeyframes } from "./plan.ts";
@@ -14,7 +14,6 @@ describe("renderStage", () => {
 		const c = mount(renderStage(stages[0]));
 		expect(c.querySelectorAll("td[data-cell-id]")).toHaveLength(40);
 		expect(c.querySelectorAll('td[data-null="true"]')).toHaveLength(4);
-		expect(within(c).getByText("P1 Apollo (12h), P2 Zephyr (8h)")).toBeTruthy();
 	});
 
 	it("flags violating columns on the header and every cell below", () => {

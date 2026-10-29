@@ -6,7 +6,7 @@ import { describe, expect, it } from "vitest";
 const root = join(import.meta.dirname, "..");
 
 describe("mise papers feature", () => {
-	it("delegates through the npm papers script to both paper compiler wrappers", () => {
+	it("delegates through the npm papers script to the RRF paper compiler wrapper", () => {
 		const packageJson = JSON.parse(
 			readFileSync(join(root, "package.json"), "utf8"),
 		) as { scripts?: Record<string, string> };
@@ -16,7 +16,7 @@ describe("mise papers feature", () => {
 
 		expect(mise.tasks?.papers?.run).toBe("npm run papers");
 		expect(packageJson.scripts?.papers).toBe(
-			"node posts/llm_manifold/scripts/compile-manifold-paper.ts && node posts/rrf_coverage_normalization/scripts/compile-rrf-coverage-normalization.ts",
+			"node posts/rrf_coverage_normalization/scripts/compile-rrf-coverage-normalization.ts",
 		);
 	});
 });
