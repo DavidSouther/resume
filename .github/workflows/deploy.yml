@@ -14,6 +14,7 @@ on:
 # Least privilege for the Pages deployment: read the repo, write the Pages
 # artifact, and mint the OIDC token deploy-pages exchanges with Pages.
 permissions:
+  actions: read
   contents: read
   pages: write
   id-token: write
@@ -34,52 +35,49 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Provision Node and the paper compiler tools from mise.toml.
-      - uses: jdx/mise-action@v2
+      - name: Compute tree hash
+        id: tree
+        run: echo "sha=$(git rev-parse 'HEAD^{tree}')" >> "$GITHUB_OUTPUT"
 
-      - name: Install dependencies
-        run: npm ci
-
-      # The NYC polling map's GeoJSON (public/nyc_polling/*.geojson) is generated
-      # here, not committed. pdftotext (poppler) reads the BOE assignment PDFs and
-      # uv runs the PEP 723 scripts.
-      - name: Install NYC polling tools
-        run: sudo apt-get update && sudo apt-get install -y poppler-utils
-
-      - uses: astral-sh/setup-uv@v6
-
-      - name: Get the month for the source cache key
-        id: month
-        run: echo "month=$(date -u +%Y-%m)" >> "$GITHUB_OUTPUT"
-
-      # Source downloads (Census tables, tract boundaries, BOE PDFs, election
-      # districts), about 18 MB. A new month saves a fresh entry that starts from
-      # last month's, and the script re-downloads anything older than 30 days.
-      # Bump v1 to v2 to throw the cache away, for example when BOE posts a
-      # revised poll site list. Geocoder answers are not in here: they are
-      # committed in pages/nyc_polling/data/poll_site_locations.json, so no Google
-      # key is needed. A poll site that is not in that file fails the build.
-      - name: Restore NYC polling source cache
-        uses: actions/cache@v4
-        with:
-          path: pages/nyc_polling/.cache
-          key: nyc-polling-sources-v1-${{ steps.month.outputs.month }}
-          restore-keys: nyc-polling-sources-v1-
-
-      # Needs the CENSUS_API_KEY repository secret only when the Census tables
-      # are not in the cache.
-      - name: Build NYC polling map data
+      # ci.yml uploads docs/ as site-<tree hash> when a pull request builds green.
+      # If main's tree equals that tree, no other change merged in the interim and
+      # the approved build can ship as is. Artifacts older than MAX_AGE_HOURS are
+      # ignored so a reused build cannot drift far from the current nyc-polling-data
+# release, which the tree hash does not cover.
+      # Only for push events. A manual or census-triggered dispatch exists to
+      # publish data that changed outside the tree, so it always rebuilds.
+      - name: Look for an approved build
+        id: reuse
+        if: github.event_name == 'push'
         env:
-          CENSUS_API_KEY: ${{ secrets.CENSUS_API_KEY }}
-        run: uv run pages/nyc_polling/nyc_tracts_geojson.py
+          GH_TOKEN: ${{ github.token }}
+          TREE: ${{ steps.tree.outputs.sha }}
+          MAX_AGE_HOURS: 72
+        run: |
+          cutoff=$(date -u -d "$MAX_AGE_HOURS hours ago" +%Y-%m-%dT%H:%M:%SZ)
+          found=$(gh api "repos/$GITHUB_REPOSITORY/actions/artifacts?name=site-$TREE&per_page=10" \
+            --jq "[.artifacts[] | select(.expired == false and .created_at > \"$cutoff\")] | first | .workflow_run.id // empty")
+          if [ -n "$found" ]; then
+            echo "hit=true" >> "$GITHUB_OUTPUT"
+            echo "run_id=$found" >> "$GITHUB_OUTPUT"
+            echo "Reusing build from run $found"
+          else
+            echo "hit=false" >> "$GITHUB_OUTPUT"
+            echo "No approved build for tree $TREE, building"
+          fi
 
-      - name: Build RRF preprint
-        run: node posts/rrf_coverage_normalization/scripts/compile-rrf-coverage-normalization.ts
+      - name: Download approved build
+        if: steps.reuse.outputs.hit == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: site-${{ steps.tree.outputs.sha }}
+          path: docs
+          run-id: ${{ steps.reuse.outputs.run_id }}
+          github-token: ${{ github.token }}
 
-      # prebuild (npm run check: tsc + biome) runs first via the npm lifecycle,
-      # then css:bundle + sitemap + the jiffies SSG write the site into docs/.
       - name: Build site
-        run: npm run build
+        if: steps.reuse.outputs.hit != 'true'
+        uses: ./.github/actions/build-site
 
       - uses: actions/configure-pages@v5
 

@@ -1,0 +1,53 @@
+name: CI
+
+# Builds the site and runs the tests on every pull request. Merging is blocked
+# only when branch protection requires this check: Settings -> Branches (or
+# Rules -> Rulesets) -> require status check "build" on main.
+#
+# The NYC polling GeoJSON is built by census.yml and downloaded here from the
+# nyc-polling-data release, so this check never needs the Census key.
+#
+# On success the built docs/ is uploaded as artifact site-<tree hash>. After a
+# squash merge the commit SHA changes but the tree does not, as long as no other
+# change landed on main first, so deploy.yml finds this artifact by tree hash
+# and publishes it without rebuilding. A different tree means a miss and a
+# normal rebuild. The Actions cache cannot do this job because entries saved by
+# a pull request are not readable from main.
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      # A pull_request checkout is the merge of the head into the base, which is
+      # the tree main will have after a squash merge.
+      - uses: actions/checkout@v4
+
+      - name: Compute tree hash
+        id: tree
+        run: echo "sha=$(git rev-parse 'HEAD^{tree}')" >> "$GITHUB_OUTPUT"
+
+      - uses: ./.github/actions/build-site
+
+      # posttest runs the check script again, so this also covers lint.
+      - name: Test
+        run: npm test
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: site-${{ steps.tree.outputs.sha }}
+          path: docs
+          retention-days: 7
+          # docs/.nojekyll is a dotfile and artifacts drop those by default.
+          include-hidden-files: true
+          if-no-files-found: error
