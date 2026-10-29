@@ -1,0 +1,47 @@
+name: Build site
+description: >
+  Provision tools, fetch the generated NYC polling data, and build the static
+  site into docs/. Shared by the PR check and the release so both build the same
+  way. The caller checks the repository out first.
+
+inputs:
+  github-token:
+    description: Token used to download the NYC polling data release asset.
+    required: false
+    default: ${{ github.token }}
+
+runs:
+  using: composite
+  steps:
+    # Provision Node and the paper compiler tools from mise.toml.
+    - uses: jdx/mise-action@v2
+
+    - name: Install dependencies
+      shell: bash
+      run: npm ci
+
+    # The NYC polling map's GeoJSON (public/nyc_polling/*.geojson) is generated
+    # by census.yml and published to the nyc-polling-data release, not built
+    # here. The site build never reads it; the browser fetches it, so it only
+    # has to land in public/ before the SSG copies public/ into docs/. A missing
+    # release fails the build: run the "NYC polling data" workflow once.
+    - name: Fetch NYC polling data
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+      run: >
+        gh release download nyc-polling-data
+        --repo "$GITHUB_REPOSITORY"
+        --pattern '*.geojson'
+        --dir public/nyc_polling
+        --clobber
+
+    - name: Build RRF preprint
+      shell: bash
+      run: node posts/rrf_coverage_normalization/scripts/compile-rrf-coverage-normalization.ts
+
+    # prebuild (npm run check: tsc + biome) runs first via the npm lifecycle,
+    # then css:bundle + sitemap + the jiffies SSG write the site into docs/.
+    - name: Build site
+      shell: bash
+      run: npm run build
