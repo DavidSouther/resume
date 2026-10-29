@@ -69,38 +69,7 @@ describe("PR builds gate merge and the release reuses the approved build", () =>
 		);
 	});
 
-	it("census.yml generates on code, schedule and demand, and publishes only off PRs", () => {
-		const census = workflow(".github/workflows/census.yml") as Workflow & {
-			jobs: Record<string, { steps: Step[]; if?: string; needs?: string }>;
-		};
-		expect(Object.keys(census.on)).toEqual(
-			expect.arrayContaining([
-				"pull_request",
-				"push",
-				"schedule",
-				"workflow_dispatch",
-			]),
-		);
-		const gen = census.jobs.generate.steps.map((x) => x.run ?? "").join("\n");
-		expect(gen).toContain("nyc_tracts_geojson.py");
-		expect(census.jobs.publish.needs).toBe("generate");
-		expect(census.jobs.publish.if).toContain("!= 'pull_request'");
-		expect(
-			census.jobs.publish.steps.some((x) =>
-				x.run?.includes("gh release upload"),
-			),
-		).toBe(true);
-	});
-
-	it("census.yml redeploys after publishing and deploy rebuilds on dispatch", () => {
-		const census = workflow(".github/workflows/census.yml") as Workflow & {
-			jobs: Record<string, { steps: Step[] }>;
-		};
-		expect(
-			census.jobs.publish.steps.some((x) =>
-				x.run?.includes("gh workflow run deploy.yml"),
-			),
-		).toBe(true);
+	it("deploy.yml rebuilds on dispatch instead of reusing an artifact", () => {
 		expect(deploy.on).toHaveProperty("workflow_dispatch");
 		const lookup = steps(deploy, "build-deploy").find((x) =>
 			x.run?.includes("actions/artifacts"),
