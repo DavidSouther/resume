@@ -1,0 +1,14 @@
+[project]
+name = "cisc-7510-hw6"
+version = "0.0.0"
+description = "Door-log homework checks"
+requires-python = ">=3.10"
+# Keep in sync with the inline script metadata in run_tests.py, which is what
+# `uv run run_tests.py` reads. This table exists so editors and `uv sync` can build
+# the same environment.
+dependencies = [
+    "shgit @ git+https://github.com/davidsouther/shgit@3e2f481f9826552610c2b12a40b8b8a7f91a30c1",
+]
+
+[tool.uv]
+package = false
