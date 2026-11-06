@@ -77,6 +77,8 @@ ANSWER_FILES = (
     "incumbency_presidential_lean.csv",
     "turnout_k.csv",
     "dummymander.csv",
+    "dummymander_party.csv",
+    "dummymander_test.csv",
 )
 
 

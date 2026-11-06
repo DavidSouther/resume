@@ -16,6 +16,8 @@ from lib.findings_rules import (
     bonus_vs_history,
     completeness,
     dummymander,
+    dummymander_party,
+    dummymander_test,
     dummymander_vs_history,
     incumbency_party_gap,
     k_direction,
@@ -108,11 +110,11 @@ def counts(races: int = 10, ap: int = 10, unofficial: int = 10, below_95: int = 
 
 
 class SelectorKeysTest(unittest.TestCase):
-    def test_sixty_nine_unique_keys(self) -> None:
+    def test_seventy_two_unique_keys(self) -> None:
         keys = selector_keys()
 
-        self.assertEqual(len(keys), 69)
-        self.assertEqual(len(set(keys)), 69)
+        self.assertEqual(len(keys), 72)
+        self.assertEqual(len(set(keys)), 72)
         self.assertIn("bonus_vs_history.presidential.governor.swing.REP", keys)
         self.assertIn("seat_shift_by_lean.senate.swing", keys)
         self.assertFalse(any("senate_delegation" in k for k in keys))
@@ -329,6 +331,57 @@ class DummymanderTest(unittest.TestCase):
         self.assertEqual(dummymander_vs_history(dummy({2018: 5.0, 2026: -6.0}, redrawn_races=3))["value"], "insufficient_data")
 
 
+class DummymanderPartyTest(unittest.TestCase):
+    def test_boundaries(self) -> None:
+        self.assertEqual(dummymander_party(dummy({2026: 1.0}))["value"], "redrawn_toward_dem")
+        self.assertEqual(dummymander_party(dummy({2026: -1.0}))["value"], "redrawn_toward_rep")
+        self.assertEqual(dummymander_party(dummy({2026: 0.5}))["value"], "no_clear_difference")
+
+    def test_small_group(self) -> None:
+        claim = dummymander_party(dummy({2026: 3.0}, redrawn_races=4))
+
+        self.assertEqual(claim["value"], "insufficient_data")
+        self.assertEqual(claim["display"], {"redrawn_races": "4", "not_redrawn_races": "100"})
+
+    def test_evidence_names_party_file(self) -> None:
+        self.assertEqual(dummymander_party(dummy({2026: 3.0}))["evidence"][0], "dummymander_party.csv:2026,house,redrawn")
+
+
+def wash(p_2026: float | None, hist_races: int = 100) -> list[Row]:
+    return [
+        {
+            "basis": "party",
+            "hist_redrawn_mean": "1.0",
+            "hist_not_redrawn_mean": "0.5",
+            "hist_redrawn_races": str(hist_races),
+            "hist_not_redrawn_races": "300",
+            "hist_difference": "0.5",
+            "difference_2026": "1.5",
+            "excess": "1.0",
+            "p_hist": "0.4",
+            "p_2026": "" if p_2026 is None else str(p_2026),
+            "p_excess": "0.2",
+            "states": "50",
+        }
+    ]
+
+
+class DummymanderTestTest(unittest.TestCase):
+    def test_boundary(self) -> None:
+        self.assertEqual(dummymander_test(wash(0.049), "party")["value"], "not_a_wash")
+        self.assertEqual(dummymander_test(wash(0.05), "party")["value"], "consistent_with_wash")
+
+    def test_insufficient(self) -> None:
+        self.assertEqual(dummymander_test(wash(None), "party")["value"], "insufficient_data")
+        self.assertEqual(dummymander_test(wash(0.01, hist_races=4), "party")["value"], "insufficient_data")
+        self.assertEqual(dummymander_test([], "party")["value"], "insufficient_data")
+
+    def test_historical_numbers_use_table_field_names(self) -> None:
+        numbers = dummymander_test(wash(0.2), "party")["numbers"]
+
+        self.assertEqual((numbers["redrawn_mean"], numbers["difference"], numbers["redrawn_races"]), (1.0, 0.5, 100))
+
+
 class ByLeanTest(unittest.TestCase):
     def test_groups_by_presidential_lean_and_counts_excluded(self) -> None:
         rows = leaned(2, 2, 2, 2, 2) + leaned(-3, -3, -3, -3, -3, lean="blue") + [{**seat(5.0, seat_no=9, comparable=False), "presidential_lean": "red"}]
@@ -378,6 +431,11 @@ class ClaimShapeTest(unittest.TestCase):
             ("dummymander", dummymander([])),
             ("dummymander_vs_history", dummymander_vs_history(dummy({2018: 5.0, 2026: -6.0}))),
             ("dummymander_vs_history", dummymander_vs_history([])),
+            ("dummymander_party", dummymander_party(dummy({2026: 3.0}))),
+            ("dummymander_party", dummymander_party([])),
+            ("dummymander_test", dummymander_test(wash(0.01), "party")),
+            ("dummymander_test", dummymander_test(wash(0.2), "party")),
+            ("dummymander_test", dummymander_test([], "party")),
         ]
 
     def test_trigger_fields_and_display(self) -> None:

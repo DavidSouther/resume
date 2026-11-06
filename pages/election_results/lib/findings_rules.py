@@ -27,6 +27,7 @@ PARTIES: tuple[IncParty, ...] = ("DEM", "REP")
 PRESIDENTIAL_LEANS: tuple[str, ...] = LEAN_DEFS["presidential"]
 BY_LEAN_FILE = "seat_change_2026_by_lean.csv"
 YEAR = "2026"
+DUMMY_BASES = ("incumbent", "party")  # the two dummymander comparisons, by incumbents and by party
 PRIOR_YEARS = range(2014, 2025)  # the years bonus_vs_history compares 2026 against
 
 # Every family's values, in the order of findings.schema.json `$defs.<family>.enum`.
@@ -43,6 +44,8 @@ FAMILIES: dict[str, tuple[str, ...]] = {
     "k_direction": ("dem_relative_gain", "rep_relative_gain", "near_parity", "insufficient_data"),
     "dummymander": ("redrawn_incumbents_worse", "redrawn_incumbents_better", "no_clear_difference", "insufficient_data"),
     "dummymander_vs_history": ("largest_gap_on_record", "within_prior_range", "insufficient_data"),
+    "dummymander_party": ("redrawn_toward_dem", "redrawn_toward_rep", "no_clear_difference", "insufficient_data"),
+    "dummymander_test": ("consistent_with_wash", "not_a_wash", "insufficient_data"),
 }
 SPARSE_VALUES = frozenset({"insufficient_data", "not_tested", "no_2026_data"})
 
@@ -60,6 +63,8 @@ DISPLAY: dict[str, tuple[str, ...]] = {
     "k_direction": ("n", "median_k"),
     "dummymander": ("redrawn_mean", "not_redrawn_mean", "difference", "redrawn_races", "not_redrawn_races"),
     "dummymander_vs_history": ("difference", "prior_max_abs", "prior_max_year"),
+    "dummymander_party": ("redrawn_mean", "not_redrawn_mean", "difference", "redrawn_races", "not_redrawn_races"),
+    "dummymander_test": ("redrawn_mean", "not_redrawn_mean", "difference", "redrawn_races", "not_redrawn_races", "difference_2026", "excess", "p_hist", "p_2026", "p_excess"),
 }
 SPARSE_DISPLAY: dict[str, tuple[str, ...]] = {
     "completeness": ("races_2026",),
@@ -74,6 +79,8 @@ SPARSE_DISPLAY: dict[str, tuple[str, ...]] = {
     "k_direction": ("n",),
     "dummymander": ("redrawn_races", "not_redrawn_races"),
     "dummymander_vs_history": ("prior_max_year",),
+    "dummymander_party": ("redrawn_races", "not_redrawn_races"),
+    "dummymander_test": ("redrawn_races", "not_redrawn_races"),
 }
 
 
@@ -144,7 +151,7 @@ def selector_keys() -> list[str]:
             if group.office == office:
                 keys += [f"incumbency_party_gap.{group.key}", f"significance.{group.key}"]
                 keys += [f"bonus_vs_history.{group.key}.{party}" for party in PARTIES]
-    return [*keys, "dummymander.house", "dummymander_vs_history.house"]
+    return [*keys, "dummymander.house", "dummymander_vs_history.house", "dummymander_party.house", *(f"dummymander_test.{b}" for b in DUMMY_BASES)]
 
 
 def groups() -> list[Group]:
@@ -232,6 +239,17 @@ def rule_text(th: Thresholds = THRESHOLDS) -> dict[str, list[str]]:
             "insufficient_data when the 2026 dummymander finding is insufficient_data or no earlier year has a difference.",
             "largest_gap_on_record when the absolute 2026 difference exceeds every earlier year's absolute difference.",
             "within_prior_range otherwise.",
+        ],
+        "dummymander_party": [
+            f"insufficient_data when the 2026 redrawn or not_redrawn group in dummymander_party.csv has fewer than {th.min_group_races} races or a null mean_change.",
+            f"redrawn_toward_dem when the difference (redrawn mean minus not_redrawn mean of the Democratic share change) is at least +{d:g} point.",
+            f"redrawn_toward_rep when the difference is at most minus {d:g} point.",
+            "no_clear_difference otherwise. The comparison is a raw difference of means with no significance test.",
+        ],
+        "dummymander_test": [
+            f"insufficient_data when the 2014 to 2024 redrawn or not_redrawn group in dummymander_test.csv has fewer than {th.min_group_races} races or the 2026 p value is null.",
+            f"not_a_wash when p_2026, the p value that the 2026 redrawn gap is zero, is below {low:g}.",
+            "consistent_with_wash otherwise. The null is that redistricting is a wash because both parties redraw.",
         ],
     }
 
@@ -508,6 +526,76 @@ def dummymander(rows: Rows, th: Thresholds = THRESHOLDS) -> Claim:
         **race_formats,
     }
     return _claim("dummymander", value, rule, numbers, formats, evidence)
+
+
+def dummymander_party(rows: Rows, th: Thresholds = THRESHOLDS) -> Claim:
+    """The 2026 raw difference of mean Democratic share change, redrawn House seats minus the rest, over all races, from dummymander_party.csv."""
+    rules = rule_text(th)["dummymander_party"]
+    groups_2026 = _dummy_groups(rows, YEAR)
+    redrawn, rest = groups_2026.get("redrawn", {}), groups_2026.get("not_redrawn", {})
+    numbers: dict[str, Number] = {
+        "redrawn_mean": _num(redrawn, "mean_change"),
+        "not_redrawn_mean": _num(rest, "mean_change"),
+        "difference": _num(redrawn, "difference"),
+        "redrawn_races": int(_num(redrawn, "races") or 0),
+        "not_redrawn_races": int(_num(rest, "races") or 0),
+    }
+    evidence = [f"dummymander_party.csv:{YEAR},house,{g}" for g in ("redrawn", "not_redrawn") if g in groups_2026]
+    race_formats = {"redrawn_races": fmt.count(numbers["redrawn_races"]), "not_redrawn_races": fmt.count(numbers["not_redrawn_races"])}
+    diff = numbers["difference"]
+    if not _dummy_sufficient(groups_2026, th) or diff is None:
+        return _claim("dummymander_party", "insufficient_data", rules[0], numbers, race_formats, evidence)
+    d = th.dummymander_points
+    if diff >= d:
+        value, rule = "redrawn_toward_dem", rules[1]
+    elif diff <= -d:
+        value, rule = "redrawn_toward_rep", rules[2]
+    else:
+        value, rule = "no_clear_difference", rules[3]
+    formats = {
+        "redrawn_mean": fmt.points(numbers["redrawn_mean"]),
+        "not_redrawn_mean": fmt.points(numbers["not_redrawn_mean"]),
+        "difference": fmt.points(diff, (d, -d)),
+        **race_formats,
+    }
+    return _claim("dummymander_party", value, rule, numbers, formats, evidence)
+
+
+def dummymander_test(rows: Rows, basis: str, th: Thresholds = THRESHOLDS) -> Claim:
+    """The 2026 redrawn gap against the null that redistricting is a wash, with the 2014 to 2024 pooled figures, from dummymander_test.csv."""
+    rules = rule_text(th)["dummymander_test"]
+    row = next((r for r in rows if r.get("basis") == basis), {})
+    numbers: dict[str, Number] = {
+        "redrawn_mean": _num(row, "hist_redrawn_mean"),
+        "not_redrawn_mean": _num(row, "hist_not_redrawn_mean"),
+        "difference": _num(row, "hist_difference"),
+        "redrawn_races": int(_num(row, "hist_redrawn_races") or 0),
+        "not_redrawn_races": int(_num(row, "hist_not_redrawn_races") or 0),
+        "difference_2026": _num(row, "difference_2026"),
+        "excess": _num(row, "excess"),
+        "p_hist": _num(row, "p_hist"),
+        "p_2026": _num(row, "p_2026"),
+        "p_excess": _num(row, "p_excess"),
+    }
+    evidence = [f"dummymander_test.csv:{basis}"] if row else []
+    race_formats = {"redrawn_races": fmt.count(numbers["redrawn_races"]), "not_redrawn_races": fmt.count(numbers["not_redrawn_races"])}
+    p = numbers["p_2026"]
+    if p is None or min(numbers["redrawn_races"] or 0, numbers["not_redrawn_races"] or 0) < th.min_group_races:
+        return _claim("dummymander_test", "insufficient_data", rules[0], numbers, race_formats, evidence)
+    low = th.p_tiers[0]
+    value, rule = ("not_a_wash", rules[1]) if p < low else ("consistent_with_wash", rules[2])
+    formats = {
+        "redrawn_mean": fmt.points(numbers["redrawn_mean"]),
+        "not_redrawn_mean": fmt.points(numbers["not_redrawn_mean"]),
+        "difference": fmt.points(numbers["difference"]),
+        "difference_2026": fmt.points(numbers["difference_2026"]),
+        "excess": fmt.points(numbers["excess"]),
+        "p_hist": fmt.p_value(numbers["p_hist"]),
+        "p_2026": fmt.p_value(p, th.p_tiers),
+        "p_excess": fmt.p_value(numbers["p_excess"]),
+        **race_formats,
+    }
+    return _claim("dummymander_test", value, rule, numbers, formats, evidence)
 
 
 def dummymander_vs_history(rows: Rows, th: Thresholds = THRESHOLDS) -> Claim:

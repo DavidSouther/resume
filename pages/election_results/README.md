@@ -45,6 +45,7 @@ Percentages are of the votes cast for candidates in the race, from 0 to 100. Boo
 | `40_turnout_k.sql` | view `turnout_k` with `a`, `b`, `k`, and `flip_share` | |
 | `45_turnout_plausibility.sql` | | `turnout_k.csv` (question 3, with the plausibility columns) |
 | `50_dummymander.sql` | | `dummymander.csv` (question 4) |
+| `55_dummymander_party.sql` | | `dummymander_party.csv` (question 4, by party) |
 
 The incumbency file (question 2), by presidential lean, comes from the numpy fit in `analyze.py` on `incumbency_input`. Every file runs by hand in the DuckDB CLI against the built database, for example `duckdb out/elections.duckdb` and then `.read sql/45_turnout_plausibility.sql`. Rebuilding the tables by hand needs `SET file_search_path = 'out,data';` before `.read sql/00_views.sql`, since the CSV names in it are relative.
 
@@ -87,6 +88,8 @@ Every rule reads 2026 rows, and the thresholds below are the defaults.
 | `k_direction` | `k_direction.<office>` | `insufficient_data` below 5 races with a `k`, `dem_relative_gain` when the median `k` is above 1.02, `rep_relative_gain` when it is below 0.98, and otherwise `near_parity`. |
 | `dummymander` | `dummymander.house` | `insufficient_data` when either group has fewer than 5 races or a null mean, `redrawn_incumbents_worse` when `difference` is at most minus 1 point, `redrawn_incumbents_better` when it is at least plus 1 point, and otherwise `no_clear_difference`. The comparison is a raw difference of means with no significance test. |
 | `dummymander_vs_history` | `dummymander_vs_history.house` | `insufficient_data` when the 2026 finding is insufficient or no earlier year has a difference, `largest_gap_on_record` when the absolute 2026 difference exceeds every earlier year's, and otherwise `within_prior_range`. |
+| `dummymander_party` | `dummymander_party.house` | `insufficient_data` when either group has fewer than 5 races or a null mean, `redrawn_toward_dem` when `difference` of the mean Democratic share change over all House races is at least plus 1 point, `redrawn_toward_rep` when it is at most minus 1 point, and otherwise `no_clear_difference`. Open seats are included. The comparison is a raw difference of means with no significance test. |
+| `dummymander_test` | `dummymander_test.incumbent`, `dummymander_test.party` | `insufficient_data` when a 2014 to 2024 group has fewer than 5 races or the 2026 p value is null, `not_a_wash` when `p_2026` is below 0.05, and otherwise `consistent_with_wash`. The null is that redistricting is a wash because both parties redraw. `analyze.py` writes `dummymander_test.csv` by regressing race level change on year effects, a redrawn indicator, and a redrawn in 2026 indicator, with state clustered standard errors (CR1) and normal p values. `difference` is the year adjusted 2014 to 2024 gap, `difference_2026` is the 2026 gap, and `p_hist`, `p_2026`, and `p_excess` test the historical gap, the 2026 gap, and their difference against zero. |
 
 To check a label by hand, read `claims[key].rule` for the branch that fired, compare `claims[key].numbers` with `thresholds`, and look up the rows in `claims[key].evidence` in `races.csv` or the named answer file.
 

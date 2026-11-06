@@ -39,6 +39,7 @@ ANSWER_SQL = {
     "seat_change_2026_by_lean.csv": "22_seat_change_by_lean.sql",
     "turnout_k.csv": "45_turnout_plausibility.sql",
     "dummymander.csv": "50_dummymander.sql",
+    "dummymander_party.csv": "55_dummymander_party.sql",
 }
 LEANS = {
     "presidential_lean": ("incumbency_presidential_lean", ("red", "blue", "swing")),
@@ -150,6 +151,91 @@ def write_incumbency(con: duckdb.DuckDBPyConnection, data: Path) -> None:
         write_csvs(data / "answers", **{name: table})
 
 
+def dummymander_test(rows: Sequence[Row], basis: str) -> Row:
+    """Tests the null that mid cycle redistricting is a wash, because both parties redraw, so redrawn and other House races change alike.
+
+    `rows` are incumbency_input rows. The `incumbent` basis keeps House races with an incumbent running and signs the change for the
+    incumbent party, and the `party` basis keeps every House race and uses the Democratic share change. Only years with a mid cycle
+    map are kept. The fit regresses the change on year effects, `redrawn`, and `redrawn` in 2026 only, with standard errors clustered
+    by state (CR1) and normal p values. The `redrawn` coefficient is the year adjusted historical gap (2014 to 2024), and the sum of
+    both is the 2026 gap. p_hist tests the first against zero, p_2026 tests the sum, and p_excess tests whether 2026 differs from
+    history. The pooled means are plain race weighted means over 2014 to 2024. Everything is null when the fit has no 2026 gap.
+    """
+    years = sorted({int(r["year"]) for r in rows if r["mid_cycle"]})
+    kept = [r for r in rows if int(r["year"]) in years and r["office"] == "house" and (basis == "party" or r["inc_dem"] or r["inc_rep"])]
+
+    def change(r: Row) -> float:
+        delta = float(r["dem_share"]) - float(r["prior_dem_share"])
+        return -delta if basis == "incumbent" and r["inc_rep"] else delta
+
+    last = str(LAST_YEAR)
+    hist = [r for r in kept if int(r["year"]) < LAST_YEAR]
+    result: Row = {"basis": basis}
+    for name, flag in (("redrawn", True), ("not_redrawn", False)):
+        group = [change(r) for r in hist if bool(r["mid_cycle"]) is flag]
+        result[f"hist_{name}_mean"] = sum(group) / len(group) if group else None
+        result[f"hist_{name}_races"] = len(group)
+    result.update(hist_difference=None, difference_2026=None, excess=None, p_hist=None, p_2026=None, p_excess=None, states=len({r["state"] for r in kept}))
+    if not kept:
+        return result
+    y = np.array([change(r) for r in kept], dtype=np.float64)
+    redrawn = np.array([bool(r["mid_cycle"]) for r in kept], dtype=np.float64)
+    now = np.array([str(r["year"]) == last for r in kept], dtype=np.float64)
+    columns: list[tuple[str, Matrix]] = [("intercept", np.ones(len(kept)))]
+    columns += [(f"year_{yr}", np.array([int(r["year"]) == yr for r in kept], dtype=np.float64)) for yr in years[1:]]
+    columns += [("redrawn", redrawn), ("redrawn_2026", redrawn * now)]
+    names: list[str] = []
+    for name, column in columns:
+        trial = np.column_stack([c for n, c in columns if n in names] + [column])
+        if np.linalg.matrix_rank(trial) > len(names):
+            names.append(name)
+    if "redrawn" not in names or "redrawn_2026" not in names:
+        return result
+    x = np.column_stack([c for n, c in columns if n in names])
+    xtx_inv = np.linalg.inv(x.T @ x)
+    beta = xtx_inv @ x.T @ y
+    residual = y - x @ beta
+    groups = sorted({r["state"] for r in kept})
+    meat = np.zeros((x.shape[1], x.shape[1]))
+    for g in groups:
+        idx = np.array([r["state"] == g for r in kept])
+        score = x[idx].T @ residual[idx]
+        meat += np.outer(score, score)
+    n, k, g_count = len(kept), x.shape[1], len(groups)
+    if g_count < 2 or n <= k:
+        return result
+    cov = xtx_inv @ meat @ xtx_inv * (g_count / (g_count - 1)) * ((n - 1) / (n - k))
+    i, j = names.index("redrawn"), names.index("redrawn_2026")
+
+    def p_of(weights: Matrix) -> float | None:
+        estimate = float(weights @ beta)
+        se = math.sqrt(max(float(weights @ cov @ weights), 0.0))
+        return math.erfc(abs(estimate / se) / math.sqrt(2)) if se > 0 else None
+
+    unit = np.zeros(len(names))
+    hist_w, now_w, excess_w = unit.copy(), unit.copy(), unit.copy()
+    hist_w[i] = 1.0
+    now_w[i] = now_w[j] = 1.0
+    excess_w[j] = 1.0
+    result.update(
+        hist_difference=float(beta[i]),
+        difference_2026=float(beta[i] + beta[j]),
+        excess=float(beta[j]),
+        p_hist=p_of(hist_w),
+        p_2026=p_of(now_w),
+        p_excess=p_of(excess_w),
+    )
+    return result
+
+
+def write_dummymander_test(con: duckdb.DuckDBPyConnection, data: Path) -> None:
+    """Writes `<data>/answers/dummymander_test.csv`: one row per basis, `incumbent` and `party`."""
+    cursor = con.execute("select * from incumbency_input where office = 'house'")
+    names = [d[0] for d in cursor.description]
+    rows: list[Row] = [dict(zip(names, values, strict=True)) for values in cursor.fetchall()]
+    write_csvs(data / "answers", dummymander_test=[dummymander_test(rows, basis) for basis in ("incumbent", "party")])
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Build elections.duckdb and the answer CSVs from the pulled CSVs.")
     parser.add_argument("--data", type=Path, default=DATA, help="folder holding the pulled CSVs and overrides/; the answers are written to its answers/ (default data/)")
@@ -166,9 +252,10 @@ def main(argv: list[str] | None = None) -> int:
         for answer, sql_file in ANSWER_SQL.items():
             run_sql_answer(con, SQL / sql_file, args.data / "answers" / answer)
         write_incumbency(con, args.data)
+        write_dummymander_test(con, args.data)
     finally:
         con.close()
-    print(f"{out / 'elections.duckdb'} and {len(ANSWER_SQL) + len(LEANS)} answer files in {time.monotonic() - started:.1f}s")
+    print(f"{out / 'elections.duckdb'} and {len(ANSWER_SQL) + len(LEANS) + 1} answer files in {time.monotonic() - started:.1f}s")
     return 0
 
 

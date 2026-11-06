@@ -44,7 +44,7 @@ from lib.source_table import SourceTable, join_sources  # noqa: E402
 
 SCHEMA_PATH = HERE / "findings.schema.json"
 SCHEMA_VERSION = 1
-ANSWERS = ("seat_change_2026.csv", "seat_change_2026_by_lean.csv", "incumbency_presidential_lean.csv", "turnout_k.csv", "dummymander.csv")
+ANSWERS = ("seat_change_2026.csv", "seat_change_2026_by_lean.csv", "incumbency_presidential_lean.csv", "turnout_k.csv", "dummymander.csv", "dummymander_party.csv", "dummymander_test.csv")
 PULLED = ("races.csv", "candidates.csv", "load_report.txt")
 DATABASE = "elections.duckdb"
 LEAN_COLUMNS: dict[rules.LeanDef, str] = {"presidential": "presidential_lean"}
@@ -258,7 +258,7 @@ QUESTION_SQL: dict[str, tuple[str, ...]] = {
         "analyze.py:_ols",
     ),
     "turnout": ("sql/40_turnout_k.sql", "sql/45_turnout_plausibility.sql", "analyze.py:run_sql_answer"),
-    "dummymander": ("sql/30_incumbency_view.sql", "sql/50_dummymander.sql", "analyze.py:run_sql_answer"),
+    "dummymander": ("sql/30_incumbency_view.sql", "sql/50_dummymander.sql", "sql/55_dummymander_party.sql", "analyze.py:dummymander_test", "analyze.py:write_dummymander_test", "analyze.py:run_sql_answer"),
 }
 RAW_ROW_CAP = 50
 
@@ -337,7 +337,11 @@ def raw_results(inputs: Inputs, cap: int = RAW_ROW_CAP) -> dict[str, list[Json]]
             table("incumbency_presidential_lean.csv", "The 2026 year scope rows, by office, presidential lean, and incumbent party.", scope_2026),
         ],
         "turnout": [table("turnout_k.csv", "The 2026 races, in file order.", in_2026)],
-        "dummymander": [table("dummymander.csv", "Every year with a mid cycle House map, both groups.", lambda _: True)],
+        "dummymander": [
+            table("dummymander.csv", "Every year with a mid cycle House map, both groups.", lambda _: True),
+            table("dummymander_party.csv", "Every year with a mid cycle House map, both groups, all races.", lambda _: True),
+            table("dummymander_test.csv", "The 2014 to 2024 pooled figures and the 2026 test, for each basis.", lambda _: True),
+        ],
     }
 
 
@@ -473,7 +477,7 @@ def main(argv: list[str] | None = None) -> int:
 def _claims(inputs: Inputs, counts: Mapping[str, rules.Counts2026], fetched_at: str | None, th: rules.Thresholds) -> dict[str, rules.Claim]:
     seat, turnout = inputs.answers["seat_change_2026.csv"], inputs.answers["turnout_k.csv"]
     by_lean = inputs.answers[rules.BY_LEAN_FILE]
-    fits, dummies = _fit_races(inputs.database)
+    fits, dummies, party_races = _fit_races(inputs.database)
     ap_keys = {rules.race_key(r) for r in inputs.races if r["year"] == rules.YEAR and r["source"] == "ap"}
     counting = sorted(k for k in ap_keys if (p := inputs.progress.get(k)) is None or p.eevp is None or p.eevp < th.nearly_complete_eevp)
     found: dict[str, rules.Claim] = {"completeness": _with_races(rules.completeness(counts, fetched_at, th), counting)}
@@ -495,6 +499,9 @@ def _claims(inputs: Inputs, counts: Mapping[str, rules.Counts2026], fetched_at: 
     dummy = inputs.answers["dummymander.csv"]
     found["dummymander.house"] = _with_races(rules.dummymander(dummy, th), dummies)
     found["dummymander_vs_history.house"] = rules.dummymander_vs_history(dummy, th)
+    found["dummymander_party.house"] = _with_races(rules.dummymander_party(inputs.answers["dummymander_party.csv"], th), party_races)
+    for basis in rules.DUMMY_BASES:
+        found[f"dummymander_test.{basis}"] = rules.dummymander_test(inputs.answers["dummymander_test.csv"], basis, th)
     return {key: with_cells(found[key]) for key in rules.selector_keys()}
 
 
@@ -504,8 +511,8 @@ def with_cells(claim: rules.Claim) -> rules.Claim:
     return {**claim, "cells": cells}
 
 
-def _fit_races(database: Path) -> tuple[dict[str, list[str]], list[str]]:
-    """The race keys of each 2026 incumbency fit (by group key) and of the 2026 dummymander groups, from incumbency_input."""
+def _fit_races(database: Path) -> tuple[dict[str, list[str]], list[str], list[str]]:
+    """The race keys of each 2026 incumbency fit (by group key), of the 2026 incumbent dummymander groups, and of all 2026 House races, from incumbency_input."""
     con = duckdb.connect(str(database), read_only=True)
     try:
         cursor = con.execute(
@@ -519,14 +526,17 @@ def _fit_races(database: Path) -> tuple[dict[str, list[str]], list[str]]:
         con.close()
     fits: dict[str, list[str]] = {}
     dummies: list[str] = []
+    party: list[str] = []
     for r in rows:
         key = rules.race_key_of(int(r["year"]), str(r["state"]), str(r["office"]), int(r["seat"]), bool(r["special"]))
         for leandef, column in LEAN_COLUMNS.items():
             if r[column] is not None:
                 fits.setdefault(f"{leandef}.{r['office']}.{r[column]}", []).append(key)
-        if r["office"] == "house" and r["incumbent"]:
-            dummies.append(key)
-    return fits, dummies
+        if r["office"] == "house":
+            party.append(key)
+            if r["incumbent"]:
+                dummies.append(key)
+    return fits, dummies, party
 
 
 def _with_races(claim: rules.Claim, races: list[str]) -> rules.Claim:

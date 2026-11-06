@@ -77,6 +77,8 @@
         "k_direction",
         "dummymander",
         "dummymander_vs_history",
+        "dummymander_party",
+        "dummymander_test",
         "seat_shift_by_lean",
         "party_flips_by_lean"
       ],
@@ -152,6 +154,20 @@
             "type": "string"
           }
         },
+        "dummymander_party": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "dummymander_test": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
         "seat_shift_by_lean": {
           "type": "array",
           "minItems": 1,
@@ -202,6 +218,12 @@
         "^dummymander_vs_history\\.house$": {
           "$ref": "#/$defs/dummymander_vs_history"
         },
+        "^dummymander_party\\.house$": {
+          "$ref": "#/$defs/dummymander_party"
+        },
+        "^dummymander_test\\.(incumbent|party)$": {
+          "$ref": "#/$defs/dummymander_test"
+        },
         "^seat_shift_by_lean\\.(house|senate|governor)\\.(red|blue|swing)$": {
           "$ref": "#/$defs/seat_shift_by_lean"
         },
@@ -242,6 +264,12 @@
           "$ref": "#/$defs/claim"
         },
         "^dummymander_vs_history\\.house$": {
+          "$ref": "#/$defs/claim"
+        },
+        "^dummymander_party\\.house$": {
+          "$ref": "#/$defs/claim"
+        },
+        "^dummymander_test\\.(incumbent|party)$": {
           "$ref": "#/$defs/claim"
         },
         "^seat_shift_by_lean\\.(house|senate|governor)\\.(red|blue|swing)$": {
@@ -402,6 +430,34 @@
         "largest_gap_on_record": "The absolute 2026 difference exceeds every earlier year's.",
         "within_prior_range": "Some earlier year's absolute difference is at least as large.",
         "insufficient_data": "The 2026 dummymander finding is insufficient, or no earlier year has a difference."
+      }
+    },
+    "dummymander_party": {
+      "description": "The 2026 raw difference of mean Democratic two party share change over all House races, redrawn seats minus the rest, with no significance test.",
+      "enum": [
+        "redrawn_toward_dem",
+        "redrawn_toward_rep",
+        "no_clear_difference",
+        "insufficient_data"
+      ],
+      "x-value-descriptions": {
+        "redrawn_toward_dem": "The difference is at least dummymander_points.",
+        "redrawn_toward_rep": "The difference is at most minus dummymander_points.",
+        "no_clear_difference": "The difference is within dummymander_points of zero.",
+        "insufficient_data": "A group has fewer than min_group_races races or no mean."
+      }
+    },
+    "dummymander_test": {
+      "description": "Whether the 2026 redrawn gap in the Democratic or incumbent share change differs from zero, against the null that redistricting is a wash because both parties redraw.",
+      "enum": [
+        "consistent_with_wash",
+        "not_a_wash",
+        "insufficient_data"
+      ],
+      "x-value-descriptions": {
+        "consistent_with_wash": "The p value that the 2026 redrawn gap is zero is at least 0.05.",
+        "not_a_wash": "The p value that the 2026 redrawn gap is zero is below 0.05.",
+        "insufficient_data": "A 2014 to 2024 group has fewer than min_group_races races, or the 2026 p value is null."
       }
     },
     "claim": {

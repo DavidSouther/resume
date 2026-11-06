@@ -434,11 +434,43 @@ export const VARIANTS = {
 				`The 2026 difference is not compared with history, because the 2026 comparison has insufficient data or no earlier year has a difference. The earlier year with the largest difference is listed as ${d(c, "prior_max_year")}.`,
 		),
 	},
+	dummymander_party: {
+		redrawn_toward_dem: variant(
+			(c, x) =>
+				`In 2026, all House races in states with a newly drawn mid cycle map, open seats included, changed the Democratic two party share by ${d(c, "redrawn_mean")} on average across ${d(c, "redrawn_races")} races, against ${d(c, "not_redrawn_mean")} across ${d(c, "not_redrawn_races")} races elsewhere. The difference is ${d(c, "difference")}, at or above plus ${t(x, "dummymander_points")}, so the Democratic share moved further toward the Democrats in redrawn states than elsewhere, which is the Republican share moving the other way. This is a raw difference of means with no significance test, on partial, unofficial counts, and it does not show that the new maps caused the gap.`,
+		),
+		redrawn_toward_rep: variant(
+			(c, x) =>
+				`In 2026, all House races in states with a newly drawn mid cycle map, open seats included, changed the Democratic two party share by ${d(c, "redrawn_mean")} on average across ${d(c, "redrawn_races")} races, against ${d(c, "not_redrawn_mean")} across ${d(c, "not_redrawn_races")} races elsewhere. The difference is ${d(c, "difference")}, at or below minus ${t(x, "dummymander_points")}, so the Democratic share moved further toward the Republicans in redrawn states than elsewhere. This is a raw difference of means with no significance test, on partial, unofficial counts, and it does not show that the new maps caused the gap.`,
+		),
+		no_clear_difference: variant(
+			(c, x) =>
+				`In 2026, all House races in states with a newly drawn mid cycle map, open seats included, changed the Democratic two party share by ${d(c, "redrawn_mean")} on average across ${d(c, "redrawn_races")} races, against ${d(c, "not_redrawn_mean")} across ${d(c, "not_redrawn_races")} races elsewhere. The difference is ${d(c, "difference")}, between minus ${t(x, "dummymander_points")} and plus ${t(x, "dummymander_points")}, so this rule finds no clear difference by party. This is a raw difference of means with no significance test, on partial, unofficial counts.`,
+		),
+		insufficient_data: variant(
+			(c, x) =>
+				`The 2026 comparison has ${d(c, "redrawn_races")} House races in redrawn states and ${d(c, "not_redrawn_races")} elsewhere. Each group needs at least ${t(x, "min_group_races")} races with a mean change, so no party difference is reported.`,
+		),
+	},
+	dummymander_test: {
+		consistent_with_wash: variant(
+			(c, x) =>
+				`In this comparison, the 2026 gap between redrawn and other House races is ${d(c, "difference_2026")}, against a year adjusted gap of ${d(c, "difference")} across the earlier years from 2014 to 2024 (redrawn mean ${d(c, "redrawn_mean")} across ${d(c, "redrawn_races")} races, other mean ${d(c, "not_redrawn_mean")} across ${d(c, "not_redrawn_races")} races). The null is that redistricting is a wash, because both parties redraw, so the expected gap is zero. The p value for a zero gap is ${d(c, "p_2026")} in 2026 and ${d(c, "p_hist")} for the earlier years, and the p value that 2026 differs from the earlier gap, a difference of ${d(c, "excess")}, is ${d(c, "p_excess")}. The 2026 p value is at or above ${t(x, "p_tiers", 0)}, so the data are consistent with a wash. The test clusters standard errors by state and uses a normal approximation, 2026 uses partial, unofficial counts, and the test cannot show what caused any gap.`,
+		),
+		not_a_wash: variant(
+			(c, x) =>
+				`In this comparison, the 2026 gap between redrawn and other House races is ${d(c, "difference_2026")}, against a year adjusted gap of ${d(c, "difference")} across the earlier years from 2014 to 2024 (redrawn mean ${d(c, "redrawn_mean")} across ${d(c, "redrawn_races")} races, other mean ${d(c, "not_redrawn_mean")} across ${d(c, "not_redrawn_races")} races). The null is that redistricting is a wash, because both parties redraw, so the expected gap is zero. The p value for a zero gap is ${d(c, "p_2026")} in 2026 and ${d(c, "p_hist")} for the earlier years, and the p value that 2026 differs from the earlier gap, a difference of ${d(c, "excess")}, is ${d(c, "p_excess")}. The 2026 p value is below ${t(x, "p_tiers", 0)}, so a wash is unlikely by this measure and the gap is not explained by chance alone. The test clusters standard errors by state and uses a normal approximation, 2026 uses partial, unofficial counts, and the test cannot show what caused any gap.`,
+		),
+		insufficient_data: variant(
+			(c, x) =>
+				`The earlier years from 2014 to 2024 have ${d(c, "redrawn_races")} redrawn races and ${d(c, "not_redrawn_races")} other races, or the 2026 test could not be fit. Each group needs at least ${t(x, "min_group_races")} races, so the wash test is not reported.`,
+		),
+	},
 } satisfies Record<string, Record<string, Variant>>;
 
 export type Family = keyof typeof VARIANTS;
 
-/** The 69 selector keys, in the order the page renders them. */
+/** The 72 selector keys, in the order the page renders them. */
 export function selectorKeys(): string[] {
 	const keys = ["completeness"];
 	for (const office of OFFICES) {
@@ -458,7 +490,13 @@ export function selectorKeys(): string[] {
 			}
 		}
 	}
-	keys.push("dummymander.house", "dummymander_vs_history.house");
+	keys.push(
+		"dummymander.house",
+		"dummymander_vs_history.house",
+		"dummymander_party.house",
+		"dummymander_test.incumbent",
+		"dummymander_test.party",
+	);
 	return keys;
 }
 
@@ -626,16 +664,9 @@ const CSS = `
 `;
 
 function caveat(): HTMLElement {
-	return data(
-		aside(
-			{},
-			p(
-				{},
-				"2026 counts are unofficial and partial.",
-			),
-		),
-		{ role: "ap-caveat" },
-	);
+	return data(aside({}, p({}, "2026 counts are unofficial and partial.")), {
+		role: "ap-caveat",
+	});
 }
 
 function pageHeader(): HTMLElement {
@@ -896,6 +927,11 @@ const METHODS: Record<Question, Method> = {
 			"A dummymander is a map drawn to help a party that ends up hurting it. This question looks only at the outcome, without judging the intent of any map. For each year from 2014 to 2026 with at least one mid cycle map first used that year, House incumbents who ran in such a state form the redrawn group, and House incumbents who ran elsewhere form the other group.",
 			"Each race's change is the incumbent party's two party share minus its share in the prior election, in points. For a redrawn district, the prior share comes from the previous election for the same district number under the old lines. Comparing the two groups within one year cancels the national tide that moves every race in that year.",
 			"The difference is the redrawn mean minus the mean for the other group. It is a raw difference of means with no regression and no significance test, and it does not separate the effect of new lines from other differences between the states that redrew and those that did not. The population is the same as in question 2: comparable races without paired incumbents. The history finding compares the size of the 2026 difference with every earlier year's.",
+			"The by party check drops the incumbent restriction. It takes every comparable House race, open seats included, and measures the change in the Democratic two party share, so a map that was drawn to help one party shows up as that party's share moving differently in redrawn states than elsewhere. It does not know which party drew a map, so a reader pairs the sign of the difference with the map's sponsor. A map that backfires shows as a difference against its sponsor.",
+			"The Historical rows pool every year from 2014 to 2024 that had a mid cycle map. Their means are plain race weighted means. Their difference is adjusted for each year's national tide, so the means do not subtract to it exactly.",
+			"The wash test starts from the null that redistricting nets out because both parties redraw, so the expected gap between redrawn and other races is zero. It fits every race's change in one least squares regression on year effects, a redrawn indicator that covers the earlier years, and a redrawn indicator for 2026 alone. The first indicator's coefficient, β, is the historical gap. The second's, γ, is how far 2026 departs from it, so β + γ is the 2026 gap.",
+			"Each p value tests one of those quantities against zero. The estimate is divided by its standard error, which gives a z score, and the p value is the chance of a score at least that far from zero in either direction under a normal curve. Standard errors are clustered by state, which treats races in one state as related and states as independent of each other, and they carry the usual small sample correction. The three p values are p for the 2026 gap, β + γ, which is the wash test proper, p for the historical gap, β, and p for the excess, γ, which asks whether 2026 differs from history.",
+			"A small p value for 2026 says the gap would be unlikely if redistricting were a wash. A large one says the data cannot rule a wash out, which is weaker than showing a wash. The normal curve is somewhat generous with few redrawn states in a year, so a p value near 0.05 should be read as borderline. The test cannot say which map or party produced a gap, and 2026 uses partial, unofficial counts.",
 		],
 		formulas: [
 			{
@@ -915,6 +951,20 @@ const METHODS: Record<Question, Method> = {
 				formula:
 					"largest on record when |difference₂₀₂₆| > max over earlier years of |differenceₜ|",
 				meaning: "Only years with a mid cycle map have a difference.",
+			},
+			{
+				name: "Wash test",
+				formula:
+					"Δᵢ = year effects + β·redrawnᵢ + γ·redrawnᵢ·[2026] + εᵢ\nH₀: β + γ = 0 (2026 is a wash)   β = 0 (history is a wash)   γ = 0 (2026 matches history)",
+				meaning:
+					"β is the year adjusted historical gap, γ is the excess of 2026 over it, and β + γ is the 2026 gap. Each p value is 2 × (1 − Φ(|estimate ÷ standard error|)), with Φ the normal distribution function and standard errors clustered by state.",
+			},
+			{
+				name: "Party change",
+				formula:
+					"Δᵢ = sᵢ − s_prior,ᵢ   for every House race, open seats included\ndifference = mean(Δ | redrawn) − mean(Δ | not redrawn)",
+				meaning:
+					"A positive difference is the Democratic share rising more in redrawn states. The Republican change is the same number with its sign reversed.",
 			},
 		],
 	},
@@ -1087,7 +1137,7 @@ const NULL_MARK = "–";
 interface NumberColumn {
 	label: string;
 	unit?: string;
-	key: (row: string) => string;
+	key: (row: string) => string | null;
 	field?: string;
 }
 
@@ -1107,7 +1157,9 @@ function numberTable(
 	columns: NumberColumn[],
 ): HTMLElement {
 	const cellOf = (col: NumberColumn, row: string): HTMLElement => {
-		const claim = f.claims[col.key(row)];
+		const key = col.key(row);
+		if (key === null) return td({ class: "ef-num" }, NULL_MARK);
+		const claim = f.claims[key];
 		if (col.field === undefined) return td({}, code({}, claim.value));
 		const value = claim.cells?.[col.field] ?? null;
 		return td({ class: "ef-num" }, value ?? NULL_MARK);
@@ -1264,43 +1316,121 @@ function turnoutSummary(f: Findings): Node[] {
 }
 
 function dummymanderSummary(f: Findings): Node[] {
-	const now = () => "dummymander.house";
-	const past = () => "dummymander_vs_history.house";
+	// The Historical row reads the pooled 2014 to 2024 figures from the test claims, and has no finding of its own.
+	const rowKey = (house: string, hist: string) => (row: string) =>
+		row === "hist" ? hist : house;
+	const only2026 = (key: string) => (row: string) =>
+		row === "hist" ? null : key;
+	const rows: [string, string][] = [
+		["house", "2026, House"],
+		["hist", "Historical, 2014 to 2024"],
+	];
+	const incumbent = "dummymander_test.incumbent";
+	const partyTest = "dummymander_test.party";
+	const now = rowKey("dummymander.house", incumbent);
+	const past = only2026("dummymander_vs_history.house");
+	const party = rowKey("dummymander_party.house", partyTest);
+	const testKey = (basis: string) => `dummymander_test.${basis}`;
 	return [
-		numberTable(
-			f,
-			"Year",
-			[["house", "2026, House"]],
-			[
-				{ label: "Finding", key: now },
-				{ label: "Redrawn races", key: now, field: "redrawn_races" },
-				{ label: "Other races", key: now, field: "not_redrawn_races" },
-				{
-					label: "Redrawn mean change",
-					unit: "points",
-					key: now,
-					field: "redrawn_mean",
-				},
-				{
-					label: "Other mean change",
-					unit: "points",
-					key: now,
-					field: "not_redrawn_mean",
-				},
-				{ label: "Difference", unit: "points", key: now, field: "difference" },
-				{ label: "History finding", key: past },
-				{
-					label: "Largest earlier difference",
-					unit: "points",
-					key: past,
-					field: "prior_max_abs",
-				},
-				{ label: "Year of largest", key: past, field: "prior_max_year" },
-			],
-		),
+		numberTable(f, "Year", rows, [
+			{ label: "Finding", key: only2026("dummymander.house") },
+			{ label: "Redrawn races", key: now, field: "redrawn_races" },
+			{ label: "Other races", key: now, field: "not_redrawn_races" },
+			{
+				label: "Redrawn mean change",
+				unit: "points",
+				key: now,
+				field: "redrawn_mean",
+			},
+			{
+				label: "Other mean change",
+				unit: "points",
+				key: now,
+				field: "not_redrawn_mean",
+			},
+			{ label: "Difference", unit: "points", key: now, field: "difference" },
+			{ label: "History finding", key: past },
+			{
+				label: "Largest earlier difference",
+				unit: "points",
+				key: past,
+				field: "prior_max_abs",
+			},
+			{ label: "Year of largest", key: past, field: "prior_max_year" },
+		]),
 		legend(),
+		p(
+			{ class: "ef-legend" },
+			"The Historical row pools the years from 2014 to 2024 with a mid cycle map. Its means are plain race weighted means, and its difference is adjusted for each year's national tide, so the means do not subtract to it exactly.",
+		),
 		renderSelector(f, "dummymander.house"),
 		renderSelector(f, "dummymander_vs_history.house"),
+		h4({}, "By party, all races"),
+		numberTable(f, "Year", rows, [
+			{ label: "Finding", key: only2026("dummymander_party.house") },
+			{ label: "Redrawn races", key: party, field: "redrawn_races" },
+			{ label: "Other races", key: party, field: "not_redrawn_races" },
+			{
+				label: "Redrawn mean Democratic change",
+				unit: "points",
+				key: party,
+				field: "redrawn_mean",
+			},
+			{
+				label: "Other mean Democratic change",
+				unit: "points",
+				key: party,
+				field: "not_redrawn_mean",
+			},
+			{
+				label: "Difference",
+				unit: "points",
+				key: party,
+				field: "difference",
+			},
+		]),
+		renderSelector(f, "dummymander_party.house"),
+		h4({}, "Is the gap more than a wash?"),
+		numberTable(
+			f,
+			"Basis",
+			[
+				["incumbent", "Incumbents"],
+				["party", "All races, by party"],
+			],
+			[
+				{ label: "Finding", key: testKey },
+				{
+					label: "2026 gap",
+					unit: "points",
+					key: testKey,
+					field: "difference_2026",
+				},
+				{
+					label: "Historical gap",
+					unit: "points",
+					key: testKey,
+					field: "difference",
+				},
+				{
+					label: "p, 2026 gap is zero",
+					key: testKey,
+					field: "p_2026",
+				},
+				{
+					label: "p, historical gap is zero",
+					key: testKey,
+					field: "p_hist",
+				},
+				{
+					label: "p, 2026 differs from history",
+					key: testKey,
+					field: "p_excess",
+				},
+			],
+		),
+		renderSelector(f, "dummymander_test.incumbent"),
+		renderSelector(f, "dummymander_test.party"),
 	];
 }
 

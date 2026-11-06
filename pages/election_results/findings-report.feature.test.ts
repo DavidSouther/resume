@@ -105,6 +105,13 @@ const FAMILIES: Record<string, readonly string[]> = {
 		"within_prior_range",
 		"insufficient_data",
 	],
+	dummymander_test: ["consistent_with_wash", "not_a_wash", "insufficient_data"],
+	dummymander_party: [
+		"redrawn_toward_dem",
+		"redrawn_toward_rep",
+		"no_clear_difference",
+		"insufficient_data",
+	],
 };
 
 // The display fields findings.py writes for each family. A variant quotes the
@@ -146,6 +153,25 @@ const DISPLAY: Record<string, readonly string[]> = {
 		"not_redrawn_races",
 	],
 	dummymander_vs_history: ["difference", "prior_max_abs", "prior_max_year"],
+	dummymander_test: [
+		"redrawn_mean",
+		"not_redrawn_mean",
+		"difference",
+		"redrawn_races",
+		"not_redrawn_races",
+		"difference_2026",
+		"excess",
+		"p_hist",
+		"p_2026",
+		"p_excess",
+	],
+	dummymander_party: [
+		"redrawn_mean",
+		"not_redrawn_mean",
+		"difference",
+		"redrawn_races",
+		"not_redrawn_races",
+	],
 };
 
 const INSUFFICIENT: Record<string, readonly string[]> = {
@@ -161,6 +187,8 @@ const INSUFFICIENT: Record<string, readonly string[]> = {
 	k_direction: ["n"],
 	dummymander: ["redrawn_races", "not_redrawn_races"],
 	dummymander_vs_history: ["prior_max_year"],
+	dummymander_test: ["redrawn_races", "not_redrawn_races"],
+	dummymander_party: ["redrawn_races", "not_redrawn_races"],
 };
 const SPARSE_VALUES = new Set([
 	"insufficient_data",
@@ -193,7 +221,13 @@ function instanceKeys(): string[] {
 			}
 		}
 	}
-	keys.push("dummymander.house", "dummymander_vs_history.house");
+	keys.push(
+		"dummymander.house",
+		"dummymander_vs_history.house",
+		"dummymander_party.house",
+		"dummymander_test.incumbent",
+		"dummymander_test.party",
+	);
 	return keys;
 }
 

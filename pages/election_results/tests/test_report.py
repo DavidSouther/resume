@@ -51,6 +51,8 @@ def fixture_answers() -> dict[str, list[dict[str, str]]]:
         "incumbency_presidential_lean.csv": [INC, {**INC, "year_scope": "2024"}],
         "turnout_k.csv": [TURN],
         "dummymander.csv": [],
+        "dummymander_party.csv": [],
+        "dummymander_test.csv": [],
     }
 
 

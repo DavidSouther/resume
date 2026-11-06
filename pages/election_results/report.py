@@ -28,6 +28,8 @@ ANSWER_FILES: tuple[str, ...] = (
     "incumbency_presidential_lean.csv",
     "turnout_k.csv",
     "dummymander.csv",
+    "dummymander_party.csv",
+    "dummymander_test.csv",
 )
 ROW_CAP = 25
 
@@ -67,6 +69,8 @@ SECTIONS: tuple[tuple[str, str], ...] = (
     ("incumbency_presidential_lean.csv", "Question 2: What is the incumbency bonus, by presidential lean?"),
     ("turnout_k.csv", "Question 3: Could turnout alone explain each shift?"),
     ("dummymander.csv", "Question 4: Did mid cycle redistricting hurt incumbents?"),
+    ("dummymander_party.csv", "Question 4, by party: Did mid cycle redistricting move the Democratic share?"),
+    ("dummymander_test.csv", "Question 4, test: Is the 2026 redistricting gap more than a wash?"),
 )
 
 
@@ -239,7 +243,7 @@ def section(name: str, title: str, rows: Rows, href: str = ANSWERS_HREF) -> str:
         shown = sorted(rows, key=lambda r: -(num(r.get("year")) or 0))
         note = "The table lists the most recent years first."
     if not rows:
-        out.append("<p>No mid cycle states, so this file has no rows.</p>" if name == "dummymander.csv" else "<p>This file has no rows.</p>")
+        out.append("<p>No mid cycle states, so this file has no rows.</p>" if name in ("dummymander.csv", "dummymander_party.csv", "dummymander_test.csv") else "<p>This file has no rows.</p>")
     else:
         if len(shown) > ROW_CAP:
             note += f" Showing the first {ROW_CAP} of {len(shown)} rows. Open the CSV for the rest."

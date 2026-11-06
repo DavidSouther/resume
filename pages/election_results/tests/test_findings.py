@@ -67,7 +67,7 @@ class LoadInputsTest(unittest.TestCase):
             self.assertEqual(i["sha256"], hashlib.sha256(path.read_bytes()).hexdigest(), i["path"])
             self.assertEqual(i["bytes"], path.stat().st_size)
         self.assertTrue(any(i["path"].endswith("ap/2026-11-03/progress.json") for i in listed))
-        self.assertEqual(len(listed), 12)
+        self.assertEqual(len(listed), 14)
 
     def test_missing_answer_exits_1_and_writes_nothing(self) -> None:
         out = FixtureOut(self)
@@ -102,7 +102,7 @@ class RunTest(unittest.TestCase):
         self.assertEqual(validate(f), [])
         self.assertEqual(list(f["selectors"]), rules.selector_keys())
         self.assertIn("completeness: counting_in_progress", printed)
-        self.assertEqual(len(printed.splitlines()), 69)
+        self.assertEqual(len(printed.splitlines()), 72)
         self.assertEqual(sorted(f["run"]["counts_2026"]), ["governor", "house", "senate"])
         self.assertEqual(f["thresholds"]["k_parity_band"], [0.98, 1.02])
         self.assertFalse(list(out.out.glob(".*partial")))

@@ -8,7 +8,7 @@ from typing import Any
 import duckdb
 
 import analyze
-from analyze import build_database, fit_incumbency, run_sql_answer, write_incumbency
+from analyze import build_database, dummymander_test, fit_incumbency, run_sql_answer, write_incumbency
 from lib.source_table import SourceTable
 
 RACE_HEADER: list[str] = [
@@ -454,6 +454,57 @@ class DummymanderTests(unittest.TestCase):
         self.assertEqual(only(rows, year=2026, group="redrawn")["races"], 0)
         self.assertIsNone(only(rows, year=2026, group="redrawn")["difference"])
         self.assertAlmostEqual(only(rows, year=2026, group="not_redrawn")["mean_change"], -5.0)
+
+
+class DummymanderPartyTests(unittest.TestCase):
+    def test_counts_open_seats_and_signs_the_democratic_change(self) -> None:
+        races = [
+            race(2024, "TX", "house", 1, 50, 50),
+            race(2026, "TX", "house", 1, 60, 40, redrawn=True),  # open seat, DEM share 50 to 60: +10
+            race(2024, "KY", "house", 1, 40, 60),
+            race(2026, "KY", "house", 1, 35, 65),  # open seat, DEM share 40 to 35: -5
+        ]
+        rows = fixture(self, races, redistricting=[("TX", 2026, "mid_cycle")]).answer("dummymander_party.csv")
+        self.assertAlmostEqual(only(rows, year=2026, group="redrawn")["mean_change"], 10.0)
+        self.assertAlmostEqual(only(rows, year=2026, group="not_redrawn")["mean_change"], -5.0)
+        self.assertAlmostEqual(only(rows, year=2026, group="redrawn")["difference"], 15.0)
+        self.assertEqual(only(rows, year=2026, group="not_redrawn")["races"], 1)
+
+
+class DummymanderWashTests(unittest.TestCase):
+    @staticmethod
+    def rows(shift_2026: float) -> list[dict[str, Any]]:
+        """Forty states in each of 2018 and 2026. Four redrawn states a year, with a +2 gap in 2018 and shift_2026 in 2026."""
+        out: list[dict[str, Any]] = []
+        for year, gap in ((2018, 2.0), (2026, shift_2026)):
+            for i in range(40):
+                redrawn = i < 4
+                noise = ((i * 7) % 5 - 2) * 0.1
+                out.append({"year": year, "state": f"S{i}", "office": "house", "mid_cycle": redrawn, "prior_dem_share": 50.0,
+                            "dem_share": 50.0 + noise + (gap if redrawn else 0.0), "inc_dem": True, "inc_rep": False})
+        return out
+
+    def test_gap_recovered_by_period(self) -> None:
+        row = dummymander_test(self.rows(6.0), "party")
+
+        self.assertAlmostEqual(row["hist_difference"], 2.0, delta=0.3)
+        self.assertAlmostEqual(row["difference_2026"], 6.0, delta=0.3)
+        self.assertAlmostEqual(row["excess"], row["difference_2026"] - row["hist_difference"])
+        self.assertLess(row["p_2026"], 0.05)
+        self.assertEqual(row["hist_redrawn_races"], 4)
+
+    def test_no_2026_gap_is_not_rejected(self) -> None:
+        self.assertGreater(dummymander_test(self.rows(0.0), "party")["p_2026"], 0.05)
+
+    def test_incumbent_basis_signs_republican_changes(self) -> None:
+        rows = [{**r, "inc_dem": False, "inc_rep": True} for r in self.rows(6.0)]
+
+        self.assertAlmostEqual(dummymander_test(rows, "incumbent")["difference_2026"], -6.0, delta=0.3)
+
+    def test_no_2026_redrawn_races_leaves_the_test_null(self) -> None:
+        rows = [r for r in self.rows(6.0) if not (r["year"] == 2026 and r["mid_cycle"])]
+
+        self.assertIsNone(dummymander_test(rows, "party")["p_2026"])
 
 
 if __name__ == "__main__":
