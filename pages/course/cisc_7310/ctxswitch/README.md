@@ -18,7 +18,7 @@ Needs Docker. The crate only builds on Linux with glibc; on macOS use the contai
 | `src/bin/uctxswitch.rs`, `uctxmake.rs`, `uctxswap.rs`, `uctxrestore.rs` | Ports of `umcontext/*.c` |
 | `src/bin/umthreaddemo.rs` | Port of `umthread/umthreaddemo.c` |
 | `src/bin/switchbench.rs`, `src/bench/` | The benchmark: `thread`, `process`, `ucontext`, `regswitch`, `green`, plus two baselines |
-| `src/uctx.rs`, `src/stack.rs`, `src/regswitch.rs`, `src/green.rs` | All `unsafe` code, audited in `UNSAFE.md` |
+| `src/uctx.rs`, `src/stack.rs`, `src/regswitch.rs`, `src/green.rs` | The library `unsafe` code. Every `unsafe` site, including the few in `src/bin/`, is proved in `SAFETY.md` |
 | `REVIEW.md` | The evidence packet for the four questions (it does not answer them) |
 | `results/final/` | Raw output of the run `REVIEW.md` cites |
 
@@ -37,6 +37,7 @@ for numbers outside a VM.
 - `sleep` and `usleep` are `std::thread::sleep`.
 - `printctx` has an aarch64 register list; the i386 branch is dropped. `uctxswap` prints Rust function addresses.
 - The `umthreaddemo` exit-flag checks are kept as in the C (the `!hw_exited` test in `hello_world` is always true there).
+- Each port keeps the C item order and names (`CTX`, `UCTX_FUNC1`, `make_hu_context`, ...). Comments mark the rest: `C:` quotes the statements a Rust line replaces, `Rust only:` marks code with no C counterpart. `docs/compare.html` (built by `docs/build.py`) shows them side by side.
 
 ## Attribution
 

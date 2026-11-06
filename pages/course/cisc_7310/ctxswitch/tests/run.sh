@@ -143,8 +143,8 @@ grep -q '^== /proc/[0-9]*/task/[0-9]*/syscall ==$' "$results/proc/thread.txt" ||
 grep -A1 '/syscall ==$' "$results/proc/thread.txt" | grep -Eq '^(running|[0-9-]+ )' || fail "proc snapshot: syscall file of a blocked thread was empty"
 
 note "unsafe audit"
-[[ -f "$project/UNSAFE.md" ]] || fail "UNSAFE.md (audit against unsafe_rust_review) missing"
-grep -q '^Open rejections: 0$' "$project/UNSAFE.md" 2>/dev/null || fail "UNSAFE.md must state 'Open rejections: 0'"
+[[ -f "$project/SAFETY.md" ]] || fail "SAFETY.md (audit against unsafe_rust_review) missing"
+grep -q '^Open rejections: 0$' "$project/SAFETY.md" 2>/dev/null || fail "SAFETY.md must state 'Open rejections: 0'"
 grep -qi 'dzania' "$project/README.md" "$project/REVIEW.md" 2>/dev/null || fail "attribution to Dzania missing from README.md or REVIEW.md"
 
 note "REVIEW.md"

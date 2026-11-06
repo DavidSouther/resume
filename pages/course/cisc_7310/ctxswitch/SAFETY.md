@@ -1,4 +1,6 @@
-# Unsafe audit of ctxswitch
+# Safety proofs for ctxswitch
+
+Every `unsafe` site in the crate has its proof here. Sites 34 to 39 are the ones in `src/bin/`. The same reasoning stays in `// SAFETY:` comments in the source; `docs/build.py` removes those comments from the C versus Rust comparison page.
 
 Applied: Google's `unsafe_rust_review` skill (https://github.com/google/rust-skills/tree/main/unsafe_rust_review), by two independent cold auditor passes (a model reviewer given the skill text; static reading plus builds, not a human audit). Pass 1 found 7 rejections; each was fixed; pass 2 re-audited every site and found 0. The first pass's findings are summarized here, and the second pass report follows verbatim.
 
@@ -99,12 +101,12 @@ fact, TF = type-system fact, PC = postcondition.
 | 31 | regswitch.rs:231 | `ctxswitch_regswitch(self.sp.as_ptr(), target)` | `target` a once-consumed frame on a still-mapped stack; `self` the running flow | `target` from `to.sp.replace(null)` (LF, consumed once); initial or routine-pushed frame on an owner-held stack, leaked if started-and-unfinished (INV, R3); `self.sp` null ⇒ running (LF, R7); `self.sp.as_ptr()` valid `*mut *mut u8` (TF); one OS thread (`!Send`, TF); callee-saved preserved, rest caller-saved per ABI (AX) | ACCEPT |
 | 32 | green.rs:117 | `&*fiber` (raw deref) | pointee live, not `&mut`-aliased | `fiber` points into the `Task`; `run()` holds `task` and `s.running` (two strong `Rc<Task>`) across the whole task, until `sched.switch` returns there; dropping task_main's own clone first only decrements a count those two keep above zero (INV, documented at green.rs:92) | ACCEPT |
 | 33 | green.rs:121 | `fiber.mark_finished()` | mark_finished precond | `body` consumed and `task` dropped (LF); trampoline frame below owns nothing (LF); the following `switch(&s.sched)` never returns here and the scheduler never re-queues a finished task (INV); so no frame or reference into the stack survives when `Fiber::drop` later unmaps it (PRE discharged) | ACCEPT |
-| 34 | bin/uctxswitch.rs:27 | `CONTEXT.resume()` | resume POF | `println!` temporaries and stdout lock gone; `with` closure only borrows the thread-local; no Drop value live at the call (LF) | ACCEPT |
-| 35 | bin/uctxswitch.rs:35 | `run_twice(c, body)` | run_twice contract | `body` only resumes `CONTEXT`, while the call is active, holds no Drop value, cannot unwind (`extern "C"`) (PRE discharged) | ACCEPT |
-| 36 | bin/uctxrestore.rs:17 | `CURR.resume()` | resume POF | as #34; `sleep` returned, no live temporaries (LF) | ACCEPT |
-| 37 | bin/uctxrestore.rs:24 | `run_twice(c, body)` | run_twice contract | as #35 | ACCEPT |
-| 38 | bin/uctxswap.rs:57 | `spawn_linked(.., main_ctx, func1)` | bind_linked uc_link contract | when `func1` returns, `main` is suspended inside `m.swap(&c2)` (it never returns before the chain ends), so `main_ctx`'s saved frame is live; nothing swaps to `main_ctx` after (PRE discharged, LF). Runtime: chain ends at "main: exiting". | ACCEPT |
-| 39 | bin/uctxswap.rs:70 | `spawn_linked(.., c1, func2)` | bind_linked uc_link contract | `func2` returns only after its `swap(func2->func1)` resumed it, at which point `func1` is suspended in `swap(func1->func2)`, so `c1` is live; glibc enters it once; nothing swaps to `c1` after (PRE discharged, LF) | ACCEPT |
+| 34 | bin/uctxswitch.rs:50 | `CONTEXT.resume()` in `func` | resume POF | `CONTEXT` is the context `getcontext` filled, because `func` runs inside `main_after_getcontext`, called by `run_twice(&CONTEXT, ..)`. The `println!`s before it have finished, so no temporaries or stdout lock are live; the `with` closure only borrows the thread-local; no Drop value or borrow of a local is live at the call (LF). | ACCEPT |
+| 35 | bin/uctxswitch.rs:25 | `run_twice(cp, main_after_getcontext)` | run_twice contract | `main_after_getcontext` only resumes `CONTEXT`, while `run_twice` is active, holding no destructible values, and cannot unwind (`extern "C"`) (PRE discharged) | ACCEPT |
+| 36 | bin/uctxrestore.rs:32 | `CURR.resume()` | resume POF | as #34: called under `run_twice(&CURR, ..)`, so `CURR` is the context `getcontext` filled; the `println!` has finished (no stdout lock, no temporaries); the sleep has returned; the `with` closure only borrows the thread-local (LF) | ACCEPT |
+| 37 | bin/uctxrestore.rs:21 | `run_twice(curr, main_after_getcontext)` | run_twice contract | as #35 | ACCEPT |
+| 38 | bin/uctxswap.rs:66 | `spawn_linked(.., UCTX_MAIN, func1)` | bind_linked uc_link contract | when `func1` returns, glibc enters `UCTX_MAIN`; at that point `main` is suspended inside `swapcontext(&UCTX_MAIN, &UCTX_FUNC2)` (it never returns before `func1` ends the chain), so `UCTX_MAIN`'s saved frame is live and its state valid; nothing swaps to `UCTX_MAIN` after (PRE discharged, LF). Runtime: chain ends at "main: exiting". | ACCEPT |
+| 39 | bin/uctxswap.rs:83 | `spawn_linked(.., UCTX_FUNC1, func2)` | bind_linked uc_link contract | `func2` returns only after its own `swapcontext(func2 -> func1)` resumed it; at that moment `func1` is suspended in its `swapcontext(func1 -> func2)`, so `UCTX_FUNC1`'s saved state is live and valid, and glibc enters it once; nothing swaps to it afterwards (PRE discharged, LF) | ACCEPT |
 
 No site is a REJECT.
 

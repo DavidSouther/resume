@@ -1,0 +1,29 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ucontext C and Rust</title>
+    <link rel="stylesheet" href="./compare.css" />
+  </head>
+  <body>
+    <main>
+      <h1>ucontext in C and Rust</h1>
+      <p class="key">Rust items keep the order and names of the C. Comments are removed from the Rust listings so the code compares line for line; the source files in <code>src/</code> mark every line that differs in shape (<code>C:</code>) or has no C counterpart (<code>Rust only:</code>).</p>
+      <nav>{% for p in programs %}<a href="#{{ p.name }}">{{ p.name }}</a>{% endfor %}</nav>
+      {% for p in programs %}
+      <section id="{{ p.name }}">
+        <h2>{{ p.name }}</h2>
+        <div class="pair">
+          <div class="cell c"><div class="lab"><b>C</b> {{ p.c_path }}</div><pre><code class="language-c">{{ p.c }}</code></pre></div>
+          <div class="cell r"><div class="lab"><b>Rust</b> {{ p.rs_path }}{% if p.ranges %}, lines {% for a, b in p.ranges %}{{ a }} to {{ b }}{% if not loop.last %} and {% endif %}{% endfor %}{% endif %}</div><pre><code class="language-rust">{{ p.rs }}</code></pre></div>
+        </div>
+      </section>
+      {% endfor %}
+    </main>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/c.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/rust.min.js"></script>
+    <script>hljs.highlightAll()</script>
+  </body>
+</html>

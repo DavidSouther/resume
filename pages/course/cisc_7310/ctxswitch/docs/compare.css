@@ -1,0 +1,153 @@
+:root {
+  --bg: #f6f7f9;
+  --fg: #1b232c;
+  --mut: #5d6b7a;
+  --line: #d5dce4;
+  --code: #fff;
+  --c: #1f5fa8;
+  --r: #a8481c;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --kw: #cf222e;
+  --st: #0a3069;
+  --cm: #6e7781;
+  --num: #0550ae;
+  --fn: #8250df;
+  --ty: #953800;
+  --mac: #116329;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f151c;
+    --fg: #e4eaf1;
+    --mut: #93a2b3;
+    --line: #2a3745;
+    --code: #0c1218;
+    --c: #6fb0ff;
+    --r: #f09a6b;
+    --kw: #ff7b72;
+    --st: #a5d6ff;
+    --cm: #8b949e;
+    --num: #79c0ff;
+    --fn: #d2a8ff;
+    --ty: #ffa657;
+    --mac: #7ee787;
+    color-scheme: dark;
+  }
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font:
+    15px/1.5 system-ui,
+    sans-serif;
+  margin: 0;
+  padding: 20px 16px 56px;
+}
+main {
+  max-width: 1400px;
+  margin-inline: auto;
+}
+h1 {
+  font-size: 1.6rem;
+  margin: 0 0 8px;
+}
+nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  font-family: var(--mono);
+}
+nav a {
+  color: var(--c);
+}
+h2 {
+  font: 600 1.2rem var(--mono);
+  margin: 32px 0 8px;
+}
+.pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+.cell {
+  min-width: 0;
+}
+.lab {
+  font-size: 13px;
+  color: var(--mut);
+  margin-bottom: 6px;
+}
+.lab b {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.c b {
+  color: var(--c);
+}
+.r b {
+  color: var(--r);
+}
+pre {
+  margin: 0;
+  background: var(--code);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 10px 12px;
+  overflow-x: auto;
+  font: 12.5px/1.5 var(--mono);
+  tab-size: 4;
+}
+.c pre {
+  border-left: 3px solid var(--c);
+}
+.r pre {
+  border-left: 3px solid var(--r);
+}
+code.hljs {
+  background: none;
+  padding: 0;
+}
+.hljs-keyword {
+  color: var(--kw);
+}
+.hljs-string,
+.hljs-char {
+  color: var(--st);
+}
+.hljs-comment {
+  color: var(--cm);
+  font-style: italic;
+}
+.hljs-number,
+.hljs-literal,
+.hljs-symbol {
+  color: var(--num);
+}
+.hljs-title.function_,
+.hljs-title.function_.invoke__ {
+  color: var(--fn);
+}
+.hljs-type,
+.hljs-built_in,
+.hljs-title.class_,
+.hljs-variable.constant_ {
+  color: var(--ty);
+}
+.hljs-meta,
+.hljs-meta .hljs-string {
+  color: var(--mac);
+}
+@media (max-width: 800px) {
+  .pair {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.key {
+  max-width: 80ch;
+  color: var(--mut);
+  margin: 0 0 12px;
+}

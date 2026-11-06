@@ -97,7 +97,7 @@ Where to look. Slides 14 to 16 and 25 of the deck; `research/slide-15.md`; the p
 
 - One machine, one VM, one run per section above; no confidence intervals beyond the median of 5.
 - Register lists are from glibc on Debian 13 (trixie) aarch64; `ucontext_t` sizes are from the `libc` crate's type definitions; the `x86_64` build was compile and correctness checked under emulation only (no timing).
-- The unsafe code was audited twice by an independent model reviewer (`UNSAFE.md`); this is not a human audit. `cargo clippy` and Miri were not run (Miri does not model `getcontext`).
+- The unsafe code was audited twice by an independent model reviewer (`SAFETY.md`); this is not a human audit. `cargo clippy` and Miri were not run (Miri does not model `getcontext`).
 
 ## Attribution
 

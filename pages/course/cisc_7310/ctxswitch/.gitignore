@@ -1,3 +1,6 @@
+.playwright-cli/
 target/
 results/*
 !results/final/
+!docs/
+!docs/*

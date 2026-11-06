@@ -10,7 +10,8 @@
 //! with [`Context::resume`] (`getcontext` returning twice, kept out of Rust's sight in assembly).
 
 use std::arch::global_asm;
-use std::cell::{Cell, UnsafeCell};
+use std::cell::{Cell, RefCell, UnsafeCell};
+use std::thread::LocalKey;
 use std::io;
 use std::mem;
 use std::ptr::NonNull;
@@ -230,6 +231,7 @@ impl Context {
     }
 
     /// The registers `printctx.c` prints, in the same order, labelled for this architecture.
+    // docs:begin printctx 2
     pub fn registers(&self) -> Vec<(&'static str, u64)> {
         let p = self.as_ptr();
         #[cfg(target_arch = "x86_64")]
@@ -274,6 +276,7 @@ impl Context {
             v
         }
     }
+    // docs:end printctx 2
 }
 
 impl Drop for Context {
@@ -374,6 +377,7 @@ pub unsafe fn run_twice(ctx: &Context, body: extern "C" fn(u32)) {
     unsafe { ctxswitch_twice(ctx.as_ptr(), body) };
 }
 
+// docs:begin printctx 1
 /// Port of `print_ucontext`.
 pub fn print_ucontext(c: &Context) {
     println!("-------------------------------------------");
@@ -382,4 +386,30 @@ pub fn print_ucontext(c: &Context) {
         println!("\tRegister {name}:  {value:x}");
     }
     println!("-------------------------------------------");
+}
+// docs:end printctx 1
+
+/// A global `ucontext_t` variable of the C programs, as a thread local. Like a C static it starts
+/// out zeroed (a blank context) and is later filled in or replaced.
+pub type Global = RefCell<Rc<Context>>;
+
+/// The initializer for a [`Global`], for `thread_local! { static X: Global = global(); }`.
+pub fn global() -> Global {
+    RefCell::new(Rc::new(Context::blank()))
+}
+
+/// `&g`: a handle to the context currently stored in `g`.
+pub fn get_global(g: &'static LocalKey<Global>) -> Rc<Context> {
+    g.with(|c| c.borrow().clone())
+}
+
+/// `getcontext(&g)`, `makecontext(&g, ..)`: store a context that was built elsewhere into `g`.
+pub fn set_global(g: &'static LocalKey<Global>, ctx: Context) {
+    g.with(|c| *c.borrow_mut() = Rc::new(ctx));
+}
+
+/// `swapcontext(&from, &to)` on two globals.
+pub fn swapcontext(from: &'static LocalKey<Global>, to: &'static LocalKey<Global>) -> Result<(), Error> {
+    let (from, to) = (get_global(from), get_global(to));
+    from.swap(&to)
 }
