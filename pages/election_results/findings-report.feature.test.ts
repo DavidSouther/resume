@@ -418,9 +418,14 @@ function writeFixture(name: string, findings: Findings): string {
 }
 
 function expectOneVariantPerSelector(root: HTMLElement, f: Findings): void {
+	// The page no longer renders the completeness selector.
+	const rendered = Object.entries(f.selectors).filter(
+		([key]) => key !== "completeness",
+	);
 	const shown = root.querySelectorAll("[data-selector]");
-	expect(shown.length).toBe(Object.keys(f.selectors).length);
-	for (const [key, value] of Object.entries(f.selectors)) {
+	expect(shown.length).toBe(rendered.length);
+	expect(root.querySelector('[data-selector="completeness"]')).toBeNull();
+	for (const [key, value] of rendered) {
 		const matches = root.querySelectorAll(`[data-selector="${key}"]`);
 		expect(matches.length, key).toBe(1);
 		const variant = matches[0] as HTMLElement;
@@ -435,8 +440,7 @@ function expectOneVariantPerSelector(root: HTMLElement, f: Findings): void {
 
 function expectCaveat(root: HTMLElement): void {
 	const caveat = root.querySelector('[data-role="ap-caveat"]');
-	expect(caveat?.textContent).toMatch(/AP/);
-	expect(caveat?.textContent).toMatch(/terms/);
+	expect(caveat?.textContent).toMatch(/unofficial and partial/);
 }
 
 describe("election findings report", () => {
@@ -479,15 +483,10 @@ describe("election findings report", () => {
 		}
 	}
 
-	it("shows the completeness banner and an audit panel holding the exact file", async () => {
+	it("shows an audit panel holding the exact file", async () => {
 		const f = fixture({ completeness: "counting_in_progress" });
 		const path = writeFixture("audit.json", f);
 		const root = await render(path);
-		const banner = root.querySelector('[data-role="completeness-banner"]');
-		expect(
-			banner?.querySelector('[data-selector="completeness"]'),
-		).not.toBeNull();
-		expect(banner?.textContent).toContain(f.run.generated_at);
 		const audit = root.querySelector('[data-role="audit"]') as HTMLElement;
 		const download = audit.querySelector('a[download="findings.json"]');
 		const href = download?.getAttribute("href") ?? "";
@@ -504,15 +503,15 @@ describe("election findings report", () => {
 		}
 	});
 
-	it("opens with a data sources overview before the questions", async () => {
+	it("shows a data sources overview after the questions", async () => {
 		const f = fixture();
 		const root = await render(writeFixture("sources.json", f));
 		const sources = root.querySelector('[data-role="sources"]') as HTMLElement;
 		expect(sources.textContent).toContain("Fixture source «source»");
 		expect(sources.textContent).toContain("not available");
-		const first = root.querySelector('[data-question="seat_change"]') as Node;
+		const last = root.querySelector('[data-question="dummymander"]') as Node;
 		expect(
-			sources.compareDocumentPosition(first) & Node.DOCUMENT_POSITION_FOLLOWING,
+			last.compareDocumentPosition(sources) & Node.DOCUMENT_POSITION_FOLLOWING,
 		).toBeTruthy();
 	});
 
