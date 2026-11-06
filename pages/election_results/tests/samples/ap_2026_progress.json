@@ -1,0 +1,332 @@
+{
+ "20261103AK2015": {
+  "statePostal": "AK",
+  "lastUpdated": "2026-11-05T15:28:06.520000Z",
+  "eevp": 73.98,
+  "raceID": "20261103AK2015",
+  "candidates": [
+   {
+    "candidateID": "70724",
+    "voteCount": 105647,
+    "votePct": 49.6
+   },
+   {
+    "candidateID": "177719",
+    "voteCount": 86023,
+    "votePct": 40.38
+   },
+   {
+    "candidateID": "167001",
+    "voteCount": 15550,
+    "votePct": 7.3
+   },
+   {
+    "candidateID": "62643",
+    "voteCount": 5789,
+    "votePct": 2.72
+   },
+   {
+    "candidateID": "100008",
+    "voteCount": 0,
+    "votePct": 0.0
+   }
+  ]
+ },
+ "20261103OH84327": {
+  "statePostal": "OH",
+  "lastUpdated": "2026-11-05T23:50:26.350000Z",
+  "eevp": 97.95,
+  "raceID": "20261103OH84327",
+  "candidates": [
+   {
+    "candidateID": "1384",
+    "voteCount": 2301042,
+    "votePct": 50.01,
+    "winner": "X"
+   },
+   {
+    "candidateID": "139415",
+    "voteCount": 2077748,
+    "votePct": 45.15
+   },
+   {
+    "candidateID": "176564",
+    "voteCount": 128272,
+    "votePct": 2.79
+   },
+   {
+    "candidateID": "179110",
+    "voteCount": 94509,
+    "votePct": 2.05
+   }
+  ]
+ },
+ "20261103TX46643": {
+  "statePostal": "TX",
+  "lastUpdated": "2026-11-05T20:34:17.883000Z",
+  "eevp": 99.0,
+  "raceID": "20261103TX46643",
+  "candidates": [
+   {
+    "candidateID": "153037",
+    "voteCount": 5445156,
+    "votePct": 55.08,
+    "winner": "X"
+   },
+   {
+    "candidateID": "58352",
+    "voteCount": 4249763,
+    "votePct": 42.99
+   },
+   {
+    "candidateID": "69634",
+    "voteCount": 190259,
+    "votePct": 1.92
+   }
+  ]
+ },
+ "20261103TX45896": {
+  "statePostal": "TX",
+  "lastUpdated": "2026-11-05T20:06:39.656000Z",
+  "eevp": 99.0,
+  "raceID": "20261103TX45896",
+  "candidates": [
+   {
+    "candidateID": "160826",
+    "voteCount": 182648,
+    "votePct": 54.54,
+    "winner": "X"
+   },
+   {
+    "candidateID": "170236",
+    "voteCount": 147944,
+    "votePct": 44.18
+   },
+   {
+    "candidateID": "65546",
+    "voteCount": 4308,
+    "votePct": 1.29
+   }
+  ]
+ },
+ "20261103FL10025": {
+  "statePostal": "FL",
+  "lastUpdated": "2026-11-04T18:01:32.872000Z",
+  "eevp": 0.0,
+  "raceID": "20261103FL10025",
+  "candidates": [
+   {
+    "candidateID": "71568",
+    "voteCount": 0,
+    "votePct": 0,
+    "winner": "X"
+   }
+  ]
+ },
+ "20261103MA22948": {
+  "statePostal": "MA",
+  "lastUpdated": "2026-11-05T23:29:40.417000Z",
+  "eevp": 62.72,
+  "raceID": "20261103MA22948",
+  "candidates": [
+   {
+    "candidateID": "883",
+    "voteCount": 198782,
+    "votePct": 100.0,
+    "winner": "X"
+   }
+  ]
+ },
+ "20261103CA5696": {
+  "statePostal": "CA",
+  "lastUpdated": "2026-11-06T02:58:21.575000Z",
+  "eevp": 52.21,
+  "raceID": "20261103CA5696",
+  "candidates": [
+   {
+    "candidateID": "105173",
+    "voteCount": 86732,
+    "votePct": 57.49,
+    "winner": "X"
+   },
+   {
+    "candidateID": "69756",
+    "voteCount": 64143,
+    "votePct": 42.51
+   }
+  ]
+ },
+ "20261103LA20560": {
+  "statePostal": "LA",
+  "lastUpdated": "2026-11-04T21:27:19.514000Z",
+  "eevp": 99.0,
+  "raceID": "20261103LA20560",
+  "candidates": [
+   {
+    "candidateID": "72453",
+    "voteCount": 40789,
+    "votePct": 17.9,
+    "winner": "R"
+   },
+   {
+    "candidateID": "72460",
+    "voteCount": 39131,
+    "votePct": 17.17,
+    "winner": "R"
+   },
+   {
+    "candidateID": "172911",
+    "voteCount": 33366,
+    "votePct": 14.64
+   },
+   {
+    "candidateID": "178736",
+    "voteCount": 32902,
+    "votePct": 14.44
+   },
+   {
+    "candidateID": "72421",
+    "voteCount": 28160,
+    "votePct": 12.36
+   },
+   {
+    "candidateID": "178737",
+    "voteCount": 27364,
+    "votePct": 12.01
+   },
+   {
+    "candidateID": "172909",
+    "voteCount": 16047,
+    "votePct": 7.04
+   },
+   {
+    "candidateID": "172912",
+    "voteCount": 7920,
+    "votePct": 3.47
+   },
+   {
+    "candidateID": "67930",
+    "voteCount": 2238,
+    "votePct": 0.98
+   }
+  ]
+ },
+ "20261103ME20645": {
+  "statePostal": "ME",
+  "lastUpdated": "2026-11-05T23:13:11.855000Z",
+  "eevp": 97.83,
+  "raceID": "20261103ME20645",
+  "candidates": [
+   {
+    "candidateID": "60414",
+    "voteCount": 170265,
+    "votePct": 49.89
+   },
+   {
+    "candidateID": "174146",
+    "voteCount": 164845,
+    "votePct": 48.31
+   },
+   {
+    "candidateID": "179614",
+    "voteCount": 6021,
+    "votePct": 1.76
+   },
+   {
+    "candidateID": "120523",
+    "voteCount": 125,
+    "votePct": 0.04
+   }
+  ]
+ },
+ "20261103US999999": {
+  "statePostal": "US",
+  "lastUpdated": "2026-11-06T03:51:14.871000Z",
+  "eevp": 92.01,
+  "raceID": "20261103US999999",
+  "candidates": [
+   {
+    "candidateID": "178506",
+    "voteCount": 62046362,
+    "votePct": 55.44
+   },
+   {
+    "candidateID": "178507",
+    "voteCount": 48236647,
+    "votePct": 43.1
+   },
+   {
+    "candidateID": "178508",
+    "voteCount": 1641986,
+    "votePct": 1.47
+   }
+  ]
+ },
+ "20261103GA12029": {
+  "statePostal": "GA",
+  "lastUpdated": "2026-11-05T22:38:03.407000Z",
+  "eevp": 99.0,
+  "raceID": "20261103GA12029",
+  "candidates": [
+   {
+    "candidateID": "110638",
+    "voteCount": 2271404,
+    "votePct": 54.33,
+    "winner": "X"
+   },
+   {
+    "candidateID": "171426",
+    "voteCount": 1909163,
+    "votePct": 45.67
+   },
+   {
+    "candidateID": "100008",
+    "voteCount": 0,
+    "votePct": 0.0
+   }
+  ]
+ },
+ "20261103GA11025": {
+  "statePostal": "GA",
+  "lastUpdated": "2026-11-05T22:27:05.028000Z",
+  "eevp": 99.0,
+  "raceID": "20261103GA11025",
+  "candidates": [
+   {
+    "candidateID": "110700",
+    "voteCount": 174274,
+    "votePct": 53.59,
+    "winner": "X"
+   },
+   {
+    "candidateID": "171490",
+    "voteCount": 150901,
+    "votePct": 46.41
+   },
+   {
+    "candidateID": "100008",
+    "voteCount": 0,
+    "votePct": 0.0
+   }
+  ]
+ },
+ "20261103AL1025": {
+  "statePostal": "AL",
+  "lastUpdated": "2026-11-05T22:29:27.217000Z",
+  "eevp": 98.77,
+  "raceID": "20261103AL1025",
+  "candidates": [
+   {
+    "candidateID": "171298",
+    "voteCount": 920421,
+    "votePct": 54.98,
+    "winner": "X"
+   },
+   {
+    "candidateID": "52832",
+    "voteCount": 753532,
+    "votePct": 45.02
+   }
+  ]
+ }
+}
