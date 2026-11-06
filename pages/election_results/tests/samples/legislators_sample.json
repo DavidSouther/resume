@@ -1,0 +1,459 @@
+[
+ {
+  "id": {
+   "bioguide": "H001104"
+  },
+  "name": {
+   "first": "Jon",
+   "last": "Husted",
+   "official_full": "Jon Husted"
+  },
+  "terms": [
+   {
+    "type": "sen",
+    "state": "OH",
+    "class": 3,
+    "start": "2025-01-21",
+    "end": "2026-11-03",
+    "party": "Republican",
+    "how": "appointment",
+    "end-type": "special-election"
+   }
+  ]
+ },
+ {
+  "id": {
+   "bioguide": "M001242"
+  },
+  "name": {
+   "first": "Bernie",
+   "last": "Moreno",
+   "official_full": "Bernie Moreno"
+  },
+  "terms": [
+   {
+    "type": "sen",
+    "state": "OH",
+    "class": 1,
+    "start": "2025-01-03",
+    "end": "2031-01-03",
+    "party": "Republican"
+   }
+  ]
+ },
+ {
+  "id": {
+   "bioguide": "V000137"
+  },
+  "name": {
+   "first": "J. D.",
+   "last": "Vance",
+   "official_full": "J. D. Vance"
+  },
+  "terms": [
+   {
+    "type": "sen",
+    "state": "OH",
+    "class": 3,
+    "start": "2023-01-03",
+    "end": "2025-01-10",
+    "party": "Republican"
+   }
+  ]
+ },
+ {
+  "id": {
+   "bioguide": "C001098"
+  },
+  "name": {
+   "first": "Rafael",
+   "last": "Cruz",
+   "official_full": "Ted Cruz",
+   "nickname": "Ted"
+  },
+  "terms": [
+   {
+    "type": "sen",
+    "state": "TX",
+    "class": 1,
+    "start": "2013-01-03",
+    "end": "2019-01-03",
+    "party": "Republican"
+   },
+   {
+    "type": "sen",
+    "state": "TX",
+    "class": 1,
+    "start": "2019-01-03",
+    "end": "2025-01-03",
+    "party": "Republican"
+   }
+  ]
+ },
+ {
+  "id": {
+   "bioguide": "C001056"
+  },
+  "name": {
+   "first": "John",
+   "last": "Cornyn",
+   "official_full": "John Cornyn"
+  },
+  "terms": [
+   {
+    "type": "sen",
+    "state": "TX",
+    "class": 2,
+    "start": "2002-12-02",
+    "end": "2027-01-03",
+    "party": "Republican"
+   }
+  ]
+ },
+ {
+  "id": {
+   "bioguide": "C001035"
+  },
+  "name": {
+   "first": "Susan",
+   "last": "Collins",
+   "official_full": "Susan Collins"
+  },
+  "terms": [
+   {
+    "type": "sen",
+    "state": "ME",
+    "class": 2,
+    "start": "2009-01-06",
+    "end": "2015-01-03",
+    "party": "Republican"
+   },
+   {
+    "type": "sen",
+    "state": "ME",
+    "class": 2,
+    "start": "2015-01-06",
+    "end": "2027-01-03",
+    "party": "Republican"
+   }
+  ]
+ },
+ {
+  "id": {
+   "bioguide": "K000383"
+  },
+  "name": {
+   "first": "Angus",
+   "last": "King",
+   "official_full": "Angus King"
+  },
+  "terms": [
+   {
+    "type": "sen",
+    "state": "ME",
+    "class": 1,
+    "start": "2013-01-03",
+    "end": "2019-01-03",
+    "party": "Independent",
+    "caucus": "Democrat"
+   },
+   {
+    "type": "sen",
+    "state": "ME",
+    "class": 1,
+    "start": "2019-01-03",
+    "end": "2031-01-03",
+    "party": "Independent",
+    "caucus": "Democrat"
+   }
+  ]
+ },
+ {
+  "id": {
+   "bioguide": "S000033"
+  },
+  "name": {
+   "first": "Bernard",
+   "last": "Sanders",
+   "official_full": "Bernie Sanders",
+   "nickname": "Bernie"
+  },
+  "terms": [
+   {
+    "type": "sen",
+    "state": "VT",
+    "class": 1,
+    "start": "2013-01-03",
+    "end": "2019-01-03",
+    "party": "Independent",
+    "caucus": "Democrat"
+   },
+   {
+    "type": "sen",
+    "state": "VT",
+    "class": 1,
+    "start": "2019-01-03",
+    "end": "2031-01-03",
+    "party": "Independent",
+    "caucus": "Democrat"
+   }
+  ]
+ },
+ {
+  "id": {
+   "bioguide": "L000174"
+  },
+  "name": {
+   "first": "Patrick",
+   "last": "Leahy",
+   "official_full": "Patrick Leahy"
+  },
+  "terms": [
+   {
+    "type": "sen",
+    "state": "VT",
+    "class": 3,
+    "start": "1975-01-14",
+    "end": "2023-01-03",
+    "party": "Democrat"
+   }
+  ]
+ },
+ {
+  "id": {
+   "bioguide": "M001183"
+  },
+  "name": {
+   "first": "Joe",
+   "last": "Manchin",
+   "official_full": "Joe Manchin"
+  },
+  "terms": [
+   {
+    "type": "sen",
+    "state": "WV",
+    "class": 1,
+    "start": "2019-01-03",
+    "end": "2025-01-03",
+    "party": "Independent",
+    "caucus": "Democrat",
+    "party_affiliations": [
+     {
+      "start": "2019-01-03",
+      "end": "2024-05-31",
+      "party": "Democrat"
+     },
+     {
+      "start": "2024-05-31",
+      "end": "2025-01-03",
+      "party": "Independent",
+      "caucus": "Democrat"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": {
+   "bioguide": "C001047"
+  },
+  "name": {
+   "first": "Shelley",
+   "last": "Capito",
+   "official_full": "Shelley Capito"
+  },
+  "terms": [
+   {
+    "type": "sen",
+    "state": "WV",
+    "class": 2,
+    "start": "2015-01-03",
+    "end": "2027-01-03",
+    "party": "Republican"
+   }
+  ]
+ },
+ {
+  "id": {
+   "bioguide": "J000300"
+  },
+  "name": {
+   "first": "Doug",
+   "last": "Jones",
+   "official_full": "Doug Jones"
+  },
+  "terms": [
+   {
+    "type": "sen",
+    "state": "AL",
+    "class": 2,
+    "start": "2018-01-03",
+    "end": "2021-01-03",
+    "party": "Democrat",
+    "how": "special-election"
+   }
+  ]
+ },
+ {
+  "id": {
+   "bioguide": "R000598"
+  },
+  "name": {
+   "first": "Keith",
+   "last": "Rothfus",
+   "official_full": "Keith Rothfus"
+  },
+  "terms": [
+   {
+    "type": "rep",
+    "state": "PA",
+    "district": 12,
+    "start": "2013-01-03",
+    "end": "2019-01-03",
+    "party": "Republican"
+   }
+  ]
+ },
+ {
+  "id": {
+   "bioguide": "L000588"
+  },
+  "name": {
+   "first": "Conor",
+   "last": "Lamb",
+   "official_full": "Conor Lamb"
+  },
+  "terms": [
+   {
+    "type": "rep",
+    "state": "PA",
+    "district": 18,
+    "start": "2018-04-12",
+    "end": "2019-01-03",
+    "party": "Democrat"
+   }
+  ]
+ },
+ {
+  "id": {
+   "bioguide": "C001106"
+  },
+  "name": {
+   "first": "Ryan",
+   "last": "Costello",
+   "official_full": "Ryan Costello"
+  },
+  "terms": [
+   {
+    "type": "rep",
+    "state": "PA",
+    "district": 6,
+    "start": "2015-01-06",
+    "end": "2019-01-03",
+    "party": "Republican"
+   }
+  ]
+ },
+ {
+  "id": {
+   "bioguide": "D000604"
+  },
+  "name": {
+   "first": "Charles",
+   "last": "Dent",
+   "official_full": "Charlie Dent",
+   "nickname": "Charlie"
+  },
+  "terms": [
+   {
+    "type": "rep",
+    "state": "PA",
+    "district": 15,
+    "start": "2005-01-04",
+    "end": "2018-05-12",
+    "party": "Republican"
+   }
+  ]
+ },
+ {
+  "id": {
+   "bioguide": "F000466"
+  },
+  "name": {
+   "first": "Brian",
+   "last": "Fitzpatrick",
+   "official_full": "Brian Fitzpatrick"
+  },
+  "terms": [
+   {
+    "type": "rep",
+    "state": "PA",
+    "district": 8,
+    "start": "2017-01-03",
+    "end": "2019-01-03",
+    "party": "Republican"
+   }
+  ]
+ },
+ {
+  "id": {
+   "bioguide": "M001181"
+  },
+  "name": {
+   "first": "Timothy",
+   "last": "Murphy",
+   "official_full": "Tim Murphy",
+   "nickname": "Tim"
+  },
+  "terms": [
+   {
+    "type": "rep",
+    "state": "PA",
+    "district": 18,
+    "start": "2003-01-07",
+    "end": "2017-10-21",
+    "party": "Republican"
+   }
+  ]
+ },
+ {
+  "id": {
+   "bioguide": "J000032"
+  },
+  "name": {
+   "first": "Sheila",
+   "last": "Jackson Lee",
+   "official_full": "Sheila Jackson Lee"
+  },
+  "terms": [
+   {
+    "type": "rep",
+    "state": "TX",
+    "district": 18,
+    "start": "1995-01-03",
+    "end": "2024-07-19",
+    "party": "Democrat"
+   }
+  ]
+ },
+ {
+  "id": {
+   "bioguide": "M001157"
+  },
+  "name": {
+   "first": "Michael",
+   "last": "McCaul",
+   "official_full": "Michael McCaul"
+  },
+  "terms": [
+   {
+    "type": "rep",
+    "state": "TX",
+    "district": 10,
+    "start": "2005-01-04",
+    "end": "2027-01-03",
+    "party": "Republican"
+   }
+  ]
+ }
+]

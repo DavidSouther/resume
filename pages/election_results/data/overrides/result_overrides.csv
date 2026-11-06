@@ -1,0 +1,137 @@
+year,state,office,seat,special,round,candidate,party,votes,official,source_id
+2008,GA,senate,2,false,general,Saxby Chambliss,REP,1867097,true,10
+2008,GA,senate,2,false,general,Jim Martin,DEM,1757393,true,10
+2008,GA,senate,2,false,general,Allen Buckley,OTHER,127923,true,10
+2008,GA,senate,2,false,general,Eleanor Garcia,OTHER,43,true,10
+2008,GA,senate,2,false,general,"William Salomone, Jr.",OTHER,29,true,10
+2008,GA,senate,2,false,runoff,Saxby Chambliss,REP,1228033,true,10
+2008,GA,senate,2,false,runoff,Jim Martin,DEM,909923,true,10
+2014,LA,senate,2,false,general,Mary Landrieu,DEM,619402,true,11
+2014,LA,senate,2,false,general,Bill Cassidy,REP,603048,true,11
+2014,LA,senate,2,false,general,Rob Maness,REP,202556,true,11
+2014,LA,senate,2,false,general,Thomas Clements,REP,14173,true,11
+2014,LA,senate,2,false,general,Brannon McMorris,OTHER,13034,true,11
+2014,LA,senate,2,false,general,Wayne Ables,DEM,11323,true,11
+2014,LA,senate,2,false,general,William Waymire,DEM,4673,true,11
+2014,LA,senate,2,false,general,Vallian Senegal,DEM,3835,true,11
+2014,LA,senate,2,false,runoff,Bill Cassidy,REP,712379,true,11
+2014,LA,senate,2,false,runoff,Mary Landrieu,DEM,561210,true,11
+2016,LA,senate,3,false,general,John Kennedy,REP,482591,true,12
+2016,LA,senate,3,false,general,Foster Campbell,DEM,337833,true,12
+2016,LA,senate,3,false,general,Charles Boustany,REP,298008,true,12
+2016,LA,senate,3,false,general,Caroline Fayard,DEM,240917,true,12
+2016,LA,senate,3,false,general,John Fleming,REP,204026,true,12
+2016,LA,senate,3,false,general,Rob Maness,REP,90856,true,12
+2016,LA,senate,3,false,general,David Duke,REP,58606,true,12
+2016,LA,senate,3,false,general,Derrick Edwards,DEM,51774,true,12
+2016,LA,senate,3,false,general,Gary Landrieu,DEM,45587,true,12
+2016,LA,senate,3,false,general,"Donald ""Crawdaddy"" Crawford",REP,25523,true,12
+2016,LA,senate,3,false,general,Joseph Cao,REP,21019,true,12
+2016,LA,senate,3,false,general,Beryl Billiot,OTHER,19352,true,12
+2016,LA,senate,3,false,general,Thomas Clements,OTHER,11370,true,12
+2016,LA,senate,3,false,general,Troy Hebert,OTHER,9503,true,12
+2016,LA,senate,3,false,general,Josh Pellerin,DEM,7395,true,12
+2016,LA,senate,3,false,general,Peter Williams,DEM,6855,true,12
+2016,LA,senate,3,false,general,Vinny Mendoza,DEM,4927,true,12
+2016,LA,senate,3,false,general,Kaitlin Marone,OTHER,4108,true,12
+2016,LA,senate,3,false,general,Le Roy Gillam,OTHER,4067,true,12
+2016,LA,senate,3,false,general,Charles Eugene Marsala,REP,3684,true,12
+2016,LA,senate,3,false,general,Abhay Patel,REP,1576,true,12
+2016,LA,senate,3,false,general,Arden Wells,OTHER,1483,true,12
+2016,LA,senate,3,false,general,Bob Lang,OTHER,1424,true,12
+2016,LA,senate,3,false,general,Gregory Taylor,OTHER,1151,true,12
+2016,LA,senate,3,false,runoff,John Neely Kennedy,REP,536191,true,12
+2016,LA,senate,3,false,runoff,Foster Campbell,DEM,347816,true,12
+2022,CT,senate,3,false,general,Richard Blumenthal,DEM,723864,true,13
+2022,CT,senate,3,false,general,Leora Levy,REP,535943,true,13
+2022,CT,senate,3,false,general,Write-in,OTHER,80,true,13
+2012,LA,house,3,false,general,Charles Boustany,REP,139123,true,14
+2012,LA,house,3,false,general,Jeff Landry,REP,93527,true,14
+2012,LA,house,3,false,general,Ron Richard,DEM,67070,true,14
+2012,LA,house,3,false,general,Bryan Barrilleaux,REP,7908,true,14
+2012,LA,house,3,false,general,Jim Stark,OTHER,3765,true,14
+2012,LA,house,3,false,runoff,"Charles W. Boustany, Jr.",REP,58820,true,14
+2012,LA,house,3,false,runoff,Jeff Landry,REP,37767,true,14
+2014,LA,house,5,false,general,Jamie Mayo,DEM,67611,true,15
+2014,LA,house,5,false,general,Ralph Abraham,REP,55489,true,15
+2014,LA,house,5,false,general,Zach Dasher,REP,53628,true,15
+2014,LA,house,5,false,general,Vance McAllister,REP,26606,true,15
+2014,LA,house,5,false,general,Clyde C. Holloway,REP,17877,true,15
+2014,LA,house,5,false,general,Harris Brown,REP,9890,true,15
+2014,LA,house,5,false,general,Ed Tarpley,REP,4594,true,15
+2014,LA,house,5,false,general,Charles Saucier,OTHER,2201,true,15
+2014,LA,house,5,false,general,Eliot Barron,OTHER,1655,true,15
+2014,LA,house,5,false,runoff,Ralph Abraham,REP,134616,true,15
+2014,LA,house,5,false,runoff,Jamie Mayo,DEM,75006,true,15
+2014,LA,house,6,false,general,Edwin Edwards,DEM,77866,true,15
+2014,LA,house,6,false,general,Garret Graves,REP,70715,true,15
+2014,LA,house,6,false,general,Paul Dietzel,REP,35024,true,15
+2014,LA,house,6,false,general,Dan Claitor,REP,26524,true,15
+2014,LA,house,6,false,general,Lenar Whitney,REP,19151,true,15
+2014,LA,house,6,false,general,Richard Dean Lieberman,DEM,7309,true,15
+2014,LA,house,6,false,general,Craig McCulloch,REP,5815,true,15
+2014,LA,house,6,false,general,Bob Bell,REP,5182,true,15
+2014,LA,house,6,false,general,Peter Williams,DEM,4037,true,15
+2014,LA,house,6,false,general,"Rufus Holt Craig, Jr.",OTHER,3561,true,15
+2014,LA,house,6,false,general,Norm Clark,REP,1848,true,15
+2014,LA,house,6,false,general,"Charles ""Trey"" Thomas",REP,1447,true,15
+2014,LA,house,6,false,runoff,Garret Graves,REP,139209,true,15
+2014,LA,house,6,false,runoff,Edwin Edwards,DEM,83781,true,15
+2016,LA,house,3,false,general,Scott Angelle,REP,91532,true,16
+2016,LA,house,3,false,general,Clay Higgins,REP,84912,true,16
+2016,LA,house,3,false,general,"Jacob ""Dorian Phibian"" Hebert",DEM,28385,true,16
+2016,LA,house,3,false,general,Larry Rader,DEM,27830,true,16
+2016,LA,house,3,false,general,Gus Rantz,REP,25662,true,16
+2016,LA,house,3,false,general,Greg Ellison,REP,24882,true,16
+2016,LA,house,3,false,general,Brett Geymann,REP,21607,true,16
+2016,LA,house,3,false,general,Bryan Barrilleaux,REP,6223,true,16
+2016,LA,house,3,false,general,Guy McLendon,OTHER,2937,true,16
+2016,LA,house,3,false,general,"Kenny P. Scelfo, Sr.",OTHER,2670,true,16
+2016,LA,house,3,false,general,Grover J. Rees III,REP,2457,true,16
+2016,LA,house,3,false,general,Herman Vidrine,REP,1357,true,16
+2016,LA,house,3,false,runoff,Clay Higgins,REP,77671,true,16
+2016,LA,house,3,false,runoff,Scott Angelle,REP,60762,true,16
+2016,LA,house,4,false,general,Marshall Jones,DEM,80593,true,16
+2016,LA,house,4,false,general,Mike Johnson,REP,70580,true,16
+2016,LA,house,4,false,general,Trey Baucum,REP,50412,true,16
+2016,LA,house,4,false,general,Oliver Jenkins,REP,44521,true,16
+2016,LA,house,4,false,general,Elbert Guillory,REP,21017,true,16
+2016,LA,house,4,false,general,Rick John,REP,13220,true,16
+2016,LA,house,4,false,general,Mark Halverson,OTHER,3149,true,16
+2016,LA,house,4,false,general,Kenneth Kreft,OTHER,2493,true,16
+2016,LA,house,4,false,runoff,Mike Johnson,REP,87370,true,16
+2016,LA,house,4,false,runoff,Marshall Jones,DEM,46579,true,16
+2020,LA,house,5,false,general,Luke Letlow,REP,102533,true,17
+2020,LA,house,5,false,general,Lance Harris,REP,51240,true,17
+2020,LA,house,5,false,general,Candy Shoemaker-Cristophe,DEM,50812,true,17
+2020,LA,house,5,false,general,Martin Lemelle Jr.,DEM,32186,true,17
+2020,LA,house,5,false,general,Scotty Robinson,REP,23887,true,17
+2020,LA,house,5,false,general,Allen Guillory Sr.,REP,22496,true,17
+2020,LA,house,5,false,general,Matt Hasty,REP,9834,true,17
+2020,LA,house,5,false,general,Phillip Snowden,DEM,9432,true,17
+2020,LA,house,5,false,general,Jesse P. Lagarde,DEM,7136,true,17
+2020,LA,house,5,false,runoff,Luke Letlow,REP,49183,true,17
+2020,LA,house,5,false,runoff,Lance Harris,REP,30124,true,17
+2018,ME,house,2,false,general,Bruce Poliquin,REP,134184,true,18
+2018,ME,house,2,false,general,Jared Golden,DEM,132013,true,18
+2018,ME,house,2,false,general,Tiffany Bond,OTHER,16552,true,18
+2018,ME,house,2,false,general,Will Hoar,OTHER,6875,true,18
+2018,ME,house,2,false,rcv_final,Jared Golden,DEM,142440,true,18
+2018,ME,house,2,false,rcv_final,Bruce Poliquin,REP,138931,true,18
+2022,ME,house,2,false,general,Jared Golden,DEM,153074,true,19
+2022,ME,house,2,false,general,Bruce Poliquin,REP,141260,true,19
+2022,ME,house,2,false,general,Tiffany Bond,OTHER,21655,true,19
+2022,ME,house,2,false,general,Write-in,OTHER,393,true,19
+2022,ME,house,2,false,rcv_final,Jared Golden,DEM,165136,true,19
+2022,ME,house,2,false,rcv_final,Bruce Poliquin,REP,146142,true,19
+2022,AK,senate,3,false,general,Lisa Murkowski,REP,113495,true,20
+2022,AK,senate,3,false,general,Kelly Tshibaka,REP,111480,true,20
+2022,AK,senate,3,false,general,Pat Chesbro,DEM,27145,true,20
+2022,AK,senate,3,false,general,Buzz Kelley,REP,7557,true,20
+2022,AK,senate,3,false,general,Write-in,OTHER,2028,true,20
+2022,AK,senate,3,false,rcv_final,Lisa Murkowski,REP,136330,true,20
+2022,AK,senate,3,false,rcv_final,Kelly Tshibaka,REP,117534,true,20
+2022,AK,house,0,false,rcv_final,Mary Peltola,DEM,137263,true,21
+2022,AK,house,0,false,rcv_final,Sarah Palin,REP,112471,true,21
+2024,AK,house,0,false,rcv_final,Nick Begich III,REP,164861,true,22
+2024,AK,house,0,false,rcv_final,Mary Peltola,DEM,156985,true,22

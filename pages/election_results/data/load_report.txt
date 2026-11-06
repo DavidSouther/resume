@@ -1,0 +1,547 @@
+Load report, written 2026-11-06T13:28:52Z
+
+Races per year and office, baseline years included (specials and runoffs counted once per race):
+  year  house senate governor
+  2008    435     35       11
+  2009      0      0        2
+  2010    435     37       37
+  2011      0      0        4
+  2012    435     33       11
+  2013      0      0        2
+  2014    435     36       36
+  2015      0      0        3
+  2016    435     34       12
+  2017      0      0        2
+  2018    435     35       36
+  2019      0      0        3
+  2020    435     35       11
+  2021      0      0        2
+  2022    435     36       36
+  2023      0      0        3
+  2024    435     35       11
+  2025      0      0        2
+  2026    435     35       36
+
+Races decided or corrected by result_overrides.csv: 15
+Election Lab turnout years: 2008, 2010, 2012, 2014, 2016, 2018, 2020, 2022, 2024, 2026
+
+Races not read, or read only in part (11). None of these is written with zeros:
+- 2026 AK governor: ranked choice, AP reports the first round only, so it is stored as the general round until result_overrides.csv adds rcv_final
+- 2026 AK house district 0: ranked choice, AP reports the first round only, so it is stored as the general round until result_overrides.csv adds rcv_final
+- 2026 AK senate: ranked choice, AP reports the first round only, so it is stored as the general round until result_overrides.csv adds rcv_final
+- 2026 FL house district 10: uncontested and not counted, so its votes are null
+- 2026 LA house district 5: AP reports a runoff between Patricia Moore and Gabe Firment, so the November round is stored as general until result_overrides.csv adds the runoff
+- 2026 LA house district 6: no candidate has a majority in a state with runoffs, so a runoff may follow
+- 20261103US999999: AP house entry for US is not a state race (the national House vote total), so it was not read
+- 2010 NY governor: partial, no general election box, so only the infobox nominees are counted
+- 2011 MS governor: partial, no general election box, so only the infobox nominees are counted
+- 2015 MS governor: partial, no general election box, so only the infobox nominees are counted
+- 2019 MS governor: partial, no general election box, so only the infobox nominees are counted
+
+AP races counted below 100 percent of their expected vote (506). They are written with the partial counts:
+- 2026 AK governor: eevp 73.81, last updated 2026-11-05T15:28:06Z
+- 2026 AK house district 0: eevp 73.98, last updated 2026-11-05T15:28:06Z
+- 2026 AK senate: eevp 74.09, last updated 2026-11-05T15:27:57Z
+- 2026 AL house district 1: eevp 99, last updated 2026-11-05T22:29:22Z
+- 2026 AL house district 4: eevp 98.91, last updated 2026-11-05T22:28:14Z
+- 2026 AL governor: eevp 98.9, last updated 2026-11-05T22:29:22Z
+- 2026 AL house district 2: eevp 98.95, last updated 2026-11-05T22:27:45Z
+- 2026 AL house district 3: eevp 99, last updated 2026-11-05T21:17:20Z
+- 2026 AL house district 5: eevp 99, last updated 2026-11-05T21:22:51Z
+- 2026 AL house district 6: eevp 98.31, last updated 2026-11-05T22:26:41Z
+- 2026 AL house district 7: eevp 98.95, last updated 2026-11-05T22:26:17Z
+- 2026 AL senate: eevp 98.97, last updated 2026-11-05T22:29:22Z
+- 2026 AR house district 1: eevp 99, last updated 2026-11-04T21:22:02Z
+- 2026 AR house district 2: eevp 99, last updated 2026-11-05T17:01:35Z
+- 2026 AR house district 4: eevp 99, last updated 2026-11-04T22:21:41Z
+- 2026 AR governor: eevp 99, last updated 2026-11-04T22:22:13Z
+- 2026 AR house district 3: eevp 99, last updated 2026-11-04T18:30:57Z
+- 2026 AR senate: eevp 99, last updated 2026-11-04T22:22:08Z
+- 2026 AZ house district 1: eevp 93.2, last updated 2026-11-06T03:51:02Z
+- 2026 AZ house district 2: eevp 95.78, last updated 2026-11-06T03:51:06Z
+- 2026 AZ house district 3: eevp 93.58, last updated 2026-11-06T03:51:03Z
+- 2026 AZ house district 4: eevp 93.32, last updated 2026-11-06T03:51:07Z
+- 2026 AZ house district 5: eevp 92.92, last updated 2026-11-06T03:50:58Z
+- 2026 AZ governor: eevp 92.11, last updated 2026-11-06T03:51:03Z
+- 2026 AZ house district 6: eevp 88.6, last updated 2026-11-06T01:57:35Z
+- 2026 AZ house district 7: eevp 71.55, last updated 2026-11-06T03:51:14Z
+- 2026 AZ house district 8: eevp 93.21, last updated 2026-11-06T03:51:10Z
+- 2026 AZ house district 9: eevp 90.77, last updated 2026-11-06T03:51:06Z
+- 2026 CA house district 2: eevp 54.18, last updated 2026-11-06T02:58:24Z
+- 2026 CA house district 3: eevp 51.6, last updated 2026-11-06T02:57:46Z
+- 2026 CA house district 4: eevp 48.52, last updated 2026-11-06T02:58:20Z
+- 2026 CA house district 5: eevp 63.86, last updated 2026-11-06T02:58:17Z
+- 2026 CA house district 6: eevp 52.21, last updated 2026-11-06T02:58:21Z
+- 2026 CA house district 7: eevp 51.6, last updated 2026-11-06T02:58:06Z
+- 2026 CA house district 8: eevp 75.18, last updated 2026-11-06T02:58:22Z
+- 2026 CA house district 9: eevp 57.38, last updated 2026-11-06T02:58:02Z
+- 2026 CA house district 11: eevp 74.48, last updated 2026-11-06T02:58:08Z
+- 2026 CA house district 12: eevp 50.85, last updated 2026-11-06T02:57:32Z
+- 2026 CA house district 13: eevp 54.83, last updated 2026-11-06T02:58:09Z
+- 2026 CA house district 14: eevp 50.85, last updated 2026-11-06T02:57:40Z
+- 2026 CA house district 15: eevp 60.85, last updated 2026-11-06T02:58:04Z
+- 2026 CA house district 16: eevp 53.55, last updated 2026-11-06T02:58:07Z
+- 2026 CA house district 17: eevp 52.09, last updated 2026-11-06T02:58:03Z
+- 2026 CA house district 18: eevp 55.29, last updated 2026-11-06T02:58:04Z
+- 2026 CA house district 19: eevp 60.59, last updated 2026-11-06T02:58:10Z
+- 2026 CA house district 20: eevp 56.95, last updated 2026-11-06T02:58:17Z
+- 2026 CA house district 21: eevp 58.55, last updated 2026-11-06T02:58:24Z
+- 2026 CA house district 22: eevp 56.58, last updated 2026-11-06T02:58:18Z
+- 2026 CA house district 23: eevp 68.02, last updated 2026-11-06T02:58:05Z
+- 2026 CA house district 24: eevp 57.82, last updated 2026-11-06T02:58:25Z
+- 2026 CA house district 25: eevp 49.84, last updated 2026-11-06T02:58:12Z
+- 2026 CA house district 26: eevp 61.31, last updated 2026-11-06T02:58:21Z
+- 2026 CA house district 27: eevp 76.34, last updated 2026-11-06T02:57:52Z
+- 2026 CA house district 28: eevp 75.15, last updated 2026-11-06T02:58:05Z
+- 2026 CA house district 29: eevp 76.34, last updated 2026-11-06T02:57:47Z
+- 2026 CA house district 30: eevp 76.34, last updated 2026-11-06T02:57:45Z
+- 2026 CA house district 31: eevp 75.46, last updated 2026-11-06T02:58:04Z
+- 2026 CA house district 32: eevp 72.31, last updated 2026-11-06T02:58:23Z
+- 2026 CA house district 33: eevp 69.31, last updated 2026-11-06T02:58:03Z
+- 2026 CA house district 35: eevp 66.12, last updated 2026-11-06T02:58:13Z
+- 2026 CA house district 36: eevp 76.34, last updated 2026-11-06T02:57:53Z
+- 2026 CA house district 37: eevp 76.34, last updated 2026-11-06T02:57:52Z
+- 2026 CA house district 38: eevp 75.86, last updated 2026-11-06T02:57:47Z
+- 2026 CA house district 39: eevp 47.91, last updated 2026-11-06T02:57:50Z
+- 2026 CA house district 40: eevp 57.86, last updated 2026-11-06T02:57:53Z
+- 2026 CA house district 41: eevp 75.96, last updated 2026-11-06T02:57:51Z
+- 2026 CA house district 42: eevp 75.16, last updated 2026-11-06T02:57:55Z
+- 2026 CA house district 43: eevp 76.34, last updated 2026-11-06T02:57:50Z
+- 2026 CA house district 44: eevp 76.34, last updated 2026-11-06T02:57:46Z
+- 2026 CA house district 45: eevp 74.84, last updated 2026-11-06T02:57:56Z
+- 2026 CA house district 46: eevp 74.43, last updated 2026-11-06T02:57:54Z
+- 2026 CA house district 47: eevp 74.43, last updated 2026-11-06T02:57:48Z
+- 2026 CA house district 49: eevp 65, last updated 2026-11-06T02:58:06Z
+- 2026 CA house district 50: eevp 62.9, last updated 2026-11-06T02:58:07Z
+- 2026 CA governor: eevp 63.75, last updated 2026-11-06T02:58:26Z
+- 2026 CA house district 51: eevp 62.9, last updated 2026-11-06T02:58:11Z
+- 2026 CA house district 1: eevp 59.98, last updated 2026-11-06T02:58:23Z
+- 2026 CA house district 52: eevp 62.9, last updated 2026-11-06T02:58:14Z
+- 2026 CA house district 48: eevp 55.02, last updated 2026-11-06T02:58:13Z
+- 2026 CA house district 10: eevp 58.75, last updated 2026-11-06T02:57:47Z
+- 2026 CA house district 34: eevp 76.34, last updated 2026-11-06T02:58:09Z
+- 2026 CO house district 2: eevp 91.15, last updated 2026-11-06T03:10:07Z
+- 2026 CO house district 3: eevp 96.87, last updated 2026-11-06T02:15:12Z
+- 2026 CO house district 4: eevp 97.03, last updated 2026-11-06T03:10:05Z
+- 2026 CO house district 5: eevp 99, last updated 2026-11-06T01:31:21Z
+- 2026 CO house district 6: eevp 86.81, last updated 2026-11-06T02:25:04Z
+- 2026 CO governor: eevp 94.7, last updated 2026-11-06T03:10:03Z
+- 2026 CO house district 7: eevp 98.3, last updated 2026-11-06T02:15:11Z
+- 2026 CO senate: eevp 94.92, last updated 2026-11-06T03:10:09Z
+- 2026 CO house district 1: eevp 93.06, last updated 2026-11-06T02:25:11Z
+- 2026 CO house district 8: eevp 94.84, last updated 2026-11-06T03:10:12Z
+- 2026 CT house district 1: eevp 98.24, last updated 2026-11-05T23:20:08Z
+- 2026 CT house district 2: eevp 98.32, last updated 2026-11-06T01:50:11Z
+- 2026 CT house district 3: eevp 97.53, last updated 2026-11-06T01:26:12Z
+- 2026 CT house district 4: eevp 98.41, last updated 2026-11-05T21:09:17Z
+- 2026 CT house district 5: eevp 98.6, last updated 2026-11-05T22:02:14Z
+- 2026 CT governor: eevp 98.04, last updated 2026-11-06T01:50:13Z
+- 2026 DE house district 0: eevp 99, last updated 2026-11-05T20:08:57Z
+- 2026 DE senate: eevp 99, last updated 2026-11-05T20:08:57Z
+- 2026 FL house district 2: eevp 99, last updated 2026-11-06T02:17:10Z
+- 2026 FL house district 3: eevp 99, last updated 2026-11-06T00:59:07Z
+- 2026 FL house district 4: eevp 99, last updated 2026-11-05T23:38:35Z
+- 2026 FL house district 5: eevp 99, last updated 2026-11-05T17:51:11Z
+- 2026 FL house district 6: eevp 99, last updated 2026-11-06T02:16:49Z
+- 2026 FL house district 7: eevp 99, last updated 2026-11-06T02:26:56Z
+- 2026 FL house district 8: eevp 99, last updated 2026-11-05T18:09:32Z
+- 2026 FL house district 9: eevp 99, last updated 2026-11-06T00:17:03Z
+- 2026 FL house district 10: eevp 0, last updated 2026-11-04T18:01:32Z
+- 2026 FL house district 11: eevp 99, last updated 2026-11-05T23:54:34Z
+- 2026 FL house district 12: eevp 99, last updated 2026-11-05T21:41:37Z
+- 2026 FL house district 13: eevp 99, last updated 2026-11-05T19:38:55Z
+- 2026 FL house district 14: eevp 99, last updated 2026-11-05T21:41:37Z
+- 2026 FL house district 15: eevp 99, last updated 2026-11-05T21:41:37Z
+- 2026 FL house district 16: eevp 99, last updated 2026-11-06T01:41:51Z
+- 2026 FL house district 17: eevp 99, last updated 2026-11-05T16:24:20Z
+- 2026 FL house district 18: eevp 99, last updated 2026-11-05T16:24:21Z
+- 2026 FL governor: eevp 99, last updated 2026-11-06T02:26:56Z
+- 2026 FL house district 21: eevp 99, last updated 2026-11-06T02:25:58Z
+- 2026 FL house district 22: eevp 99, last updated 2026-11-06T02:25:57Z
+- 2026 FL house district 23: eevp 99, last updated 2026-11-06T02:25:58Z
+- 2026 FL house district 1: eevp 99, last updated 2026-11-05T19:36:14Z
+- 2026 FL house district 24: eevp 99, last updated 2026-11-05T23:26:50Z
+- 2026 FL house district 25: eevp 99, last updated 2026-11-06T02:25:58Z
+- 2026 FL house district 26: eevp 99, last updated 2026-11-05T23:26:55Z
+- 2026 FL house district 27: eevp 99, last updated 2026-11-05T23:26:48Z
+- 2026 FL house district 19: eevp 99, last updated 2026-11-05T16:24:25Z
+- 2026 FL house district 28: eevp 99, last updated 2026-11-05T23:26:51Z
+- 2026 FL house district 20: eevp 99, last updated 2026-11-05T16:24:27Z
+- 2026 FL senate special: eevp 99, last updated 2026-11-06T02:26:58Z
+- 2026 GA house district 1: eevp 99, last updated 2026-11-05T18:57:12Z
+- 2026 GA house district 2: eevp 99, last updated 2026-11-05T22:28:12Z
+- 2026 GA house district 3: eevp 99, last updated 2026-11-05T22:38:03Z
+- 2026 GA house district 4: eevp 99, last updated 2026-11-05T22:27:10Z
+- 2026 GA house district 5: eevp 99, last updated 2026-11-05T22:35:51Z
+- 2026 GA house district 7: eevp 99, last updated 2026-11-05T18:31:53Z
+- 2026 GA house district 8: eevp 99, last updated 2026-11-05T22:36:25Z
+- 2026 GA house district 9: eevp 99, last updated 2026-11-05T22:27:06Z
+- 2026 GA house district 10: eevp 99, last updated 2026-11-05T22:27:05Z
+- 2026 GA house district 11: eevp 99, last updated 2026-11-05T22:35:30Z
+- 2026 GA governor: eevp 99, last updated 2026-11-05T22:38:03Z
+- 2026 GA house district 12: eevp 99, last updated 2026-11-05T19:30:41Z
+- 2026 GA house district 13: eevp 99, last updated 2026-11-05T22:35:51Z
+- 2026 GA senate: eevp 99, last updated 2026-11-05T22:38:03Z
+- 2026 GA house district 14: eevp 99, last updated 2026-11-05T22:37:30Z
+- 2026 GA house district 6: eevp 99, last updated 2026-11-05T22:35:30Z
+- 2026 HI house district 2: eevp 99, last updated 2026-11-05T22:48:59Z
+- 2026 HI governor: eevp 99, last updated 2026-11-05T22:47:09Z
+- 2026 HI house district 1: eevp 99, last updated 2026-11-05T22:48:19Z
+- 2026 IA house district 1: eevp 99, last updated 2026-11-05T13:45:26Z
+- 2026 IA house district 2: eevp 99, last updated 2026-11-05T19:45:40Z
+- 2026 IA house district 3: eevp 98.84, last updated 2026-11-05T16:48:38Z
+- 2026 IA house district 4: eevp 98.7, last updated 2026-11-05T21:45:41Z
+- 2026 IA governor: eevp 99, last updated 2026-11-05T21:45:43Z
+- 2026 IA senate: eevp 99, last updated 2026-11-05T21:45:43Z
+- 2026 ID senate: eevp 98.95, last updated 2026-11-05T22:52:38Z
+- 2026 ID house district 1: eevp 99, last updated 2026-11-05T22:52:30Z
+- 2026 ID house district 2: eevp 98.75, last updated 2026-11-05T22:52:38Z
+- 2026 ID governor: eevp 98.96, last updated 2026-11-05T22:52:29Z
+- 2026 IL governor: eevp 93.73, last updated 2026-11-05T23:40:47Z
+- 2026 IL house district 1: eevp 84.96, last updated 2026-11-05T23:40:53Z
+- 2026 IL house district 3: eevp 83.39, last updated 2026-11-05T23:40:48Z
+- 2026 IL house district 4: eevp 83.53, last updated 2026-11-05T23:40:48Z
+- 2026 IL house district 5: eevp 93.1, last updated 2026-11-05T23:40:47Z
+- 2026 IL house district 6: eevp 92.42, last updated 2026-11-05T23:40:46Z
+- 2026 IL house district 7: eevp 76.14, last updated 2026-11-05T23:40:47Z
+- 2026 IL house district 8: eevp 89.76, last updated 2026-11-05T23:41:49Z
+- 2026 IL house district 9: eevp 94.35, last updated 2026-11-05T23:40:51Z
+- 2026 IL house district 10: eevp 96.21, last updated 2026-11-05T19:59:51Z
+- 2026 IL house district 11: eevp 93.96, last updated 2026-11-05T23:03:22Z
+- 2026 IL house district 12: eevp 98.18, last updated 2026-11-05T00:21:22Z
+- 2026 IL house district 13: eevp 98.47, last updated 2026-11-04T22:46:03Z
+- 2026 IL house district 14: eevp 97.01, last updated 2026-11-05T23:03:19Z
+- 2026 IL house district 15: eevp 97.58, last updated 2026-11-05T00:21:08Z
+- 2026 IL house district 16: eevp 93.86, last updated 2026-11-05T20:30:14Z
+- 2026 IL house district 17: eevp 95.03, last updated 2026-11-05T20:30:15Z
+- 2026 IL house district 2: eevp 85.7, last updated 2026-11-05T23:40:48Z
+- 2026 IL senate: eevp 93.78, last updated 2026-11-05T23:40:52Z
+- 2026 IN house district 1: eevp 99, last updated 2026-11-05T23:15:13Z
+- 2026 IN house district 2: eevp 99, last updated 2026-11-05T23:15:15Z
+- 2026 IN house district 3: eevp 99, last updated 2026-11-05T23:15:08Z
+- 2026 IN house district 4: eevp 99, last updated 2026-11-05T23:15:11Z
+- 2026 IN house district 5: eevp 99, last updated 2026-11-05T23:15:09Z
+- 2026 IN house district 6: eevp 99, last updated 2026-11-05T23:15:09Z
+- 2026 IN house district 7: eevp 99, last updated 2026-11-05T23:15:06Z
+- 2026 IN house district 8: eevp 99, last updated 2026-11-05T23:15:12Z
+- 2026 IN house district 9: eevp 99, last updated 2026-11-05T23:15:16Z
+- 2026 KS house district 1: eevp 98.63, last updated 2026-11-05T23:29:19Z
+- 2026 KS house district 3: eevp 98.6, last updated 2026-11-05T20:49:42Z
+- 2026 KS house district 2: eevp 98.58, last updated 2026-11-05T23:04:35Z
+- 2026 KS governor: eevp 98.7, last updated 2026-11-05T23:29:19Z
+- 2026 KS senate: eevp 98.7, last updated 2026-11-05T23:29:19Z
+- 2026 KS house district 4: eevp 99, last updated 2026-11-05T22:37:06Z
+- 2026 KY house district 3: eevp 99, last updated 2026-11-05T22:33:42Z
+- 2026 KY house district 5: eevp 99, last updated 2026-11-05T20:40:00Z
+- 2026 KY house district 6: eevp 99, last updated 2026-11-05T20:39:41Z
+- 2026 KY house district 1: eevp 99, last updated 2026-11-05T20:41:09Z
+- 2026 KY house district 2: eevp 99, last updated 2026-11-05T22:33:40Z
+- 2026 KY senate: eevp 99, last updated 2026-11-05T22:33:42Z
+- 2026 KY house district 4: eevp 99, last updated 2026-11-05T20:38:46Z
+- 2026 LA senate: eevp 99, last updated 2026-11-05T20:07:46Z
+- 2026 LA house district 1: eevp 99, last updated 2026-11-05T20:07:46Z
+- 2026 LA house district 2: eevp 99, last updated 2026-11-04T21:18:25Z
+- 2026 LA house district 3: eevp 99, last updated 2026-11-04T21:23:52Z
+- 2026 LA house district 4: eevp 99, last updated 2026-11-04T21:25:36Z
+- 2026 LA house district 5: eevp 99, last updated 2026-11-04T21:27:19Z
+- 2026 LA house district 6: eevp 99, last updated 2026-11-05T20:07:49Z
+- 2026 MA house district 1: eevp 98.54, last updated 2026-11-05T22:30:12Z
+- 2026 MA house district 2: eevp 62.72, last updated 2026-11-05T23:29:40Z
+- 2026 MA house district 3: eevp 99, last updated 2026-11-05T22:30:15Z
+- 2026 MA house district 4: eevp 99, last updated 2026-11-05T22:30:12Z
+- 2026 MA house district 6: eevp 99, last updated 2026-11-04T20:11:51Z
+- 2026 MA house district 7: eevp 60.89, last updated 2026-11-05T22:25:45Z
+- 2026 MA house district 8: eevp 99, last updated 2026-11-05T21:08:51Z
+- 2026 MA governor: eevp 98.99, last updated 2026-11-05T22:33:24Z
+- 2026 MA house district 9: eevp 99, last updated 2026-11-05T22:28:35Z
+- 2026 MA house district 5: eevp 68.45, last updated 2026-11-05T17:13:07Z
+- 2026 MA senate: eevp 99, last updated 2026-11-05T22:33:24Z
+- 2026 MD house district 1: eevp 86.41, last updated 2026-11-05T22:29:25Z
+- 2026 MD house district 2: eevp 79.27, last updated 2026-11-05T22:45:15Z
+- 2026 MD house district 3: eevp 81.71, last updated 2026-11-05T22:45:11Z
+- 2026 MD house district 4: eevp 75.41, last updated 2026-11-05T19:46:13Z
+- 2026 MD house district 5: eevp 82.35, last updated 2026-11-05T22:15:35Z
+- 2026 MD house district 6: eevp 82.54, last updated 2026-11-05T20:51:10Z
+- 2026 MD house district 7: eevp 68.19, last updated 2026-11-05T19:46:46Z
+- 2026 MD house district 8: eevp 75.26, last updated 2026-11-05T19:46:12Z
+- 2026 MD governor: eevp 79.18, last updated 2026-11-05T22:45:08Z
+- 2026 ME senate: eevp 93.26, last updated 2026-11-05T23:13:15Z
+- 2026 ME house district 1: eevp 92.42, last updated 2026-11-05T23:05:07Z
+- 2026 ME house district 2: eevp 97.83, last updated 2026-11-05T23:13:11Z
+- 2026 ME governor: eevp 93.26, last updated 2026-11-05T23:13:19Z
+- 2026 MI house district 1: eevp 97.39, last updated 2026-11-05T21:55:00Z
+- 2026 MI house district 2: eevp 95.31, last updated 2026-11-05T21:44:20Z
+- 2026 MI house district 3: eevp 99, last updated 2026-11-05T21:41:52Z
+- 2026 MI house district 4: eevp 96.9, last updated 2026-11-05T19:49:27Z
+- 2026 MI house district 5: eevp 94.55, last updated 2026-11-05T23:06:50Z
+- 2026 MI house district 6: eevp 94.74, last updated 2026-11-06T00:39:48Z
+- 2026 MI house district 7: eevp 97.93, last updated 2026-11-04T23:47:50Z
+- 2026 MI house district 8: eevp 98.16, last updated 2026-11-05T21:55:21Z
+- 2026 MI house district 9: eevp 97.89, last updated 2026-11-04T22:41:21Z
+- 2026 MI house district 10: eevp 99, last updated 2026-11-04T20:25:13Z
+- 2026 MI house district 11: eevp 99, last updated 2026-11-04T18:20:16Z
+- 2026 MI house district 12: eevp 98.46, last updated 2026-11-05T14:07:26Z
+- 2026 MI house district 13: eevp 69.44, last updated 2026-11-05T21:54:41Z
+- 2026 MI governor: eevp 97.74, last updated 2026-11-06T00:39:51Z
+- 2026 MI senate: eevp 97.73, last updated 2026-11-06T00:34:57Z
+- 2026 MN house district 1: eevp 98.79, last updated 2026-11-06T00:39:46Z
+- 2026 MN house district 2: eevp 98.93, last updated 2026-11-05T22:09:41Z
+- 2026 MN house district 3: eevp 98.68, last updated 2026-11-05T16:17:08Z
+- 2026 MN house district 4: eevp 98.63, last updated 2026-11-05T22:29:40Z
+- 2026 MN house district 5: eevp 98.97, last updated 2026-11-05T17:01:05Z
+- 2026 MN house district 6: eevp 99, last updated 2026-11-05T17:13:15Z
+- 2026 MN house district 7: eevp 98.8, last updated 2026-11-05T19:49:40Z
+- 2026 MN house district 8: eevp 98.81, last updated 2026-11-05T18:10:42Z
+- 2026 MN governor: eevp 98.84, last updated 2026-11-06T00:39:42Z
+- 2026 MN senate: eevp 98.85, last updated 2026-11-06T00:39:43Z
+- 2026 MO house district 2: eevp 99, last updated 2026-11-05T21:25:05Z
+- 2026 MO house district 3: eevp 98.85, last updated 2026-11-05T21:25:08Z
+- 2026 MO house district 4: eevp 97.15, last updated 2026-11-05T21:38:49Z
+- 2026 MO house district 5: eevp 99, last updated 2026-11-05T21:25:15Z
+- 2026 MO house district 6: eevp 99, last updated 2026-11-05T21:37:40Z
+- 2026 MO house district 7: eevp 99, last updated 2026-11-05T21:25:03Z
+- 2026 MO house district 8: eevp 98.3, last updated 2026-11-05T21:25:09Z
+- 2026 MO house district 1: eevp 99, last updated 2026-11-05T21:25:04Z
+- 2026 MS house district 2: eevp 95.08, last updated 2026-11-05T22:44:42Z
+- 2026 MS house district 3: eevp 95.02, last updated 2026-11-05T21:37:16Z
+- 2026 MS house district 4: eevp 96.58, last updated 2026-11-05T22:27:41Z
+- 2026 MS senate: eevp 95.65, last updated 2026-11-05T22:44:09Z
+- 2026 MS house district 1: eevp 95.97, last updated 2026-11-05T22:27:50Z
+- 2026 MT senate: eevp 97.47, last updated 2026-11-06T00:26:16Z
+- 2026 MT house district 1: eevp 97.64, last updated 2026-11-06T00:03:10Z
+- 2026 MT house district 2: eevp 97.48, last updated 2026-11-06T00:26:14Z
+- 2026 NC house district 3: eevp 98.75, last updated 2026-11-05T17:30:15Z
+- 2026 NC house district 7: eevp 99, last updated 2026-11-05T22:50:31Z
+- 2026 NC house district 9: eevp 99, last updated 2026-11-05T22:50:31Z
+- 2026 NC house district 11: eevp 99, last updated 2026-11-05T15:42:51Z
+- 2026 NC house district 1: eevp 99, last updated 2026-11-05T17:26:51Z
+- 2026 NC house district 2: eevp 99, last updated 2026-11-05T15:42:47Z
+- 2026 NC house district 4: eevp 98.9, last updated 2026-11-05T15:42:48Z
+- 2026 NC house district 5: eevp 99, last updated 2026-11-05T17:48:41Z
+- 2026 NC house district 6: eevp 99, last updated 2026-11-05T21:34:58Z
+- 2026 NC house district 8: eevp 98.93, last updated 2026-11-05T21:57:14Z
+- 2026 NC house district 10: eevp 99, last updated 2026-11-05T21:24:10Z
+- 2026 NC house district 12: eevp 99, last updated 2026-11-05T21:48:31Z
+- 2026 NC house district 13: eevp 99, last updated 2026-11-05T21:46:01Z
+- 2026 NC senate: eevp 99, last updated 2026-11-05T22:50:31Z
+- 2026 NC house district 14: eevp 99, last updated 2026-11-05T21:48:31Z
+- 2026 ND house district 0: eevp 98.2, last updated 2026-11-05T17:01:47Z
+- 2026 NE governor: eevp 94.22, last updated 2026-11-06T00:53:23Z
+- 2026 NE house district 1: eevp 92.2, last updated 2026-11-06T00:53:24Z
+- 2026 NE house district 3: eevp 98.38, last updated 2026-11-05T22:48:23Z
+- 2026 NE house district 2: eevp 92.1, last updated 2026-11-06T00:53:23Z
+- 2026 NE senate: eevp 94.11, last updated 2026-11-06T00:53:23Z
+- 2026 NH senate: eevp 98.04, last updated 2026-11-05T22:58:58Z
+- 2026 NH governor: eevp 98.04, last updated 2026-11-05T22:57:46Z
+- 2026 NH house district 1: eevp 98.61, last updated 2026-11-05T22:57:46Z
+- 2026 NH house district 2: eevp 97.42, last updated 2026-11-05T22:36:03Z
+- 2026 NJ house district 1: eevp 95.56, last updated 2026-11-05T22:34:46Z
+- 2026 NJ house district 2: eevp 96.96, last updated 2026-11-05T22:35:37Z
+- 2026 NJ house district 4: eevp 96.96, last updated 2026-11-06T02:19:37Z
+- 2026 NJ house district 5: eevp 96.06, last updated 2026-11-05T22:35:02Z
+- 2026 NJ house district 6: eevp 95, last updated 2026-11-06T02:19:41Z
+- 2026 NJ house district 8: eevp 81.16, last updated 2026-11-05T21:34:00Z
+- 2026 NJ house district 3: eevp 94.15, last updated 2026-11-06T02:19:40Z
+- 2026 NJ house district 7: eevp 94.72, last updated 2026-11-05T22:17:26Z
+- 2026 NJ house district 10: eevp 90.18, last updated 2026-11-05T21:34:00Z
+- 2026 NJ house district 12: eevp 93.29, last updated 2026-11-05T22:17:52Z
+- 2026 NJ house district 9: eevp 94.33, last updated 2026-11-05T22:35:02Z
+- 2026 NJ house district 11: eevp 94.54, last updated 2026-11-05T20:49:29Z
+- 2026 NJ senate: eevp 95.32, last updated 2026-11-06T02:19:39Z
+- 2026 NM house district 3: eevp 98.19, last updated 2026-11-05T22:48:37Z
+- 2026 NM governor: eevp 98.36, last updated 2026-11-05T22:48:45Z
+- 2026 NM house district 2: eevp 98.36, last updated 2026-11-05T19:37:17Z
+- 2026 NM senate: eevp 98.36, last updated 2026-11-05T22:48:44Z
+- 2026 NM house district 1: eevp 98.44, last updated 2026-11-05T19:39:45Z
+- 2026 NV governor: eevp 92.36, last updated 2026-11-06T03:54:12Z
+- 2026 NV house district 1: eevp 90.91, last updated 2026-11-06T03:29:07Z
+- 2026 NV house district 3: eevp 90.27, last updated 2026-11-06T03:29:04Z
+- 2026 NV house district 2: eevp 96, last updated 2026-11-06T03:44:35Z
+- 2026 NV house district 4: eevp 91.48, last updated 2026-11-06T03:45:08Z
+- 2026 NY house district 1: eevp 97, last updated 2026-11-05T17:00:41Z
+- 2026 NY house district 2: eevp 97.22, last updated 2026-11-05T17:44:06Z
+- 2026 NY house district 3: eevp 96.86, last updated 2026-11-05T21:32:52Z
+- 2026 NY house district 4: eevp 97.99, last updated 2026-11-05T17:44:07Z
+- 2026 NY house district 5: eevp 90.73, last updated 2026-11-05T21:32:52Z
+- 2026 NY house district 6: eevp 88.22, last updated 2026-11-05T21:32:45Z
+- 2026 NY house district 7: eevp 88.15, last updated 2026-11-05T21:32:49Z
+- 2026 NY house district 8: eevp 87.04, last updated 2026-11-05T21:32:53Z
+- 2026 NY house district 10: eevp 88.45, last updated 2026-11-05T21:32:53Z
+- 2026 NY house district 11: eevp 91.08, last updated 2026-11-05T21:32:52Z
+- 2026 NY house district 12: eevp 85.9, last updated 2026-11-05T21:32:53Z
+- 2026 NY house district 13: eevp 89.54, last updated 2026-11-05T21:32:45Z
+- 2026 NY house district 14: eevp 91.5, last updated 2026-11-05T21:32:49Z
+- 2026 NY house district 15: eevp 90.1, last updated 2026-11-05T21:32:55Z
+- 2026 NY house district 16: eevp 39.29, last updated 2026-11-05T21:32:53Z
+- 2026 NY house district 17: eevp 87.59, last updated 2026-11-05T23:12:39Z
+- 2026 NY house district 18: eevp 88.9, last updated 2026-11-05T22:41:17Z
+- 2026 NY house district 19: eevp 96.51, last updated 2026-11-05T21:43:14Z
+- 2026 NY house district 20: eevp 96.1, last updated 2026-11-05T22:40:43Z
+- 2026 NY house district 21: eevp 95.66, last updated 2026-11-05T22:40:58Z
+- 2026 NY house district 22: eevp 93.76, last updated 2026-11-05T22:39:38Z
+- 2026 NY house district 23: eevp 97.28, last updated 2026-11-05T22:41:14Z
+- 2026 NY house district 24: eevp 95.96, last updated 2026-11-05T22:41:14Z
+- 2026 NY house district 25: eevp 98.01, last updated 2026-11-05T22:22:57Z
+- 2026 NY governor: eevp 90.43, last updated 2026-11-05T22:51:37Z
+- 2026 NY house district 26: eevp 83.65, last updated 2026-11-05T22:23:44Z
+- 2026 NY house district 9: eevp 87.14, last updated 2026-11-05T21:32:56Z
+- 2026 OH governor: eevp 97.94, last updated 2026-11-05T23:50:26Z
+- 2026 OH house district 1: eevp 97.64, last updated 2026-11-05T23:07:28Z
+- 2026 OH house district 3: eevp 98, last updated 2026-11-05T16:48:03Z
+- 2026 OH house district 4: eevp 98.1, last updated 2026-11-05T23:04:23Z
+- 2026 OH house district 5: eevp 98.15, last updated 2026-11-05T23:13:57Z
+- 2026 OH house district 6: eevp 98.06, last updated 2026-11-05T23:07:24Z
+- 2026 OH house district 7: eevp 98, last updated 2026-11-05T20:32:13Z
+- 2026 OH house district 9: eevp 98.11, last updated 2026-11-05T23:13:53Z
+- 2026 OH house district 10: eevp 97.51, last updated 2026-11-05T23:00:02Z
+- 2026 OH house district 11: eevp 98, last updated 2026-11-05T19:50:06Z
+- 2026 OH house district 13: eevp 98.09, last updated 2026-11-05T23:15:04Z
+- 2026 OH house district 14: eevp 98.08, last updated 2026-11-05T23:36:45Z
+- 2026 OH house district 15: eevp 97.93, last updated 2026-11-05T23:04:58Z
+- 2026 OH house district 2: eevp 97.97, last updated 2026-11-05T23:19:59Z
+- 2026 OH house district 8: eevp 97.65, last updated 2026-11-05T23:07:34Z
+- 2026 OH house district 12: eevp 97.68, last updated 2026-11-05T23:50:26Z
+- 2026 OH senate special: eevp 97.95, last updated 2026-11-05T23:50:26Z
+- 2026 OK house district 1: eevp 99, last updated 2026-11-04T23:21:19Z
+- 2026 OK house district 3: eevp 99, last updated 2026-11-04T23:47:01Z
+- 2026 OK house district 4: eevp 99, last updated 2026-11-05T14:45:28Z
+- 2026 OK house district 2: eevp 99, last updated 2026-11-05T14:45:03Z
+- 2026 OK house district 5: eevp 99, last updated 2026-11-04T22:22:56Z
+- 2026 OK governor: eevp 99, last updated 2026-11-05T14:45:28Z
+- 2026 OK senate: eevp 99, last updated 2026-11-05T14:45:28Z
+- 2026 OR governor: eevp 84.12, last updated 2026-11-06T02:00:44Z
+- 2026 OR house district 2: eevp 92.89, last updated 2026-11-06T01:20:27Z
+- 2026 OR house district 3: eevp 82.01, last updated 2026-11-06T01:21:19Z
+- 2026 OR house district 4: eevp 93.56, last updated 2026-11-06T01:20:26Z
+- 2026 OR house district 5: eevp 86.88, last updated 2026-11-06T02:00:38Z
+- 2026 OR senate: eevp 84.33, last updated 2026-11-06T02:00:38Z
+- 2026 OR house district 1: eevp 77.27, last updated 2026-11-06T00:03:30Z
+- 2026 OR house district 6: eevp 73.48, last updated 2026-11-06T02:00:46Z
+- 2026 PA house district 1: eevp 98.47, last updated 2026-11-05T17:52:08Z
+- 2026 PA house district 3: eevp 98.48, last updated 2026-11-05T21:31:36Z
+- 2026 PA house district 4: eevp 99, last updated 2026-11-05T17:52:08Z
+- 2026 PA house district 5: eevp 99, last updated 2026-11-05T21:31:36Z
+- 2026 PA house district 6: eevp 99, last updated 2026-11-05T14:48:51Z
+- 2026 PA house district 7: eevp 98.86, last updated 2026-11-05T14:48:48Z
+- 2026 PA house district 8: eevp 98.22, last updated 2026-11-05T20:26:45Z
+- 2026 PA house district 10: eevp 98.71, last updated 2026-11-05T14:54:33Z
+- 2026 PA house district 11: eevp 98.62, last updated 2026-11-05T14:48:48Z
+- 2026 PA house district 12: eevp 98.7, last updated 2026-11-05T14:48:47Z
+- 2026 PA house district 13: eevp 99, last updated 2026-11-05T18:46:20Z
+- 2026 PA house district 14: eevp 99, last updated 2026-11-05T18:51:09Z
+- 2026 PA house district 16: eevp 98.11, last updated 2026-11-05T18:46:41Z
+- 2026 PA house district 17: eevp 98.98, last updated 2026-11-05T14:48:49Z
+- 2026 PA governor: eevp 98.74, last updated 2026-11-05T22:22:47Z
+- 2026 PA house district 2: eevp 99, last updated 2026-11-05T22:23:47Z
+- 2026 PA house district 9: eevp 97.64, last updated 2026-11-05T18:52:55Z
+- 2026 PA house district 15: eevp 99, last updated 2026-11-05T20:54:44Z
+- 2026 RI senate: eevp 98.03, last updated 2026-11-05T23:46:17Z
+- 2026 RI governor: eevp 98.03, last updated 2026-11-05T23:46:17Z
+- 2026 RI house district 1: eevp 98.31, last updated 2026-11-05T23:46:17Z
+- 2026 RI house district 2: eevp 97.76, last updated 2026-11-05T23:45:55Z
+- 2026 SC house district 2: eevp 99, last updated 2026-11-04T20:37:16Z
+- 2026 SC house district 3: eevp 99, last updated 2026-11-04T22:41:37Z
+- 2026 SC governor: eevp 99, last updated 2026-11-05T15:07:13Z
+- 2026 SC house district 4: eevp 99, last updated 2026-11-04T20:34:03Z
+- 2026 SC house district 6: eevp 99, last updated 2026-11-05T15:07:13Z
+- 2026 SC house district 7: eevp 99, last updated 2026-11-04T22:41:46Z
+- 2026 SC house district 1: eevp 98.91, last updated 2026-11-05T15:07:13Z
+- 2026 SC senate: eevp 99, last updated 2026-11-05T15:07:13Z
+- 2026 SC house district 5: eevp 99, last updated 2026-11-04T22:41:58Z
+- 2026 SD senate: eevp 99, last updated 2026-11-05T21:55:43Z
+- 2026 SD house district 0: eevp 99, last updated 2026-11-05T21:55:45Z
+- 2026 SD governor: eevp 99, last updated 2026-11-05T21:55:38Z
+- 2026 TN house district 1: eevp 99, last updated 2026-11-05T22:10:28Z
+- 2026 TN house district 2: eevp 99, last updated 2026-11-05T22:10:52Z
+- 2026 TN house district 3: eevp 98.25, last updated 2026-11-05T21:48:32Z
+- 2026 TN house district 4: eevp 99, last updated 2026-11-05T21:55:39Z
+- 2026 TN house district 5: eevp 99, last updated 2026-11-05T22:11:28Z
+- 2026 TN house district 6: eevp 99, last updated 2026-11-05T22:01:36Z
+- 2026 TN house district 7: eevp 99, last updated 2026-11-05T22:03:38Z
+- 2026 TN house district 8: eevp 99, last updated 2026-11-05T22:07:32Z
+- 2026 TN house district 9: eevp 99, last updated 2026-11-05T22:32:39Z
+- 2026 TN governor: eevp 98.91, last updated 2026-11-05T22:32:39Z
+- 2026 TN senate: eevp 99, last updated 2026-11-05T22:32:39Z
+- 2026 TX house district 1: eevp 99, last updated 2026-11-05T15:35:16Z
+- 2026 TX house district 2: eevp 99, last updated 2026-11-05T20:06:54Z
+- 2026 TX house district 3: eevp 99, last updated 2026-11-05T20:05:24Z
+- 2026 TX house district 4: eevp 99, last updated 2026-11-05T20:05:25Z
+- 2026 TX house district 5: eevp 99, last updated 2026-11-05T15:35:19Z
+- 2026 TX house district 6: eevp 99, last updated 2026-11-05T15:35:19Z
+- 2026 TX house district 7: eevp 99, last updated 2026-11-05T16:01:53Z
+- 2026 TX house district 8: eevp 99, last updated 2026-11-05T20:06:55Z
+- 2026 TX house district 9: eevp 99, last updated 2026-11-05T15:35:14Z
+- 2026 TX house district 10: eevp 99, last updated 2026-11-05T15:43:44Z
+- 2026 TX house district 11: eevp 99, last updated 2026-11-05T20:34:17Z
+- 2026 TX house district 12: eevp 99, last updated 2026-11-05T15:59:41Z
+- 2026 TX house district 13: eevp 98.88, last updated 2026-11-05T20:06:39Z
+- 2026 TX house district 14: eevp 99, last updated 2026-11-05T20:05:43Z
+- 2026 TX house district 15: eevp 99, last updated 2026-11-05T20:06:13Z
+- 2026 TX house district 16: eevp 99, last updated 2026-11-05T15:35:22Z
+- 2026 TX house district 17: eevp 99, last updated 2026-11-05T20:34:17Z
+- 2026 TX house district 18: eevp 99, last updated 2026-11-05T16:01:53Z
+- 2026 TX house district 19: eevp 99, last updated 2026-11-05T20:05:10Z
+- 2026 TX house district 20: eevp 99, last updated 2026-11-05T15:35:20Z
+- 2026 TX house district 21: eevp 99, last updated 2026-11-05T20:06:27Z
+- 2026 TX house district 22: eevp 99, last updated 2026-11-05T20:05:43Z
+- 2026 TX house district 23: eevp 99, last updated 2026-11-05T15:35:15Z
+- 2026 TX house district 24: eevp 99, last updated 2026-11-05T15:35:17Z
+- 2026 TX house district 25: eevp 99, last updated 2026-11-05T20:03:58Z
+- 2026 TX house district 26: eevp 99, last updated 2026-11-05T20:06:39Z
+- 2026 TX house district 27: eevp 99, last updated 2026-11-05T20:06:27Z
+- 2026 TX house district 29: eevp 99, last updated 2026-11-05T15:35:18Z
+- 2026 TX house district 30: eevp 99, last updated 2026-11-05T15:35:19Z
+- 2026 TX governor: eevp 99, last updated 2026-11-05T20:34:17Z
+- 2026 TX senate: eevp 99, last updated 2026-11-05T20:34:17Z
+- 2026 TX house district 28: eevp 99, last updated 2026-11-05T15:35:20Z
+- 2026 TX house district 31: eevp 99, last updated 2026-11-05T20:34:17Z
+- 2026 TX house district 32: eevp 99, last updated 2026-11-05T20:05:26Z
+- 2026 TX house district 33: eevp 99, last updated 2026-11-05T15:35:15Z
+- 2026 TX house district 34: eevp 99, last updated 2026-11-05T15:35:38Z
+- 2026 TX house district 35: eevp 99, last updated 2026-11-05T16:29:12Z
+- 2026 TX house district 36: eevp 99, last updated 2026-11-05T20:05:45Z
+- 2026 TX house district 37: eevp 99, last updated 2026-11-05T15:43:44Z
+- 2026 TX house district 38: eevp 99, last updated 2026-11-05T15:35:16Z
+- 2026 UT house district 1: eevp 67.54, last updated 2026-11-06T02:20:58Z
+- 2026 UT house district 2: eevp 96.45, last updated 2026-11-06T02:21:06Z
+- 2026 UT house district 4: eevp 68.17, last updated 2026-11-06T02:26:59Z
+- 2026 UT house district 3: eevp 76.58, last updated 2026-11-06T02:50:56Z
+- 2026 VA house district 1: eevp 98.53, last updated 2026-11-05T21:54:44Z
+- 2026 VA house district 2: eevp 97.66, last updated 2026-11-05T20:20:15Z
+- 2026 VA house district 3: eevp 97.64, last updated 2026-11-05T16:32:20Z
+- 2026 VA house district 4: eevp 97.75, last updated 2026-11-05T21:27:28Z
+- 2026 VA house district 5: eevp 98.02, last updated 2026-11-05T21:30:05Z
+- 2026 VA house district 6: eevp 98.23, last updated 2026-11-05T21:15:46Z
+- 2026 VA house district 7: eevp 97.92, last updated 2026-11-05T21:28:34Z
+- 2026 VA house district 8: eevp 95.27, last updated 2026-11-05T16:39:43Z
+- 2026 VA house district 9: eevp 98.5, last updated 2026-11-05T21:30:18Z
+- 2026 VA house district 10: eevp 97.39, last updated 2026-11-05T17:36:11Z
+- 2026 VA house district 11: eevp 95.7, last updated 2026-11-04T23:28:40Z
+- 2026 VA senate: eevp 97.57, last updated 2026-11-05T21:33:39Z
+- 2026 VT house district 0: eevp 99, last updated 2026-11-05T23:03:47Z
+- 2026 VT governor: eevp 99, last updated 2026-11-05T23:13:47Z
+- 2026 WA house district 1: eevp 80.88, last updated 2026-11-06T02:17:28Z
+- 2026 WA house district 9: eevp 70.42, last updated 2026-11-06T02:17:25Z
+- 2026 WA house district 2: eevp 82.78, last updated 2026-11-06T02:17:46Z
+- 2026 WA house district 3: eevp 91.63, last updated 2026-11-06T02:17:33Z
+- 2026 WA house district 4: eevp 73.89, last updated 2026-11-06T02:17:40Z
+- 2026 WA house district 5: eevp 68.77, last updated 2026-11-06T02:17:41Z
+- 2026 WA house district 6: eevp 80.68, last updated 2026-11-06T02:17:25Z
+- 2026 WA house district 7: eevp 70.42, last updated 2026-11-06T02:17:26Z
+- 2026 WA house district 8: eevp 80.06, last updated 2026-11-06T02:17:25Z
+- 2026 WA house district 10: eevp 82.09, last updated 2026-11-06T02:17:46Z
+- 2026 WI governor: eevp 98.85, last updated 2026-11-05T22:27:18Z
+- 2026 WI house district 1: eevp 99, last updated 2026-11-04T09:01:32Z
+- 2026 WI house district 2: eevp 93.72, last updated 2026-11-05T15:17:30Z
+- 2026 WI house district 3: eevp 99, last updated 2026-11-05T21:44:31Z
+- 2026 WI house district 4: eevp 99, last updated 2026-11-04T08:30:07Z
+- 2026 WI house district 5: eevp 99, last updated 2026-11-05T20:31:06Z
+- 2026 WI house district 6: eevp 97.79, last updated 2026-11-05T21:43:47Z
+- 2026 WI house district 7: eevp 99, last updated 2026-11-05T22:27:19Z
+- 2026 WI house district 8: eevp 98.98, last updated 2026-11-05T21:43:47Z
+- 2026 WV senate: eevp 99, last updated 2026-11-05T16:12:02Z
+- 2026 WV house district 1: eevp 99, last updated 2026-11-05T16:12:04Z
+- 2026 WV house district 2: eevp 99, last updated 2026-11-05T16:12:07Z
+- 2026 WY house district 0: eevp 96.59, last updated 2026-11-06T02:03:16Z
+- 2026 WY governor: eevp 96.97, last updated 2026-11-06T02:04:11Z
+- 2026 WY senate: eevp 96.95, last updated 2026-11-06T02:02:47Z

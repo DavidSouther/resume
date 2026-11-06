@@ -1,0 +1,874 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://davidsouther.com/election_results/findings.schema.json",
+  "title": "Election findings",
+  "description": "One run of findings.py: run metadata and input hashes, thresholds, rules, enumerated selectors, and a claim per selector.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "run",
+    "sources",
+    "questions",
+    "thresholds",
+    "rules",
+    "selectors",
+    "claims"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "run": {
+      "$ref": "#/$defs/run"
+    },
+    "sources": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/source_overview"
+      },
+      "description": "Every data source behind the answers, for the page's overview."
+    },
+    "questions": {
+      "type": "object",
+      "required": [
+        "seat_change",
+        "incumbency",
+        "turnout",
+        "dummymander"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "seat_change": {
+          "$ref": "#/$defs/question"
+        },
+        "incumbency": {
+          "$ref": "#/$defs/question"
+        },
+        "turnout": {
+          "$ref": "#/$defs/question"
+        },
+        "dummymander": {
+          "$ref": "#/$defs/question"
+        }
+      },
+      "description": "Per question, the exact SQL and code that implement it and its raw 2026 results."
+    },
+    "thresholds": {
+      "type": "object",
+      "additionalProperties": {
+        "type": [
+          "number",
+          "array"
+        ]
+      }
+    },
+    "rules": {
+      "type": "object",
+      "required": [
+        "completeness",
+        "seat_shift",
+        "party_flips",
+        "incumbency_party_gap",
+        "significance",
+        "bonus_vs_history",
+        "turnout_explanation",
+        "k_direction",
+        "dummymander",
+        "dummymander_vs_history",
+        "dummymander_party",
+        "dummymander_test",
+        "seat_shift_by_lean",
+        "party_flips_by_lean"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "completeness": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "seat_shift": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "party_flips": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "incumbency_party_gap": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "significance": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "bonus_vs_history": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "turnout_explanation": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "k_direction": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "dummymander": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "dummymander_vs_history": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "dummymander_party": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "dummymander_test": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "seat_shift_by_lean": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "party_flips_by_lean": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "selectors": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^completeness$": {
+          "$ref": "#/$defs/completeness"
+        },
+        "^seat_shift\\.(house|senate|governor)$": {
+          "$ref": "#/$defs/seat_shift"
+        },
+        "^party_flips\\.(house|senate|governor)$": {
+          "$ref": "#/$defs/party_flips"
+        },
+        "^incumbency_party_gap\\.presidential\\.(house|senate|governor)\\.(red|blue|swing)$": {
+          "$ref": "#/$defs/incumbency_party_gap"
+        },
+        "^significance\\.presidential\\.(house|senate|governor)\\.(red|blue|swing)$": {
+          "$ref": "#/$defs/significance"
+        },
+        "^bonus_vs_history\\.presidential\\.(house|senate|governor)\\.(red|blue|swing)\\.(DEM|REP)$": {
+          "$ref": "#/$defs/bonus_vs_history"
+        },
+        "^turnout_explanation\\.(house|senate|governor)$": {
+          "$ref": "#/$defs/turnout_explanation"
+        },
+        "^k_direction\\.(house|senate|governor)$": {
+          "$ref": "#/$defs/k_direction"
+        },
+        "^dummymander\\.house$": {
+          "$ref": "#/$defs/dummymander"
+        },
+        "^dummymander_vs_history\\.house$": {
+          "$ref": "#/$defs/dummymander_vs_history"
+        },
+        "^dummymander_party\\.house$": {
+          "$ref": "#/$defs/dummymander_party"
+        },
+        "^dummymander_test\\.(incumbent|party)$": {
+          "$ref": "#/$defs/dummymander_test"
+        },
+        "^seat_shift_by_lean\\.(house|senate|governor)\\.(red|blue|swing)$": {
+          "$ref": "#/$defs/seat_shift_by_lean"
+        },
+        "^party_flips_by_lean\\.(house|senate|governor)\\.(red|blue|swing)$": {
+          "$ref": "#/$defs/party_flips_by_lean"
+        }
+      }
+    },
+    "claims": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^completeness$": {
+          "$ref": "#/$defs/claim"
+        },
+        "^seat_shift\\.(house|senate|governor)$": {
+          "$ref": "#/$defs/claim"
+        },
+        "^party_flips\\.(house|senate|governor)$": {
+          "$ref": "#/$defs/claim"
+        },
+        "^incumbency_party_gap\\.presidential\\.(house|senate|governor)\\.(red|blue|swing)$": {
+          "$ref": "#/$defs/claim"
+        },
+        "^significance\\.presidential\\.(house|senate|governor)\\.(red|blue|swing)$": {
+          "$ref": "#/$defs/claim"
+        },
+        "^bonus_vs_history\\.presidential\\.(house|senate|governor)\\.(red|blue|swing)\\.(DEM|REP)$": {
+          "$ref": "#/$defs/claim"
+        },
+        "^turnout_explanation\\.(house|senate|governor)$": {
+          "$ref": "#/$defs/claim"
+        },
+        "^k_direction\\.(house|senate|governor)$": {
+          "$ref": "#/$defs/claim"
+        },
+        "^dummymander\\.house$": {
+          "$ref": "#/$defs/claim"
+        },
+        "^dummymander_vs_history\\.house$": {
+          "$ref": "#/$defs/claim"
+        },
+        "^dummymander_party\\.house$": {
+          "$ref": "#/$defs/claim"
+        },
+        "^dummymander_test\\.(incumbent|party)$": {
+          "$ref": "#/$defs/claim"
+        },
+        "^seat_shift_by_lean\\.(house|senate|governor)\\.(red|blue|swing)$": {
+          "$ref": "#/$defs/claim"
+        },
+        "^party_flips_by_lean\\.(house|senate|governor)\\.(red|blue|swing)$": {
+          "$ref": "#/$defs/claim"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "completeness": {
+      "description": "How complete the 2026 counts are.",
+      "enum": [
+        "certified",
+        "counting_nearly_complete",
+        "counting_in_progress",
+        "no_2026_data"
+      ],
+      "x-value-descriptions": {
+        "certified": "Every 2026 race is certified, so no count is unofficial.",
+        "counting_nearly_complete": "Some races are unofficial, but every AP race has counted at least 95 percent of its expected vote.",
+        "counting_in_progress": "At least one AP race has counted less than 95 percent of its expected vote, or has no expected vote figure.",
+        "no_2026_data": "No 2026 race comes from AP."
+      }
+    },
+    "seat_shift": {
+      "description": "The median 2026 margin change against each seat's prior election, over comparable races of one office.",
+      "enum": [
+        "toward_dem",
+        "toward_rep",
+        "no_clear_shift",
+        "insufficient_data"
+      ],
+      "x-value-descriptions": {
+        "toward_dem": "The median margin change is at least shift_points toward Democrats.",
+        "toward_rep": "The median margin change is at least shift_points toward Republicans.",
+        "no_clear_shift": "The median margin change is within shift_points of zero.",
+        "insufficient_data": "Fewer than min_comparable_races comparable races have a margin change."
+      }
+    },
+    "party_flips": {
+      "description": "Seats whose winning party changed against the prior election, over comparable races of one office.",
+      "enum": [
+        "none",
+        "dem_net_gain",
+        "rep_net_gain",
+        "even_exchange",
+        "insufficient_data"
+      ],
+      "x-value-descriptions": {
+        "none": "No comparable race changed party.",
+        "dem_net_gain": "Democrats took more seats from Republicans than they lost.",
+        "rep_net_gain": "Republicans took more seats from Democrats than they lost.",
+        "even_exchange": "Each party took the same number of seats from the other, and that number is above zero.",
+        "insufficient_data": "Fewer than min_comparable_races comparable races have both margins."
+      }
+    },
+    "incumbency_party_gap": {
+      "description": "Which party's incumbents gained less in the 2026 fit of one office and lean group, by the Wald test of equal bonuses.",
+      "enum": [
+        "rep_lower",
+        "dem_lower",
+        "no_difference",
+        "insufficient_data"
+      ],
+      "x-value-descriptions": {
+        "rep_lower": "The Republican bonus is lower than the Democratic bonus, with wald_p below the upper p tier.",
+        "dem_lower": "The Democratic bonus is lower than the Republican bonus, with wald_p below the upper p tier.",
+        "no_difference": "wald_p is at or above the upper p tier, so the test cannot tell the bonuses apart.",
+        "insufficient_data": "The test has no p value, because a party has fewer than min_seats incumbents or the fit failed."
+      }
+    },
+    "significance": {
+      "description": "The p value tier of the 2026 Wald test of equal bonuses for one office and lean group.",
+      "enum": [
+        "p_below_0_05",
+        "p_below_0_10",
+        "p_at_or_above_0_10",
+        "not_tested"
+      ],
+      "x-value-descriptions": {
+        "p_below_0_05": "wald_p is below the lower p tier.",
+        "p_below_0_10": "wald_p is at or above the lower p tier and below the upper one.",
+        "p_at_or_above_0_10": "wald_p is at or above the upper p tier.",
+        "not_tested": "The test has no p value."
+      }
+    },
+    "bonus_vs_history": {
+      "description": "One party's 2026 incumbency bonus against its bonuses from 2014 to 2024 in the same office and lean group.",
+      "enum": [
+        "below_all_prior_years",
+        "within_prior_range",
+        "above_all_prior_years",
+        "insufficient_data"
+      ],
+      "x-value-descriptions": {
+        "below_all_prior_years": "The 2026 bonus is below every prior year's bonus.",
+        "within_prior_range": "The 2026 bonus is within the range of the prior years' bonuses, ends included.",
+        "above_all_prior_years": "The 2026 bonus is above every prior year's bonus.",
+        "insufficient_data": "The 2026 bonus is null, or fewer than min_prior_years prior years have a bonus."
+      }
+    },
+    "turnout_explanation": {
+      "description": "Whether a turnout change alone could explain each 2026 race's result, over races of one office.",
+      "enum": [
+        "turnout_plausible_majority",
+        "persuasion_needed_majority",
+        "evenly_split",
+        "insufficient_data"
+      ],
+      "x-value-descriptions": {
+        "turnout_plausible_majority": "More than half the races have a plausible turnout explanation.",
+        "persuasion_needed_majority": "Fewer than half the races have a plausible turnout explanation, so most need persuasion.",
+        "evenly_split": "Exactly half the races have a plausible turnout explanation.",
+        "insufficient_data": "Fewer than min_comparable_races races have a turnout_plausible value."
+      }
+    },
+    "k_direction": {
+      "description": "The median 2026 turnout ratio k of one office, against the parity band.",
+      "enum": [
+        "dem_relative_gain",
+        "rep_relative_gain",
+        "near_parity",
+        "insufficient_data"
+      ],
+      "x-value-descriptions": {
+        "dem_relative_gain": "The median k is above the parity band.",
+        "rep_relative_gain": "The median k is below the parity band.",
+        "near_parity": "The median k is within the parity band, ends included.",
+        "insufficient_data": "Fewer than min_comparable_races races have a k."
+      }
+    },
+    "dummymander": {
+      "description": "The 2026 raw difference of mean incumbent share change, redrawn House seats minus the rest, with no significance test.",
+      "enum": [
+        "redrawn_incumbents_worse",
+        "redrawn_incumbents_better",
+        "no_clear_difference",
+        "insufficient_data"
+      ],
+      "x-value-descriptions": {
+        "redrawn_incumbents_worse": "The difference is at most minus dummymander_points.",
+        "redrawn_incumbents_better": "The difference is at least dummymander_points.",
+        "no_clear_difference": "The difference is within dummymander_points of zero.",
+        "insufficient_data": "A group has fewer than min_group_races races or no mean."
+      }
+    },
+    "dummymander_vs_history": {
+      "description": "The absolute 2026 dummymander difference against every earlier year's.",
+      "enum": [
+        "largest_gap_on_record",
+        "within_prior_range",
+        "insufficient_data"
+      ],
+      "x-value-descriptions": {
+        "largest_gap_on_record": "The absolute 2026 difference exceeds every earlier year's.",
+        "within_prior_range": "Some earlier year's absolute difference is at least as large.",
+        "insufficient_data": "The 2026 dummymander finding is insufficient, or no earlier year has a difference."
+      }
+    },
+    "dummymander_party": {
+      "description": "The 2026 raw difference of mean Democratic two party share change over all House races, redrawn seats minus the rest, with no significance test.",
+      "enum": [
+        "redrawn_toward_dem",
+        "redrawn_toward_rep",
+        "no_clear_difference",
+        "insufficient_data"
+      ],
+      "x-value-descriptions": {
+        "redrawn_toward_dem": "The difference is at least dummymander_points.",
+        "redrawn_toward_rep": "The difference is at most minus dummymander_points.",
+        "no_clear_difference": "The difference is within dummymander_points of zero.",
+        "insufficient_data": "A group has fewer than min_group_races races or no mean."
+      }
+    },
+    "dummymander_test": {
+      "description": "Whether the 2026 redrawn gap in the Democratic or incumbent share change differs from zero, against the null that redistricting is a wash because both parties redraw.",
+      "enum": [
+        "consistent_with_wash",
+        "not_a_wash",
+        "insufficient_data"
+      ],
+      "x-value-descriptions": {
+        "consistent_with_wash": "The p value that the 2026 redrawn gap is zero is at least 0.05.",
+        "not_a_wash": "The p value that the 2026 redrawn gap is zero is below 0.05.",
+        "insufficient_data": "A 2014 to 2024 group has fewer than min_group_races races, or the 2026 p value is null."
+      }
+    },
+    "claim": {
+      "type": "object",
+      "required": [
+        "value",
+        "rule",
+        "numbers",
+        "display",
+        "trigger_fields",
+        "evidence"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "value": {
+          "type": "string"
+        },
+        "rule": {
+          "type": "string",
+          "minLength": 1
+        },
+        "numbers": {
+          "type": "object",
+          "additionalProperties": {
+            "type": [
+              "number",
+              "null"
+            ]
+          }
+        },
+        "display": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "trigger_fields": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "cells": {
+          "type": "object",
+          "additionalProperties": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "description": "Each number at its table precision with no unit, or null."
+        }
+      }
+    },
+    "input": {
+      "type": "object",
+      "required": [
+        "path",
+        "sha256",
+        "bytes",
+        "rows"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "rows": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "required": [
+        "name",
+        "fetched_at"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "fetched_at": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "counts": {
+      "type": "object",
+      "required": [
+        "races",
+        "ap_races",
+        "unofficial",
+        "certified",
+        "eevp_below_100",
+        "eevp_below_95",
+        "eevp_unknown",
+        "eevp_min",
+        "eevp_median",
+        "latest_update"
+      ],
+      "properties": {
+        "races": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "ap_races": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "unofficial": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "certified": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "eevp_below_100": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "eevp_below_95": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "eevp_unknown": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "eevp_min": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "eevp_median": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "latest_update": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "run": {
+      "type": "object",
+      "required": [
+        "generated_at",
+        "tools",
+        "inputs",
+        "sources",
+        "counts_2026"
+      ],
+      "properties": {
+        "generated_at": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+        },
+        "tools": {
+          "type": "object",
+          "required": [
+            "python",
+            "duckdb",
+            "numpy",
+            "jsonschema",
+            "findings_py_sha256",
+            "commit"
+          ]
+        },
+        "inputs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/input"
+          }
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/source"
+          }
+        },
+        "counts_2026": {
+          "type": "object",
+          "required": [
+            "house",
+            "senate",
+            "governor"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "house": {
+              "$ref": "#/$defs/counts"
+            },
+            "senate": {
+              "$ref": "#/$defs/counts"
+            },
+            "governor": {
+              "$ref": "#/$defs/counts"
+            }
+          }
+        }
+      }
+    },
+    "source_overview": {
+      "type": "object",
+      "required": [
+        "name",
+        "supplies",
+        "location",
+        "fetched_at",
+        "rows",
+        "notes"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "supplies": {
+          "type": "string"
+        },
+        "location": {
+          "type": "string"
+        },
+        "fetched_at": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "rows": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
+    "code": {
+      "type": "object",
+      "required": [
+        "file",
+        "kind",
+        "sha256",
+        "text"
+      ],
+      "additionalProperties": false,
+      "description": "One SQL file, or one analyze.py function, verbatim. sha256 is of text.",
+      "properties": {
+        "file": {
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "sql",
+            "python"
+          ]
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "text": {
+          "type": "string"
+        }
+      }
+    },
+    "raw_table": {
+      "type": "object",
+      "required": [
+        "source_file",
+        "filter",
+        "columns",
+        "column_kinds",
+        "column_units",
+        "rows",
+        "total_rows",
+        "truncated"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "source_file": {
+          "type": "string"
+        },
+        "filter": {
+          "type": "string"
+        },
+        "columns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "column_kinds": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "number",
+              "text"
+            ]
+          }
+        },
+        "column_units": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "rows": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "total_rows": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "truncated": {
+          "type": "boolean"
+        }
+      },
+      "description": "Answer rows for display. Numeric cells are rounded by column; the full precision values are in source_file, hashed in run.inputs."
+    },
+    "question": {
+      "type": "object",
+      "required": [
+        "sql",
+        "raw_results"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "sql": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/code"
+          }
+        },
+        "raw_results": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/raw_table"
+          }
+        }
+      }
+    },
+    "seat_shift_by_lean": {
+      "enum": [
+        "toward_dem",
+        "toward_rep",
+        "no_clear_shift",
+        "insufficient_data"
+      ],
+      "description": "The seat_shift rule over one office's 2026 races in states of one presidential lean (red, blue, or swing). The median 2026 margin change against each seat's prior election, over comparable races of one office.",
+      "x-value-descriptions": {
+        "toward_dem": "The median margin change is at least shift_points toward Democrats.",
+        "toward_rep": "The median margin change is at least shift_points toward Republicans.",
+        "no_clear_shift": "The median margin change is within shift_points of zero.",
+        "insufficient_data": "Fewer than min_comparable_races comparable races have a margin change."
+      }
+    },
+    "party_flips_by_lean": {
+      "enum": [
+        "none",
+        "dem_net_gain",
+        "rep_net_gain",
+        "even_exchange",
+        "insufficient_data"
+      ],
+      "description": "The party_flips rule over one office's 2026 races in states of one presidential lean (red, blue, or swing). Seats whose winning party changed against the prior election, over comparable races of one office.",
+      "x-value-descriptions": {
+        "none": "No comparable race changed party.",
+        "dem_net_gain": "Democrats took more seats from Republicans than they lost.",
+        "rep_net_gain": "Republicans took more seats from Democrats than they lost.",
+        "even_exchange": "Each party took the same number of seats from the other, and that number is above zero.",
+        "insufficient_data": "Fewer than min_comparable_races comparable races have both margins."
+      }
+    }
+  }
+}

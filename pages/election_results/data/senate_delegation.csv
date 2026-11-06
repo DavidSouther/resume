@@ -1,0 +1,951 @@
+state,year,election_date,senator1,senator1_party,senator2,senator2_party,lean
+AK,2008,2008-11-04,Ted Stevens,REP,Lisa Murkowski,REP,red
+AL,2008,2008-11-04,Jeff Sessions,REP,Richard C. Shelby,REP,red
+AR,2008,2008-11-04,Mark L. Pryor,DEM,Blanche Lincoln,DEM,blue
+AZ,2008,2008-11-04,Jon Kyl,REP,John McCain,REP,red
+CA,2008,2008-11-04,Dianne Feinstein,DEM,Barbara Boxer,DEM,blue
+CO,2008,2008-11-04,Wayne Allard,REP,Ken Salazar,DEM,purple
+CT,2008,2008-11-04,Joseph I. Lieberman,DEM,Christopher Dodd,DEM,blue
+DE,2008,2008-11-04,Thomas R. Carper,DEM,Joseph Biden,DEM,blue
+FL,2008,2008-11-04,Bill Nelson,DEM,Mel Martinez,REP,purple
+GA,2008,2008-11-04,Saxby Chambliss,REP,Johnny Isakson,REP,red
+HI,2008,2008-11-04,Daniel K. Akaka,DEM,Daniel K. Inouye,DEM,blue
+IA,2008,2008-11-04,Tom Harkin,DEM,Chuck Grassley,REP,purple
+ID,2008,2008-11-04,Larry Craig,REP,Mike Crapo,REP,red
+IL,2008,2008-11-04,Richard J. Durbin,DEM,Barack Obama,DEM,blue
+IN,2008,2008-11-04,Richard G. Lugar,REP,Evan Bayh,DEM,purple
+KS,2008,2008-11-04,Pat Roberts,REP,Sam Brownback,REP,red
+KY,2008,2008-11-04,Mitch McConnell,REP,Jim Bunning,REP,red
+LA,2008,2008-11-04,Mary L. Landrieu,DEM,David Vitter,REP,purple
+MA,2008,2008-11-04,Ted Kennedy,DEM,John F. Kerry,DEM,blue
+MD,2008,2008-11-04,Benjamin L. Cardin,DEM,Barbara A. Mikulski,DEM,blue
+ME,2008,2008-11-04,Olympia J. Snowe,REP,Susan M. Collins,REP,red
+MI,2008,2008-11-04,Debbie Stabenow,DEM,Carl Levin,DEM,blue
+MN,2008,2008-11-04,Amy Klobuchar,DEM,Norm Coleman,REP,purple
+MO,2008,2008-11-04,Claire McCaskill,DEM,Kit Bond,REP,purple
+MS,2008,2008-11-04,Roger F. Wicker,REP,Thad Cochran,REP,red
+MT,2008,2008-11-04,Jon Tester,DEM,Max Baucus,DEM,blue
+NC,2008,2008-11-04,Elizabeth Dole,REP,Richard Burr,REP,red
+ND,2008,2008-11-04,Kent Conrad,DEM,Byron Dorgan,DEM,blue
+NE,2008,2008-11-04,Ben Nelson,DEM,Chuck Hagel,REP,purple
+NH,2008,2008-11-04,John Sununu,REP,Judd Gregg,REP,red
+NJ,2008,2008-11-04,Robert Menendez,DEM,Frank R. Lautenberg,DEM,blue
+NM,2008,2008-11-04,Jeff Bingaman,DEM,Pete Domenici,REP,purple
+NV,2008,2008-11-04,John Ensign,REP,Harry Reid,DEM,purple
+NY,2008,2008-11-04,Hillary Clinton,DEM,Charles E. Schumer,DEM,blue
+OH,2008,2008-11-04,Sherrod Brown,DEM,George Voinovich,REP,purple
+OK,2008,2008-11-04,James M. Inhofe,REP,Tom Coburn,REP,red
+OR,2008,2008-11-04,Gordon Smith,REP,Ron Wyden,DEM,purple
+PA,2008,2008-11-04,"Robert P. Casey, Jr.",DEM,Arlen Specter,REP,purple
+RI,2008,2008-11-04,Sheldon Whitehouse,DEM,Jack Reed,DEM,blue
+SC,2008,2008-11-04,Lindsey Graham,REP,Jim DeMint,REP,red
+SD,2008,2008-11-04,Tim Johnson,DEM,John Thune,REP,purple
+TN,2008,2008-11-04,Bob Corker,REP,Lamar Alexander,REP,red
+TX,2008,2008-11-04,Kay Bailey Hutchison,REP,John Cornyn,REP,red
+UT,2008,2008-11-04,Orrin G. Hatch,REP,Robert Bennett,REP,red
+VA,2008,2008-11-04,Jim Webb,DEM,John Warner,REP,purple
+VT,2008,2008-11-04,Bernard Sanders,DEM,Patrick J. Leahy,DEM,blue
+WA,2008,2008-11-04,Maria Cantwell,DEM,Patty Murray,DEM,blue
+WI,2008,2008-11-04,Herb Kohl,DEM,Russell Feingold,DEM,blue
+WV,2008,2008-11-04,Robert Byrd,DEM,"John D. Rockefeller, IV",DEM,blue
+WY,2008,2008-11-04,John Barrasso,REP,Michael B. Enzi,REP,red
+AK,2009,2009-11-03,Mark Begich,DEM,Lisa Murkowski,REP,purple
+AL,2009,2009-11-03,Jeff Sessions,REP,Richard C. Shelby,REP,red
+AR,2009,2009-11-03,Mark L. Pryor,DEM,Blanche Lincoln,DEM,blue
+AZ,2009,2009-11-03,Jon Kyl,REP,John McCain,REP,red
+CA,2009,2009-11-03,Dianne Feinstein,DEM,Barbara Boxer,DEM,blue
+CO,2009,2009-11-03,Mark Udall,DEM,Michael F. Bennet,DEM,blue
+CT,2009,2009-11-03,Joseph I. Lieberman,DEM,Christopher Dodd,DEM,blue
+DE,2009,2009-11-03,Thomas R. Carper,DEM,Edward Kaufman,DEM,blue
+FL,2009,2009-11-03,Bill Nelson,DEM,George LeMieux,REP,purple
+GA,2009,2009-11-03,Saxby Chambliss,REP,Johnny Isakson,REP,red
+HI,2009,2009-11-03,Daniel K. Akaka,DEM,Daniel K. Inouye,DEM,blue
+IA,2009,2009-11-03,Tom Harkin,DEM,Chuck Grassley,REP,purple
+ID,2009,2009-11-03,James E. Risch,REP,Mike Crapo,REP,red
+IL,2009,2009-11-03,Richard J. Durbin,DEM,Roland Burris,DEM,blue
+IN,2009,2009-11-03,Richard G. Lugar,REP,Evan Bayh,DEM,purple
+KS,2009,2009-11-03,Pat Roberts,REP,Sam Brownback,REP,red
+KY,2009,2009-11-03,Mitch McConnell,REP,Jim Bunning,REP,red
+LA,2009,2009-11-03,Mary L. Landrieu,DEM,David Vitter,REP,purple
+MA,2009,2009-11-03,Paul Kirk,DEM,John F. Kerry,DEM,blue
+MD,2009,2009-11-03,Benjamin L. Cardin,DEM,Barbara A. Mikulski,DEM,blue
+ME,2009,2009-11-03,Olympia J. Snowe,REP,Susan M. Collins,REP,red
+MI,2009,2009-11-03,Debbie Stabenow,DEM,Carl Levin,DEM,blue
+MN,2009,2009-11-03,Amy Klobuchar,DEM,Al Franken,DEM,blue
+MO,2009,2009-11-03,Claire McCaskill,DEM,Kit Bond,REP,purple
+MS,2009,2009-11-03,Roger F. Wicker,REP,Thad Cochran,REP,red
+MT,2009,2009-11-03,Jon Tester,DEM,Max Baucus,DEM,blue
+NC,2009,2009-11-03,Kay R. Hagan,DEM,Richard Burr,REP,purple
+ND,2009,2009-11-03,Kent Conrad,DEM,Byron Dorgan,DEM,blue
+NE,2009,2009-11-03,Ben Nelson,DEM,Mike Johanns,REP,purple
+NH,2009,2009-11-03,Jeanne Shaheen,DEM,Judd Gregg,REP,purple
+NJ,2009,2009-11-03,Robert Menendez,DEM,Frank R. Lautenberg,DEM,blue
+NM,2009,2009-11-03,Jeff Bingaman,DEM,Tom Udall,DEM,blue
+NV,2009,2009-11-03,John Ensign,REP,Harry Reid,DEM,purple
+NY,2009,2009-11-03,Kirsten E. Gillibrand,DEM,Charles E. Schumer,DEM,blue
+OH,2009,2009-11-03,Sherrod Brown,DEM,George Voinovich,REP,purple
+OK,2009,2009-11-03,James M. Inhofe,REP,Tom Coburn,REP,red
+OR,2009,2009-11-03,Jeff Merkley,DEM,Ron Wyden,DEM,blue
+PA,2009,2009-11-03,"Robert P. Casey, Jr.",DEM,Arlen Specter,DEM,blue
+RI,2009,2009-11-03,Sheldon Whitehouse,DEM,Jack Reed,DEM,blue
+SC,2009,2009-11-03,Lindsey Graham,REP,Jim DeMint,REP,red
+SD,2009,2009-11-03,Tim Johnson,DEM,John Thune,REP,purple
+TN,2009,2009-11-03,Bob Corker,REP,Lamar Alexander,REP,red
+TX,2009,2009-11-03,Kay Bailey Hutchison,REP,John Cornyn,REP,red
+UT,2009,2009-11-03,Orrin G. Hatch,REP,Robert Bennett,REP,red
+VA,2009,2009-11-03,Jim Webb,DEM,Mark R. Warner,DEM,blue
+VT,2009,2009-11-03,Bernard Sanders,DEM,Patrick J. Leahy,DEM,blue
+WA,2009,2009-11-03,Maria Cantwell,DEM,Patty Murray,DEM,blue
+WI,2009,2009-11-03,Herb Kohl,DEM,Russell Feingold,DEM,blue
+WV,2009,2009-11-03,Robert Byrd,DEM,"John D. Rockefeller, IV",DEM,blue
+WY,2009,2009-11-03,John Barrasso,REP,Michael B. Enzi,REP,red
+AK,2010,2010-11-02,Mark Begich,DEM,Lisa Murkowski,REP,purple
+AL,2010,2010-11-02,Jeff Sessions,REP,Richard C. Shelby,REP,red
+AR,2010,2010-11-02,Mark L. Pryor,DEM,Blanche Lincoln,DEM,blue
+AZ,2010,2010-11-02,Jon Kyl,REP,John McCain,REP,red
+CA,2010,2010-11-02,Dianne Feinstein,DEM,Barbara Boxer,DEM,blue
+CO,2010,2010-11-02,Mark Udall,DEM,Michael F. Bennet,DEM,blue
+CT,2010,2010-11-02,Joseph I. Lieberman,DEM,Christopher Dodd,DEM,blue
+DE,2010,2010-11-02,Thomas R. Carper,DEM,Edward Kaufman,DEM,blue
+FL,2010,2010-11-02,Bill Nelson,DEM,George LeMieux,REP,purple
+GA,2010,2010-11-02,Saxby Chambliss,REP,Johnny Isakson,REP,red
+HI,2010,2010-11-02,Daniel K. Akaka,DEM,Daniel K. Inouye,DEM,blue
+IA,2010,2010-11-02,Tom Harkin,DEM,Chuck Grassley,REP,purple
+ID,2010,2010-11-02,James E. Risch,REP,Mike Crapo,REP,red
+IL,2010,2010-11-02,Richard J. Durbin,DEM,Roland Burris,DEM,blue
+IN,2010,2010-11-02,Richard G. Lugar,REP,Evan Bayh,DEM,purple
+KS,2010,2010-11-02,Pat Roberts,REP,Sam Brownback,REP,red
+KY,2010,2010-11-02,Mitch McConnell,REP,Jim Bunning,REP,red
+LA,2010,2010-11-02,Mary L. Landrieu,DEM,David Vitter,REP,purple
+MA,2010,2010-11-02,Scott P. Brown,REP,John F. Kerry,DEM,purple
+MD,2010,2010-11-02,Benjamin L. Cardin,DEM,Barbara A. Mikulski,DEM,blue
+ME,2010,2010-11-02,Olympia J. Snowe,REP,Susan M. Collins,REP,red
+MI,2010,2010-11-02,Debbie Stabenow,DEM,Carl Levin,DEM,blue
+MN,2010,2010-11-02,Amy Klobuchar,DEM,Al Franken,DEM,blue
+MO,2010,2010-11-02,Claire McCaskill,DEM,Kit Bond,REP,purple
+MS,2010,2010-11-02,Roger F. Wicker,REP,Thad Cochran,REP,red
+MT,2010,2010-11-02,Jon Tester,DEM,Max Baucus,DEM,blue
+NC,2010,2010-11-02,Kay R. Hagan,DEM,Richard Burr,REP,purple
+ND,2010,2010-11-02,Kent Conrad,DEM,Byron Dorgan,DEM,blue
+NE,2010,2010-11-02,Ben Nelson,DEM,Mike Johanns,REP,purple
+NH,2010,2010-11-02,Jeanne Shaheen,DEM,Judd Gregg,REP,purple
+NJ,2010,2010-11-02,Robert Menendez,DEM,Frank R. Lautenberg,DEM,blue
+NM,2010,2010-11-02,Jeff Bingaman,DEM,Tom Udall,DEM,blue
+NV,2010,2010-11-02,John Ensign,REP,Harry Reid,DEM,purple
+NY,2010,2010-11-02,Kirsten E. Gillibrand,DEM,Charles E. Schumer,DEM,blue
+OH,2010,2010-11-02,Sherrod Brown,DEM,George Voinovich,REP,purple
+OK,2010,2010-11-02,James M. Inhofe,REP,Tom Coburn,REP,red
+OR,2010,2010-11-02,Jeff Merkley,DEM,Ron Wyden,DEM,blue
+PA,2010,2010-11-02,"Robert P. Casey, Jr.",DEM,Arlen Specter,DEM,blue
+RI,2010,2010-11-02,Sheldon Whitehouse,DEM,Jack Reed,DEM,blue
+SC,2010,2010-11-02,Lindsey Graham,REP,Jim DeMint,REP,red
+SD,2010,2010-11-02,Tim Johnson,DEM,John Thune,REP,purple
+TN,2010,2010-11-02,Bob Corker,REP,Lamar Alexander,REP,red
+TX,2010,2010-11-02,Kay Bailey Hutchison,REP,John Cornyn,REP,red
+UT,2010,2010-11-02,Orrin G. Hatch,REP,Robert Bennett,REP,red
+VA,2010,2010-11-02,Jim Webb,DEM,Mark R. Warner,DEM,blue
+VT,2010,2010-11-02,Bernard Sanders,DEM,Patrick J. Leahy,DEM,blue
+WA,2010,2010-11-02,Maria Cantwell,DEM,Patty Murray,DEM,blue
+WI,2010,2010-11-02,Herb Kohl,DEM,Russell Feingold,DEM,blue
+WV,2010,2010-11-02,Carte Goodwin,DEM,"John D. Rockefeller, IV",DEM,blue
+WY,2010,2010-11-02,John Barrasso,REP,Michael B. Enzi,REP,red
+AK,2011,2011-11-08,Mark Begich,DEM,Lisa Murkowski,REP,purple
+AL,2011,2011-11-08,Jeff Sessions,REP,Richard C. Shelby,REP,red
+AR,2011,2011-11-08,Mark L. Pryor,DEM,John Boozman,REP,purple
+AZ,2011,2011-11-08,Jon Kyl,REP,John McCain,REP,red
+CA,2011,2011-11-08,Dianne Feinstein,DEM,Barbara Boxer,DEM,blue
+CO,2011,2011-11-08,Mark Udall,DEM,Michael F. Bennet,DEM,blue
+CT,2011,2011-11-08,Joseph I. Lieberman,DEM,Richard Blumenthal,DEM,blue
+DE,2011,2011-11-08,Thomas R. Carper,DEM,Christopher A. Coons,DEM,blue
+FL,2011,2011-11-08,Bill Nelson,DEM,Marco Rubio,REP,purple
+GA,2011,2011-11-08,Saxby Chambliss,REP,Johnny Isakson,REP,red
+HI,2011,2011-11-08,Daniel K. Akaka,DEM,Daniel K. Inouye,DEM,blue
+IA,2011,2011-11-08,Tom Harkin,DEM,Chuck Grassley,REP,purple
+ID,2011,2011-11-08,James E. Risch,REP,Mike Crapo,REP,red
+IL,2011,2011-11-08,Richard J. Durbin,DEM,Mark Kirk,REP,purple
+IN,2011,2011-11-08,Richard G. Lugar,REP,Daniel Coats,REP,red
+KS,2011,2011-11-08,Pat Roberts,REP,Jerry Moran,REP,red
+KY,2011,2011-11-08,Mitch McConnell,REP,Rand Paul,REP,red
+LA,2011,2011-11-08,Mary L. Landrieu,DEM,David Vitter,REP,purple
+MA,2011,2011-11-08,Scott P. Brown,REP,John F. Kerry,DEM,purple
+MD,2011,2011-11-08,Benjamin L. Cardin,DEM,Barbara A. Mikulski,DEM,blue
+ME,2011,2011-11-08,Olympia J. Snowe,REP,Susan M. Collins,REP,red
+MI,2011,2011-11-08,Debbie Stabenow,DEM,Carl Levin,DEM,blue
+MN,2011,2011-11-08,Amy Klobuchar,DEM,Al Franken,DEM,blue
+MO,2011,2011-11-08,Claire McCaskill,DEM,Roy Blunt,REP,purple
+MS,2011,2011-11-08,Roger F. Wicker,REP,Thad Cochran,REP,red
+MT,2011,2011-11-08,Jon Tester,DEM,Max Baucus,DEM,blue
+NC,2011,2011-11-08,Kay R. Hagan,DEM,Richard Burr,REP,purple
+ND,2011,2011-11-08,Kent Conrad,DEM,John Hoeven,REP,purple
+NE,2011,2011-11-08,Ben Nelson,DEM,Mike Johanns,REP,purple
+NH,2011,2011-11-08,Jeanne Shaheen,DEM,Kelly Ayotte,REP,purple
+NJ,2011,2011-11-08,Robert Menendez,DEM,Frank R. Lautenberg,DEM,blue
+NM,2011,2011-11-08,Jeff Bingaman,DEM,Tom Udall,DEM,blue
+NV,2011,2011-11-08,Dean Heller,REP,Harry Reid,DEM,purple
+NY,2011,2011-11-08,Kirsten E. Gillibrand,DEM,Charles E. Schumer,DEM,blue
+OH,2011,2011-11-08,Sherrod Brown,DEM,Rob Portman,REP,purple
+OK,2011,2011-11-08,James M. Inhofe,REP,Tom Coburn,REP,red
+OR,2011,2011-11-08,Jeff Merkley,DEM,Ron Wyden,DEM,blue
+PA,2011,2011-11-08,"Robert P. Casey, Jr.",DEM,Patrick J. Toomey,REP,purple
+RI,2011,2011-11-08,Sheldon Whitehouse,DEM,Jack Reed,DEM,blue
+SC,2011,2011-11-08,Lindsey Graham,REP,Jim DeMint,REP,red
+SD,2011,2011-11-08,Tim Johnson,DEM,John Thune,REP,purple
+TN,2011,2011-11-08,Bob Corker,REP,Lamar Alexander,REP,red
+TX,2011,2011-11-08,Kay Bailey Hutchison,REP,John Cornyn,REP,red
+UT,2011,2011-11-08,Orrin G. Hatch,REP,Mike Lee,REP,red
+VA,2011,2011-11-08,Jim Webb,DEM,Mark R. Warner,DEM,blue
+VT,2011,2011-11-08,Bernard Sanders,DEM,Patrick J. Leahy,DEM,blue
+WA,2011,2011-11-08,Maria Cantwell,DEM,Patty Murray,DEM,blue
+WI,2011,2011-11-08,Herb Kohl,DEM,Ron Johnson,REP,purple
+WV,2011,2011-11-08,"Joe Manchin, III",DEM,"John D. Rockefeller, IV",DEM,blue
+WY,2011,2011-11-08,John Barrasso,REP,Michael B. Enzi,REP,red
+AK,2012,2012-11-06,Mark Begich,DEM,Lisa Murkowski,REP,purple
+AL,2012,2012-11-06,Jeff Sessions,REP,Richard C. Shelby,REP,red
+AR,2012,2012-11-06,Mark L. Pryor,DEM,John Boozman,REP,purple
+AZ,2012,2012-11-06,Jon Kyl,REP,John McCain,REP,red
+CA,2012,2012-11-06,Dianne Feinstein,DEM,Barbara Boxer,DEM,blue
+CO,2012,2012-11-06,Mark Udall,DEM,Michael F. Bennet,DEM,blue
+CT,2012,2012-11-06,Joseph I. Lieberman,DEM,Richard Blumenthal,DEM,blue
+DE,2012,2012-11-06,Thomas R. Carper,DEM,Christopher A. Coons,DEM,blue
+FL,2012,2012-11-06,Bill Nelson,DEM,Marco Rubio,REP,purple
+GA,2012,2012-11-06,Saxby Chambliss,REP,Johnny Isakson,REP,red
+HI,2012,2012-11-06,Daniel K. Akaka,DEM,Daniel K. Inouye,DEM,blue
+IA,2012,2012-11-06,Tom Harkin,DEM,Chuck Grassley,REP,purple
+ID,2012,2012-11-06,James E. Risch,REP,Mike Crapo,REP,red
+IL,2012,2012-11-06,Richard J. Durbin,DEM,Mark Kirk,REP,purple
+IN,2012,2012-11-06,Richard G. Lugar,REP,Daniel Coats,REP,red
+KS,2012,2012-11-06,Pat Roberts,REP,Jerry Moran,REP,red
+KY,2012,2012-11-06,Mitch McConnell,REP,Rand Paul,REP,red
+LA,2012,2012-11-06,Mary L. Landrieu,DEM,David Vitter,REP,purple
+MA,2012,2012-11-06,Scott P. Brown,REP,John F. Kerry,DEM,purple
+MD,2012,2012-11-06,Benjamin L. Cardin,DEM,Barbara A. Mikulski,DEM,blue
+ME,2012,2012-11-06,Olympia J. Snowe,REP,Susan M. Collins,REP,red
+MI,2012,2012-11-06,Debbie Stabenow,DEM,Carl Levin,DEM,blue
+MN,2012,2012-11-06,Amy Klobuchar,DEM,Al Franken,DEM,blue
+MO,2012,2012-11-06,Claire McCaskill,DEM,Roy Blunt,REP,purple
+MS,2012,2012-11-06,Roger F. Wicker,REP,Thad Cochran,REP,red
+MT,2012,2012-11-06,Jon Tester,DEM,Max Baucus,DEM,blue
+NC,2012,2012-11-06,Kay R. Hagan,DEM,Richard Burr,REP,purple
+ND,2012,2012-11-06,Kent Conrad,DEM,John Hoeven,REP,purple
+NE,2012,2012-11-06,Ben Nelson,DEM,Mike Johanns,REP,purple
+NH,2012,2012-11-06,Jeanne Shaheen,DEM,Kelly Ayotte,REP,purple
+NJ,2012,2012-11-06,Robert Menendez,DEM,Frank R. Lautenberg,DEM,blue
+NM,2012,2012-11-06,Jeff Bingaman,DEM,Tom Udall,DEM,blue
+NV,2012,2012-11-06,Dean Heller,REP,Harry Reid,DEM,purple
+NY,2012,2012-11-06,Kirsten E. Gillibrand,DEM,Charles E. Schumer,DEM,blue
+OH,2012,2012-11-06,Sherrod Brown,DEM,Rob Portman,REP,purple
+OK,2012,2012-11-06,James M. Inhofe,REP,Tom Coburn,REP,red
+OR,2012,2012-11-06,Jeff Merkley,DEM,Ron Wyden,DEM,blue
+PA,2012,2012-11-06,"Robert P. Casey, Jr.",DEM,Patrick J. Toomey,REP,purple
+RI,2012,2012-11-06,Sheldon Whitehouse,DEM,Jack Reed,DEM,blue
+SC,2012,2012-11-06,Lindsey Graham,REP,Jim DeMint,REP,red
+SD,2012,2012-11-06,Tim Johnson,DEM,John Thune,REP,purple
+TN,2012,2012-11-06,Bob Corker,REP,Lamar Alexander,REP,red
+TX,2012,2012-11-06,Kay Bailey Hutchison,REP,John Cornyn,REP,red
+UT,2012,2012-11-06,Orrin G. Hatch,REP,Mike Lee,REP,red
+VA,2012,2012-11-06,Jim Webb,DEM,Mark R. Warner,DEM,blue
+VT,2012,2012-11-06,Bernard Sanders,DEM,Patrick J. Leahy,DEM,blue
+WA,2012,2012-11-06,Maria Cantwell,DEM,Patty Murray,DEM,blue
+WI,2012,2012-11-06,Herb Kohl,DEM,Ron Johnson,REP,purple
+WV,2012,2012-11-06,"Joe Manchin, III",DEM,"John D. Rockefeller, IV",DEM,blue
+WY,2012,2012-11-06,John Barrasso,REP,Michael B. Enzi,REP,red
+AK,2013,2013-11-05,Mark Begich,DEM,Lisa Murkowski,REP,purple
+AL,2013,2013-11-05,Jeff Sessions,REP,Richard C. Shelby,REP,red
+AR,2013,2013-11-05,Mark L. Pryor,DEM,John Boozman,REP,purple
+AZ,2013,2013-11-05,Jeff Flake,REP,John McCain,REP,red
+CA,2013,2013-11-05,Dianne Feinstein,DEM,Barbara Boxer,DEM,blue
+CO,2013,2013-11-05,Mark Udall,DEM,Michael F. Bennet,DEM,blue
+CT,2013,2013-11-05,Christopher Murphy,DEM,Richard Blumenthal,DEM,blue
+DE,2013,2013-11-05,Thomas R. Carper,DEM,Christopher A. Coons,DEM,blue
+FL,2013,2013-11-05,Bill Nelson,DEM,Marco Rubio,REP,purple
+GA,2013,2013-11-05,Saxby Chambliss,REP,Johnny Isakson,REP,red
+HI,2013,2013-11-05,Mazie K. Hirono,DEM,Brian Schatz,DEM,blue
+IA,2013,2013-11-05,Tom Harkin,DEM,Chuck Grassley,REP,purple
+ID,2013,2013-11-05,James E. Risch,REP,Mike Crapo,REP,red
+IL,2013,2013-11-05,Richard J. Durbin,DEM,Mark Kirk,REP,purple
+IN,2013,2013-11-05,Joe Donnelly,DEM,Daniel Coats,REP,purple
+KS,2013,2013-11-05,Pat Roberts,REP,Jerry Moran,REP,red
+KY,2013,2013-11-05,Mitch McConnell,REP,Rand Paul,REP,red
+LA,2013,2013-11-05,Mary L. Landrieu,DEM,David Vitter,REP,purple
+MA,2013,2013-11-05,Elizabeth Warren,DEM,Edward J. Markey,DEM,blue
+MD,2013,2013-11-05,Benjamin L. Cardin,DEM,Barbara A. Mikulski,DEM,blue
+ME,2013,2013-11-05,"Angus S. King, Jr.",DEM,Susan M. Collins,REP,purple
+MI,2013,2013-11-05,Debbie Stabenow,DEM,Carl Levin,DEM,blue
+MN,2013,2013-11-05,Amy Klobuchar,DEM,Al Franken,DEM,blue
+MO,2013,2013-11-05,Claire McCaskill,DEM,Roy Blunt,REP,purple
+MS,2013,2013-11-05,Roger F. Wicker,REP,Thad Cochran,REP,red
+MT,2013,2013-11-05,Jon Tester,DEM,Max Baucus,DEM,blue
+NC,2013,2013-11-05,Kay R. Hagan,DEM,Richard Burr,REP,purple
+ND,2013,2013-11-05,Heidi Heitkamp,DEM,John Hoeven,REP,purple
+NE,2013,2013-11-05,Deb Fischer,REP,Mike Johanns,REP,red
+NH,2013,2013-11-05,Jeanne Shaheen,DEM,Kelly Ayotte,REP,purple
+NJ,2013,2013-11-05,Robert Menendez,DEM,Cory A. Booker,DEM,blue
+NM,2013,2013-11-05,Martin Heinrich,DEM,Tom Udall,DEM,blue
+NV,2013,2013-11-05,Dean Heller,REP,Harry Reid,DEM,purple
+NY,2013,2013-11-05,Kirsten E. Gillibrand,DEM,Charles E. Schumer,DEM,blue
+OH,2013,2013-11-05,Sherrod Brown,DEM,Rob Portman,REP,purple
+OK,2013,2013-11-05,James M. Inhofe,REP,Tom Coburn,REP,red
+OR,2013,2013-11-05,Jeff Merkley,DEM,Ron Wyden,DEM,blue
+PA,2013,2013-11-05,"Robert P. Casey, Jr.",DEM,Patrick J. Toomey,REP,purple
+RI,2013,2013-11-05,Sheldon Whitehouse,DEM,Jack Reed,DEM,blue
+SC,2013,2013-11-05,Lindsey Graham,REP,Tim Scott,REP,red
+SD,2013,2013-11-05,Tim Johnson,DEM,John Thune,REP,purple
+TN,2013,2013-11-05,Bob Corker,REP,Lamar Alexander,REP,red
+TX,2013,2013-11-05,Ted Cruz,REP,John Cornyn,REP,red
+UT,2013,2013-11-05,Orrin G. Hatch,REP,Mike Lee,REP,red
+VA,2013,2013-11-05,Tim Kaine,DEM,Mark R. Warner,DEM,blue
+VT,2013,2013-11-05,Bernard Sanders,DEM,Patrick J. Leahy,DEM,blue
+WA,2013,2013-11-05,Maria Cantwell,DEM,Patty Murray,DEM,blue
+WI,2013,2013-11-05,Tammy Baldwin,DEM,Ron Johnson,REP,purple
+WV,2013,2013-11-05,"Joe Manchin, III",DEM,"John D. Rockefeller, IV",DEM,blue
+WY,2013,2013-11-05,John Barrasso,REP,Michael B. Enzi,REP,red
+AK,2014,2014-11-04,Mark Begich,DEM,Lisa Murkowski,REP,purple
+AL,2014,2014-11-04,Jeff Sessions,REP,Richard C. Shelby,REP,red
+AR,2014,2014-11-04,Mark L. Pryor,DEM,John Boozman,REP,purple
+AZ,2014,2014-11-04,Jeff Flake,REP,John McCain,REP,red
+CA,2014,2014-11-04,Dianne Feinstein,DEM,Barbara Boxer,DEM,blue
+CO,2014,2014-11-04,Mark Udall,DEM,Michael F. Bennet,DEM,blue
+CT,2014,2014-11-04,Christopher Murphy,DEM,Richard Blumenthal,DEM,blue
+DE,2014,2014-11-04,Thomas R. Carper,DEM,Christopher A. Coons,DEM,blue
+FL,2014,2014-11-04,Bill Nelson,DEM,Marco Rubio,REP,purple
+GA,2014,2014-11-04,Saxby Chambliss,REP,Johnny Isakson,REP,red
+HI,2014,2014-11-04,Mazie K. Hirono,DEM,Brian Schatz,DEM,blue
+IA,2014,2014-11-04,Tom Harkin,DEM,Chuck Grassley,REP,purple
+ID,2014,2014-11-04,James E. Risch,REP,Mike Crapo,REP,red
+IL,2014,2014-11-04,Richard J. Durbin,DEM,Mark Kirk,REP,purple
+IN,2014,2014-11-04,Joe Donnelly,DEM,Daniel Coats,REP,purple
+KS,2014,2014-11-04,Pat Roberts,REP,Jerry Moran,REP,red
+KY,2014,2014-11-04,Mitch McConnell,REP,Rand Paul,REP,red
+LA,2014,2014-11-04,Mary L. Landrieu,DEM,David Vitter,REP,purple
+MA,2014,2014-11-04,Elizabeth Warren,DEM,Edward J. Markey,DEM,blue
+MD,2014,2014-11-04,Benjamin L. Cardin,DEM,Barbara A. Mikulski,DEM,blue
+ME,2014,2014-11-04,"Angus S. King, Jr.",DEM,Susan M. Collins,REP,purple
+MI,2014,2014-11-04,Debbie Stabenow,DEM,Carl Levin,DEM,blue
+MN,2014,2014-11-04,Amy Klobuchar,DEM,Al Franken,DEM,blue
+MO,2014,2014-11-04,Claire McCaskill,DEM,Roy Blunt,REP,purple
+MS,2014,2014-11-04,Roger F. Wicker,REP,Thad Cochran,REP,red
+MT,2014,2014-11-04,Jon Tester,DEM,John E. Walsh,DEM,blue
+NC,2014,2014-11-04,Kay R. Hagan,DEM,Richard Burr,REP,purple
+ND,2014,2014-11-04,Heidi Heitkamp,DEM,John Hoeven,REP,purple
+NE,2014,2014-11-04,Deb Fischer,REP,Mike Johanns,REP,red
+NH,2014,2014-11-04,Jeanne Shaheen,DEM,Kelly Ayotte,REP,purple
+NJ,2014,2014-11-04,Robert Menendez,DEM,Cory A. Booker,DEM,blue
+NM,2014,2014-11-04,Martin Heinrich,DEM,Tom Udall,DEM,blue
+NV,2014,2014-11-04,Dean Heller,REP,Harry Reid,DEM,purple
+NY,2014,2014-11-04,Kirsten E. Gillibrand,DEM,Charles E. Schumer,DEM,blue
+OH,2014,2014-11-04,Sherrod Brown,DEM,Rob Portman,REP,purple
+OK,2014,2014-11-04,James M. Inhofe,REP,Tom Coburn,REP,red
+OR,2014,2014-11-04,Jeff Merkley,DEM,Ron Wyden,DEM,blue
+PA,2014,2014-11-04,"Robert P. Casey, Jr.",DEM,Patrick J. Toomey,REP,purple
+RI,2014,2014-11-04,Sheldon Whitehouse,DEM,Jack Reed,DEM,blue
+SC,2014,2014-11-04,Lindsey Graham,REP,Tim Scott,REP,red
+SD,2014,2014-11-04,Tim Johnson,DEM,John Thune,REP,purple
+TN,2014,2014-11-04,Bob Corker,REP,Lamar Alexander,REP,red
+TX,2014,2014-11-04,Ted Cruz,REP,John Cornyn,REP,red
+UT,2014,2014-11-04,Orrin G. Hatch,REP,Mike Lee,REP,red
+VA,2014,2014-11-04,Tim Kaine,DEM,Mark R. Warner,DEM,blue
+VT,2014,2014-11-04,Bernard Sanders,DEM,Patrick J. Leahy,DEM,blue
+WA,2014,2014-11-04,Maria Cantwell,DEM,Patty Murray,DEM,blue
+WI,2014,2014-11-04,Tammy Baldwin,DEM,Ron Johnson,REP,purple
+WV,2014,2014-11-04,"Joe Manchin, III",DEM,"John D. Rockefeller, IV",DEM,blue
+WY,2014,2014-11-04,John Barrasso,REP,Michael B. Enzi,REP,red
+AK,2015,2015-11-03,Dan Sullivan,REP,Lisa Murkowski,REP,red
+AL,2015,2015-11-03,Jeff Sessions,REP,Richard C. Shelby,REP,red
+AR,2015,2015-11-03,Tom Cotton,REP,John Boozman,REP,red
+AZ,2015,2015-11-03,Jeff Flake,REP,John McCain,REP,red
+CA,2015,2015-11-03,Dianne Feinstein,DEM,Barbara Boxer,DEM,blue
+CO,2015,2015-11-03,Cory Gardner,REP,Michael F. Bennet,DEM,purple
+CT,2015,2015-11-03,Christopher Murphy,DEM,Richard Blumenthal,DEM,blue
+DE,2015,2015-11-03,Thomas R. Carper,DEM,Christopher A. Coons,DEM,blue
+FL,2015,2015-11-03,Bill Nelson,DEM,Marco Rubio,REP,purple
+GA,2015,2015-11-03,David Perdue,REP,Johnny Isakson,REP,red
+HI,2015,2015-11-03,Mazie K. Hirono,DEM,Brian Schatz,DEM,blue
+IA,2015,2015-11-03,Joni Ernst,REP,Chuck Grassley,REP,red
+ID,2015,2015-11-03,James E. Risch,REP,Mike Crapo,REP,red
+IL,2015,2015-11-03,Richard J. Durbin,DEM,Mark Kirk,REP,purple
+IN,2015,2015-11-03,Joe Donnelly,DEM,Daniel Coats,REP,purple
+KS,2015,2015-11-03,Pat Roberts,REP,Jerry Moran,REP,red
+KY,2015,2015-11-03,Mitch McConnell,REP,Rand Paul,REP,red
+LA,2015,2015-11-03,Bill Cassidy,REP,David Vitter,REP,red
+MA,2015,2015-11-03,Elizabeth Warren,DEM,Edward J. Markey,DEM,blue
+MD,2015,2015-11-03,Benjamin L. Cardin,DEM,Barbara A. Mikulski,DEM,blue
+ME,2015,2015-11-03,"Angus S. King, Jr.",DEM,Susan M. Collins,REP,purple
+MI,2015,2015-11-03,Debbie Stabenow,DEM,Gary C. Peters,DEM,blue
+MN,2015,2015-11-03,Amy Klobuchar,DEM,Al Franken,DEM,blue
+MO,2015,2015-11-03,Claire McCaskill,DEM,Roy Blunt,REP,purple
+MS,2015,2015-11-03,Roger F. Wicker,REP,Thad Cochran,REP,red
+MT,2015,2015-11-03,Jon Tester,DEM,Steve Daines,REP,purple
+NC,2015,2015-11-03,Thom Tillis,REP,Richard Burr,REP,red
+ND,2015,2015-11-03,Heidi Heitkamp,DEM,John Hoeven,REP,purple
+NE,2015,2015-11-03,Deb Fischer,REP,Ben Sasse,REP,red
+NH,2015,2015-11-03,Jeanne Shaheen,DEM,Kelly Ayotte,REP,purple
+NJ,2015,2015-11-03,Robert Menendez,DEM,Cory A. Booker,DEM,blue
+NM,2015,2015-11-03,Martin Heinrich,DEM,Tom Udall,DEM,blue
+NV,2015,2015-11-03,Dean Heller,REP,Harry Reid,DEM,purple
+NY,2015,2015-11-03,Kirsten E. Gillibrand,DEM,Charles E. Schumer,DEM,blue
+OH,2015,2015-11-03,Sherrod Brown,DEM,Rob Portman,REP,purple
+OK,2015,2015-11-03,James M. Inhofe,REP,James Lankford,REP,red
+OR,2015,2015-11-03,Jeff Merkley,DEM,Ron Wyden,DEM,blue
+PA,2015,2015-11-03,"Robert P. Casey, Jr.",DEM,Patrick J. Toomey,REP,purple
+RI,2015,2015-11-03,Sheldon Whitehouse,DEM,Jack Reed,DEM,blue
+SC,2015,2015-11-03,Lindsey Graham,REP,Tim Scott,REP,red
+SD,2015,2015-11-03,Mike Rounds,REP,John Thune,REP,red
+TN,2015,2015-11-03,Bob Corker,REP,Lamar Alexander,REP,red
+TX,2015,2015-11-03,Ted Cruz,REP,John Cornyn,REP,red
+UT,2015,2015-11-03,Orrin G. Hatch,REP,Mike Lee,REP,red
+VA,2015,2015-11-03,Tim Kaine,DEM,Mark R. Warner,DEM,blue
+VT,2015,2015-11-03,Bernard Sanders,DEM,Patrick J. Leahy,DEM,blue
+WA,2015,2015-11-03,Maria Cantwell,DEM,Patty Murray,DEM,blue
+WI,2015,2015-11-03,Tammy Baldwin,DEM,Ron Johnson,REP,purple
+WV,2015,2015-11-03,"Joe Manchin, III",DEM,Shelley Moore Capito,REP,purple
+WY,2015,2015-11-03,John Barrasso,REP,Michael B. Enzi,REP,red
+AK,2016,2016-11-08,Dan Sullivan,REP,Lisa Murkowski,REP,red
+AL,2016,2016-11-08,Jeff Sessions,REP,Richard C. Shelby,REP,red
+AR,2016,2016-11-08,Tom Cotton,REP,John Boozman,REP,red
+AZ,2016,2016-11-08,Jeff Flake,REP,John McCain,REP,red
+CA,2016,2016-11-08,Dianne Feinstein,DEM,Barbara Boxer,DEM,blue
+CO,2016,2016-11-08,Cory Gardner,REP,Michael F. Bennet,DEM,purple
+CT,2016,2016-11-08,Christopher Murphy,DEM,Richard Blumenthal,DEM,blue
+DE,2016,2016-11-08,Thomas R. Carper,DEM,Christopher A. Coons,DEM,blue
+FL,2016,2016-11-08,Bill Nelson,DEM,Marco Rubio,REP,purple
+GA,2016,2016-11-08,David Perdue,REP,Johnny Isakson,REP,red
+HI,2016,2016-11-08,Mazie K. Hirono,DEM,Brian Schatz,DEM,blue
+IA,2016,2016-11-08,Joni Ernst,REP,Chuck Grassley,REP,red
+ID,2016,2016-11-08,James E. Risch,REP,Mike Crapo,REP,red
+IL,2016,2016-11-08,Richard J. Durbin,DEM,Mark Kirk,REP,purple
+IN,2016,2016-11-08,Joe Donnelly,DEM,Daniel Coats,REP,purple
+KS,2016,2016-11-08,Pat Roberts,REP,Jerry Moran,REP,red
+KY,2016,2016-11-08,Mitch McConnell,REP,Rand Paul,REP,red
+LA,2016,2016-11-08,Bill Cassidy,REP,David Vitter,REP,red
+MA,2016,2016-11-08,Elizabeth Warren,DEM,Edward J. Markey,DEM,blue
+MD,2016,2016-11-08,Benjamin L. Cardin,DEM,Barbara A. Mikulski,DEM,blue
+ME,2016,2016-11-08,"Angus S. King, Jr.",DEM,Susan M. Collins,REP,purple
+MI,2016,2016-11-08,Debbie Stabenow,DEM,Gary C. Peters,DEM,blue
+MN,2016,2016-11-08,Amy Klobuchar,DEM,Al Franken,DEM,blue
+MO,2016,2016-11-08,Claire McCaskill,DEM,Roy Blunt,REP,purple
+MS,2016,2016-11-08,Roger F. Wicker,REP,Thad Cochran,REP,red
+MT,2016,2016-11-08,Jon Tester,DEM,Steve Daines,REP,purple
+NC,2016,2016-11-08,Thom Tillis,REP,Richard Burr,REP,red
+ND,2016,2016-11-08,Heidi Heitkamp,DEM,John Hoeven,REP,purple
+NE,2016,2016-11-08,Deb Fischer,REP,Ben Sasse,REP,red
+NH,2016,2016-11-08,Jeanne Shaheen,DEM,Kelly Ayotte,REP,purple
+NJ,2016,2016-11-08,Robert Menendez,DEM,Cory A. Booker,DEM,blue
+NM,2016,2016-11-08,Martin Heinrich,DEM,Tom Udall,DEM,blue
+NV,2016,2016-11-08,Dean Heller,REP,Harry Reid,DEM,purple
+NY,2016,2016-11-08,Kirsten E. Gillibrand,DEM,Charles E. Schumer,DEM,blue
+OH,2016,2016-11-08,Sherrod Brown,DEM,Rob Portman,REP,purple
+OK,2016,2016-11-08,James M. Inhofe,REP,James Lankford,REP,red
+OR,2016,2016-11-08,Jeff Merkley,DEM,Ron Wyden,DEM,blue
+PA,2016,2016-11-08,"Robert P. Casey, Jr.",DEM,Patrick J. Toomey,REP,purple
+RI,2016,2016-11-08,Sheldon Whitehouse,DEM,Jack Reed,DEM,blue
+SC,2016,2016-11-08,Lindsey Graham,REP,Tim Scott,REP,red
+SD,2016,2016-11-08,Mike Rounds,REP,John Thune,REP,red
+TN,2016,2016-11-08,Bob Corker,REP,Lamar Alexander,REP,red
+TX,2016,2016-11-08,Ted Cruz,REP,John Cornyn,REP,red
+UT,2016,2016-11-08,Orrin G. Hatch,REP,Mike Lee,REP,red
+VA,2016,2016-11-08,Tim Kaine,DEM,Mark R. Warner,DEM,blue
+VT,2016,2016-11-08,Bernard Sanders,DEM,Patrick J. Leahy,DEM,blue
+WA,2016,2016-11-08,Maria Cantwell,DEM,Patty Murray,DEM,blue
+WI,2016,2016-11-08,Tammy Baldwin,DEM,Ron Johnson,REP,purple
+WV,2016,2016-11-08,"Joe Manchin, III",DEM,Shelley Moore Capito,REP,purple
+WY,2016,2016-11-08,John Barrasso,REP,Michael B. Enzi,REP,red
+AK,2017,2017-11-07,Dan Sullivan,REP,Lisa Murkowski,REP,red
+AL,2017,2017-11-07,Luther Strange,REP,Richard C. Shelby,REP,red
+AR,2017,2017-11-07,Tom Cotton,REP,John Boozman,REP,red
+AZ,2017,2017-11-07,Jeff Flake,REP,John McCain,REP,red
+CA,2017,2017-11-07,Dianne Feinstein,DEM,Kamala D. Harris,DEM,blue
+CO,2017,2017-11-07,Cory Gardner,REP,Michael F. Bennet,DEM,purple
+CT,2017,2017-11-07,Christopher Murphy,DEM,Richard Blumenthal,DEM,blue
+DE,2017,2017-11-07,Thomas R. Carper,DEM,Christopher A. Coons,DEM,blue
+FL,2017,2017-11-07,Bill Nelson,DEM,Marco Rubio,REP,purple
+GA,2017,2017-11-07,David Perdue,REP,Johnny Isakson,REP,red
+HI,2017,2017-11-07,Mazie K. Hirono,DEM,Brian Schatz,DEM,blue
+IA,2017,2017-11-07,Joni Ernst,REP,Chuck Grassley,REP,red
+ID,2017,2017-11-07,James E. Risch,REP,Mike Crapo,REP,red
+IL,2017,2017-11-07,Richard J. Durbin,DEM,Tammy Duckworth,DEM,blue
+IN,2017,2017-11-07,Joe Donnelly,DEM,Todd Young,REP,purple
+KS,2017,2017-11-07,Pat Roberts,REP,Jerry Moran,REP,red
+KY,2017,2017-11-07,Mitch McConnell,REP,Rand Paul,REP,red
+LA,2017,2017-11-07,Bill Cassidy,REP,John Kennedy,REP,red
+MA,2017,2017-11-07,Elizabeth Warren,DEM,Edward J. Markey,DEM,blue
+MD,2017,2017-11-07,Benjamin L. Cardin,DEM,Chris Van Hollen,DEM,blue
+ME,2017,2017-11-07,"Angus S. King, Jr.",DEM,Susan M. Collins,REP,purple
+MI,2017,2017-11-07,Debbie Stabenow,DEM,Gary C. Peters,DEM,blue
+MN,2017,2017-11-07,Amy Klobuchar,DEM,Al Franken,DEM,blue
+MO,2017,2017-11-07,Claire McCaskill,DEM,Roy Blunt,REP,purple
+MS,2017,2017-11-07,Roger F. Wicker,REP,Thad Cochran,REP,red
+MT,2017,2017-11-07,Jon Tester,DEM,Steve Daines,REP,purple
+NC,2017,2017-11-07,Thom Tillis,REP,Richard Burr,REP,red
+ND,2017,2017-11-07,Heidi Heitkamp,DEM,John Hoeven,REP,purple
+NE,2017,2017-11-07,Deb Fischer,REP,Ben Sasse,REP,red
+NH,2017,2017-11-07,Jeanne Shaheen,DEM,Margaret Wood Hassan,DEM,blue
+NJ,2017,2017-11-07,Robert Menendez,DEM,Cory A. Booker,DEM,blue
+NM,2017,2017-11-07,Martin Heinrich,DEM,Tom Udall,DEM,blue
+NV,2017,2017-11-07,Dean Heller,REP,Catherine Cortez Masto,DEM,purple
+NY,2017,2017-11-07,Kirsten E. Gillibrand,DEM,Charles E. Schumer,DEM,blue
+OH,2017,2017-11-07,Sherrod Brown,DEM,Rob Portman,REP,purple
+OK,2017,2017-11-07,James M. Inhofe,REP,James Lankford,REP,red
+OR,2017,2017-11-07,Jeff Merkley,DEM,Ron Wyden,DEM,blue
+PA,2017,2017-11-07,"Robert P. Casey, Jr.",DEM,Patrick J. Toomey,REP,purple
+RI,2017,2017-11-07,Sheldon Whitehouse,DEM,Jack Reed,DEM,blue
+SC,2017,2017-11-07,Lindsey Graham,REP,Tim Scott,REP,red
+SD,2017,2017-11-07,Mike Rounds,REP,John Thune,REP,red
+TN,2017,2017-11-07,Bob Corker,REP,Lamar Alexander,REP,red
+TX,2017,2017-11-07,Ted Cruz,REP,John Cornyn,REP,red
+UT,2017,2017-11-07,Orrin G. Hatch,REP,Mike Lee,REP,red
+VA,2017,2017-11-07,Tim Kaine,DEM,Mark R. Warner,DEM,blue
+VT,2017,2017-11-07,Bernard Sanders,DEM,Patrick J. Leahy,DEM,blue
+WA,2017,2017-11-07,Maria Cantwell,DEM,Patty Murray,DEM,blue
+WI,2017,2017-11-07,Tammy Baldwin,DEM,Ron Johnson,REP,purple
+WV,2017,2017-11-07,"Joe Manchin, III",DEM,Shelley Moore Capito,REP,purple
+WY,2017,2017-11-07,John Barrasso,REP,Michael B. Enzi,REP,red
+AK,2018,2018-11-06,Dan Sullivan,REP,Lisa Murkowski,REP,red
+AL,2018,2018-11-06,Doug Jones,DEM,Richard C. Shelby,REP,purple
+AR,2018,2018-11-06,Tom Cotton,REP,John Boozman,REP,red
+AZ,2018,2018-11-06,Jeff Flake,REP,Jon Kyl,REP,red
+CA,2018,2018-11-06,Dianne Feinstein,DEM,Kamala D. Harris,DEM,blue
+CO,2018,2018-11-06,Cory Gardner,REP,Michael F. Bennet,DEM,purple
+CT,2018,2018-11-06,Christopher Murphy,DEM,Richard Blumenthal,DEM,blue
+DE,2018,2018-11-06,Thomas R. Carper,DEM,Christopher A. Coons,DEM,blue
+FL,2018,2018-11-06,Bill Nelson,DEM,Marco Rubio,REP,purple
+GA,2018,2018-11-06,David Perdue,REP,Johnny Isakson,REP,red
+HI,2018,2018-11-06,Mazie K. Hirono,DEM,Brian Schatz,DEM,blue
+IA,2018,2018-11-06,Joni Ernst,REP,Chuck Grassley,REP,red
+ID,2018,2018-11-06,James E. Risch,REP,Mike Crapo,REP,red
+IL,2018,2018-11-06,Richard J. Durbin,DEM,Tammy Duckworth,DEM,blue
+IN,2018,2018-11-06,Joe Donnelly,DEM,Todd Young,REP,purple
+KS,2018,2018-11-06,Pat Roberts,REP,Jerry Moran,REP,red
+KY,2018,2018-11-06,Mitch McConnell,REP,Rand Paul,REP,red
+LA,2018,2018-11-06,Bill Cassidy,REP,John Kennedy,REP,red
+MA,2018,2018-11-06,Elizabeth Warren,DEM,Edward J. Markey,DEM,blue
+MD,2018,2018-11-06,Benjamin L. Cardin,DEM,Chris Van Hollen,DEM,blue
+ME,2018,2018-11-06,"Angus S. King, Jr.",DEM,Susan M. Collins,REP,purple
+MI,2018,2018-11-06,Debbie Stabenow,DEM,Gary C. Peters,DEM,blue
+MN,2018,2018-11-06,Amy Klobuchar,DEM,Tina Smith,DEM,blue
+MO,2018,2018-11-06,Claire McCaskill,DEM,Roy Blunt,REP,purple
+MS,2018,2018-11-06,Roger F. Wicker,REP,Cindy Hyde-Smith,REP,red
+MT,2018,2018-11-06,Jon Tester,DEM,Steve Daines,REP,purple
+NC,2018,2018-11-06,Thom Tillis,REP,Richard Burr,REP,red
+ND,2018,2018-11-06,Heidi Heitkamp,DEM,John Hoeven,REP,purple
+NE,2018,2018-11-06,Deb Fischer,REP,Ben Sasse,REP,red
+NH,2018,2018-11-06,Jeanne Shaheen,DEM,Margaret Wood Hassan,DEM,blue
+NJ,2018,2018-11-06,Robert Menendez,DEM,Cory A. Booker,DEM,blue
+NM,2018,2018-11-06,Martin Heinrich,DEM,Tom Udall,DEM,blue
+NV,2018,2018-11-06,Dean Heller,REP,Catherine Cortez Masto,DEM,purple
+NY,2018,2018-11-06,Kirsten E. Gillibrand,DEM,Charles E. Schumer,DEM,blue
+OH,2018,2018-11-06,Sherrod Brown,DEM,Rob Portman,REP,purple
+OK,2018,2018-11-06,James M. Inhofe,REP,James Lankford,REP,red
+OR,2018,2018-11-06,Jeff Merkley,DEM,Ron Wyden,DEM,blue
+PA,2018,2018-11-06,"Robert P. Casey, Jr.",DEM,Patrick J. Toomey,REP,purple
+RI,2018,2018-11-06,Sheldon Whitehouse,DEM,Jack Reed,DEM,blue
+SC,2018,2018-11-06,Lindsey Graham,REP,Tim Scott,REP,red
+SD,2018,2018-11-06,Mike Rounds,REP,John Thune,REP,red
+TN,2018,2018-11-06,Bob Corker,REP,Lamar Alexander,REP,red
+TX,2018,2018-11-06,Ted Cruz,REP,John Cornyn,REP,red
+UT,2018,2018-11-06,Orrin G. Hatch,REP,Mike Lee,REP,red
+VA,2018,2018-11-06,Tim Kaine,DEM,Mark R. Warner,DEM,blue
+VT,2018,2018-11-06,Bernard Sanders,DEM,Patrick J. Leahy,DEM,blue
+WA,2018,2018-11-06,Maria Cantwell,DEM,Patty Murray,DEM,blue
+WI,2018,2018-11-06,Tammy Baldwin,DEM,Ron Johnson,REP,purple
+WV,2018,2018-11-06,"Joe Manchin, III",DEM,Shelley Moore Capito,REP,purple
+WY,2018,2018-11-06,John Barrasso,REP,Michael B. Enzi,REP,red
+AK,2019,2019-11-05,Dan Sullivan,REP,Lisa Murkowski,REP,red
+AL,2019,2019-11-05,Doug Jones,DEM,Richard C. Shelby,REP,purple
+AR,2019,2019-11-05,Tom Cotton,REP,John Boozman,REP,red
+AZ,2019,2019-11-05,Kyrsten Sinema,DEM,Martha McSally,REP,purple
+CA,2019,2019-11-05,Dianne Feinstein,DEM,Kamala D. Harris,DEM,blue
+CO,2019,2019-11-05,Cory Gardner,REP,Michael F. Bennet,DEM,purple
+CT,2019,2019-11-05,Christopher Murphy,DEM,Richard Blumenthal,DEM,blue
+DE,2019,2019-11-05,Thomas R. Carper,DEM,Christopher A. Coons,DEM,blue
+FL,2019,2019-11-05,Rick Scott,REP,Marco Rubio,REP,red
+GA,2019,2019-11-05,David Perdue,REP,Johnny Isakson,REP,red
+HI,2019,2019-11-05,Mazie K. Hirono,DEM,Brian Schatz,DEM,blue
+IA,2019,2019-11-05,Joni Ernst,REP,Chuck Grassley,REP,red
+ID,2019,2019-11-05,James E. Risch,REP,Mike Crapo,REP,red
+IL,2019,2019-11-05,Richard J. Durbin,DEM,Tammy Duckworth,DEM,blue
+IN,2019,2019-11-05,Mike Braun,REP,Todd Young,REP,red
+KS,2019,2019-11-05,Pat Roberts,REP,Jerry Moran,REP,red
+KY,2019,2019-11-05,Mitch McConnell,REP,Rand Paul,REP,red
+LA,2019,2019-11-05,Bill Cassidy,REP,John Kennedy,REP,red
+MA,2019,2019-11-05,Elizabeth Warren,DEM,Edward J. Markey,DEM,blue
+MD,2019,2019-11-05,Benjamin L. Cardin,DEM,Chris Van Hollen,DEM,blue
+ME,2019,2019-11-05,"Angus S. King, Jr.",DEM,Susan M. Collins,REP,purple
+MI,2019,2019-11-05,Debbie Stabenow,DEM,Gary C. Peters,DEM,blue
+MN,2019,2019-11-05,Amy Klobuchar,DEM,Tina Smith,DEM,blue
+MO,2019,2019-11-05,Josh Hawley,REP,Roy Blunt,REP,red
+MS,2019,2019-11-05,Roger F. Wicker,REP,Cindy Hyde-Smith,REP,red
+MT,2019,2019-11-05,Jon Tester,DEM,Steve Daines,REP,purple
+NC,2019,2019-11-05,Thom Tillis,REP,Richard Burr,REP,red
+ND,2019,2019-11-05,Kevin Cramer,REP,John Hoeven,REP,red
+NE,2019,2019-11-05,Deb Fischer,REP,Ben Sasse,REP,red
+NH,2019,2019-11-05,Jeanne Shaheen,DEM,Margaret Wood Hassan,DEM,blue
+NJ,2019,2019-11-05,Robert Menendez,DEM,Cory A. Booker,DEM,blue
+NM,2019,2019-11-05,Martin Heinrich,DEM,Tom Udall,DEM,blue
+NV,2019,2019-11-05,Jacky Rosen,DEM,Catherine Cortez Masto,DEM,blue
+NY,2019,2019-11-05,Kirsten E. Gillibrand,DEM,Charles E. Schumer,DEM,blue
+OH,2019,2019-11-05,Sherrod Brown,DEM,Rob Portman,REP,purple
+OK,2019,2019-11-05,James M. Inhofe,REP,James Lankford,REP,red
+OR,2019,2019-11-05,Jeff Merkley,DEM,Ron Wyden,DEM,blue
+PA,2019,2019-11-05,"Robert P. Casey, Jr.",DEM,Patrick J. Toomey,REP,purple
+RI,2019,2019-11-05,Sheldon Whitehouse,DEM,Jack Reed,DEM,blue
+SC,2019,2019-11-05,Lindsey Graham,REP,Tim Scott,REP,red
+SD,2019,2019-11-05,Mike Rounds,REP,John Thune,REP,red
+TN,2019,2019-11-05,Marsha Blackburn,REP,Lamar Alexander,REP,red
+TX,2019,2019-11-05,Ted Cruz,REP,John Cornyn,REP,red
+UT,2019,2019-11-05,Mitt Romney,REP,Mike Lee,REP,red
+VA,2019,2019-11-05,Tim Kaine,DEM,Mark R. Warner,DEM,blue
+VT,2019,2019-11-05,Bernard Sanders,DEM,Patrick J. Leahy,DEM,blue
+WA,2019,2019-11-05,Maria Cantwell,DEM,Patty Murray,DEM,blue
+WI,2019,2019-11-05,Tammy Baldwin,DEM,Ron Johnson,REP,purple
+WV,2019,2019-11-05,"Joe Manchin, III",DEM,Shelley Moore Capito,REP,purple
+WY,2019,2019-11-05,John Barrasso,REP,Michael B. Enzi,REP,red
+AK,2020,2020-11-03,Dan Sullivan,REP,Lisa Murkowski,REP,red
+AL,2020,2020-11-03,Doug Jones,DEM,Richard C. Shelby,REP,purple
+AR,2020,2020-11-03,Tom Cotton,REP,John Boozman,REP,red
+AZ,2020,2020-11-03,Kyrsten Sinema,DEM,Martha McSally,REP,purple
+CA,2020,2020-11-03,Dianne Feinstein,DEM,Kamala D. Harris,DEM,blue
+CO,2020,2020-11-03,Cory Gardner,REP,Michael F. Bennet,DEM,purple
+CT,2020,2020-11-03,Christopher Murphy,DEM,Richard Blumenthal,DEM,blue
+DE,2020,2020-11-03,Thomas R. Carper,DEM,Christopher A. Coons,DEM,blue
+FL,2020,2020-11-03,Rick Scott,REP,Marco Rubio,REP,red
+GA,2020,2020-11-03,David Perdue,REP,Kelly Loeffler,REP,red
+HI,2020,2020-11-03,Mazie K. Hirono,DEM,Brian Schatz,DEM,blue
+IA,2020,2020-11-03,Joni Ernst,REP,Chuck Grassley,REP,red
+ID,2020,2020-11-03,James E. Risch,REP,Mike Crapo,REP,red
+IL,2020,2020-11-03,Richard J. Durbin,DEM,Tammy Duckworth,DEM,blue
+IN,2020,2020-11-03,Mike Braun,REP,Todd Young,REP,red
+KS,2020,2020-11-03,Pat Roberts,REP,Jerry Moran,REP,red
+KY,2020,2020-11-03,Mitch McConnell,REP,Rand Paul,REP,red
+LA,2020,2020-11-03,Bill Cassidy,REP,John Kennedy,REP,red
+MA,2020,2020-11-03,Elizabeth Warren,DEM,Edward J. Markey,DEM,blue
+MD,2020,2020-11-03,Benjamin L. Cardin,DEM,Chris Van Hollen,DEM,blue
+ME,2020,2020-11-03,"Angus S. King, Jr.",DEM,Susan M. Collins,REP,purple
+MI,2020,2020-11-03,Debbie Stabenow,DEM,Gary C. Peters,DEM,blue
+MN,2020,2020-11-03,Amy Klobuchar,DEM,Tina Smith,DEM,blue
+MO,2020,2020-11-03,Josh Hawley,REP,Roy Blunt,REP,red
+MS,2020,2020-11-03,Roger F. Wicker,REP,Cindy Hyde-Smith,REP,red
+MT,2020,2020-11-03,Jon Tester,DEM,Steve Daines,REP,purple
+NC,2020,2020-11-03,Thom Tillis,REP,Richard Burr,REP,red
+ND,2020,2020-11-03,Kevin Cramer,REP,John Hoeven,REP,red
+NE,2020,2020-11-03,Deb Fischer,REP,Ben Sasse,REP,red
+NH,2020,2020-11-03,Jeanne Shaheen,DEM,Margaret Wood Hassan,DEM,blue
+NJ,2020,2020-11-03,Robert Menendez,DEM,Cory A. Booker,DEM,blue
+NM,2020,2020-11-03,Martin Heinrich,DEM,Tom Udall,DEM,blue
+NV,2020,2020-11-03,Jacky Rosen,DEM,Catherine Cortez Masto,DEM,blue
+NY,2020,2020-11-03,Kirsten E. Gillibrand,DEM,Charles E. Schumer,DEM,blue
+OH,2020,2020-11-03,Sherrod Brown,DEM,Rob Portman,REP,purple
+OK,2020,2020-11-03,James M. Inhofe,REP,James Lankford,REP,red
+OR,2020,2020-11-03,Jeff Merkley,DEM,Ron Wyden,DEM,blue
+PA,2020,2020-11-03,"Robert P. Casey, Jr.",DEM,Patrick J. Toomey,REP,purple
+RI,2020,2020-11-03,Sheldon Whitehouse,DEM,Jack Reed,DEM,blue
+SC,2020,2020-11-03,Lindsey Graham,REP,Tim Scott,REP,red
+SD,2020,2020-11-03,Mike Rounds,REP,John Thune,REP,red
+TN,2020,2020-11-03,Marsha Blackburn,REP,Lamar Alexander,REP,red
+TX,2020,2020-11-03,Ted Cruz,REP,John Cornyn,REP,red
+UT,2020,2020-11-03,Mitt Romney,REP,Mike Lee,REP,red
+VA,2020,2020-11-03,Tim Kaine,DEM,Mark R. Warner,DEM,blue
+VT,2020,2020-11-03,Bernard Sanders,DEM,Patrick J. Leahy,DEM,blue
+WA,2020,2020-11-03,Maria Cantwell,DEM,Patty Murray,DEM,blue
+WI,2020,2020-11-03,Tammy Baldwin,DEM,Ron Johnson,REP,purple
+WV,2020,2020-11-03,"Joe Manchin, III",DEM,Shelley Moore Capito,REP,purple
+WY,2020,2020-11-03,John Barrasso,REP,Michael B. Enzi,REP,red
+AK,2021,2021-11-02,Dan Sullivan,REP,Lisa Murkowski,REP,red
+AL,2021,2021-11-02,Tommy Tuberville,REP,Richard C. Shelby,REP,red
+AR,2021,2021-11-02,Tom Cotton,REP,John Boozman,REP,red
+AZ,2021,2021-11-02,Kyrsten Sinema,DEM,Mark Kelly,DEM,blue
+CA,2021,2021-11-02,Dianne Feinstein,DEM,Alex Padilla,DEM,blue
+CO,2021,2021-11-02,John W. Hickenlooper,DEM,Michael F. Bennet,DEM,blue
+CT,2021,2021-11-02,Christopher Murphy,DEM,Richard Blumenthal,DEM,blue
+DE,2021,2021-11-02,Thomas R. Carper,DEM,Christopher A. Coons,DEM,blue
+FL,2021,2021-11-02,Rick Scott,REP,Marco Rubio,REP,red
+GA,2021,2021-11-02,Jon Ossoff,DEM,Raphael G. Warnock,DEM,blue
+HI,2021,2021-11-02,Mazie K. Hirono,DEM,Brian Schatz,DEM,blue
+IA,2021,2021-11-02,Joni Ernst,REP,Chuck Grassley,REP,red
+ID,2021,2021-11-02,James E. Risch,REP,Mike Crapo,REP,red
+IL,2021,2021-11-02,Richard J. Durbin,DEM,Tammy Duckworth,DEM,blue
+IN,2021,2021-11-02,Mike Braun,REP,Todd Young,REP,red
+KS,2021,2021-11-02,Roger Marshall,REP,Jerry Moran,REP,red
+KY,2021,2021-11-02,Mitch McConnell,REP,Rand Paul,REP,red
+LA,2021,2021-11-02,Bill Cassidy,REP,John Kennedy,REP,red
+MA,2021,2021-11-02,Elizabeth Warren,DEM,Edward J. Markey,DEM,blue
+MD,2021,2021-11-02,Benjamin L. Cardin,DEM,Chris Van Hollen,DEM,blue
+ME,2021,2021-11-02,"Angus S. King, Jr.",DEM,Susan M. Collins,REP,purple
+MI,2021,2021-11-02,Debbie Stabenow,DEM,Gary C. Peters,DEM,blue
+MN,2021,2021-11-02,Amy Klobuchar,DEM,Tina Smith,DEM,blue
+MO,2021,2021-11-02,Josh Hawley,REP,Roy Blunt,REP,red
+MS,2021,2021-11-02,Roger F. Wicker,REP,Cindy Hyde-Smith,REP,red
+MT,2021,2021-11-02,Jon Tester,DEM,Steve Daines,REP,purple
+NC,2021,2021-11-02,Thom Tillis,REP,Richard Burr,REP,red
+ND,2021,2021-11-02,Kevin Cramer,REP,John Hoeven,REP,red
+NE,2021,2021-11-02,Deb Fischer,REP,Ben Sasse,REP,red
+NH,2021,2021-11-02,Jeanne Shaheen,DEM,Margaret Wood Hassan,DEM,blue
+NJ,2021,2021-11-02,Robert Menendez,DEM,Cory A. Booker,DEM,blue
+NM,2021,2021-11-02,Martin Heinrich,DEM,Ben Ray Luján,DEM,blue
+NV,2021,2021-11-02,Jacky Rosen,DEM,Catherine Cortez Masto,DEM,blue
+NY,2021,2021-11-02,Kirsten E. Gillibrand,DEM,Charles E. Schumer,DEM,blue
+OH,2021,2021-11-02,Sherrod Brown,DEM,Rob Portman,REP,purple
+OK,2021,2021-11-02,James M. Inhofe,REP,James Lankford,REP,red
+OR,2021,2021-11-02,Jeff Merkley,DEM,Ron Wyden,DEM,blue
+PA,2021,2021-11-02,"Robert P. Casey, Jr.",DEM,Patrick J. Toomey,REP,purple
+RI,2021,2021-11-02,Sheldon Whitehouse,DEM,Jack Reed,DEM,blue
+SC,2021,2021-11-02,Lindsey Graham,REP,Tim Scott,REP,red
+SD,2021,2021-11-02,Mike Rounds,REP,John Thune,REP,red
+TN,2021,2021-11-02,Marsha Blackburn,REP,Bill Hagerty,REP,red
+TX,2021,2021-11-02,Ted Cruz,REP,John Cornyn,REP,red
+UT,2021,2021-11-02,Mitt Romney,REP,Mike Lee,REP,red
+VA,2021,2021-11-02,Tim Kaine,DEM,Mark R. Warner,DEM,blue
+VT,2021,2021-11-02,Bernard Sanders,DEM,Patrick J. Leahy,DEM,blue
+WA,2021,2021-11-02,Maria Cantwell,DEM,Patty Murray,DEM,blue
+WI,2021,2021-11-02,Tammy Baldwin,DEM,Ron Johnson,REP,purple
+WV,2021,2021-11-02,"Joe Manchin, III",DEM,Shelley Moore Capito,REP,purple
+WY,2021,2021-11-02,John Barrasso,REP,Cynthia M. Lummis,REP,red
+AK,2022,2022-11-08,Dan Sullivan,REP,Lisa Murkowski,REP,red
+AL,2022,2022-11-08,Tommy Tuberville,REP,Richard C. Shelby,REP,red
+AR,2022,2022-11-08,Tom Cotton,REP,John Boozman,REP,red
+AZ,2022,2022-11-08,Kyrsten Sinema,DEM,Mark Kelly,DEM,blue
+CA,2022,2022-11-08,Dianne Feinstein,DEM,Alex Padilla,DEM,blue
+CO,2022,2022-11-08,John W. Hickenlooper,DEM,Michael F. Bennet,DEM,blue
+CT,2022,2022-11-08,Christopher Murphy,DEM,Richard Blumenthal,DEM,blue
+DE,2022,2022-11-08,Thomas R. Carper,DEM,Christopher A. Coons,DEM,blue
+FL,2022,2022-11-08,Rick Scott,REP,Marco Rubio,REP,red
+GA,2022,2022-11-08,Jon Ossoff,DEM,Raphael G. Warnock,DEM,blue
+HI,2022,2022-11-08,Mazie K. Hirono,DEM,Brian Schatz,DEM,blue
+IA,2022,2022-11-08,Joni Ernst,REP,Chuck Grassley,REP,red
+ID,2022,2022-11-08,James E. Risch,REP,Mike Crapo,REP,red
+IL,2022,2022-11-08,Richard J. Durbin,DEM,Tammy Duckworth,DEM,blue
+IN,2022,2022-11-08,Mike Braun,REP,Todd Young,REP,red
+KS,2022,2022-11-08,Roger Marshall,REP,Jerry Moran,REP,red
+KY,2022,2022-11-08,Mitch McConnell,REP,Rand Paul,REP,red
+LA,2022,2022-11-08,Bill Cassidy,REP,John Kennedy,REP,red
+MA,2022,2022-11-08,Elizabeth Warren,DEM,Edward J. Markey,DEM,blue
+MD,2022,2022-11-08,Benjamin L. Cardin,DEM,Chris Van Hollen,DEM,blue
+ME,2022,2022-11-08,"Angus S. King, Jr.",DEM,Susan M. Collins,REP,purple
+MI,2022,2022-11-08,Debbie Stabenow,DEM,Gary C. Peters,DEM,blue
+MN,2022,2022-11-08,Amy Klobuchar,DEM,Tina Smith,DEM,blue
+MO,2022,2022-11-08,Josh Hawley,REP,Roy Blunt,REP,red
+MS,2022,2022-11-08,Roger F. Wicker,REP,Cindy Hyde-Smith,REP,red
+MT,2022,2022-11-08,Jon Tester,DEM,Steve Daines,REP,purple
+NC,2022,2022-11-08,Thom Tillis,REP,Richard Burr,REP,red
+ND,2022,2022-11-08,Kevin Cramer,REP,John Hoeven,REP,red
+NE,2022,2022-11-08,Deb Fischer,REP,Ben Sasse,REP,red
+NH,2022,2022-11-08,Jeanne Shaheen,DEM,Margaret Wood Hassan,DEM,blue
+NJ,2022,2022-11-08,Robert Menendez,DEM,Cory A. Booker,DEM,blue
+NM,2022,2022-11-08,Martin Heinrich,DEM,Ben Ray Luján,DEM,blue
+NV,2022,2022-11-08,Jacky Rosen,DEM,Catherine Cortez Masto,DEM,blue
+NY,2022,2022-11-08,Kirsten E. Gillibrand,DEM,Charles E. Schumer,DEM,blue
+OH,2022,2022-11-08,Sherrod Brown,DEM,Rob Portman,REP,purple
+OK,2022,2022-11-08,James M. Inhofe,REP,James Lankford,REP,red
+OR,2022,2022-11-08,Jeff Merkley,DEM,Ron Wyden,DEM,blue
+PA,2022,2022-11-08,"Robert P. Casey, Jr.",DEM,Patrick J. Toomey,REP,purple
+RI,2022,2022-11-08,Sheldon Whitehouse,DEM,Jack Reed,DEM,blue
+SC,2022,2022-11-08,Lindsey Graham,REP,Tim Scott,REP,red
+SD,2022,2022-11-08,Mike Rounds,REP,John Thune,REP,red
+TN,2022,2022-11-08,Marsha Blackburn,REP,Bill Hagerty,REP,red
+TX,2022,2022-11-08,Ted Cruz,REP,John Cornyn,REP,red
+UT,2022,2022-11-08,Mitt Romney,REP,Mike Lee,REP,red
+VA,2022,2022-11-08,Tim Kaine,DEM,Mark R. Warner,DEM,blue
+VT,2022,2022-11-08,Bernard Sanders,DEM,Patrick J. Leahy,DEM,blue
+WA,2022,2022-11-08,Maria Cantwell,DEM,Patty Murray,DEM,blue
+WI,2022,2022-11-08,Tammy Baldwin,DEM,Ron Johnson,REP,purple
+WV,2022,2022-11-08,"Joe Manchin, III",DEM,Shelley Moore Capito,REP,purple
+WY,2022,2022-11-08,John Barrasso,REP,Cynthia M. Lummis,REP,red
+AK,2023,2023-11-07,Dan Sullivan,REP,Lisa Murkowski,REP,red
+AL,2023,2023-11-07,Tommy Tuberville,REP,Katie Boyd Britt,REP,red
+AR,2023,2023-11-07,Tom Cotton,REP,John Boozman,REP,red
+AZ,2023,2023-11-07,Kyrsten Sinema,DEM,Mark Kelly,DEM,blue
+CA,2023,2023-11-07,Laphonza R. Butler,DEM,Alex Padilla,DEM,blue
+CO,2023,2023-11-07,John W. Hickenlooper,DEM,Michael F. Bennet,DEM,blue
+CT,2023,2023-11-07,Christopher Murphy,DEM,Richard Blumenthal,DEM,blue
+DE,2023,2023-11-07,Thomas R. Carper,DEM,Christopher A. Coons,DEM,blue
+FL,2023,2023-11-07,Rick Scott,REP,Marco Rubio,REP,red
+GA,2023,2023-11-07,Jon Ossoff,DEM,Raphael G. Warnock,DEM,blue
+HI,2023,2023-11-07,Mazie K. Hirono,DEM,Brian Schatz,DEM,blue
+IA,2023,2023-11-07,Joni Ernst,REP,Chuck Grassley,REP,red
+ID,2023,2023-11-07,James E. Risch,REP,Mike Crapo,REP,red
+IL,2023,2023-11-07,Richard J. Durbin,DEM,Tammy Duckworth,DEM,blue
+IN,2023,2023-11-07,Mike Braun,REP,Todd Young,REP,red
+KS,2023,2023-11-07,Roger Marshall,REP,Jerry Moran,REP,red
+KY,2023,2023-11-07,Mitch McConnell,REP,Rand Paul,REP,red
+LA,2023,2023-11-07,Bill Cassidy,REP,John Kennedy,REP,red
+MA,2023,2023-11-07,Elizabeth Warren,DEM,Edward J. Markey,DEM,blue
+MD,2023,2023-11-07,Benjamin L. Cardin,DEM,Chris Van Hollen,DEM,blue
+ME,2023,2023-11-07,"Angus S. King, Jr.",DEM,Susan M. Collins,REP,purple
+MI,2023,2023-11-07,Debbie Stabenow,DEM,Gary C. Peters,DEM,blue
+MN,2023,2023-11-07,Amy Klobuchar,DEM,Tina Smith,DEM,blue
+MO,2023,2023-11-07,Josh Hawley,REP,Eric Schmitt,REP,red
+MS,2023,2023-11-07,Roger F. Wicker,REP,Cindy Hyde-Smith,REP,red
+MT,2023,2023-11-07,Jon Tester,DEM,Steve Daines,REP,purple
+NC,2023,2023-11-07,Thom Tillis,REP,Ted Budd,REP,red
+ND,2023,2023-11-07,Kevin Cramer,REP,John Hoeven,REP,red
+NE,2023,2023-11-07,Deb Fischer,REP,Pete Ricketts,REP,red
+NH,2023,2023-11-07,Jeanne Shaheen,DEM,Margaret Wood Hassan,DEM,blue
+NJ,2023,2023-11-07,Robert Menendez,DEM,Cory A. Booker,DEM,blue
+NM,2023,2023-11-07,Martin Heinrich,DEM,Ben Ray Luján,DEM,blue
+NV,2023,2023-11-07,Jacky Rosen,DEM,Catherine Cortez Masto,DEM,blue
+NY,2023,2023-11-07,Kirsten E. Gillibrand,DEM,Charles E. Schumer,DEM,blue
+OH,2023,2023-11-07,Sherrod Brown,DEM,J.D. Vance,REP,purple
+OK,2023,2023-11-07,Markwayne Mullin,REP,James Lankford,REP,red
+OR,2023,2023-11-07,Jeff Merkley,DEM,Ron Wyden,DEM,blue
+PA,2023,2023-11-07,"Robert P. Casey, Jr.",DEM,John Fetterman,DEM,blue
+RI,2023,2023-11-07,Sheldon Whitehouse,DEM,Jack Reed,DEM,blue
+SC,2023,2023-11-07,Lindsey Graham,REP,Tim Scott,REP,red
+SD,2023,2023-11-07,Mike Rounds,REP,John Thune,REP,red
+TN,2023,2023-11-07,Marsha Blackburn,REP,Bill Hagerty,REP,red
+TX,2023,2023-11-07,Ted Cruz,REP,John Cornyn,REP,red
+UT,2023,2023-11-07,Mitt Romney,REP,Mike Lee,REP,red
+VA,2023,2023-11-07,Tim Kaine,DEM,Mark R. Warner,DEM,blue
+VT,2023,2023-11-07,Bernard Sanders,DEM,Peter Welch,DEM,blue
+WA,2023,2023-11-07,Maria Cantwell,DEM,Patty Murray,DEM,blue
+WI,2023,2023-11-07,Tammy Baldwin,DEM,Ron Johnson,REP,purple
+WV,2023,2023-11-07,"Joe Manchin, III",DEM,Shelley Moore Capito,REP,purple
+WY,2023,2023-11-07,John Barrasso,REP,Cynthia M. Lummis,REP,red
+AK,2024,2024-11-05,Dan Sullivan,REP,Lisa Murkowski,REP,red
+AL,2024,2024-11-05,Tommy Tuberville,REP,Katie Boyd Britt,REP,red
+AR,2024,2024-11-05,Tom Cotton,REP,John Boozman,REP,red
+AZ,2024,2024-11-05,Kyrsten Sinema,DEM,Mark Kelly,DEM,blue
+CA,2024,2024-11-05,Laphonza R. Butler,DEM,Alex Padilla,DEM,blue
+CO,2024,2024-11-05,John W. Hickenlooper,DEM,Michael F. Bennet,DEM,blue
+CT,2024,2024-11-05,Christopher Murphy,DEM,Richard Blumenthal,DEM,blue
+DE,2024,2024-11-05,Thomas R. Carper,DEM,Christopher A. Coons,DEM,blue
+FL,2024,2024-11-05,Rick Scott,REP,Marco Rubio,REP,red
+GA,2024,2024-11-05,Jon Ossoff,DEM,Raphael G. Warnock,DEM,blue
+HI,2024,2024-11-05,Mazie K. Hirono,DEM,Brian Schatz,DEM,blue
+IA,2024,2024-11-05,Joni Ernst,REP,Chuck Grassley,REP,red
+ID,2024,2024-11-05,James E. Risch,REP,Mike Crapo,REP,red
+IL,2024,2024-11-05,Richard J. Durbin,DEM,Tammy Duckworth,DEM,blue
+IN,2024,2024-11-05,Mike Braun,REP,Todd Young,REP,red
+KS,2024,2024-11-05,Roger Marshall,REP,Jerry Moran,REP,red
+KY,2024,2024-11-05,Mitch McConnell,REP,Rand Paul,REP,red
+LA,2024,2024-11-05,Bill Cassidy,REP,John Kennedy,REP,red
+MA,2024,2024-11-05,Elizabeth Warren,DEM,Edward J. Markey,DEM,blue
+MD,2024,2024-11-05,Benjamin L. Cardin,DEM,Chris Van Hollen,DEM,blue
+ME,2024,2024-11-05,"Angus S. King, Jr.",DEM,Susan M. Collins,REP,purple
+MI,2024,2024-11-05,Debbie Stabenow,DEM,Gary C. Peters,DEM,blue
+MN,2024,2024-11-05,Amy Klobuchar,DEM,Tina Smith,DEM,blue
+MO,2024,2024-11-05,Josh Hawley,REP,Eric Schmitt,REP,red
+MS,2024,2024-11-05,Roger F. Wicker,REP,Cindy Hyde-Smith,REP,red
+MT,2024,2024-11-05,Jon Tester,DEM,Steve Daines,REP,purple
+NC,2024,2024-11-05,Thom Tillis,REP,Ted Budd,REP,red
+ND,2024,2024-11-05,Kevin Cramer,REP,John Hoeven,REP,red
+NE,2024,2024-11-05,Deb Fischer,REP,Pete Ricketts,REP,red
+NH,2024,2024-11-05,Jeanne Shaheen,DEM,Margaret Wood Hassan,DEM,blue
+NJ,2024,2024-11-05,George S. Helmy,DEM,Cory A. Booker,DEM,blue
+NM,2024,2024-11-05,Martin Heinrich,DEM,Ben Ray Luján,DEM,blue
+NV,2024,2024-11-05,Jacky Rosen,DEM,Catherine Cortez Masto,DEM,blue
+NY,2024,2024-11-05,Kirsten E. Gillibrand,DEM,Charles E. Schumer,DEM,blue
+OH,2024,2024-11-05,Sherrod Brown,DEM,J.D. Vance,REP,purple
+OK,2024,2024-11-05,Markwayne Mullin,REP,James Lankford,REP,red
+OR,2024,2024-11-05,Jeff Merkley,DEM,Ron Wyden,DEM,blue
+PA,2024,2024-11-05,"Robert P. Casey, Jr.",DEM,John Fetterman,DEM,blue
+RI,2024,2024-11-05,Sheldon Whitehouse,DEM,Jack Reed,DEM,blue
+SC,2024,2024-11-05,Lindsey Graham,REP,Tim Scott,REP,red
+SD,2024,2024-11-05,Mike Rounds,REP,John Thune,REP,red
+TN,2024,2024-11-05,Marsha Blackburn,REP,Bill Hagerty,REP,red
+TX,2024,2024-11-05,Ted Cruz,REP,John Cornyn,REP,red
+UT,2024,2024-11-05,Mitt Romney,REP,Mike Lee,REP,red
+VA,2024,2024-11-05,Tim Kaine,DEM,Mark R. Warner,DEM,blue
+VT,2024,2024-11-05,Bernard Sanders,DEM,Peter Welch,DEM,blue
+WA,2024,2024-11-05,Maria Cantwell,DEM,Patty Murray,DEM,blue
+WI,2024,2024-11-05,Tammy Baldwin,DEM,Ron Johnson,REP,purple
+WV,2024,2024-11-05,"Joe Manchin, III",DEM,Shelley Moore Capito,REP,purple
+WY,2024,2024-11-05,John Barrasso,REP,Cynthia M. Lummis,REP,red
+AK,2025,2025-11-04,Dan Sullivan,REP,Lisa Murkowski,REP,red
+AL,2025,2025-11-04,Tommy Tuberville,REP,Katie Boyd Britt,REP,red
+AR,2025,2025-11-04,Tom Cotton,REP,John Boozman,REP,red
+AZ,2025,2025-11-04,Ruben Gallego,DEM,Mark Kelly,DEM,blue
+CA,2025,2025-11-04,Adam B. Schiff,DEM,Alex Padilla,DEM,blue
+CO,2025,2025-11-04,John W. Hickenlooper,DEM,Michael F. Bennet,DEM,blue
+CT,2025,2025-11-04,Christopher Murphy,DEM,Richard Blumenthal,DEM,blue
+DE,2025,2025-11-04,Lisa Blunt Rochester,DEM,Christopher A. Coons,DEM,blue
+FL,2025,2025-11-04,Rick Scott,REP,Ashley Moody,REP,red
+GA,2025,2025-11-04,Jon Ossoff,DEM,Raphael G. Warnock,DEM,blue
+HI,2025,2025-11-04,Mazie K. Hirono,DEM,Brian Schatz,DEM,blue
+IA,2025,2025-11-04,Joni Ernst,REP,Chuck Grassley,REP,red
+ID,2025,2025-11-04,James E. Risch,REP,Mike Crapo,REP,red
+IL,2025,2025-11-04,Richard J. Durbin,DEM,Tammy Duckworth,DEM,blue
+IN,2025,2025-11-04,Jim Banks,REP,Todd Young,REP,red
+KS,2025,2025-11-04,Roger Marshall,REP,Jerry Moran,REP,red
+KY,2025,2025-11-04,Mitch McConnell,REP,Rand Paul,REP,red
+LA,2025,2025-11-04,Bill Cassidy,REP,John Kennedy,REP,red
+MA,2025,2025-11-04,Elizabeth Warren,DEM,Edward J. Markey,DEM,blue
+MD,2025,2025-11-04,Angela D. Alsobrooks,DEM,Chris Van Hollen,DEM,blue
+ME,2025,2025-11-04,"Angus S. King, Jr.",DEM,Susan M. Collins,REP,purple
+MI,2025,2025-11-04,Elissa Slotkin,DEM,Gary C. Peters,DEM,blue
+MN,2025,2025-11-04,Amy Klobuchar,DEM,Tina Smith,DEM,blue
+MO,2025,2025-11-04,Josh Hawley,REP,Eric Schmitt,REP,red
+MS,2025,2025-11-04,Roger F. Wicker,REP,Cindy Hyde-Smith,REP,red
+MT,2025,2025-11-04,Tim Sheehy,REP,Steve Daines,REP,red
+NC,2025,2025-11-04,Thom Tillis,REP,Ted Budd,REP,red
+ND,2025,2025-11-04,Kevin Cramer,REP,John Hoeven,REP,red
+NE,2025,2025-11-04,Deb Fischer,REP,Pete Ricketts,REP,red
+NH,2025,2025-11-04,Jeanne Shaheen,DEM,Margaret Wood Hassan,DEM,blue
+NJ,2025,2025-11-04,Andy Kim,DEM,Cory A. Booker,DEM,blue
+NM,2025,2025-11-04,Martin Heinrich,DEM,Ben Ray Luján,DEM,blue
+NV,2025,2025-11-04,Jacky Rosen,DEM,Catherine Cortez Masto,DEM,blue
+NY,2025,2025-11-04,Kirsten E. Gillibrand,DEM,Charles E. Schumer,DEM,blue
+OH,2025,2025-11-04,Bernie Moreno,REP,Jon Husted,REP,red
+OK,2025,2025-11-04,Markwayne Mullin,REP,James Lankford,REP,red
+OR,2025,2025-11-04,Jeff Merkley,DEM,Ron Wyden,DEM,blue
+PA,2025,2025-11-04,David McCormick,REP,John Fetterman,DEM,purple
+RI,2025,2025-11-04,Sheldon Whitehouse,DEM,Jack Reed,DEM,blue
+SC,2025,2025-11-04,Lindsey Graham,REP,Tim Scott,REP,red
+SD,2025,2025-11-04,Mike Rounds,REP,John Thune,REP,red
+TN,2025,2025-11-04,Marsha Blackburn,REP,Bill Hagerty,REP,red
+TX,2025,2025-11-04,Ted Cruz,REP,John Cornyn,REP,red
+UT,2025,2025-11-04,John R. Curtis,REP,Mike Lee,REP,red
+VA,2025,2025-11-04,Tim Kaine,DEM,Mark R. Warner,DEM,blue
+VT,2025,2025-11-04,Bernard Sanders,DEM,Peter Welch,DEM,blue
+WA,2025,2025-11-04,Maria Cantwell,DEM,Patty Murray,DEM,blue
+WI,2025,2025-11-04,Tammy Baldwin,DEM,Ron Johnson,REP,purple
+WV,2025,2025-11-04,James C. Justice,REP,Shelley Moore Capito,REP,red
+WY,2025,2025-11-04,John Barrasso,REP,Cynthia M. Lummis,REP,red
+AK,2026,2026-11-03,Dan Sullivan,REP,Lisa Murkowski,REP,red
+AL,2026,2026-11-03,Tommy Tuberville,REP,Katie Boyd Britt,REP,red
+AR,2026,2026-11-03,Tom Cotton,REP,John Boozman,REP,red
+AZ,2026,2026-11-03,Ruben Gallego,DEM,Mark Kelly,DEM,blue
+CA,2026,2026-11-03,Adam B. Schiff,DEM,Alex Padilla,DEM,blue
+CO,2026,2026-11-03,John W. Hickenlooper,DEM,Michael F. Bennet,DEM,blue
+CT,2026,2026-11-03,Christopher Murphy,DEM,Richard Blumenthal,DEM,blue
+DE,2026,2026-11-03,Lisa Blunt Rochester,DEM,Christopher A. Coons,DEM,blue
+FL,2026,2026-11-03,Rick Scott,REP,Ashley Moody,REP,red
+GA,2026,2026-11-03,Jon Ossoff,DEM,Raphael G. Warnock,DEM,blue
+HI,2026,2026-11-03,Mazie K. Hirono,DEM,Brian Schatz,DEM,blue
+IA,2026,2026-11-03,Joni Ernst,REP,Chuck Grassley,REP,red
+ID,2026,2026-11-03,James E. Risch,REP,Mike Crapo,REP,red
+IL,2026,2026-11-03,Richard J. Durbin,DEM,Tammy Duckworth,DEM,blue
+IN,2026,2026-11-03,Jim Banks,REP,Todd Young,REP,red
+KS,2026,2026-11-03,Roger Marshall,REP,Jerry Moran,REP,red
+KY,2026,2026-11-03,Mitch McConnell,REP,Rand Paul,REP,red
+LA,2026,2026-11-03,Bill Cassidy,REP,John Kennedy,REP,red
+MA,2026,2026-11-03,Elizabeth Warren,DEM,Edward J. Markey,DEM,blue
+MD,2026,2026-11-03,Angela D. Alsobrooks,DEM,Chris Van Hollen,DEM,blue
+ME,2026,2026-11-03,"Angus S. King, Jr.",DEM,Susan M. Collins,REP,purple
+MI,2026,2026-11-03,Elissa Slotkin,DEM,Gary C. Peters,DEM,blue
+MN,2026,2026-11-03,Amy Klobuchar,DEM,Tina Smith,DEM,blue
+MO,2026,2026-11-03,Josh Hawley,REP,Eric Schmitt,REP,red
+MS,2026,2026-11-03,Roger F. Wicker,REP,Cindy Hyde-Smith,REP,red
+MT,2026,2026-11-03,Tim Sheehy,REP,Steve Daines,REP,red
+NC,2026,2026-11-03,Thom Tillis,REP,Ted Budd,REP,red
+ND,2026,2026-11-03,Kevin Cramer,REP,John Hoeven,REP,red
+NE,2026,2026-11-03,Deb Fischer,REP,Pete Ricketts,REP,red
+NH,2026,2026-11-03,Jeanne Shaheen,DEM,Margaret Wood Hassan,DEM,blue
+NJ,2026,2026-11-03,Andy Kim,DEM,Cory A. Booker,DEM,blue
+NM,2026,2026-11-03,Martin Heinrich,DEM,Ben Ray Luján,DEM,blue
+NV,2026,2026-11-03,Jacky Rosen,DEM,Catherine Cortez Masto,DEM,blue
+NY,2026,2026-11-03,Kirsten E. Gillibrand,DEM,Charles E. Schumer,DEM,blue
+OH,2026,2026-11-03,Bernie Moreno,REP,Jon Husted,REP,red
+OK,2026,2026-11-03,Alan Armstrong,REP,James Lankford,REP,red
+OR,2026,2026-11-03,Jeff Merkley,DEM,Ron Wyden,DEM,blue
+PA,2026,2026-11-03,David McCormick,REP,John Fetterman,DEM,purple
+RI,2026,2026-11-03,Sheldon Whitehouse,DEM,Jack Reed,DEM,blue
+SC,2026,2026-11-03,Darline Graham,REP,Tim Scott,REP,red
+SD,2026,2026-11-03,Mike Rounds,REP,John Thune,REP,red
+TN,2026,2026-11-03,Marsha Blackburn,REP,Bill Hagerty,REP,red
+TX,2026,2026-11-03,Ted Cruz,REP,John Cornyn,REP,red
+UT,2026,2026-11-03,John R. Curtis,REP,Mike Lee,REP,red
+VA,2026,2026-11-03,Tim Kaine,DEM,Mark R. Warner,DEM,blue
+VT,2026,2026-11-03,Bernard Sanders,DEM,Peter Welch,DEM,blue
+WA,2026,2026-11-03,Maria Cantwell,DEM,Patty Murray,DEM,blue
+WI,2026,2026-11-03,Tammy Baldwin,DEM,Ron Johnson,REP,purple
+WV,2026,2026-11-03,James C. Justice,REP,Shelley Moore Capito,REP,red
+WY,2026,2026-11-03,John Barrasso,REP,Cynthia M. Lummis,REP,red

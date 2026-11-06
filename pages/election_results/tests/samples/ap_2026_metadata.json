@@ -1,0 +1,650 @@
+{
+ "20261103AK2015": {
+  "raceType": "General",
+  "raceTypeID": "G",
+  "tabulationStatus": "Active Tabulation",
+  "raceCallStatus": "Too Early to Call",
+  "officeID": "H",
+  "officeName": "U.S. House",
+  "incumbents": [
+   {
+    "first": "Nick",
+    "last": "Begich",
+    "party": "GOP",
+    "candidateID": "70724",
+    "polID": "70724",
+    "polNum": "70724"
+   }
+  ],
+  "currentParty": "GOP",
+  "rankedChoice": true,
+  "seatName": "District 1",
+  "seatNum": "1",
+  "raceID": "20261103AK2015",
+  "electionDate": "2026-11-03",
+  "statePostal": "AK",
+  "isCertified": false,
+  "candidates": {
+   "70724": {
+    "first": "Nick",
+    "last": "Begich",
+    "suffix": "III",
+    "incumbent": true,
+    "party": "GOP",
+    "candidateID": "70724",
+    "ballotOrder": 1
+   },
+   "177719": {
+    "first": "Bill",
+    "last": "Hill",
+    "party": "NP",
+    "candidateID": "177719",
+    "ballotOrder": 3
+   },
+   "167001": {
+    "first": "Eric",
+    "last": "Hafner",
+    "party": "Dem",
+    "candidateID": "167001",
+    "ballotOrder": 2
+   },
+   "62643": {
+    "first": "James",
+    "middle": "C.",
+    "last": "McDermott",
+    "nickname": "Jim",
+    "party": "Lib",
+    "candidateID": "62643",
+    "ballotOrder": 4
+   },
+   "100008": {
+    "last": "Total Write-ins",
+    "party": "Oth",
+    "candidateID": "100008",
+    "ballotOrder": 5
+   }
+  }
+ },
+ "20261103OH84327": {
+  "raceType": "Special General",
+  "raceTypeID": "W",
+  "tabulationStatus": "Active Tabulation",
+  "raceCallStatus": "Called",
+  "officeID": "S",
+  "officeName": "U.S. Senate",
+  "incumbents": [
+   {
+    "first": "Jon",
+    "last": "Husted",
+    "party": "GOP",
+    "candidateID": "139415",
+    "polID": "139415",
+    "polNum": "139415"
+   }
+  ],
+  "currentParty": "GOP",
+  "seatName": "Class III Unexpired Term",
+  "seatNum": "3",
+  "raceID": "20261103OH84327",
+  "electionDate": "2026-11-03",
+  "statePostal": "OH",
+  "isCertified": false,
+  "candidates": {
+   "1384": {
+    "first": "Sherrod",
+    "last": "Brown",
+    "party": "Dem",
+    "candidateID": "1384",
+    "ballotOrder": 1
+   },
+   "139415": {
+    "first": "Jon",
+    "last": "Husted",
+    "incumbent": true,
+    "party": "GOP",
+    "candidateID": "139415",
+    "ballotOrder": 2
+   },
+   "176564": {
+    "first": "William",
+    "middle": "B.",
+    "last": "Redpath",
+    "party": "Lib",
+    "candidateID": "176564",
+    "ballotOrder": 4
+   },
+   "179110": {
+    "first": "Greg",
+    "last": "Levy",
+    "party": "Ind",
+    "candidateID": "179110",
+    "ballotOrder": 3
+   }
+  }
+ },
+ "20261103TX46643": {
+  "raceType": "General",
+  "raceTypeID": "G",
+  "tabulationStatus": "Active Tabulation",
+  "raceCallStatus": "Called",
+  "officeID": "S",
+  "officeName": "U.S. Senate",
+  "incumbents": [
+   {
+    "first": "John",
+    "last": "Cornyn",
+    "party": "GOP",
+    "candidateID": "367",
+    "polID": "367",
+    "polNum": "367"
+   }
+  ],
+  "currentParty": "GOP",
+  "seatName": "Class II",
+  "seatNum": "2",
+  "raceID": "20261103TX46643",
+  "electionDate": "2026-11-03",
+  "statePostal": "TX",
+  "isCertified": false,
+  "candidates": {
+   "153037": {
+    "first": "James",
+    "last": "Talarico",
+    "party": "Dem",
+    "candidateID": "153037",
+    "ballotOrder": 3
+   },
+   "58352": {
+    "first": "Ken",
+    "last": "Paxton",
+    "party": "GOP",
+    "candidateID": "58352",
+    "ballotOrder": 2
+   },
+   "69634": {
+    "first": "Ted",
+    "last": "Brown",
+    "party": "Lib",
+    "candidateID": "69634",
+    "ballotOrder": 1
+   }
+  }
+ },
+ "20261103TX45896": {
+  "raceType": "General",
+  "raceTypeID": "G",
+  "tabulationStatus": "Active Tabulation",
+  "raceCallStatus": "Called",
+  "officeID": "H",
+  "officeName": "U.S. House",
+  "incumbents": [
+   {
+    "first": "Brandon",
+    "last": "Gill",
+    "abbrv": "Brandon",
+    "party": "GOP",
+    "candidateID": "160826",
+    "polID": "160826",
+    "polNum": "160826"
+   }
+  ],
+  "currentParty": "GOP",
+  "seatName": "District 26",
+  "seatNum": "26",
+  "raceID": "20261103TX45896",
+  "electionDate": "2026-11-03",
+  "statePostal": "TX",
+  "isCertified": false,
+  "candidates": {
+   "160826": {
+    "first": "Brandon",
+    "last": "Gill",
+    "incumbent": true,
+    "party": "GOP",
+    "candidateID": "160826",
+    "ballotOrder": 1
+   },
+   "170236": {
+    "first": "Steven",
+    "last": "Shook",
+    "party": "Dem",
+    "candidateID": "170236",
+    "ballotOrder": 3
+   },
+   "65546": {
+    "first": "Phil",
+    "last": "Gray",
+    "party": "Lib",
+    "candidateID": "65546",
+    "ballotOrder": 2
+   }
+  }
+ },
+ "20261103FL10025": {
+  "raceType": "General",
+  "raceTypeID": "G",
+  "tabulationStatus": "Active Tabulation",
+  "raceCallStatus": "Called",
+  "officeID": "H",
+  "officeName": "U.S. House",
+  "incumbents": [
+   {
+    "first": "Maxwell",
+    "last": "Frost",
+    "party": "Dem",
+    "candidateID": "71568",
+    "polID": "71568",
+    "polNum": "71568"
+   }
+  ],
+  "currentParty": "Dem",
+  "seatName": "District 10",
+  "seatNum": "10",
+  "raceID": "20261103FL10025",
+  "electionDate": "2026-11-03",
+  "statePostal": "FL",
+  "isCertified": false,
+  "uncontested": true,
+  "candidates": {
+   "71568": {
+    "first": "Maxwell",
+    "middle": "Alejandro",
+    "last": "Frost",
+    "incumbent": true,
+    "party": "Dem",
+    "candidateID": "71568",
+    "ballotOrder": 1
+   }
+  }
+ },
+ "20261103MA22948": {
+  "raceType": "General",
+  "raceTypeID": "G",
+  "tabulationStatus": "Active Tabulation",
+  "raceCallStatus": "Called",
+  "officeID": "H",
+  "officeName": "U.S. House",
+  "incumbents": [
+   {
+    "first": "James",
+    "last": "McGovern",
+    "party": "Dem",
+    "candidateID": "883",
+    "polID": "883",
+    "polNum": "883"
+   }
+  ],
+  "currentParty": "Dem",
+  "seatName": "District 2",
+  "seatNum": "2",
+  "raceID": "20261103MA22948",
+  "electionDate": "2026-11-03",
+  "statePostal": "MA",
+  "isCertified": false,
+  "uncontested": true,
+  "candidates": {
+   "883": {
+    "first": "James",
+    "middle": "P.",
+    "last": "McGovern",
+    "incumbent": true,
+    "party": "Dem",
+    "candidateID": "883",
+    "ballotOrder": 1
+   }
+  }
+ },
+ "20261103CA5696": {
+  "raceType": "General",
+  "raceTypeID": "G",
+  "tabulationStatus": "Active Tabulation",
+  "raceCallStatus": "Called",
+  "officeID": "H",
+  "officeName": "U.S. House",
+  "incumbents": [
+   {
+    "first": "Kevin",
+    "last": "Kiley",
+    "party": "NPP",
+    "caucusWith": "GOP",
+    "candidateID": "69756",
+    "polID": "69756",
+    "polNum": "69756"
+   }
+  ],
+  "currentParty": "Dem",
+  "seatName": "District 6",
+  "seatNum": "6",
+  "raceID": "20261103CA5696",
+  "electionDate": "2026-11-03",
+  "statePostal": "CA",
+  "isCertified": false,
+  "candidates": {
+   "105173": {
+    "first": "Richard",
+    "last": "Pan",
+    "party": "Dem",
+    "candidateID": "105173",
+    "ballotOrder": 1
+   },
+   "69756": {
+    "first": "Kevin",
+    "last": "Kiley",
+    "incumbent": true,
+    "party": "NPP",
+    "candidateID": "69756",
+    "ballotOrder": 2,
+    "caucusWith": "GOP"
+   }
+  }
+ },
+ "20261103LA20560": {
+  "raceType": "Nonpartisan Election",
+  "raceTypeID": "L",
+  "tabulationStatus": "Gathering Certified Results",
+  "raceCallStatus": "Runoff",
+  "officeID": "H",
+  "officeName": "U.S. House",
+  "incumbents": [
+   {
+    "first": "Julia",
+    "last": "Letlow",
+    "party": "GOP",
+    "candidateID": "69687",
+    "polID": "69687",
+    "polNum": "69687"
+   }
+  ],
+  "currentParty": "GOP",
+  "seatName": "District 5",
+  "seatNum": "5",
+  "raceID": "20261103LA20560",
+  "electionDate": "2026-11-03",
+  "statePostal": "LA",
+  "isCertified": false,
+  "numRunoff": 2,
+  "candidates": {
+   "72453": {
+    "first": "Patricia",
+    "last": "Moore",
+    "nickname": "Pat",
+    "party": "Dem",
+    "candidateID": "72453",
+    "ballotOrder": 8
+   },
+   "72460": {
+    "first": "Gabe",
+    "last": "Firment",
+    "party": "GOP",
+    "candidateID": "72460",
+    "ballotOrder": 5
+   },
+   "172911": {
+    "first": "Misti",
+    "last": "Cordell",
+    "party": "GOP",
+    "candidateID": "172911",
+    "ballotOrder": 2
+   },
+   "178736": {
+    "first": "Michael",
+    "last": "Echols",
+    "party": "GOP",
+    "candidateID": "178736",
+    "ballotOrder": 4
+   },
+   "72421": {
+    "first": "Stewart",
+    "last": "Cathey",
+    "suffix": "Jr.",
+    "party": "GOP",
+    "candidateID": "72421",
+    "ballotOrder": 1
+   },
+   "178737": {
+    "first": "Antonio",
+    "last": "Wilson",
+    "party": "Dem",
+    "candidateID": "178737",
+    "ballotOrder": 9
+   },
+   "172909": {
+    "first": "Dan",
+    "last": "McKay",
+    "party": "Dem",
+    "candidateID": "172909",
+    "ballotOrder": 7
+   },
+   "172912": {
+    "first": "Austin",
+    "last": "Magee",
+    "party": "GOP",
+    "candidateID": "172912",
+    "ballotOrder": 6
+   },
+   "67930": {
+    "first": "Oscar",
+    "last": "Dantzler",
+    "nickname": "Omar",
+    "party": "GOP",
+    "candidateID": "67930",
+    "ballotOrder": 3
+   }
+  }
+ },
+ "20261103ME20645": {
+  "raceType": "General",
+  "raceTypeID": "G",
+  "tabulationStatus": "Active Tabulation",
+  "raceCallStatus": "Too Early to Call",
+  "officeID": "H",
+  "officeName": "U.S. House",
+  "incumbents": [
+   {
+    "first": "Jared",
+    "last": "Golden",
+    "party": "Dem",
+    "candidateID": "66383",
+    "polID": "66383",
+    "polNum": "66383"
+   }
+  ],
+  "currentParty": "Dem",
+  "rankedChoice": true,
+  "seatName": "District 2",
+  "seatNum": "2",
+  "raceID": "20261103ME20645",
+  "electionDate": "2026-11-03",
+  "statePostal": "ME",
+  "isCertified": false,
+  "candidates": {
+   "60414": {
+    "first": "Paul",
+    "middle": "R.",
+    "last": "LePage",
+    "party": "GOP",
+    "candidateID": "60414",
+    "ballotOrder": 2
+   },
+   "174146": {
+    "first": "Matthew",
+    "middle": "G.",
+    "last": "Dunlap",
+    "party": "Dem",
+    "candidateID": "174146",
+    "ballotOrder": 1
+   },
+   "179614": {
+    "last": "Blank Votes",
+    "party": "Oth",
+    "candidateID": "179614",
+    "ballotOrder": 4
+   },
+   "120523": {
+    "first": "Gregory",
+    "middle": "A.",
+    "last": "Ward (write-in)",
+    "party": "Ind",
+    "candidateID": "120523",
+    "ballotOrder": 3
+   }
+  }
+ },
+ "20261103US999999": {
+  "raceType": "General",
+  "raceTypeID": "G",
+  "officeID": "H",
+  "officeName": "U.S. House",
+  "seatName": "District 1",
+  "seatNum": "1",
+  "raceID": "20261103US999999",
+  "electionDate": "2026-11-03",
+  "statePostal": "US",
+  "isCertified": false,
+  "candidates": {
+   "178506": {
+    "last": "Democrat",
+    "party": "Dem",
+    "candidateID": "178506",
+    "ballotOrder": 2
+   },
+   "178507": {
+    "last": "Republican",
+    "party": "GOP",
+    "candidateID": "178507",
+    "ballotOrder": 1
+   },
+   "178508": {
+    "last": "Other",
+    "party": "Oth",
+    "candidateID": "178508",
+    "ballotOrder": 3
+   }
+  }
+ },
+ "20261103GA12029": {
+  "raceType": "General",
+  "raceTypeID": "G",
+  "tabulationStatus": "Active Tabulation",
+  "raceCallStatus": "Called",
+  "officeID": "G",
+  "officeName": "Governor",
+  "incumbents": [
+   {
+    "first": "Brian",
+    "last": "Kemp",
+    "party": "GOP",
+    "candidateID": "53319",
+    "polID": "53319",
+    "polNum": "53319"
+   }
+  ],
+  "currentParty": "GOP",
+  "seatNum": null,
+  "raceID": "20261103GA12029",
+  "electionDate": "2026-11-03",
+  "statePostal": "GA",
+  "isCertified": false,
+  "numRunoff": 2,
+  "candidates": {
+   "110638": {
+    "first": "Keisha",
+    "middle": "Lance",
+    "last": "Bottoms",
+    "party": "Dem",
+    "candidateID": "110638",
+    "ballotOrder": 2
+   },
+   "171426": {
+    "first": "Rick",
+    "last": "Jackson",
+    "party": "GOP",
+    "candidateID": "171426",
+    "ballotOrder": 1
+   },
+   "100008": {
+    "last": "Total Write-ins",
+    "party": "Oth",
+    "candidateID": "100008",
+    "ballotOrder": 3
+   }
+  }
+ },
+ "20261103GA11025": {
+  "raceType": "General",
+  "raceTypeID": "G",
+  "tabulationStatus": "Active Tabulation",
+  "raceCallStatus": "Called",
+  "officeID": "H",
+  "officeName": "U.S. House",
+  "incumbents": [
+   {
+    "first": "Mike",
+    "last": "Collins",
+    "party": "GOP",
+    "candidateID": "63367",
+    "polID": "63367",
+    "polNum": "63367"
+   }
+  ],
+  "currentParty": "GOP",
+  "seatName": "District 10",
+  "seatNum": "10",
+  "raceID": "20261103GA11025",
+  "electionDate": "2026-11-03",
+  "statePostal": "GA",
+  "isCertified": false,
+  "numRunoff": 2,
+  "candidates": {
+   "110700": {
+    "first": "Houston",
+    "last": "Gaines",
+    "party": "GOP",
+    "candidateID": "110700",
+    "ballotOrder": 1
+   },
+   "171490": {
+    "first": "Pamela",
+    "last": "Delancy",
+    "party": "Dem",
+    "candidateID": "171490",
+    "ballotOrder": 2
+   },
+   "100008": {
+    "last": "Total Write-ins",
+    "party": "Oth",
+    "candidateID": "100008",
+    "ballotOrder": 3
+   }
+  }
+ },
+ "20261103AL1025": {
+  "raceType": "General",
+  "raceTypeID": "G",
+  "tabulationStatus": "Active Tabulation",
+  "raceCallStatus": "Called",
+  "officeID": "A",
+  "officeName": "Attorney General",
+  "seatNum": null,
+  "raceID": "20261103AL1025",
+  "electionDate": "2026-11-03",
+  "statePostal": "AL",
+  "isCertified": false,
+  "candidates": {
+   "171298": {
+    "first": "Katherine",
+    "last": "Robertson",
+    "party": "GOP",
+    "candidateID": "171298",
+    "ballotOrder": 1
+   },
+   "52832": {
+    "first": "Jeff",
+    "last": "McLaughlin",
+    "party": "Dem",
+    "candidateID": "52832",
+    "ballotOrder": 2
+   }
+  }
+ }
+}
