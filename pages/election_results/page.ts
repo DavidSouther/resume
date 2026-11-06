@@ -42,8 +42,8 @@ import { pageHead } from "../../src/lib/page-head.ts";
 // chooses among them using findings.json, which `uv run findings.py --out out`
 // writes. Numbers reach the page as display strings that findings.py formats,
 // so nothing here formats or computes a number. The file is read inside
-// default() at build time, never at import, and never in CI, so the deployed
-// page carries no AP data. The design is in
+// default() at build time, never at import. The committed out/findings.json is
+// read in CI too, so the deployed page carries the same findings. The design is in
 // .ailly/developer/2026-11-05-B-findings-report/design.md.
 
 export const OFFICES = ["house", "senate", "governor"] as const;
@@ -581,9 +581,8 @@ export function parseFindings(text: string): Findings | InvalidFindings {
 	return data as unknown as Findings;
 }
 
-/** The findings file the build reads, or null in CI, where the page never reads findings. */
-export function findingsPath(env: NodeJS.ProcessEnv): string | null {
-	if (env.CI || env.GITHUB_ACTIONS) return null;
+/** The findings file the build reads: ELECTION_FINDINGS, else the committed out/findings.json. */
+export function findingsPath(env: NodeJS.ProcessEnv): string {
 	return (
 		env.ELECTION_FINDINGS || join(import.meta.dirname, "out", "findings.json")
 	);
@@ -684,7 +683,7 @@ function shell(state: string, ...children: Node[]): HTMLElement {
 	return data(main({ class: "election-findings" }, ...children), { state });
 }
 
-function noFindingsState(path: string | null): HTMLElement {
+function noFindingsState(path: string): HTMLElement {
 	return shell(
 		"no-findings",
 		pageHeader(),
@@ -692,12 +691,7 @@ function noFindingsState(path: string | null): HTMLElement {
 		section(
 			{},
 			h2({}, "No findings"),
-			p(
-				{},
-				path === null
-					? "This build ran in CI, so it did not read a findings file. The deployed page never carries AP data."
-					: `No findings file was found at ${path}.`,
-			),
+			p({}, `No findings file was found at ${path}.`),
 			p(
 				{},
 				"To make one, run these commands in pages/election_results, then rebuild the site:",
@@ -1700,7 +1694,7 @@ export function renderReport(
 	env: NodeJS.ProcessEnv = process.env,
 ): HTMLElement {
 	const path = findingsPath(env);
-	if (path === null || !existsSync(path)) return noFindingsState(path);
+	if (!existsSync(path)) return noFindingsState(path);
 	const bytes = readFileSync(path);
 	const text = bytes.toString("utf-8");
 	const parsed = parseFindings(text);
