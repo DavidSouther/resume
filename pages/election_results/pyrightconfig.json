@@ -1,0 +1,15 @@
+{
+  "include": [
+    "lib",
+    "tests",
+    "*.py"
+  ],
+  "pythonVersion": "3.12",
+  "typeCheckingMode": "strict",
+  "reportMissingTypeStubs": false,
+  "reportMissingImports": "warning",
+  "exclude": [
+    "tests/test_feature_election_results.py",
+    "**/__pycache__"
+  ]
+}
