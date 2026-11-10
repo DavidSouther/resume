@@ -11,10 +11,18 @@
 // skipped when data/answers/ is absent (as in CI).
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import {
+	copyFileSync,
+	existsSync,
+	mkdirSync,
+	mkdtempSync,
+	readFileSync,
+	rmSync,
+	writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterAll, afterEach, describe, expect, it } from "vitest";
 
 const HERE = import.meta.dirname;
 const OUT = join(HERE, "out");
@@ -393,6 +401,9 @@ async function loadPage(): Promise<PageExports> {
 
 const tmp = mkdtempSync(join(tmpdir(), "findings-report-"));
 const savedEnv = { ...process.env };
+afterAll(() => {
+	rmSync(tmp, { force: true, recursive: true });
+});
 afterEach(() => {
 	process.env = { ...savedEnv };
 	document.body.replaceChildren();
@@ -628,22 +639,36 @@ describe("election findings report", () => {
 	});
 
 	const uv = spawnSync("uv", ["--version"]).status === 0;
-	it.skipIf(!uv || !existsSync(join(DATA, "answers")))(
+	// The real run writes into a scratch copy of out/, never the tracked out/
+	// folder, so a test run leaves the working tree clean.
+	it.skipIf(
+		!uv ||
+			!existsSync(join(DATA, "answers")) ||
+			!existsSync(join(OUT, "elections.duckdb")),
+	)(
 		"writes a valid, auditable findings.json from a real out/ and renders it",
+		{ timeout: 60_000 },
 		async () => {
-			const run = spawnSync("uv", ["run", "findings.py", "--out", "out"], {
+			const scratchOut = join(tmp, "real-out");
+			mkdirSync(scratchOut, { recursive: true });
+			copyFileSync(
+				join(OUT, "elections.duckdb"),
+				join(scratchOut, "elections.duckdb"),
+			);
+			const run = spawnSync("uv", ["run", "findings.py", "--out", scratchOut], {
 				cwd: HERE,
 				encoding: "utf-8",
+				timeout: 45_000,
 			});
 			expect(run.status, run.stderr).toBe(0);
-			const check = spawnSync(
-				"uv",
-				["run", "findings.py", "--check", "out/findings.json"],
-				{ cwd: HERE, encoding: "utf-8" },
-			);
+			const path = join(scratchOut, "findings.json");
+			const check = spawnSync("uv", ["run", "findings.py", "--check", path], {
+				cwd: HERE,
+				encoding: "utf-8",
+				timeout: 45_000,
+			});
 			expect(check.status, check.stderr).toBe(0);
 
-			const path = join(OUT, "findings.json");
 			const f = JSON.parse(readFileSync(path, "utf-8")) as Findings;
 			expect(f.schema_version).toBe(1);
 			expect(Object.keys(f.selectors).sort()).toEqual(instanceKeys().sort());

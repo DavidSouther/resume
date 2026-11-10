@@ -21,6 +21,12 @@ const rrfOutput = resolve(
 	"build",
 	"rrf-coverage-normalization.pdf",
 );
+const rrfPublicPdf = resolve(
+	repositoryRoot,
+	"public",
+	"papers",
+	"rrf-coverage-normalization.pdf",
+);
 const rrfCompiler = resolve(
 	rrfPaperDir,
 	"scripts",
@@ -34,7 +40,12 @@ afterEach(() => {
 });
 
 describe("shared paper compiler feature", () => {
-	it("routes the RRF wrapper through the shared compiler and writes its PDF", () => {
+	// One test owns the RRF build output (build/ and public/papers/), so no
+	// other test file may compile that paper: vitest runs files in parallel
+	// workers and two compiles of one paper would race on the same PDF.
+	it("routes the RRF wrapper through the shared compiler, writes its PDF, and copies it to public/papers", {
+		timeout: 120_000,
+	}, () => {
 		const logDirectory = mkdtempSync(
 			resolve(tmpdir(), "compile-paper-feature-"),
 		);
@@ -49,9 +60,10 @@ describe("shared paper compiler feature", () => {
 		const rrf = spawnSync(process.execPath, [rrfCompiler], {
 			cwd: repositoryRoot,
 			env: environment,
+			timeout: 100_000,
 		});
 
-		expect(rrf.status).toBe(0);
+		expect(rrf.status, rrf.stderr?.toString()).toBe(0);
 		const invocations = readFileSync(invocationLog, "utf8")
 			.trim()
 			.split("\n")
@@ -61,5 +73,6 @@ describe("shared paper compiler feature", () => {
 		]);
 		expect(existsSync(rrfOutput)).toBe(true);
 		expect(statSync(rrfOutput).size).toBeGreaterThan(0);
+		expect(readFileSync(rrfPublicPdf)).toEqual(readFileSync(rrfOutput));
 	});
 });

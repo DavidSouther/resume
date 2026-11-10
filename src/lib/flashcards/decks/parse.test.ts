@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { parseDeckNotes } from "./parse.ts";
 
 const GOOD_NOTE = {
@@ -10,6 +10,11 @@ const GOOD_NOTE = {
 };
 
 describe("parseDeckNotes", () => {
+	// Restores the console.warn spy even when an assertion fails mid-test.
+	afterEach(() => {
+		vi.restoreAllMocks();
+	});
+
 	it("accepts a well-formed note array", () => {
 		expect(parseDeckNotes([GOOD_NOTE], "test")).toEqual([GOOD_NOTE]);
 	});
@@ -28,14 +33,13 @@ describe("parseDeckNotes", () => {
 		);
 		expect(result).toEqual([GOOD_NOTE]);
 		expect(warn).toHaveBeenCalledTimes(3);
-		warn.mockRestore();
 	});
 
 	it("rejects an unrecognized modelName", () => {
 		const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
 		const bad = { ...GOOD_NOTE, modelName: "NotAModel" };
 		expect(parseDeckNotes([bad], "test")).toEqual([]);
-		warn.mockRestore();
+		expect(warn).toHaveBeenCalledTimes(1);
 	});
 
 	it("defaults modelName to Basic when absent", () => {
