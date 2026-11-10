@@ -34,22 +34,22 @@ export const spriteMat = new THREE.ShaderMaterial({
 		uVis: { value: new THREE.Vector4(1, 1, 1, 1) },
 		uBright: { value: 1 },
 		uSel: { value: -1 },
-		uTilt: { value: new THREE.Vector2() },
+		uSpriteX: { value: new THREE.Vector2(1, 0) },
+		uSpriteY: { value: new THREE.Vector2(0, 1) },
 	},
 	vertexShader: `
     attribute vec3 center; attribute vec2 corner; attribute vec2 halfSize; attribute float cls; attribute float oid;
-    uniform vec4 uVis; uniform float uSel; uniform vec2 uTilt; // uTilt: yaw, pitch the quads turn toward the camera
+    uniform vec4 uVis; uniform float uSel; uniform vec2 uSpriteX; uniform vec2 uSpriteY;
     varying vec2 vUv; varying float vHi;
     void main() {
       float v = cls < 0.5 ? uVis.x : cls < 1.5 ? uVis.y : cls < 2.5 ? uVis.z : uVis.w;
       vUv = uv; vHi = abs(oid - uSel) < 0.5 ? 1.0 : 0.0;
-      // partial billboard: each quad turns toward the camera by uTilt (a capped fraction of the camera's offset from the telescope axis)
       vec2 q = corner * halfSize;
-      float cp = cos(uTilt.y), sp = sin(uTilt.y), cy = cos(uTilt.x), sy = sin(uTilt.x);
-      vec3 o = vec3(q.x, q.y * cp, -q.y * sp);
-      o = vec3(o.x * cy + o.z * sy, o.y, -o.x * sy + o.z * cy);
-      vec4 wp = modelMatrix * vec4(center, 1.0); wp.xyz += o;
-      gl_Position = v < 0.5 ? vec4(2.0, 2.0, 2.0, 1.0) : projectionMatrix * viewMatrix * wp;
+      // Foreshortened cutouts share one camera depth instead of acquiring a
+      // depth span proportional to their width as a world-space quad would.
+      vec4 p = modelViewMatrix * vec4(center, 1.0);
+      p.xy += uSpriteX * q.x + uSpriteY * q.y;
+      gl_Position = v < 0.5 ? vec4(2.0, 2.0, 2.0, 1.0) : projectionMatrix * p;
     }`,
 	fragmentShader: `
     uniform sampler2D map; uniform float uBright;
