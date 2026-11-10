@@ -79,6 +79,22 @@ jobs:
         if: steps.reuse.outputs.hit != 'true'
         uses: ./.github/actions/build-site
 
+      # A PR cache belongs to its merge ref and cannot be read from main. Seed
+      # main's WASM cache from the approved artifact even when no rebuild runs.
+      # Keep this key identical to build-site/action.yml's WASM cache key.
+      - name: Cache approved Deep Field WASM
+        if: steps.reuse.outputs.hit == 'true'
+        uses: actions/cache@v4
+        with:
+          path: public/deep_field/detect
+          key: deep-field-wasm-v1-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('pages/deep_field/detect/**/*.rs', 'pages/deep_field/detect/**/Cargo.*', '!pages/deep_field/detect/target/**', 'mise.toml', 'package.json', '.github/actions/build-site/action.yml') }}
+
+      - name: Copy approved Deep Field WASM into cache
+        if: steps.reuse.outputs.hit == 'true'
+        run: |
+          mkdir -p public/deep_field/detect
+          cp -a docs/deep_field/detect/. public/deep_field/detect/
+
       - uses: actions/configure-pages@v5
 
       - uses: actions/upload-pages-artifact@v3

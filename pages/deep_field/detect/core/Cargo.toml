@@ -1,0 +1,13 @@
+[package]
+name = "deep-field-core"
+version = "0.1.0"
+edition = "2021"
+description = "Background estimation, source extraction, deblending, cleaning and moments."
+license = "GPL-3.0-only"
+publish = false
+
+[features]
+serde = ["dep:serde"]
+
+[dependencies]
+serde = { version = "1", features = ["derive"], optional = true }

@@ -32,19 +32,60 @@ jobs:
       # A pull_request checkout is the merge of the head into the base, which is
       # the tree main will have after a squash merge.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      # Compare the PR merge against its base parent. This handles deletions
+      # and all changed files without the API's changed-file pagination limit.
+      - name: Check for Deep Field changes
+        id: deep-field
+        run: |
+          if git diff --quiet HEAD^1 HEAD -- \
+            pages/deep_field/ src/components/deep_field/ public/deep_field/ \
+            mise.toml package.json package-lock.json vitest.config.ts \
+            scripts/vitest-build.ts .github/workflows/ci.yml \
+            .github/actions/build-site/action.yml; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            status=$?
+            [ "$status" -eq 1 ] || exit "$status"
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Compute tree hash
         id: tree
         run: echo "sha=$(git rev-parse 'HEAD^{tree}')" >> "$GITHUB_OUTPUT"
 
       - uses: ./.github/actions/build-site
+        with:
+          cargo-cache-kind: ${{ steps.deep-field.outputs.changed == 'true' && 'tests' || 'wasm' }}
 
-      # posttest runs the check script again, so this also covers lint.
-      # The build above already wrote docs/, so the test run skips its own build.
-      - name: Test
+      # The build above already checked types/lint and wrote docs/. The SEP
+      # comparisons run separately below, only when their inputs change.
+      - name: Test site
         env:
           SKIP_SITE_BUILD: "1"
-        run: npm test
+        run: npm run test:site -- --exclude pages/deep_field/deep-field.feature.test.ts
+
+      - name: Test Deep Field Rust
+        if: steps.deep-field.outputs.changed == 'true'
+        run: npm run test:rust
+
+      - name: Cache SEP oracle dependencies
+        if: steps.deep-field.outputs.changed == 'true'
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/uv
+          key: deep-field-uv-v1-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('mise.toml') }}-${{ hashFiles('pages/deep_field/detect/oracle/sep_oracle.py', 'pages/deep_field/deep-field.feature.test.ts') }}
+          restore-keys: |
+            deep-field-uv-v1-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('mise.toml') }}-
+            deep-field-uv-v1-${{ runner.os }}-${{ runner.arch }}-
+
+      - name: Test Deep Field against SEP
+        if: steps.deep-field.outputs.changed == 'true'
+        env:
+          SKIP_SITE_BUILD: "1"
+        run: npm run test:site -- pages/deep_field/deep-field.feature.test.ts
 
       - uses: actions/upload-artifact@v4
         with:

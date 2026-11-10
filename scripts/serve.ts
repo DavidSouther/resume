@@ -40,11 +40,17 @@ const root = join(cwd(), "docs");
 if (values.watch) {
 	// public/global.css (css:bundle) and public/sitemap.xml (sitemap) are build
 	// outputs written back into public/. Excluding them stops the build from
-	// retriggering itself in an endless rebuild + reload loop.
+	// retriggering itself in an endless rebuild + reload loop. The Deep Field
+	// WASM build (npm run wasm) writes the same way: wasm-pack into
+	// public/deep_field/detect/ and cargo into pages/deep_field/detect/target/.
 	const generated = new Set([
 		join(cwd(), "public", "global.css"),
 		join(cwd(), "public", "sitemap.xml"),
 	]);
+	const generatedDirs = [
+		join(cwd(), "public", "deep_field", "detect"),
+		join(cwd(), "pages", "deep_field", "detect", "target"),
+	];
 	await startWatchServer({
 		root,
 		watchDirs: [
@@ -53,7 +59,10 @@ if (values.watch) {
 			join(cwd(), "public"),
 		],
 		rebuild: () => runDevBuild(cwd()),
-		ignore: (file) => generated.has(file) || ignoreDefault(file),
+		ignore: (file) =>
+			generated.has(file) ||
+			generatedDirs.some((dir) => file.startsWith(dir)) ||
+			ignoreDefault(file),
 		reloadPath: RELOAD_PATH,
 		port,
 		host: values.host,
