@@ -1,10 +1,9 @@
 //! Isophotal measurements of a detected object: pixel count, flux, peak,
 //! bounding box, flux-weighted centroid and second moments.
 
-use serde::Serialize;
-
 /// One object found by the core, measured on the background-subtracted data.
-#[derive(Clone, Debug, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct CoreObject {
     pub cx: f64,
     pub cy: f64,
@@ -16,11 +15,11 @@ pub struct CoreObject {
     pub x1: usize,
     pub y1: usize,
     /// Second central moments, in square pixels.
-    #[serde(skip)]
+    #[cfg_attr(feature = "serde", serde(skip))]
     pub x2: f64,
-    #[serde(skip)]
+    #[cfg_attr(feature = "serde", serde(skip))]
     pub y2: f64,
-    #[serde(skip)]
+    #[cfg_attr(feature = "serde", serde(skip))]
     pub xy: f64,
 }
 

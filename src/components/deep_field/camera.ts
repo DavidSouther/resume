@@ -67,7 +67,10 @@ function frame(now: number) {
 }
 
 export function initCamera() {
-	hooks.afterBuild = () => viewHome(false);
+	hooks.afterBuild = () => {
+		resize();
+		viewHome(false);
+	};
 	$("vHome").onclick = () => viewHome();
 	$("vSide").onclick = () => orbitView(ORBIT_MAX, 0);
 	$("vTop").onclick = () => orbitView(0, ORBIT_MAX);

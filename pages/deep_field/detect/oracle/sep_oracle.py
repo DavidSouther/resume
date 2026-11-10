@@ -36,9 +36,23 @@ def luminance(path: str) -> np.ndarray:
 
 
 def main() -> None:
-    if len(sys.argv) != 2:
-        sys.exit("usage: sep_oracle.py IMAGE.png")
-    data = luminance(sys.argv[1])
+    if len(sys.argv) == 3 and sys.argv[1] == "--faint-source":
+        # Independent of the bundled photograph: one faint Gaussian source
+        # on deterministic uniform noise. Its filtered SNR clears 5 even when
+        # its individual pixels do not.
+        peak = float(sys.argv[2])
+        state = 7
+        values = []
+        for i in range(128 * 128):
+            state = (state * 6364136223846793005 + 1442695040888963407) % (2**64)
+            noise = ((state >> 40) / 2**24) * 2 - 1
+            r2 = (i % 128 - 64) ** 2 + (i // 128 - 64) ** 2
+            values.append(20 + noise + peak * np.exp(-r2 / 16))
+        data = np.array(values, dtype=np.float32).reshape(128, 128)
+    elif len(sys.argv) == 2:
+        data = luminance(sys.argv[1])
+    else:
+        sys.exit("usage: sep_oracle.py IMAGE.png | --faint-source AMPLITUDE")
     height, width = data.shape
     bkg = sep.Background(data, bw=64, bh=64, fw=3, fh=3)
     found = sep.extract(data - bkg.back(), 5.0, err=bkg.rms(), minarea=5)

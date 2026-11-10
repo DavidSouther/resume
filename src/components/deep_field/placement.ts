@@ -83,7 +83,7 @@ export function estimate() {
 	for (const o of S.objs)
 		if (o.cls === "near" && !o.fragment) lead.set(o.id, o);
 	for (const o of S.objs) {
-		if (o.cls === "near" && o.fragment && !S.over.get(o.id)?.z) {
+		if (o.cls === "near" && o.fragment && S.over.get(o.id)?.z == null) {
 			const l = lead.get(o.group);
 			if (l) o.z = l.z;
 		}

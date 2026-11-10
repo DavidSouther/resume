@@ -2,8 +2,8 @@
 //! extraction, multi-threshold deblending, cleaning and moments.
 //!
 //! Written from the published method (Bertin & Arnouts 1996, A&AS 117, 393)
-//! and SEP's documentation (Barbary 2016, JOSS 1, 58). SEP's source was not
-//! read; agreement with SEP is checked by running it as a black box
+//! and informed by SEP (Barbary 2016, JOSS 1, 58). Agreement with SEP is checked
+//! by running it as a black box
 //! (`oracle/sep_oracle.py`).
 
 pub mod background;
@@ -113,12 +113,18 @@ pub fn extract(
         pixels.extend(parts.into_iter().filter(|p| p.len() >= params.min_area));
     }
     if let Some(beta) = params.clean {
-        let kernel = match &params.filter {
-            Filter::Matched(kernel) => kernel.clone(),
-            Filter::None => Kernel::default_3x3(),
+        // Response to a unit signal converts neighbour wings from data units
+        // to the same signal-to-noise units used for detection.
+        let response = match &params.filter {
+            Filter::Matched(kernel) => {
+                filter::matched(&vec![1.0; data.len()], rms, width, height, kernel)
+            }
+            Filter::None => rms
+                .iter()
+                .map(|&s| if s > 0.0 { 1.0 / s } else { 0.0 })
+                .collect(),
         };
-        let conv = filter::convolve(data, width, height, &kernel);
-        pixels = clean::clean(pixels, data, &conv, rms, width, params.thresh, beta);
+        pixels = clean::clean(pixels, data, &det, &response, width, params.thresh, beta);
     }
     let objects = pixels
         .iter()
@@ -193,6 +199,36 @@ mod tests {
         let (bg, ex) = detect_core(&img, w, h);
         assert!(ex.objects.is_empty());
         assert!(bg.back.iter().all(|&b| (b - 20.0).abs() < 0.2));
+    }
+
+    #[test]
+    fn cleaning_keeps_an_isolated_source_detected_only_by_the_matched_filter() {
+        let (w, h) = (64, 64);
+        let data: Vec<f32> = (0..w * h)
+            .map(|i| {
+                let r2 = ((i % w) as f32 - 32.0).powi(2) + ((i / w) as f32 - 32.0).powi(2);
+                3.0 * (-r2 / 16.0).exp()
+            })
+            .collect();
+        let rms = vec![1.0; w * h];
+        let params = ExtractParams {
+            thresh: 5.0,
+            clean: None,
+            ..Default::default()
+        };
+        let uncleaned = extract(&data, &rms, w, h, &params);
+        assert_eq!(uncleaned.objects.len(), 1);
+        let cleaned = extract(
+            &data,
+            &rms,
+            w,
+            h,
+            &ExtractParams {
+                clean: Some(1.0),
+                ..params
+            },
+        );
+        assert_eq!(cleaned.pixels, uncleaned.pixels);
     }
 
     #[test]

@@ -6,6 +6,9 @@ import { buildAll } from "./scene.ts";
 import { $, P, S, SAMPLE_NAME, SAMPLE_SRC } from "./state.ts";
 
 const MAX_DIM = 1600;
+// Shared by file reads, network/image loads and worker requests: only the
+// latest user action may publish state, errors or completion.
+let generation = 0;
 
 export function setBusy(text: string, on: boolean) {
 	$("busy").hidden = !on && !text;
@@ -38,23 +41,39 @@ function setCredit(isSample: boolean, credit?: Credit) {
 }
 
 export function analyse(): Promise<void> {
+	if (!S.rgba) return Promise.resolve();
+	return analyseCurrent(++generation);
+}
+
+function analyseCurrent(request: number): Promise<void> {
 	setBusy(
 		`Analysing ${S.W.toLocaleString()} × ${S.H.toLocaleString()} px`,
 		true,
 	);
 	return runDetect(S.rgba as Uint8ClampedArray, S.W, S.H, { ...P.det })
 		.then((det) => {
+			if (request !== generation) return;
 			S.det = det;
 			buildAll();
 			setBusy("", false);
 		})
 		.catch((e: Error) => {
-			// Leave the message up; the progress bar is already hidden.
+			if (request !== generation) return;
 			setBusy(e.message || String(e), false);
 		});
 }
 
 export function loadImage(
+	src: string,
+	name: string,
+	isSample: boolean,
+	credit?: Credit,
+): Promise<void> {
+	return loadImageCurrent(++generation, src, name, isSample, credit);
+}
+
+function loadImageCurrent(
+	request: number,
 	src: string,
 	name: string,
 	isSample: boolean,
@@ -73,6 +92,7 @@ export function loadImage(
 		im.src = src;
 	})
 		.then((im) => {
+			if (request !== generation) return;
 			const k = Math.min(
 				1,
 				MAX_DIM / Math.max(im.naturalWidth, im.naturalHeight),
@@ -84,9 +104,11 @@ export function loadImage(
 			cv.height = H;
 			const cx = cv.getContext("2d") as CanvasRenderingContext2D;
 			cx.drawImage(im, 0, 0, W, H);
+			const rgba = cx.getImageData(0, 0, W, H).data;
+			S.det = null;
 			S.W = W;
 			S.H = H;
-			S.rgba = cx.getImageData(0, 0, W, H).data;
+			S.rgba = rgba;
 			S.sample = isSample;
 			S.over.clear();
 			S.sel = null;
@@ -94,9 +116,10 @@ export function loadImage(
 			$("dims").textContent =
 				`${W} × ${H} px${k < 1 ? ` (from ${im.naturalWidth})` : ""}`;
 			setCredit(isSample, credit);
-			return analyse();
+			return analyseCurrent(request);
 		})
 		.catch((e: Error) => {
+			if (request !== generation) return;
 			setBusy(e.message || String(e), false);
 		});
 }
@@ -104,26 +127,37 @@ export function loadImage(
 let randomBusy = false;
 async function loadRandom(key: FeedKey) {
 	if (randomBusy) return;
+	const request = ++generation;
 	randomBusy = true;
 	const btns = [$("randJwst"), $("randHubble")] as HTMLButtonElement[];
 	for (const b of btns) b.disabled = true;
 	try {
 		setBusy(`Fetching ${FEEDS[key].label} image list`, true);
 		const { rec, res } = await pickRandom(key);
+		if (request !== generation) return;
 		const title = unbytes(rec.Title);
 		setBusy(`Downloading ${title}`, true);
-		await loadImage(res.URL, `${title} · ${FEEDS[key].label}`, false, {
-			title,
-			url: rec.ReferenceURL ?? "",
-			credit: unbytes(rec.Credit),
-			source: FEEDS[key].name,
-		});
+		await loadImageCurrent(
+			request,
+			res.URL,
+			`${title} · ${FEEDS[key].label}`,
+			false,
+			{
+				title,
+				url: rec.ReferenceURL ?? "",
+				credit: unbytes(rec.Credit),
+				source: FEEDS[key].name,
+			},
+		);
 	} catch (e) {
+		if (request !== generation) return;
 		setBusy(
 			`Could not load a ${FEEDS[key].label} image (${(e as Error).message || e}). Try again.`,
 			false,
 		);
-		setTimeout(() => setBusy("", false), 3500);
+		setTimeout(() => {
+			if (request === generation) setBusy("", false);
+		}, 3500);
 	} finally {
 		randomBusy = false;
 		for (const b of btns) b.disabled = false;
@@ -131,13 +165,22 @@ async function loadRandom(key: FeedKey) {
 }
 
 function openFile(f: File) {
+	const request = ++generation;
 	if (!/^image\//.test(f.type)) {
 		setBusy("That file is not an image. Open a PNG, JPEG or WebP.", false);
-		setTimeout(() => setBusy("", false), 2600);
+		setTimeout(() => {
+			if (request === generation) setBusy("", false);
+		}, 2600);
 		return;
 	}
 	const r = new FileReader();
-	r.onload = () => loadImage(r.result as string, f.name, false);
+	r.onload = () => {
+		if (request === generation)
+			void loadImageCurrent(request, r.result as string, f.name, false);
+	};
+	r.onerror = () => {
+		if (request === generation) setBusy("That file could not be read.", false);
+	};
 	r.readAsDataURL(f);
 }
 

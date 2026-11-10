@@ -37,6 +37,9 @@ run = "npm run lint"
 [tasks.test]
 run = "npm test"
 
+[tasks."test:rust"]
+run = "npm run test:rust"
+
 [tasks."test:watch"]
 run = "npm run test:watch"
 

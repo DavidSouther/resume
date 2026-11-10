@@ -6,8 +6,8 @@
 //! been detected without that light. Here each neighbour is a Moffat profile
 //! `peak * (1 + r^2 / ALPHA2)^-beta`, with `r` measured in its moment ellipse.
 //! Objects are visited brightest first, and an object is kept when its
-//! convolved peak, less the summed wings of the objects already kept, still
-//! reaches the detection threshold at that pixel. As in SEP, a cleaned object
+//! detection signal-to-noise peak, less the summed wings of the objects already
+//! kept, still reaches the detection threshold at that pixel. As in SEP, a cleaned object
 //! is dropped, not merged into its neighbour.
 //!
 //! The scale `ALPHA2` is not given in the published method. It was calibrated
@@ -26,27 +26,22 @@ struct Profile {
     ixy: f64,
     flux: f64,
     peak: f64,
-    /// Highest convolved value and the threshold at its pixel.
-    conv_peak: f64,
-    thresh: f64,
+    /// Highest detection signal-to-noise and the response to a unit signal there.
+    detection_peak: f64,
+    response: f64,
+    detection_x: f64,
+    detection_y: f64,
 }
 
 impl Profile {
-    fn of(
-        pixels: &[u32],
-        data: &[f32],
-        conv: &[f32],
-        rms: &[f32],
-        thresh: f32,
-        width: usize,
-    ) -> Self {
+    fn of(pixels: &[u32], data: &[f32], detection: &[f32], response: &[f32], width: usize) -> Self {
         let m = measure(pixels, data, width);
         let (xx, yy, xy) = (m.x2 + 1.0 / 12.0, m.y2 + 1.0 / 12.0, m.xy);
         let d = (xx * yy - xy * xy).max(1e-9);
         let top = pixels
             .iter()
             .copied()
-            .max_by(|&a, &b| conv[a as usize].total_cmp(&conv[b as usize]))
+            .max_by(|&a, &b| detection[a as usize].total_cmp(&detection[b as usize]))
             .map_or(0, |p| p as usize);
         Self {
             cx: m.cx,
@@ -56,8 +51,10 @@ impl Profile {
             ixy: -xy / d,
             flux: m.flux,
             peak: m.peak,
-            conv_peak: f64::from(conv[top]),
-            thresh: f64::from(thresh) * f64::from(rms[top]),
+            detection_peak: f64::from(detection[top]),
+            response: f64::from(response[top]),
+            detection_x: (top % width) as f64,
+            detection_y: (top / width) as f64,
         }
     }
 
@@ -70,20 +67,20 @@ impl Profile {
 }
 
 /// Drop objects that would not clear the threshold without their brighter
-/// neighbours' wings. `conv` is the data convolved with the detection kernel,
-/// normalised to unit sum; `thresh` is in units of `rms`.
+/// neighbours' wings. `detection` and `thresh` are in signal-to-noise units;
+/// `response` converts a locally constant signal in data units to detection units.
 pub fn clean(
     pixels: Vec<Vec<u32>>,
     data: &[f32],
-    conv: &[f32],
-    rms: &[f32],
+    detection: &[f32],
+    response: &[f32],
     width: usize,
     thresh: f32,
     beta: f64,
 ) -> Vec<Vec<u32>> {
     let profiles: Vec<Profile> = pixels
         .iter()
-        .map(|p| Profile::of(p, data, conv, rms, thresh, width))
+        .map(|p| Profile::of(p, data, detection, response, width))
         .collect();
     // Brightest first, so only objects already kept spread wings.
     let mut order: Vec<usize> = (0..profiles.len()).collect();
@@ -94,9 +91,9 @@ pub fn clean(
         let pj = &profiles[j];
         let wings: f64 = kept
             .iter()
-            .map(|&i| profiles[i].wing(pj.cx, pj.cy, beta))
+            .map(|&i| profiles[i].wing(pj.detection_x, pj.detection_y, beta))
             .sum();
-        if pj.conv_peak - wings >= pj.thresh {
+        if pj.detection_peak - wings * pj.response >= f64::from(thresh) {
             keep[j] = true;
             kept.push(j);
         }
@@ -157,6 +154,31 @@ mod tests {
             1.0,
         );
         assert_eq!(out.len(), 2);
+    }
+
+    #[test]
+    fn neighbour_wings_are_checked_at_the_detection_peak_not_the_centroid() {
+        let w = 20;
+        let mut data = vec![0.0; w];
+        data[0..5].fill(1000.0);
+        data[8] = 5.0;
+        data[14..16].fill(50.0);
+        let mut detection = data.clone();
+        // A noisy peak on the bright neighbour's wing is displaced from the
+        // candidate's flux centroid. Only that peak clears the threshold.
+        detection[8] = 20.0;
+        detection[14..16].fill(4.0);
+        let response = vec![1.0; w];
+        let out = clean(
+            vec![(0..5).collect(), vec![8, 14, 15]],
+            &data,
+            &detection,
+            &response,
+            w,
+            5.0,
+            1.0,
+        );
+        assert_eq!(out, vec![(0..5).collect::<Vec<u32>>()]);
     }
 
     #[test]

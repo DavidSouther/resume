@@ -55,8 +55,46 @@ function matchedFraction(from: Obj[], to: Obj[]): number {
 	return hit.length / from.length;
 }
 
+async function compareWithSep(...args: string[]) {
+	const run = spawnSync(
+		"uv",
+		[
+			"run",
+			"--with",
+			"sep",
+			"--with",
+			"numpy",
+			"--with",
+			"pillow",
+			"python",
+			ORACLE,
+			...args,
+		],
+		{ encoding: "utf-8", maxBuffer: 256 * 1024 * 1024 },
+	);
+	expect(run.status, run.stderr).toBe(0);
+	const sep = JSON.parse(run.stdout) as Oracle;
+
+	// Load the built WASM in Node and run only the core on the same luminance.
+	const glue = join(WASM_DIR, "detect.js");
+	const mod = (await import(pathToFileURL(glue).href)) as {
+		initSync: (arg: { module: Uint8Array }) => void;
+		detect_core: (lum: Float32Array, w: number, h: number) => Obj[];
+	};
+	mod.initSync({ module: readFileSync(join(WASM_DIR, "detect_bg.wasm")) });
+	const bytes = Buffer.from(sep.luminance_b64, "base64");
+	const lum = new Float32Array(
+		bytes.buffer,
+		bytes.byteOffset,
+		sep.width * sep.height,
+	);
+	const rust = mod.detect_core(lum, sep.width, sep.height);
+
+	return { sep, rust };
+}
+
 describe("Deep Field Volume page", () => {
-	it("ships the page, WASM detector, sample and allow-list, and the detector agrees with SEP", async () => {
+	it("ships the page, WASM detector, sample and allow-list", () => {
 		// The page is built from pages/deep_field and the old static copy is gone.
 		const html = readFileSync(join(DOCS, "index.html"), "utf-8");
 		expect(html).toContain("Deep Field Volume");
@@ -88,46 +126,31 @@ describe("Deep Field Volume page", () => {
 			expect(Object.keys(mise.tools), `mise tool ${tool}`).toContain(tool);
 		}
 		expect(Object.keys(mise.tasks ?? {})).toContain("wasm");
+	}, 120_000);
 
-		// SEP, run as a black box through uv, is the definition of correct.
-		const run = spawnSync(
-			"uv",
-			[
-				"run",
-				"--with",
-				"sep",
-				"--with",
-				"numpy",
-				"--with",
-				"pillow",
-				"python",
-				ORACLE,
-				SAMPLE,
-			],
-			{ encoding: "utf-8", maxBuffer: 256 * 1024 * 1024 },
-		);
-		expect(run.status, run.stderr).toBe(0);
-		const sep = JSON.parse(run.stdout) as Oracle;
-
-		// Load the built WASM in Node and run only the core on the same luminance.
-		const glue = join(WASM_DIR, "detect.js");
-		const mod = (await import(pathToFileURL(glue).href)) as {
-			initSync: (arg: { module: Uint8Array }) => void;
-			detect_core: (lum: Float32Array, w: number, h: number) => Obj[];
-		};
-		mod.initSync({ module: readFileSync(join(WASM_DIR, "detect_bg.wasm")) });
-		const bytes = Buffer.from(sep.luminance_b64, "base64");
-		const lum = new Float32Array(
-			bytes.buffer,
-			bytes.byteOffset,
-			sep.width * sep.height,
-		);
-		const rust = mod.detect_core(lum, sep.width, sep.height);
-
+	it("agrees approximately with SEP on the bundled image", async () => {
+		const { sep, rust } = await compareWithSep(SAMPLE);
 		const sepBig = sep.objects.filter((o) => o.area >= 20);
 		const rustBig = rust.filter((o) => o.area >= 20);
 		expect(sepBig.length).toBeGreaterThan(20);
 		expect(matchedFraction(sepBig, rust)).toBeGreaterThanOrEqual(0.85);
 		expect(matchedFraction(rustBig, sep.objects)).toBeGreaterThanOrEqual(0.85);
+	}, 120_000);
+
+	it.each([
+		2, 3,
+	])("retains an isolated faint source of amplitude %s that SEP detects", async (amplitude) => {
+		const { sep, rust } = await compareWithSep(
+			"--faint-source",
+			String(amplitude),
+		);
+		expect(sep.objects).toHaveLength(1);
+		expect(rust).toHaveLength(1);
+		expect(
+			Math.hypot(
+				rust[0].cx - sep.objects[0].cx,
+				rust[0].cy - sep.objects[0].cy,
+			),
+		).toBeLessThan(1);
 	}, 120_000);
 });
