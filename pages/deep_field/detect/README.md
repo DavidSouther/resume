@@ -22,6 +22,11 @@ Deployments that reuse an approved site artifact seed main's WASM cache from
 that artifact, so later PRs can reuse it. `npm run build:site` assembles the site
 from those prepared WASM files; `npm run build` also builds WASM for local use.
 
+The detector follows the SExtractor method, described in [Bertin & Arnouts
+1996, "SExtractor: Software for source extraction", A&AS 117, 393](https://doi.org/10.1051/aas:1996164).
+[SEP](https://github.com/sep-developers/sep) is the C library implementing that
+method, and is the reference implementation for this port.
+
 `oracle/sep_oracle.py` compares against SEP as a black box. Website tests check
 approximate centroid/area agreement on the bundled image and retention of faint
 sources on independent synthetic images. These checks do not establish full SEP
