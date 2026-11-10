@@ -35,3 +35,8 @@ pages/nyc_polling/.cache/
 __pycache__/
 
 .env
+
+# Deep field: built WASM and local backup of the old page
+public/deep_field/detect/
+public/deep_field_bak/
+pages/deep_field/detect/target/

@@ -40,6 +40,14 @@ runs:
       shell: bash
       run: node posts/rrf_coverage_normalization/scripts/compile-rrf-coverage-normalization.ts
 
+    # The Deep Field detector (Rust, from pages/deep_field/detect) compiles to
+    # public/deep_field/detect/ with wasm-pack, which mise provisions along with
+    # the wasm32 target. npm run build runs the same script again; the second
+    # pass is a cached no-op.
+    - name: Build Deep Field WASM
+      shell: bash
+      run: npm run wasm
+
     # prebuild (npm run check: tsc + biome) runs first via the npm lifecycle,
     # then css:bundle + sitemap + the jiffies SSG write the site into docs/.
     - name: Build site

@@ -1,0 +1,19 @@
+[package]
+name = "deep-field-detect"
+version = "0.1.0"
+edition = "2021"
+description = "Source detection for the Deep Field Volume page: a SExtractor-method core and page-specific star finder and classifier, compiled to WASM."
+license = "GPL-3.0-only"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde-wasm-bindgen = "0.6"
+wasm-bindgen = "0.2"
+
+[profile.release]
+opt-level = 3
+lto = true
