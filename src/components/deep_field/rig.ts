@@ -1,5 +1,7 @@
 // WebGL renderer, scene, camera and orbit controls, plus the camera pivot and
 // fly-to helpers that every view shares.
+
+import { ORBIT_MAX, ZOOM_SPEED } from "./camera-path.ts";
 import { dNear, dOfU } from "./placement.ts";
 import { $, css, P, view } from "./state.ts";
 
@@ -18,12 +20,10 @@ controls.enableDamping = true;
 controls.dampingFactor = 0.08;
 controls.screenSpacePanning = true;
 controls.rotateSpeed = 0.7;
-controls.zoomSpeed = 0.9;
+controls.zoomSpeed = ZOOM_SPEED;
 // The camera may swing a quarter turn (90°) off the telescope axis in each
 // direction, a half turn in all: it reaches the side and top views but never
 // goes behind the field.
-export const ORBIT_MAX = Math.PI / 2;
-export const BILLBOARD_MAX = 1 / 6;
 controls.minAzimuthAngle = -ORBIT_MAX;
 controls.maxAzimuthAngle = ORBIT_MAX;
 controls.minPolarAngle = Math.PI / 2 - ORBIT_MAX;
