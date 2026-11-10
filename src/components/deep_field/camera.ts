@@ -1,12 +1,21 @@
 // Camera views, resize, billboard tilt and the render loop.
+import { billboardBasis } from "./billboard.ts";
+import {
+	cameraPosition,
+	ORBIT_MAX,
+	type OrbitPath,
+	obliquePose,
+	orbitRadius,
+	orbitStart,
+	orbitStep,
+} from "./camera-path.ts";
 import { initPicking, select, updateOverlays } from "./picking.ts";
 import {
 	anim,
-	BILLBOARD_MAX,
 	camera,
 	controls,
 	flyTo,
-	ORBIT_MAX,
+	reduceMotion,
 	renderer,
 	scene,
 	stage,
@@ -15,11 +24,60 @@ import {
 import { spriteMeshes } from "./scene.ts";
 import { $, D_NEAR, H0W, hooks, view } from "./state.ts";
 
+let orbit: OrbitPath | null = null;
+let idleOrbit = false;
+let idleTimer: ReturnType<typeof setTimeout> | null = null;
+const pointersDown = new Set<number>();
+
+function stopOrbit() {
+	orbit = null;
+	anim.tween = null;
+	$("vSpin").setAttribute("aria-pressed", "false");
+}
+
+function startOrbit() {
+	anim.tween = null;
+	const target = controls.target.toArray() as [number, number, number];
+	orbit = orbitStart(
+		{
+			az: controls.getAzimuthalAngle(),
+			el: Math.PI / 2 - controls.getPolarAngle(),
+			radius: camera.position.distanceTo(controls.target),
+		},
+		target,
+		performance.now(),
+		volumeMid(),
+	);
+	// Drain drag inertia before the path starts driving the camera itself.
+	controls.enableDamping = false;
+	controls.update();
+	controls.enableDamping = true;
+	$("vSpin").setAttribute("aria-pressed", "true");
+}
+
+function cancelIdleOrbit() {
+	idleOrbit = false;
+	if (idleTimer !== null) clearTimeout(idleTimer);
+	idleTimer = null;
+}
+
+function delayIdleOrbit() {
+	if (!idleOrbit) return;
+	if (idleTimer !== null) clearTimeout(idleTimer);
+	if (pointersDown.size) return;
+	idleTimer = setTimeout(() => {
+		cancelIdleOrbit();
+		startOrbit();
+	}, 2500);
+}
+
 export function viewHome(animate = true) {
+	stopOrbit();
 	flyTo([0, 0, 0], [0, 0, volumeMid()], animate);
 }
 // camera on a sphere about the volume midpoint, at the home distance
 function orbitView(az: number, el: number) {
+	stopOrbit();
 	const m = volumeMid();
 	const r = -m;
 	const ce = Math.cos(el);
@@ -41,23 +99,31 @@ export function resize() {
 	camera.updateProjectionMatrix();
 }
 
-// quads follow the camera at BILLBOARD_MAX / ORBIT_MAX of its offset, reaching BILLBOARD_MAX at the orbit limit
 function updateTilt() {
-	const k = BILLBOARD_MAX / ORBIT_MAX;
 	const az = controls.getAzimuthalAngle();
 	const el = Math.PI / 2 - controls.getPolarAngle();
-	const c = (a: number) => Math.max(-ORBIT_MAX, Math.min(ORBIT_MAX, a)) * k;
-	for (const m of spriteMeshes)
-		m.material.uniforms.uTilt.value.set(c(az), c(el));
+	const [xx, xy, yx, yy] = billboardBasis(az, el);
+	for (const m of spriteMeshes) {
+		m.material.uniforms.uSpriteX.value.set(xx, xy);
+		m.material.uniforms.uSpriteY.value.set(yx, yy);
+	}
 }
 
 function frame(now: number) {
 	if (anim.tween) anim.tween(now);
-	if (controls.autoRotate) {
-		const az = controls.getAzimuthalAngle();
-		const sp = Math.abs(controls.autoRotateSpeed);
-		if (az >= ORBIT_MAX - 0.01) controls.autoRotateSpeed = sp;
-		else if (az <= -ORBIT_MAX + 0.01) controls.autoRotateSpeed = -sp;
+	if (orbit) {
+		const mid = volumeMid();
+		if (mid !== orbit.mid) {
+			orbit.target[2] += mid - orbit.mid;
+			const radius = orbitRadius(mid);
+			orbit.pose.radius *= radius / orbit.radius;
+			orbit.radius = radius;
+			orbit.mid = mid;
+		}
+		const { pose, target } = orbitStep(orbit, now);
+		camera.position.set(...cameraPosition(pose, target));
+		controls.target.set(...target);
+		view.pivotZ = mid;
 	}
 	controls.update();
 	updateTilt();
@@ -70,26 +136,56 @@ export function initCamera() {
 	hooks.afterBuild = () => {
 		resize();
 		viewHome(false);
+		cancelIdleOrbit();
+		idleOrbit = !reduceMotion;
+		delayIdleOrbit();
 	};
 	$("vHome").onclick = () => viewHome();
 	$("vSide").onclick = () => orbitView(ORBIT_MAX, 0);
 	$("vTop").onclick = () => orbitView(0, ORBIT_MAX);
-	$("vOblique").onclick = () => orbitView(ORBIT_MAX * 0.8, ORBIT_MAX * 0.6);
-	$("vSpin").onclick = (e) => {
-		controls.autoRotate = !controls.autoRotate;
-		controls.autoRotateSpeed = 0.8;
-		(e.currentTarget as HTMLElement).setAttribute(
-			"aria-pressed",
-			String(controls.autoRotate),
-		);
+	$("vOblique").onclick = () => {
+		stopOrbit();
+		const mid = volumeMid();
+		flyTo(cameraPosition(obliquePose(1, -mid), [0, 0, mid]), [0, 0, mid]);
 	};
+	$("vSpin").onclick = () => {
+		cancelIdleOrbit();
+		if (orbit) stopOrbit();
+		else startOrbit();
+	};
+	controls.addEventListener("start", () => {
+		stopOrbit();
+		delayIdleOrbit();
+	});
+	for (const event of ["wheel", "keydown", "input", "change"])
+		document.addEventListener(event, delayIdleOrbit, {
+			capture: true,
+			passive: true,
+		});
+	document.addEventListener(
+		"pointerdown",
+		(e) => {
+			pointersDown.add(e.pointerId);
+			delayIdleOrbit();
+		},
+		{ capture: true, passive: true },
+	);
+	for (const event of ["pointerup", "pointercancel"] as const)
+		document.addEventListener(
+			event,
+			(e) => {
+				pointersDown.delete(e.pointerId);
+				delayIdleOrbit();
+			},
+			{ capture: true, passive: true },
+		);
 	window.addEventListener("keydown", (e) => {
 		if ((e.target as HTMLElement).closest("input,select")) return;
 		if (e.key === "h" || e.key === "H") viewHome();
 		if (e.key === "Escape") select(null);
 	});
 	initPicking(() => {
-		anim.tween = null;
+		stopOrbit();
 	});
 	new ResizeObserver(resize).observe(stage);
 	resize();
