@@ -42,7 +42,19 @@ describe("PR builds gate merge and the release reuses the approved build", () =>
 	it("ci.yml builds through the shared composite action and runs tests", () => {
 		const s = steps(ci, "build");
 		expect(s.some((x) => x.uses === BUILD_ACTION)).toBe(true);
-		expect(s.some((x) => x.run?.includes("npm test"))).toBe(true);
+		const site = s.find((x) =>
+			x.run?.startsWith("npm run test:site -- --exclude"),
+		);
+		expect(site?.run).toContain("pages/deep_field/deep-field.feature.test.ts");
+		expect(site?.if, "general site tests run on every PR").toBeUndefined();
+		for (const command of [
+			"npm run test:rust",
+			"npm run test:site -- pages/deep_field/deep-field.feature.test.ts",
+		]) {
+			const test = s.find((x) => x.run === command);
+			expect(test, command).toBeDefined();
+			expect(test?.if).toBe("steps.deep-field.outputs.changed == 'true'");
+		}
 	});
 
 	it("ci.yml uploads docs as a tree-hash keyed artifact with bounded retention", () => {

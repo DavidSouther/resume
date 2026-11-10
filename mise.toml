@@ -16,6 +16,10 @@ run = "npm run dev"
 [tasks.build]
 run = "npm run build"
 
+# Site-only assembly requires WASM outputs to be built or restored first.
+[tasks."build:site"]
+run = "npm run build:site"
+
 [tasks.papers]
 run = "npm run papers"
 
@@ -39,6 +43,9 @@ run = "npm test"
 
 [tasks."test:rust"]
 run = "npm run test:rust"
+
+[tasks."test:site"]
+run = "npm run test:site"
 
 [tasks."test:watch"]
 run = "npm run test:watch"
