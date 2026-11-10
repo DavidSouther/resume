@@ -5,6 +5,10 @@ description: >
   way. The caller checks the repository out first.
 
 inputs:
+  cargo-cache-kind:
+    description: Use tests when the caller also runs native Rust tests.
+    required: false
+    default: wasm
   github-token:
     description: Token used to download the NYC polling data release asset.
     required: false
@@ -40,8 +44,35 @@ runs:
       shell: bash
       run: node posts/rrf_coverage_normalization/scripts/compile-rrf-coverage-normalization.ts
 
-    # prebuild (npm run check: tsc + biome) runs first via the npm lifecycle,
-    # then css:bundle + sitemap + the jiffies SSG write the site into docs/.
+    # Separate build/test entries let PRs save native test artifacts even when
+    # they restore a deployment's WASM-only Cargo cache.
+    - name: Cache Deep Field Cargo builds
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          pages/deep_field/detect/target
+        key: deep-field-cargo-v1-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('mise.toml', 'pages/deep_field/detect/**/Cargo.*', '!pages/deep_field/detect/target/**') }}-${{ inputs.cargo-cache-kind }}-${{ hashFiles('pages/deep_field/detect/**/*.rs', '!pages/deep_field/detect/target/**') }}
+        restore-keys: |
+          deep-field-cargo-v1-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('mise.toml', 'pages/deep_field/detect/**/Cargo.*', '!pages/deep_field/detect/target/**') }}-
+
+    # Keep this key identical to deploy.yml's cache for approved site artifacts.
+    # Never restore an older WASM binary for a different set of build inputs.
+    - name: Cache Deep Field WASM
+      id: wasm
+      uses: actions/cache@v4
+      with:
+        path: public/deep_field/detect
+        key: deep-field-wasm-v1-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('pages/deep_field/detect/**/*.rs', 'pages/deep_field/detect/**/Cargo.*', '!pages/deep_field/detect/target/**', 'mise.toml', 'package.json', '.github/actions/build-site/action.yml') }}
+
+    - name: Build Deep Field WASM
+      if: steps.wasm.outputs.cache-hit != 'true'
+      shell: bash
+      run: npm run wasm
+
+    # WASM is already restored or built. Run the same checks as prebuild, then
+    # assemble docs/ without invoking wasm-pack a second time.
     - name: Build site
       shell: bash
-      run: npm run build
+      run: npm run check && npm run build:site

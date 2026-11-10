@@ -4,6 +4,8 @@ pandoc = "3.10"
 typst = "0.15.0"
 python = "3.12"
 uv = "0.11"
+rust = { version = "1.92", targets = "wasm32-unknown-unknown" }
+"cargo:wasm-pack" = "0.15"
 
 # Thin wrappers over the package.json scripts so `mise run <name>` (and the
 # `mise <name>` shorthand) work. Each delegates to npm, so the script bodies
@@ -13,6 +15,10 @@ run = "npm run dev"
 
 [tasks.build]
 run = "npm run build"
+
+# Site-only assembly requires WASM outputs to be built or restored first.
+[tasks."build:site"]
+run = "npm run build:site"
 
 [tasks.papers]
 run = "npm run papers"
@@ -35,8 +41,23 @@ run = "npm run lint"
 [tasks.test]
 run = "npm test"
 
+[tasks."test:rust"]
+run = "npm run test:rust"
+
+[tasks."test:site"]
+run = "npm run test:site"
+
 [tasks."test:watch"]
 run = "npm run test:watch"
 
 [tasks."css:bundle"]
 run = "npm run css:bundle"
+
+# Build the Deep Field detector into public/deep_field/detect/ (detect.js and
+# detect_bg.wasm). npm's build and dev scripts run this first.
+[tasks.wasm]
+run = "npm run wasm"
+
+# Print SEP's objects for the bundled sample, the reference for the detector.
+[tasks.oracle]
+run = "uv run --with sep --with numpy --with pillow python pages/deep_field/detect/oracle/sep_oracle.py public/deep_field/potm2301a.png"
