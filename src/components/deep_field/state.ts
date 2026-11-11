@@ -98,10 +98,18 @@ export const P: Params = {
 	stretch: 2.5,
 	gamma: 1,
 	proj: "frustum",
+	// Offline checks against spectroscopic redshifts: SMACS 0723 (Noirot et al.
+	// 2022, ESA/Webb weic2209a, 152 matches) and CEERS in the Extended Groth
+	// Strip (DAWN JWST Archive v4.4 grade 3, ESA/Webb CEERS11, 186 matches).
+	// Rank correlation is about +0.54 and +0.56, with 30% of source pairs
+	// ordered wrongly. Colour wins in SMACS and size wins in CEERS, so cue 0.75
+	// is a blend that held on both. The mid range [0.4, 2.0] cuts median |dz|
+	// from 0.64 to 0.32 (SMACS, cluster excluded) and from 1.41 to 0.97 (CEERS).
+	// Far has few matches in SMACS (5), so it keeps its upper bound.
 	zNear: 0.0856,
-	zMid: [0.2, 1.0],
-	zFar: [1.0, 6.0],
-	cue: 0.5,
+	zMid: [0.4, 2.0],
+	zFar: [2.0, 6.0],
+	cue: 0.75,
 	bright: 1.15,
 	scale: 1,
 	sky: 0.3,
