@@ -39,6 +39,12 @@ describe("PR builds gate merge and the release reuses the approved build", () =>
 		expect(Object.keys(ci.jobs)).toContain("build");
 	});
 
+	it("ci.yml runs on pull requests against any base, so stacked PRs get CI", () => {
+		const pr = ci.on.pull_request as Record<string, unknown> | null;
+		expect(pr?.branches).toBeUndefined();
+		expect(pr?.["branches-ignore"]).toBeUndefined();
+	});
+
 	it("ci.yml builds through the shared composite action and runs tests", () => {
 		const s = steps(ci, "build");
 		expect(s.some((x) => x.uses === BUILD_ACTION)).toBe(true);
