@@ -1,9 +1,17 @@
 // Image loading (sample, file, drop, paste, random) and detection orchestration.
 
 import { runDetect } from "./detect-worker.ts";
-import { FEEDS, type FeedKey, pickRandom, unbytes } from "./random-feed.ts";
+import {
+	DEFAULT_FIELD,
+	type Field,
+	fieldSrc,
+	loadFields,
+	pickField,
+	SOURCES,
+	type SourceKey,
+} from "./fields.ts";
 import { buildAll } from "./scene.ts";
-import { $, P, S, SAMPLE_NAME, SAMPLE_SRC } from "./state.ts";
+import { $, P, S } from "./state.ts";
 
 const MAX_DIM = 1600;
 // Shared by file reads, network/image loads and worker requests: only the
@@ -16,28 +24,19 @@ export function setBusy(text: string, on: boolean) {
 	$("bar").hidden = !on;
 }
 
-interface Credit {
-	title: string;
-	url: string;
-	credit: string;
-	source: string;
-}
-let sampleCredit = "";
-function setCredit(isSample: boolean, credit?: Credit) {
+function setCredit(f: Field) {
 	const el = $("credit");
-	if (credit) {
-		el.textContent = "Image: ";
-		const a = document.createElement("a");
-		a.href = credit.url;
-		a.target = "_blank";
-		a.rel = "noopener";
-		a.textContent = credit.title;
-		el.append(a, `. ${credit.credit} (CC BY 4.0, ${credit.source}).`);
-		el.hidden = false;
-	} else {
-		el.innerHTML = sampleCredit;
-		el.hidden = !isSample;
-	}
+	el.textContent = "Image: ";
+	const a = document.createElement("a");
+	a.href = f.referenceUrl;
+	a.target = "_blank";
+	a.rel = "noopener";
+	a.textContent = f.title;
+	el.append(
+		a,
+		`. ${f.credit} (CC BY 4.0, ${f.source}). Redshifts: ${Object.keys(f.catalogs).join(", ")}.`,
+	);
+	el.hidden = false;
 }
 
 export function analyse(): Promise<void> {
@@ -66,29 +65,22 @@ function analyseCurrent(request: number): Promise<void> {
 export function loadImage(
 	src: string,
 	name: string,
-	isSample: boolean,
-	credit?: Credit,
+	field: Field,
 ): Promise<void> {
-	return loadImageCurrent(++generation, src, name, isSample, credit);
+	return loadImageCurrent(++generation, src, name, field);
 }
 
 function loadImageCurrent(
 	request: number,
 	src: string,
 	name: string,
-	isSample: boolean,
-	credit?: Credit,
+	field: Field,
 ): Promise<void> {
 	return new Promise<HTMLImageElement>((res, rej) => {
 		const im = new Image();
 		if (/^https?:/.test(src)) im.crossOrigin = "anonymous";
 		im.onload = () => res(im);
-		im.onerror = () =>
-			rej(
-				new Error(
-					"That file could not be read as an image. Try a PNG or JPEG.",
-				),
-			);
+		im.onerror = () => rej(new Error("That image could not be loaded."));
 		im.src = src;
 	})
 		.then((im) => {
@@ -109,13 +101,13 @@ function loadImageCurrent(
 			S.W = W;
 			S.H = H;
 			S.rgba = rgba;
-			S.sample = isSample;
+			S.field = field;
 			S.over.clear();
 			S.sel = null;
 			$("srcName").textContent = name;
 			$("dims").textContent =
 				`${W} × ${H} px${k < 1 ? ` (from ${im.naturalWidth})` : ""}`;
-			setCredit(isSample, credit);
+			setCredit(field);
 			return analyseCurrent(request);
 		})
 		.catch((e: Error) => {
@@ -124,35 +116,37 @@ function loadImageCurrent(
 		});
 }
 
+const fieldName = (f: Field, label: string) => `${f.title} · ${label}`;
+
 let randomBusy = false;
-async function loadRandom(key: FeedKey) {
+async function loadField(pick: (fields: Field[]) => Field) {
 	if (randomBusy) return;
 	const request = ++generation;
 	randomBusy = true;
-	const btns = [$("randJwst"), $("randHubble")] as HTMLButtonElement[];
+	const btns = [
+		$("loadSample"),
+		$("randJwst"),
+		$("randHubble"),
+	] as HTMLButtonElement[];
 	for (const b of btns) b.disabled = true;
 	try {
-		setBusy(`Fetching ${FEEDS[key].label} image list`, true);
-		const { rec, res } = await pickRandom(key);
+		setBusy("Loading catalog fields", true);
+		const field = pick(await loadFields());
 		if (request !== generation) return;
-		const title = unbytes(rec.Title);
-		setBusy(`Downloading ${title}`, true);
+		setBusy(`Downloading ${field.title}`, true);
 		await loadImageCurrent(
 			request,
-			res.URL,
-			`${title} · ${FEEDS[key].label}`,
-			false,
-			{
-				title,
-				url: rec.ReferenceURL ?? "",
-				credit: unbytes(rec.Credit),
-				source: FEEDS[key].name,
-			},
+			fieldSrc(field),
+			fieldName(
+				field,
+				field.source === SOURCES.hubble.name ? "Hubble" : "JWST",
+			),
+			field,
 		);
 	} catch (e) {
 		if (request !== generation) return;
 		setBusy(
-			`Could not load a ${FEEDS[key].label} image (${(e as Error).message || e}). Try again.`,
+			`Could not load an image (${(e as Error).message || e}). Try again.`,
 			false,
 		);
 		setTimeout(() => {
@@ -164,57 +158,17 @@ async function loadRandom(key: FeedKey) {
 	}
 }
 
-function openFile(f: File) {
-	const request = ++generation;
-	if (!/^image\//.test(f.type)) {
-		setBusy("That file is not an image. Open a PNG, JPEG or WebP.", false);
-		setTimeout(() => {
-			if (request === generation) setBusy("", false);
-		}, 2600);
-		return;
-	}
-	const r = new FileReader();
-	r.onload = () => {
-		if (request === generation)
-			void loadImageCurrent(request, r.result as string, f.name, false);
-	};
-	r.onerror = () => {
-		if (request === generation) setBusy("That file could not be read.", false);
-	};
-	r.readAsDataURL(f);
-}
+/** Load the default catalog field. */
+export const loadDefault = () =>
+	loadField(
+		(fields) => fields.find((f) => f.id === DEFAULT_FIELD) ?? fields[0],
+	);
 
 export function initLoader() {
-	sampleCredit = $("credit").innerHTML;
-	const stage = $("stage");
-	$<HTMLInputElement>("file").onchange = (e) => {
-		const input = e.target as HTMLInputElement;
-		const f = input.files?.[0];
-		if (f) openFile(f);
-		input.value = "";
-	};
-	$("openBtn").onclick = () => $("file").click();
-	$("loadSample").onclick = () => loadImage(SAMPLE_SRC, SAMPLE_NAME, true);
-	$("randJwst").onclick = () => loadRandom("webb");
-	$("randHubble").onclick = () => loadRandom("hubble");
-	stage.addEventListener("dragover", (e) => {
-		e.preventDefault();
-		$("drop").hidden = false;
-	});
-	stage.addEventListener("dragleave", () => {
-		$("drop").hidden = true;
-	});
-	stage.addEventListener("drop", (e) => {
-		e.preventDefault();
-		$("drop").hidden = true;
-		const f = e.dataTransfer?.files[0];
-		if (f) openFile(f);
-	});
-	window.addEventListener("paste", (e) => {
-		const it = [...(e.clipboardData?.items || [])].find((i) =>
-			i.type.startsWith("image/"),
-		);
-		const f = it?.getAsFile();
-		if (f) openFile(f);
-	});
+	$("loadSample").onclick = () => void loadDefault();
+	for (const [id, key] of [
+		["randJwst", "webb"],
+		["randHubble", "hubble"],
+	] as [string, SourceKey][])
+		$(id).onclick = () => void loadField((fields) => pickField(fields, key));
 }

@@ -1,5 +1,7 @@
 // Sprite atlas, sky plane, guides, markers and labels: everything drawn in the
 // volume, rebuilt from a detection (buildAll) or from parameters (update).
+
+import { matchCatalog } from "./catalog.ts";
 import { COS } from "./cosmology.ts";
 import {
 	dNear,
@@ -12,18 +14,7 @@ import {
 	zMax,
 } from "./placement.ts";
 import { scene, syncPivot } from "./rig.ts";
-import {
-	$,
-	COLORS,
-	css,
-	H0W,
-	hooks,
-	type Obj,
-	P,
-	S,
-	SAMPLE_NOTES,
-	view,
-} from "./state.ts";
+import { $, COLORS, css, H0W, hooks, type Obj, P, S, view } from "./state.ts";
 
 // biome-ignore lint/suspicious/noExplicitAny: three.js objects come from an untyped CDN global
 type Any = any;
@@ -96,14 +87,14 @@ export function buildAll() {
 	const { objects, labels, bg } = S.det;
 	view.W0 = (H0W * W) / H;
 	S.objs = objects.map((o) => ({ ...o, det: o.cls })) as Obj[];
-	// named objects in the sample
 	S.notes = [];
-	if (S.sample)
-		for (const n of SAMPLE_NOTES) {
-			const id = labels[Math.round(n.y * H) * W + Math.round(n.x * W)];
-			const o = id && S.objs[id - 1];
-			if (o) S.notes.push({ group: o.group, name: n.name });
+	if (S.field) {
+		const hits = matchCatalog(S.objs, S.field, W, H);
+		for (const o of S.objs) {
+			const m = hits.get(o.id);
+			if (m && o.cls !== "star") o.zCat = m.z;
 		}
+	}
 
 	for (const m of spriteMeshes) {
 		m.geometry.dispose();

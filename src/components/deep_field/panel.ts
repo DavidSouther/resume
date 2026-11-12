@@ -1,6 +1,7 @@
 // Rail panel: census, selection inspector and control wiring.
 
 import { resize } from "./camera.ts";
+import { countRedshiftSources } from "./catalog.ts";
 import { COS } from "./cosmology.ts";
 import { select } from "./picking.ts";
 import { update } from "./scene.ts";
@@ -36,6 +37,7 @@ function renderCensus() {
 		zr[o.cls][1] = Math.max(zr[o.cls][1], o.z);
 	}
 	n.near = groups.size;
+	const rz = countRedshiftSources(S.objs, S.over);
 	const f = (c: Cls) =>
 		c === "star"
 			? "Milky Way"
@@ -48,6 +50,12 @@ function renderCensus() {
 		(c) =>
 			`<dt><label for="show-${c}"><input type="checkbox" role="switch" id="show-${c}" ${P.show[c] ? "checked" : ""}><span class="dot" style="background:${COLORS[c]}"></span>${CLS_NAME[c]}</label></dt><dd><span class="zr">${f(c)}</span> <strong class="n">${n[c].toLocaleString()}</strong></dd>`,
 	).join("");
+	const zRow = (label: string, v: number, title: string) =>
+		`<dt title="${title}">${label}</dt><dd><strong class="n">${v.toLocaleString()}</strong></dd>`;
+	$("census").insertAdjacentHTML(
+		"beforeend",
+		`<dt class="zsrc-head">Redshift source</dt><dd></dd>${zRow("Catalog", rz.catalog, "Matched to a spectroscopic redshift")}${zRow("Estimated", rz.estimated, "Rank-order guess from size and colour")}${rz.manual ? zRow("Set by you", rz.manual, "Typed into the inspector") : ""}`,
+	);
 	for (const c of CLASSES)
 		$<HTMLInputElement>(`show-${c}`).onchange = (e) => {
 			P.show[c] = (e.target as HTMLInputElement).checked;
@@ -78,7 +86,11 @@ function renderSel() {
 		rows.push(
 			[
 				"Redshift",
-				(S.over.get(o.id)?.z != null ? "set " : "est. ") + o.z.toFixed(3),
+				(S.over.get(o.id)?.z != null
+					? "set "
+					: o.zCat != null
+						? "catalog "
+						: "est. ") + o.z.toFixed(3),
 			],
 			["Light-travel time", `${COS.lb(o.z).toFixed(2)} Gyr`],
 			["Comoving distance", `${COS.dc(o.z).toFixed(2)} Gly`],

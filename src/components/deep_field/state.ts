@@ -1,4 +1,5 @@
 // Shared page state: parameters (P), loaded-image state (S) and view geometry.
+import type { Field } from "./catalog.ts";
 export const CLASSES = ["star", "near", "mid", "far"] as const;
 export type Cls = (typeof CLASSES)[number];
 export const CLS_NAME: Record<Cls, string> = {
@@ -13,14 +14,6 @@ export const CLS_ONE: Record<Cls, string> = {
 	mid: "Mid galaxy",
 	far: "Far galaxy",
 };
-
-export const SAMPLE_SRC = "/deep_field/potm2301a.png";
-export const SAMPLE_NAME = "LEDA 2046648 field · JWST NIRCam";
-// Normalised pixel positions of named objects in the sample.
-export const SAMPLE_NOTES = [
-	{ x: 580 / 1280, y: 680 / 863, name: "LEDA 2046648" },
-	{ x: 658 / 1280, y: 778 / 863, name: "Companion" },
-];
 
 export type Proj = "pyramid" | "frustum" | "box";
 export type DepthMode = "comoving" | "lookback" | "log" | "linear";
@@ -56,6 +49,8 @@ export interface Obj {
 	theta: number;
 	spike: number;
 	zEst?: number;
+	/** Spectroscopic redshift from the catalog match, when there is one. */
+	zCat?: number;
 	z: number;
 	starRank?: number;
 	d: number;
@@ -103,10 +98,18 @@ export const P: Params = {
 	stretch: 2.5,
 	gamma: 1,
 	proj: "frustum",
+	// Offline checks against spectroscopic redshifts: SMACS 0723 (Noirot et al.
+	// 2022, ESA/Webb weic2209a, 152 matches) and CEERS in the Extended Groth
+	// Strip (DAWN JWST Archive v4.4 grade 3, ESA/Webb CEERS11, 186 matches).
+	// Rank correlation is about +0.54 and +0.56, with 30% of source pairs
+	// ordered wrongly. Colour wins in SMACS and size wins in CEERS, so cue 0.75
+	// is a blend that held on both. The mid range [0.4, 2.0] cuts median |dz|
+	// from 0.64 to 0.32 (SMACS, cluster excluded) and from 1.41 to 0.97 (CEERS).
+	// Far has few matches in SMACS (5), so it keeps its upper bound.
 	zNear: 0.0856,
-	zMid: [0.2, 1.0],
-	zFar: [1.0, 6.0],
-	cue: 0.5,
+	zMid: [0.4, 2.0],
+	zFar: [2.0, 6.0],
+	cue: 0.75,
 	bright: 1.15,
 	scale: 1,
 	sky: 0.3,
@@ -137,7 +140,7 @@ export const S = {
 	objs: [] as Obj[],
 	over: new Map<number, Override>(),
 	sel: null as Obj | null,
-	sample: true,
+	field: null as Field | null,
 	notes: [] as { group: number; name: string }[],
 };
 

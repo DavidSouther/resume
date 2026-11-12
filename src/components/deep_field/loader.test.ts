@@ -1,17 +1,29 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { Field } from "./catalog.ts";
 import { runDetect } from "./detect-worker.ts";
+import { loadFields } from "./fields.ts";
 import { analyse, initLoader, loadImage } from "./loader.ts";
-import { type FeedItem, pickRandom } from "./random-feed.ts";
 import { buildAll } from "./scene.ts";
 import { type Detection, S } from "./state.ts";
 
 vi.mock("./detect-worker.ts", () => ({ runDetect: vi.fn() }));
 vi.mock("./scene.ts", () => ({ buildAll: vi.fn() }));
-vi.mock("./random-feed.ts", async (original) => ({
-	...(await original<typeof import("./random-feed.ts")>()),
-	pickRandom: vi.fn(),
+vi.mock("./fields.ts", async (original) => ({
+	...(await original<typeof import("./fields.ts")>()),
+	loadFields: vi.fn(),
 }));
+const field = (id: string) =>
+	({
+		id,
+		source: "ESA/Webb",
+		title: id,
+		credit: "",
+		referenceUrl: "",
+		url: `${id}.png`,
+		catalogs: {},
+		sources: [],
+	}) as unknown as Field;
 
 const images: TestImage[] = [];
 class TestImage {
@@ -51,8 +63,6 @@ beforeEach(() => {
 		"dims",
 		"credit",
 		"stage",
-		"file",
-		"openBtn",
 		"loadSample",
 		"randJwst",
 		"randHubble",
@@ -74,7 +84,7 @@ beforeEach(() => {
 describe("latest image request wins", () => {
 	it("keeps the initial image load when detection is requested before pixels arrive", async () => {
 		vi.mocked(runDetect).mockResolvedValue(detection(10));
-		const loading = loadImage("first.png", "first", false);
+		const loading = loadImage("first.png", "first", field("a"));
 		await analyse();
 		await finishImage(0, 10);
 		await loading;
@@ -91,9 +101,9 @@ describe("latest image request wins", () => {
 		vi.mocked(runDetect)
 			.mockReturnValueOnce(old.promise)
 			.mockReturnValueOnce(latest.promise);
-		const first = loadImage("first.png", "first", false);
+		const first = loadImage("first.png", "first", field("a"));
 		await finishImage(0, 10);
-		const second = loadImage("second.png", "second", false);
+		const second = loadImage("second.png", "second", field("b"));
 		await finishImage(1, 20);
 		if (failure) old.reject(new Error("old failure"));
 		else old.resolve(detection(10));
@@ -112,8 +122,8 @@ describe("latest image request wins", () => {
 
 	it("ignores an earlier image that finishes downloading last", async () => {
 		vi.mocked(runDetect).mockResolvedValue(detection(20));
-		const first = loadImage("first.png", "first", false);
-		const second = loadImage("second.png", "second", false);
+		const first = loadImage("first.png", "first", field("a"));
+		const second = loadImage("second.png", "second", field("b"));
 		await finishImage(1, 20);
 		await second;
 		await finishImage(0, 10);
@@ -123,19 +133,16 @@ describe("latest image request wins", () => {
 		expect(runDetect).toHaveBeenCalledOnce();
 	});
 
-	it("ignores a random feed response after another image was requested", async () => {
-		const feed = Promise.withResolvers<FeedItem>();
-		vi.mocked(pickRandom).mockReturnValue(feed.promise);
+	it("ignores a field list response after another image was requested", async () => {
+		const list = Promise.withResolvers<Field[]>();
+		vi.mocked(loadFields).mockReturnValue(list.promise);
 		vi.mocked(runDetect).mockResolvedValue(detection(20));
 		initLoader();
 		document.getElementById("randJwst")?.click();
-		const latest = loadImage("local.png", "local", false);
+		const latest = loadImage("local.png", "local", field("c"));
 		await finishImage(0, 20);
 		await latest;
-		feed.resolve({
-			rec: { Title: "older random" },
-			res: { URL: "random.png", FileSize: 10, Dimensions: [1000, 1000] },
-		});
+		list.resolve([field("older")]);
 		await Promise.resolve();
 		expect(images).toHaveLength(1);
 		expect(document.getElementById("srcName")?.textContent).toBe("local");

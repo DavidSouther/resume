@@ -4,13 +4,19 @@ import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { parse } from "smol-toml";
 import { describe, expect, it } from "vitest";
+import {
+	type Field,
+	matchCatalog,
+} from "../../src/components/deep_field/catalog.ts";
+import { skyToUnit } from "../../src/components/deep_field/wcs.ts";
 
 // Feature: a visitor opens /deep_field/ and gets the Deep Field Volume page,
 // whose detector is a Rust/WASM port that agrees with SEP on the bundled image.
 //
 // Given the built site (docs/ is built once by vitest's global setup),
-// When the Deep Field page, its WASM detector, sample and allow-list are read,
-// Then the page ships them, the old static page is gone, the toolchain is pinned,
+// When the Deep Field page, its WASM detector and catalog fields are read,
+// Then the page ships them, every offered image has a known orientation and
+// catalog redshifts, the old static page is gone, the toolchain is pinned,
 // and the detector finds the same sources as SEP on the sample image.
 
 const ROOT = join(import.meta.dirname, "..", "..");
@@ -94,28 +100,52 @@ async function compareWithSep(...args: string[]) {
 }
 
 describe("Deep Field Volume page", () => {
-	it("ships the page, WASM detector, sample and allow-list", () => {
+	it("ships the page, WASM detector and catalog fields", () => {
 		// The page is built from pages/deep_field and the old static copy is gone.
 		const html = readFileSync(join(DOCS, "index.html"), "utf-8");
 		expect(html).toContain("Deep Field Volume");
-		for (const control of ["Random JWST", "Random Hubble", "JWST sample"]) {
+		for (const control of ["Random JWST", "Random Hubble", "Default field"]) {
 			expect(html).toContain(control);
 		}
 		expect(existsSync(join(ROOT, "public", "deep_field", "index.html"))).toBe(
 			false,
 		);
 
-		// The WASM module, sample image and allow-list reach the built site.
+		// The WASM module and the catalog fields reach the built site.
 		expect(existsSync(join(DOCS, "detect", "detect_bg.wasm"))).toBe(true);
-		expect(existsSync(join(DOCS, "potm2301a.png"))).toBe(true);
-		const allow = JSON.parse(
-			readFileSync(join(DOCS, "allowlist.json"), "utf-8"),
-		) as { id: string; source: string; title: string }[];
-		expect(allow.length).toBeGreaterThanOrEqual(10);
-		for (const entry of allow) {
-			expect(entry.id).toBeTruthy();
-			expect(["ESA/Webb", "ESA/Hubble"]).toContain(entry.source);
+		expect(existsSync(join(DOCS, "potm2507a.jpg"))).toBe(true);
+		expect(existsSync(join(DOCS, "allowlist.json"))).toBe(false);
+		const fields = JSON.parse(
+			readFileSync(join(DOCS, "fields.json"), "utf-8"),
+		) as Field[];
+		expect(fields.map((f) => f.id)).toContain("potm2507a");
+		for (const f of fields) {
+			expect(["ESA/Webb", "ESA/Hubble"]).toContain(f.source);
+			expect(f.wcs.dim[0]).toBeGreaterThan(0);
+			expect(f.sources.length).toBeGreaterThanOrEqual(3);
+			expect(Object.keys(f.catalogs).length).toBeGreaterThan(0);
+			// Every catalog source lies inside its image.
+			for (const [ra, dec, z] of f.sources) {
+				const [x, y] = skyToUnit(f.wcs, ra, dec);
+				expect(x).toBeGreaterThanOrEqual(0);
+				expect(x).toBeLessThan(1);
+				expect(y).toBeGreaterThanOrEqual(0);
+				expect(y).toBeLessThan(1);
+				expect(z).toBeGreaterThan(0);
+			}
 		}
+
+		// A detected source on a catalog position takes that redshift.
+		const f = fields[0];
+		const [ra, dec, z] = f.sources[0];
+		const [ux, uy] = skyToUnit(f.wcs, ra, dec);
+		const hit = matchCatalog(
+			[{ id: 1, cx: ux * 1600, cy: uy * 1600 * (f.wcs.dim[1] / f.wcs.dim[0]) }],
+			f,
+			1600,
+			Math.round((1600 * f.wcs.dim[1]) / f.wcs.dim[0]),
+		);
+		expect(hit.get(1)?.z).toBe(z);
 
 		// mise pins the toolchain that builds the WASM and runs the oracle.
 		const mise = parse(readFileSync(join(ROOT, "mise.toml"), "utf-8")) as {

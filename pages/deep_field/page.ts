@@ -84,6 +84,7 @@ html, body { height: 100%; margin: 0; padding: 0; max-width: none; overflow: hid
 .census { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; margin: 0; }
 .census dt, .census dd { margin: 0; }
 .census dd { text-align: right; font-variant-numeric: tabular-nums; }
+.census .zsrc-head { margin-top: 6px; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.7; }
 .census .zr { font-size: 0.7rem; opacity: 0.7; }
 .census .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; }
 #selDl { display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; margin: 0 0 8px; }
@@ -231,7 +232,7 @@ function buildStage(): HTMLDivElement {
 			h1(
 				{},
 				"Deep Field Volume",
-				small({ id: "srcName" }, "LEDA 2046648 field · JWST NIRCam"),
+				small({ id: "srcName" }, "Loading catalog field"),
 			),
 			hudButton(
 				"vHome",
@@ -260,10 +261,6 @@ function buildStage(): HTMLDivElement {
 			),
 			{ role: "status", "aria-live": "polite" },
 		),
-		div(
-			{ id: "drop", class: "drop", hidden: true },
-			"Drop an image to analyse",
-		),
 	);
 }
 
@@ -272,12 +269,6 @@ function sectionSummary(text: string): HTMLElement {
 }
 
 function buildRail(): HTMLElement {
-	const file = input({
-		id: "file",
-		type: "file",
-		accept: "image/*",
-		hidden: true,
-	});
 	const selCls = select(
 		{ id: "selCls" },
 		opt("star", "Star"),
@@ -307,15 +298,13 @@ function buildRail(): HTMLElement {
 			summary({}, "Image ", span({ id: "dims" })),
 			div(
 				{ class: "btns" },
-				button({ id: "openBtn" }, "Open image…"),
-				file,
-				button({ id: "loadSample" }, "JWST sample"),
+				button({ id: "loadSample" }, "Default field"),
 				button({ id: "randJwst", class: "secondary" }, "Random JWST"),
 				button({ id: "randHubble", class: "secondary" }, "Random Hubble"),
 			),
 			p(
 				{ class: "hint" },
-				"Any Hubble or JWST colour image works. You can also drop or paste one onto the view. Large images are analysed at 1600 px. Random buttons load a deep-field image.",
+				"Only images with a published sky orientation and spectroscopic redshifts for sources in view are offered (DAWN JWST Archive, DESI DR1, SDSS DR18). Large images are analysed at 1600 px.",
 			),
 		),
 		details(
@@ -361,12 +350,12 @@ function buildRail(): HTMLElement {
 			{},
 			sectionSummary("Redshift assignment"),
 			numberRow("zNear", "Near galaxies, z", "0", "2", "0.001", "0.0856"),
-			range("Mid galaxies, z", "zMid0", "0.2", "zMid1", "1.0", "20", "0.05"),
-			range("Far galaxies, z", "zFar0", "1.0", "zFar1", "6", "20", "0.1"),
-			slider("cue", "Depth cue: size ↔ colour", "0", "1", "0.05", "0.5"),
+			range("Mid galaxies, z", "zMid0", "0.4", "zMid1", "2.0", "20", "0.05"),
+			range("Far galaxies, z", "zFar0", "2.0", "zFar1", "6", "20", "0.1"),
+			slider("cue", "Depth cue: size ↔ colour", "0", "1", "0.05", "0.75"),
 			p(
 				{ class: "hint" },
-				"Within each class, smaller and redder sources are placed farther. These are rank-order estimates, not photometric redshifts.",
+				"Sources matched to a catalog spectroscopic redshift are placed at that redshift. These settings only place the rest: within each class, smaller and redder sources are placed farther. Those are rank-order guesses, not measurements. The defaults were checked against spectroscopic redshifts in two JWST fields (rank correlation about 0.55; about 3 in 10 source pairs come out in the wrong order).",
 			),
 		),
 		details(

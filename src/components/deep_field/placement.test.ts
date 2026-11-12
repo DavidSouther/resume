@@ -18,3 +18,32 @@ it("respects a fragment's zero redshift while unoverridden fragments follow thei
 	estimate();
 	expect(S.objs.map((o) => o.z)).toEqual([0.3, 0, 0.3]);
 });
+
+it("places a catalog-matched source at its catalog redshift and an override still wins", () => {
+	S.objs = [
+		{
+			id: 1,
+			group: 1,
+			det: "far",
+			fragment: false,
+			area: 10,
+			color: 0,
+			zCat: 3.2,
+		},
+		{
+			id: 2,
+			group: 2,
+			det: "far",
+			fragment: false,
+			area: 20,
+			color: 0,
+			zCat: 1.1,
+		},
+		{ id: 3, group: 3, det: "far", fragment: false, area: 30, color: 0 },
+	] as Obj[];
+	S.over.set(2, { z: 5 });
+	estimate();
+	expect(S.objs[0].z).toBe(3.2);
+	expect(S.objs[1].z).toBe(5);
+	expect(S.objs[2].z).toBeGreaterThanOrEqual(2);
+});

@@ -11,6 +11,7 @@ export function clsOf(o: Obj): Cls {
 export function zMax(): number {
 	let m = Math.max(P.zFar[1], P.zMid[1], P.zNear, 0.01);
 	for (const v of S.over.values()) if (v.z != null) m = Math.max(m, v.z);
+	for (const o of S.objs) if (o.zCat != null) m = Math.max(m, o.zCat);
 	return m;
 }
 
@@ -75,7 +76,7 @@ export function estimate() {
 	});
 	for (const o of S.objs) {
 		const ov = S.over.get(o.id);
-		o.z = ov && ov.z != null ? ov.z : (o.zEst as number);
+		o.z = ov && ov.z != null ? ov.z : (o.zCat ?? (o.zEst as number));
 		o.cls = clsOf(o);
 	}
 	// fragments follow their group's redshift
