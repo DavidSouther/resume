@@ -1,4 +1,5 @@
 // Shared page state: parameters (P), loaded-image state (S) and view geometry.
+import type { Field } from "./catalog.ts";
 export const CLASSES = ["star", "near", "mid", "far"] as const;
 export type Cls = (typeof CLASSES)[number];
 export const CLS_NAME: Record<Cls, string> = {
@@ -13,14 +14,6 @@ export const CLS_ONE: Record<Cls, string> = {
 	mid: "Mid galaxy",
 	far: "Far galaxy",
 };
-
-export const SAMPLE_SRC = "/deep_field/potm2301a.png";
-export const SAMPLE_NAME = "LEDA 2046648 field · JWST NIRCam";
-// Normalised pixel positions of named objects in the sample.
-export const SAMPLE_NOTES = [
-	{ x: 580 / 1280, y: 680 / 863, name: "LEDA 2046648" },
-	{ x: 658 / 1280, y: 778 / 863, name: "Companion" },
-];
 
 export type Proj = "pyramid" | "frustum" | "box";
 export type DepthMode = "comoving" | "lookback" | "log" | "linear";
@@ -56,6 +49,8 @@ export interface Obj {
 	theta: number;
 	spike: number;
 	zEst?: number;
+	/** Spectroscopic redshift from the catalog match, when there is one. */
+	zCat?: number;
 	z: number;
 	starRank?: number;
 	d: number;
@@ -137,7 +132,7 @@ export const S = {
 	objs: [] as Obj[],
 	over: new Map<number, Override>(),
 	sel: null as Obj | null,
-	sample: true,
+	field: null as Field | null,
 	notes: [] as { group: number; name: string }[],
 };
 
