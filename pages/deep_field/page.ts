@@ -391,23 +391,37 @@ function buildRail(): HTMLElement {
 			sectionSummary("Method"),
 			p(
 				{ class: "hint" },
-				"Sources are found with a Rust detector compiled to WebAssembly, following the SExtractor method: a sky background mesh, matched-filter thresholding, 8-connected extraction and multi-threshold deblending.",
+				"Sources are found with a Rust detector compiled to WebAssembly, following the SExtractor method (",
+				a(
+					{
+						href: "https://doi.org/10.1051/aas:1996164",
+						target: "_blank",
+						rel: "noopener",
+					},
+					"Bertin & Arnouts 1996",
+				),
+				") as implemented in ",
+				a(
+					{
+						href: "https://github.com/sep-developers/sep",
+						target: "_blank",
+						rel: "noopener",
+					},
+					"SEP",
+				),
+				": a sky background mesh, matched-filter thresholding, 8-connected extraction and multi-threshold deblending.",
 			),
 			p(
 				{ class: "hint" },
-				"Stars are found by their diffraction spikes. For each bright source, the light along both opposite rays at every angle is measured; the angles shared by several sources are the telescope's spike pattern, and a source is a star when it shows sharp peaks at those angles.",
+				"Stars are found by their diffraction spikes. Four spikes at 0° and 90° indicate Hubble, while six bright spikes 60° apart (30°, 90° and 150°), with two fainter ones at 0°, indicate JWST. Rotating the image by the telescope's roll rotates the pattern, so the angles are not fixed: for each bright source, the light along both opposite rays at every angle is measured, the angles shared by several sources are the exposure's spike pattern, and a source is a star when it shows sharp peaks at those angles.",
 			),
 			p(
 				{ class: "hint" },
-				"Near galaxies are large and clearly bluer than the field median: in an infrared composite, redshift pushes light into the redder filters. Pieces of a near galaxy cut off by deblending join its group. Mid and far galaxies are split by isophotal area.",
-			),
-			p(
-				{ class: "hint" },
-				"Sprites are the original pixels of each source, sky-subtracted and masked to its own footprint, drawn additively. Distances use flat ΛCDM with H₀ = 67.7, Ωm = 0.31.",
+				"Sprites are the original pixels of each sourc and the sky is subtracted and masked. Distances use flat ΛCDM with H₀ = 67.7, Ωm = 0.31.",
 			),
 			p(
 				{ class: "hint", id: "credit" },
-				"Sample image: ",
+				"Image: ",
 				a(
 					{
 						href: "https://esawebb.org/images/potm2301a/",
