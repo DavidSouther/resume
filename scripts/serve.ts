@@ -41,7 +41,7 @@ if (values.watch) {
 	// public/global.css (css:bundle) and public/sitemap.xml (sitemap) are build
 	// outputs written back into public/. Excluding them stops the build from
 	// retriggering itself in an endless rebuild + reload loop. The Deep Field
-	// WASM build (npm run wasm) writes the same way: wasm-pack into
+	// separate WASM build (mise run wasm) writes the same way: wasm-pack into
 	// public/deep_field/detect/ and cargo into pages/deep_field/detect/target/.
 	const generated = new Set([
 		join(cwd(), "public", "global.css"),

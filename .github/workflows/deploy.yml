@@ -79,21 +79,23 @@ jobs:
         if: steps.reuse.outputs.hit != 'true'
         uses: ./.github/actions/build-site
 
-      # A PR cache belongs to its merge ref and cannot be read from main. Seed
-      # main's WASM cache from the approved artifact even when no rebuild runs.
-      # Keep this key identical to build-site/action.yml's WASM cache key.
-      - name: Cache approved Deep Field WASM
-        if: steps.reuse.outputs.hit == 'true'
-        uses: actions/cache@v4
-        with:
-          path: public/deep_field/detect
-          key: deep-field-wasm-v1-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('pages/deep_field/detect/**/*.rs', 'pages/deep_field/detect/**/Cargo.*', '!pages/deep_field/detect/target/**', 'mise.toml', 'package.json', '.github/actions/build-site/action.yml') }}
-
-      - name: Copy approved Deep Field WASM into cache
-        if: steps.reuse.outputs.hit == 'true'
+      # A reused site artifact can contain an older published WASM build.
+      - name: Fetch current Deep Field WASM
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          mkdir -p public/deep_field/detect
-          cp -a docs/deep_field/detect/. public/deep_field/detect/
+          gh release download deep-field-wasm --repo "$GITHUB_REPOSITORY" \
+            --pattern deep-field-wasm.tar.gz --dir "$RUNNER_TEMP" --clobber
+          rm -rf docs/deep_field/detect
+          mkdir -p docs/deep_field/detect
+          tar -xzf "$RUNNER_TEMP/deep-field-wasm.tar.gz" -C docs/deep_field/detect
+          expected=$(git ls-tree -r HEAD -- pages/deep_field/detect mise.toml package.json | sha256sum | cut -d ' ' -f 1)
+          actual=$(cat docs/deep_field/detect/.source-hash)
+          if [ "$actual" != "$expected" ]; then
+            echo "Deep Field WASM is not built from this commit's detector sources; waiting for its workflow to publish and redeploy." >&2
+            exit 1
+          fi
+          rm docs/deep_field/detect/.source-hash
 
       - uses: actions/configure-pages@v5
 

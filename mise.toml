@@ -12,16 +12,14 @@ rust = { version = "1.92", targets = "wasm32-unknown-unknown" }
 # wasm-pack runs wasm-opt from PATH when present.
 "ubi:WebAssembly/binaryen" = "version_123"
 
-# Thin wrappers over the package.json scripts so `mise run <name>` (and the
-# `mise <name>` shorthand) work. Each delegates to npm, so the script bodies
-# stay single-sourced and npm lifecycle hooks (prebuild, posttest) still fire.
+# Site tasks delegate to npm; Rust commands are owned by mise.
 [tasks.dev]
 run = "npm run dev"
 
 [tasks.build]
 run = "npm run build"
 
-# Site-only assembly requires WASM outputs to be built or restored first.
+# Site assembly copies any previously built or restored WASM outputs.
 [tasks."build:site"]
 run = "npm run build:site"
 
@@ -47,7 +45,10 @@ run = "npm run lint"
 run = "npm test"
 
 [tasks."test:rust"]
-run = "npm run test:rust"
+run = [
+  "cargo test --locked --workspace --manifest-path pages/deep_field/detect/Cargo.toml",
+  "cargo test --locked --manifest-path pages/deep_field/detect/Cargo.toml -p deep-field-core --no-default-features",
+]
 
 [tasks."test:site"]
 run = "npm run test:site"
@@ -59,9 +60,9 @@ run = "npm run test:watch"
 run = "npm run css:bundle"
 
 # Build the Deep Field detector into public/deep_field/detect/ (detect.js and
-# detect_bg.wasm). npm's build and dev scripts run this first.
+# detect_bg.wasm). Run explicitly when working on the detector.
 [tasks.wasm]
-run = "npm run wasm"
+run = "wasm-pack build pages/deep_field/detect --target web --release --no-pack --out-dir ../../../public/deep_field/detect --out-name detect"
 
 # Print SEP's objects for the bundled sample, the reference for the detector.
 [tasks.oracle]
