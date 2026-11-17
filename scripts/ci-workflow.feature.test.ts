@@ -53,14 +53,34 @@ describe("PR builds gate merge and the release reuses the approved build", () =>
 		);
 		expect(site?.run).toContain("pages/deep_field/deep-field.feature.test.ts");
 		expect(site?.if, "general site tests run on every PR").toBeUndefined();
-		for (const command of [
-			"npm run test:rust",
+	});
+
+	it("runs Deep Field tests and builds separately for relevant changes", () => {
+		const deepField = workflow(".github/workflows/deep-field.yml");
+		const pr = deepField.on.pull_request as { paths: string[] };
+		expect(pr.paths).toContain("pages/deep_field/**");
+		expect(pr.paths).toContain(".github/workflows/deep-field.yml");
+		const commands = steps(deepField, "test").map((step) => step.run);
+		expect(commands).toContain("mise run wasm");
+		expect(commands).toContain("mise run test:rust");
+		expect(commands).toContain(
 			"npm run test:site -- pages/deep_field/deep-field.feature.test.ts",
-		]) {
-			const test = s.find((x) => x.run === command);
-			expect(test, command).toBeDefined();
-			expect(test?.if).toBe("steps.deep-field.outputs.changed == 'true'");
+		);
+		expect(steps(ci, "build").map((step) => step.run)).not.toContain(
+			"mise run wasm",
+		);
+	});
+
+	it("keeps general npm build and test commands independent of Rust", () => {
+		const pkg = JSON.parse(load("package.json")) as {
+			scripts: Record<string, string>;
+		};
+		for (const name of ["dev", "build", "build:site", "test"]) {
+			expect(pkg.scripts[name]).not.toMatch(/wasm|test:rust|cargo/);
 		}
+		expect(pkg.scripts.test).toContain(
+			"--exclude pages/deep_field/deep-field.feature.test.ts",
+		);
 	});
 
 	it("ci.yml uploads docs as a tree-hash keyed artifact with bounded retention", () => {
@@ -85,6 +105,26 @@ describe("PR builds gate merge and the release reuses the approved build", () =>
 		expect(load(".github/workflows/deploy.yml")).not.toContain(
 			"CENSUS_API_KEY",
 		);
+	});
+
+	it("deploys only a WASM bundle built from the checked-out detector sources", () => {
+		const deepField = workflow(".github/workflows/deep-field.yml");
+		const packageStep = steps(deepField, "test").find(
+			(x) => x.name === "Package Deep Field WASM",
+		);
+		const fetch = steps(deploy, "build-deploy").find(
+			(x) => x.name === "Fetch current Deep Field WASM",
+		);
+		const sourceHash =
+			"git ls-tree -r HEAD -- pages/deep_field/detect mise.toml package.json | sha256sum";
+		expect(packageStep?.run).toContain(sourceHash);
+		expect(fetch?.run).toContain(sourceHash);
+		expect(fetch?.run).toContain('"$actual" != "$expected"');
+		expect(
+			steps(deepField, "publish").some((x) =>
+				x.run?.includes("gh workflow run deploy.yml"),
+			),
+		).toBe(true);
 	});
 
 	it("deploy.yml rebuilds on dispatch instead of reusing an artifact", () => {
