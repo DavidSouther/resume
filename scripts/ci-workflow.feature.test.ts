@@ -107,7 +107,7 @@ describe("PR builds gate merge and the release reuses the approved build", () =>
 		);
 	});
 
-	it("deploys only a WASM bundle built from the checked-out detector sources", () => {
+	it("deploys even when the Deep Field WASM is missing or built from older sources, and Deep Field redeploys when it catches up", () => {
 		const deepField = workflow(".github/workflows/deep-field.yml");
 		const packageStep = steps(deepField, "test").find(
 			(x) => x.name === "Package Deep Field WASM",
@@ -119,7 +119,11 @@ describe("PR builds gate merge and the release reuses the approved build", () =>
 			"git ls-tree -r HEAD -- pages/deep_field/detect mise.toml package.json | sha256sum";
 		expect(packageStep?.run).toContain(sourceHash);
 		expect(fetch?.run).toContain(sourceHash);
+		// A stale or missing bundle is a warning, never a failed deploy.
 		expect(fetch?.run).toContain('"$actual" != "$expected"');
+		expect(fetch?.run).toContain("::warning::");
+		expect(fetch?.run).not.toMatch(/exit\s+[1-9]/);
+		expect(fetch).not.toHaveProperty("continue-on-error");
 		expect(
 			steps(deepField, "publish").some((x) =>
 				x.run?.includes("gh workflow run deploy.yml"),
