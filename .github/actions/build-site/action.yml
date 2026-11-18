@@ -8,7 +8,7 @@ inputs:
   mise-env:
     description: >
       MISE_ENV profiles to install on top of the Node-only base mise.toml
-      (comma separated, e.g. "deepfield"). The site build itself needs none.
+      (comma separated, e.g. "deepfield").
     required: false
     default: ""
   fetch-deep-field:
@@ -23,7 +23,6 @@ inputs:
 runs:
   using: composite
   steps:
-    # Provision Node from mise.toml, plus any profiles the caller asks for.
     - uses: jdx/mise-action@v2
       env:
         MISE_ENV: ${{ inputs.mise-env }}
@@ -48,9 +47,9 @@ runs:
         --dir public/nyc_polling
         --clobber
 
-    # The RRF preprint PDF is compiled by papers.yml (pandoc and typst, MISE_ENV
-    # =papers) and published to the rrf-preprint release. A missing release is a
-    # warning, not a failure: papers.yml redeploys once it publishes.
+    # The preprint PDF comes from the rrf-preprint release that papers.yml
+    # builds. A missing release is a warning because papers.yml redeploys once
+    # it publishes.
     - name: Fetch RRF preprint
       shell: bash
       env:

@@ -1,9 +1,7 @@
-# Base profile: Node only. Extra tools live in profiles selected with MISE_ENV
-# (comma separated, for example MISE_ENV=papers,deepfield):
-#   mise.papers.toml    pandoc, typst            RRF preprint (npm run papers)
-#   mise.deepfield.toml rust, wasm, uv           mise run wasm / test:rust / oracle
-#   mise.stats.toml     uv                       nyc_polling, election_results
-# uv downloads Python itself from each script's PEP 723 requires-python.
+# Node only, so site builds install nothing heavy. Other tools are opt-in
+# profiles in mise.<name>.toml, selected with MISE_ENV (comma separated).
+# uv downloads Python itself from the PEP 723 requires-python header of each
+# script that has one.
 [tools]
 node = "24"
 

@@ -81,6 +81,10 @@ describe("PR builds gate merge and the release reuses the approved build", () =>
 		expect(pkg.scripts.test).toContain(
 			"--exclude pages/deep_field/deep-field.feature.test.ts",
 		);
+		// The paper compile test needs pandoc and typst, which only papers.yml has.
+		expect(pkg.scripts.test).toContain(
+			"--exclude scripts/compile-paper.feature.test.ts",
+		);
 	});
 
 	it("ci.yml uploads docs as a tree-hash keyed artifact with bounded retention", () => {
@@ -131,7 +135,7 @@ describe("PR builds gate merge and the release reuses the approved build", () =>
 		).toBe(true);
 	});
 
-	it("site builds install no papers or Rust tools and fetch the preprint from a release", () => {
+	it("site builds add no mise profile and fetch the preprint from a release", () => {
 		const action = parse(load(".github/actions/build-site/action.yml")) as {
 			inputs: Record<string, { default?: string }>;
 			runs: { steps: (Step & { env?: Record<string, string> })[] };
@@ -143,6 +147,7 @@ describe("PR builds gate merge and the release reuses the approved build", () =>
 		expect(mise?.env?.MISE_ENV).toContain("inputs.mise-env");
 		const text = JSON.stringify(action.runs.steps);
 		expect(text).toContain("gh release download rrf-preprint");
+		// Site builds must not compile the paper in process.
 		expect(text).not.toContain("compile-rrf-coverage-normalization");
 		const warn = action.runs.steps.find((x) => x.name === "Fetch RRF preprint");
 		expect(warn?.run).toContain("::warning::");
@@ -156,6 +161,9 @@ describe("PR builds gate merge and the release reuses the approved build", () =>
 		).toBe("papers");
 		expect(steps(papers, "build").map((x) => x.run)).toContain(
 			"mise run papers",
+		);
+		expect(steps(papers, "build").map((x) => x.run)).toContain(
+			"npm run test:site -- scripts/compile-paper.feature.test.ts",
 		);
 		expect(
 			steps(papers, "publish").some((x) =>

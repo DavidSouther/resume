@@ -1,4 +1,4 @@
-# Profile "deepfield": MISE_ENV=deepfield
+# Builds the Deep Field WASM and runs its SEP oracle.
 [tools]
 uv = "0.11"
 rust = { version = "1.92", targets = "wasm32-unknown-unknown" }

@@ -102,8 +102,9 @@ jobs:
           fi
           rm -f docs/deep_field/detect/.source-hash
 
-      # Same for the RRF preprint: a reused site artifact can hold an older PDF.
-      # Missing is a warning; papers.yml redeploys when it publishes.
+      # A reused site artifact can hold an older preprint PDF, so overlay the
+      # current release. Missing is a warning; papers.yml redeploys when it
+      # publishes.
       - name: Fetch current RRF preprint
         env:
           GH_TOKEN: ${{ github.token }}

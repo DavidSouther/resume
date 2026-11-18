@@ -1,15 +1,13 @@
 name: Papers
 
-# Compiles the RRF preprint (pandoc + typst, MISE_ENV=papers) and publishes the
-# PDF to the rrf-preprint release. build-site and deploy.yml download it from
-# there, so site builds need neither pandoc nor typst. Pull requests only prove
-# the paper still compiles.
+# Sole producer of the RRF preprint PDF, published to the rrf-preprint release.
+# Pull requests only prove the paper still compiles; main publishes and redeploys.
 
 on:
   pull_request:
     paths:
       - posts/rrf_coverage_normalization/**
-      - scripts/compile-paper.ts
+      - scripts/compile-paper*
       - mise.toml
       - mise.papers.toml
       - .github/workflows/papers.yml
@@ -17,7 +15,7 @@ on:
     branches: [main]
     paths:
       - posts/rrf_coverage_normalization/**
-      - scripts/compile-paper.ts
+      - scripts/compile-paper*
       - mise.toml
       - mise.papers.toml
       - .github/workflows/papers.yml
@@ -44,6 +42,13 @@ jobs:
 
       - name: Build RRF preprint
         run: mise run papers
+
+      # Compiles the paper end to end, so it needs pandoc and typst. The site
+      # test run excludes it.
+      - name: Test paper compiler
+        env:
+          SKIP_SITE_BUILD: "1"
+        run: npm run test:site -- scripts/compile-paper.feature.test.ts
 
       - uses: actions/upload-artifact@v4
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
