@@ -2,7 +2,7 @@ This is a [Next.js](https://nextjs.org/) project powering [davidsouther.com](dav
 
 ## Setup
 
-- This project uses [mise](https://mise.jdx.dev/) to provision Node (>=24) from `mise.toml`. After cloning, run `mise trust && mise install` once so `node` resolves without NVM.
+- This project uses [mise](https://mise.jdx.dev/) to provision Node (>=24) from `mise.toml`. After cloning, run `mise trust && mise install` once so `node` resolves without NVM. Other tools are opt-in profiles selected with `MISE_ENV` (comma separated): `papers` (pandoc, typst), `deepfield` (Rust, WASM, uv) and `stats` (uv). For example `MISE_ENV=deepfield mise install && mise run wasm`.
 - The package.json scripts are mirrored as mise tasks, so `mise check`, `mise test`, `mise dev`, `mise build`, etc. each run the matching `npm run <script>`.
 
 ## Development

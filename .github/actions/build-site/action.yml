@@ -5,6 +5,12 @@ description: >
   way. The caller checks the repository out first.
 
 inputs:
+  mise-env:
+    description: >
+      MISE_ENV profiles to install on top of the Node-only base mise.toml
+      (comma separated, e.g. "deepfield"). The site build itself needs none.
+    required: false
+    default: ""
   fetch-deep-field:
     description: Download the published Deep Field WASM before building.
     required: false
@@ -17,8 +23,10 @@ inputs:
 runs:
   using: composite
   steps:
-    # Provision Node and the paper compiler tools from mise.toml.
+    # Provision Node from mise.toml, plus any profiles the caller asks for.
     - uses: jdx/mise-action@v2
+      env:
+        MISE_ENV: ${{ inputs.mise-env }}
 
     - name: Install dependencies
       shell: bash
@@ -40,9 +48,18 @@ runs:
         --dir public/nyc_polling
         --clobber
 
-    - name: Build RRF preprint
+    # The RRF preprint PDF is compiled by papers.yml (pandoc and typst, MISE_ENV
+    # =papers) and published to the rrf-preprint release. A missing release is a
+    # warning, not a failure: papers.yml redeploys once it publishes.
+    - name: Fetch RRF preprint
       shell: bash
-      run: node posts/rrf_coverage_normalization/scripts/compile-rrf-coverage-normalization.ts
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+      run: |
+        mkdir -p public/papers
+        gh release download rrf-preprint --repo "$GITHUB_REPOSITORY" \
+          --pattern rrf-coverage-normalization.pdf --dir public/papers --clobber \
+          || echo "::warning::No rrf-preprint release to fetch; building without the RRF preprint PDF."
 
     - name: Fetch Deep Field WASM
       if: inputs.fetch-deep-field == 'true'

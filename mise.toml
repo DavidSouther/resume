@@ -1,16 +1,11 @@
+# Base profile: Node only. Extra tools live in profiles selected with MISE_ENV
+# (comma separated, for example MISE_ENV=papers,deepfield):
+#   mise.papers.toml    pandoc, typst            RRF preprint (npm run papers)
+#   mise.deepfield.toml rust, wasm, uv           mise run wasm / test:rust / oracle
+#   mise.stats.toml     uv                       nyc_polling, election_results
+# uv downloads Python itself from each script's PEP 723 requires-python.
 [tools]
 node = "24"
-pandoc = "3.10"
-typst = "0.15.0"
-python = "3.12"
-uv = "0.11"
-rust = { version = "1.92", targets = "wasm32-unknown-unknown" }
-"cargo:wasm-pack" = "0.15"
-# Must equal the wasm-bindgen version in pages/deep_field/detect/Cargo.lock;
-# wasm-pack runs whichever wasm-bindgen is on PATH.
-"cargo:wasm-bindgen-cli" = "0.2.130"
-# wasm-pack runs wasm-opt from PATH when present.
-"ubi:WebAssembly/binaryen" = "version_123"
 
 # Site tasks delegate to npm; Rust commands are owned by mise.
 [tasks.dev]
