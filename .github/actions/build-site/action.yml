@@ -58,3 +58,13 @@ runs:
     - name: Build site
       shell: bash
       run: npm run check && npm run build:site
+
+    # resume.pdf and cv.pdf are printed from the built pages (so they follow
+    # src/resume.toml) into docs/, which ci.yml uploads and deploy.yml reuses.
+    - name: Install Chromium for PDFs
+      shell: bash
+      run: npx playwright install --with-deps chromium
+
+    - name: Build resume and CV PDFs
+      shell: bash
+      run: npm run pdfs

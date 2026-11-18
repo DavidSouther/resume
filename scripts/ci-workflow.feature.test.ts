@@ -163,3 +163,28 @@ describe("PR builds gate merge and the release reuses the approved build", () =>
 		expect(action.runs.steps.length).toBeGreaterThan(0);
 	});
 });
+
+describe("the shared build action prints the resume and CV PDFs", () => {
+	const action = parse(load(".github/actions/build-site/action.yml")) as {
+		runs: { steps: Step[] };
+	};
+	const runs = action.runs.steps.map((x) => x.run ?? "");
+
+	it("installs Chromium and runs the PDF build after the site build", () => {
+		const chromium = runs.findIndex((r) => r.includes("playwright install"));
+		const pdfs = runs.findIndex((r) => r.includes("npm run pdfs"));
+		const site = runs.findIndex((r) => r.includes("npm run build:site"));
+		expect(chromium).toBeGreaterThan(site);
+		expect(pdfs).toBeGreaterThan(chromium);
+	});
+
+	it("the pdfs script prints / and /cv/ into docs/", () => {
+		const pkg = JSON.parse(load("package.json")) as {
+			scripts: Record<string, string>;
+		};
+		expect(pkg.scripts.pdfs).toBe("node scripts/build-pdfs.ts");
+		const script = load("scripts/build-pdfs.ts");
+		expect(script).toContain('"resume.pdf"');
+		expect(script).toContain('"cv.pdf"');
+	});
+});

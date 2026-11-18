@@ -23,6 +23,10 @@ run = "npm run build"
 [tasks."build:site"]
 run = "npm run build:site"
 
+# Print docs/resume.pdf and docs/cv.pdf from the built site (run build:site first).
+[tasks.pdfs]
+run = "npm run pdfs"
+
 [tasks.papers]
 run = "npm run papers"
 

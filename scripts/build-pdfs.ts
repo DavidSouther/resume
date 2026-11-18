@@ -1,0 +1,56 @@
+import { copyFileSync } from "node:fs";
+import { join } from "node:path";
+import { cwd } from "node:process";
+import { makeServer } from "@davidsouther/jiffies/server/http/index.ts";
+import { chromium } from "playwright";
+
+// Prints the built resume (/) and academic CV (/cv/) to PDF with Chromium, using
+// each page's own print stylesheet, so the PDFs track src/resume.toml instead of
+// being committed binaries. Run after `npm run build:site`; writes into docs/.
+//
+// `David_Souther_CV.pdf` is kept as a copy of cv.pdf so old links keep working.
+// Set CHROMIUM_PATH to use a browser other than Playwright's own download.
+
+export const PDFS = [
+	{ route: "/", file: "resume.pdf" },
+	{ route: "/cv/", file: "cv.pdf" },
+] as const;
+export const LEGACY_CV = "David_Souther_CV.pdf";
+
+export async function buildPdfs(root = join(cwd(), "docs")): Promise<string[]> {
+	const server = await makeServer({ root });
+	await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+	const address = server.address();
+	if (!address || typeof address === "string") throw new Error("no port");
+	const origin = `http://127.0.0.1:${address.port}`;
+
+	const browser = await chromium.launch({
+		executablePath: process.env.CHROMIUM_PATH || undefined,
+	});
+	try {
+		const page = await browser.newPage();
+		await page.emulateMedia({ media: "print" });
+		for (const { route, file } of PDFS) {
+			await page.goto(origin + route, { waitUntil: "networkidle" });
+			await page.pdf({
+				path: join(root, file),
+				preferCSSPageSize: true,
+				printBackground: false,
+			});
+		}
+	} finally {
+		await browser.close();
+		server.close();
+	}
+	copyFileSync(join(root, "cv.pdf"), join(root, LEGACY_CV));
+	return [...PDFS.map(({ file }) => file), LEGACY_CV];
+}
+
+if (import.meta.main) {
+	try {
+		for (const file of await buildPdfs()) console.log(`docs/${file}`);
+	} catch (error) {
+		console.error(error instanceof Error ? error.message : error);
+		process.exit(1);
+	}
+}

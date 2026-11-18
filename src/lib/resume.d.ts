@@ -12,6 +12,7 @@ export interface ResumeData {
 		softSkills?: Skill[];
 		studies?: Study[];
 	};
+	academic?: AcademicData;
 }
 
 export interface Settings {
@@ -206,4 +207,28 @@ export interface Contact {
 	phoneNumbers?: Array<{ countryCode: number; number: string }>;
 	contactMails?: string[];
 	publicProfiles?: Link[];
+}
+
+/** Academic-only CV material, an extension to the MAC schema. Bodies are Markdown. */
+export interface AcademicData {
+	/** Screen-only note shown above the CV, never printed. */
+	note?: string;
+	footer?: string;
+	website?: string;
+	interests: { title: string; body: string }[];
+	teaching: CvEntry[];
+	curriculum: CvEntry[];
+	mentorship: CvEntry[];
+	software: CvEntry[];
+	service: CvEntry[];
+	publications: { heading: string; body: string }[];
+	talks: { body: string }[];
+	competencies: { label: string; items: string }[];
+}
+
+/** `title` is Markdown (already bold); `meta` follows the em dash on the first line. */
+export interface CvEntry {
+	title: string;
+	meta?: string;
+	body: string;
 }
