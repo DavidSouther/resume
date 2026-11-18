@@ -1,5 +1,5 @@
-//! Kernel view observers. A separate observer *process* dumps `/proc/<pid>/task/<tid>/...` of the
-//! benchmark while it runs, so the observer is never one of the benchmark's own tasks.
+//! A separate observer process reads `/proc/<pid>/task/<tid>/...` while the benchmark runs.
+//! This keeps the observer out of the benchmark's tasks.
 
 use std::fs;
 use std::sync::OnceLock;

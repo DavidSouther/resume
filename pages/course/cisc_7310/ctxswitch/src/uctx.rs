@@ -1,13 +1,12 @@
 //! Safe wrappers around glibc's `ucontext` family, ported from the `umcontext` examples.
 //!
-//! Model. A [`Context`] is a heap allocated `ucontext_t` at a fixed address. It is *ready* while it
-//! holds a state that can be switched to exactly once: after `makecontext`, or after it was the save
-//! side of a [`Context::swap`]. Switching to a ready context consumes the state, so a stale frame
-//! is never resumed from safe code.
+//! A [`Context`] owns a heap-allocated `ucontext_t` at a fixed address. It is *ready* after
+//! `makecontext` or after saving state in [`Context::swap`]. A ready state can be entered once;
+//! switching to it consumes the state. Safe code cannot resume a stale frame.
 //!
-//! Two things cannot be safe and are `unsafe` with stated contracts: [`Context::bind_linked`] (a
-//! `uc_link` successor is entered by glibc without our bookkeeping) and [`run_twice`] together
-//! with [`Context::resume`] (`getcontext` returning twice, kept out of Rust's sight in assembly).
+//! [`Context::bind_linked`] is unsafe because glibc enters a `uc_link` successor without updating
+//! our bookkeeping. [`run_twice`] and [`Context::resume`] are unsafe because `getcontext` can
+//! return twice; assembly keeps the second return out of Rust's sight.
 
 use std::arch::global_asm;
 use std::cell::{Cell, RefCell, UnsafeCell};

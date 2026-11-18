@@ -1,5 +1,5 @@
-//! The user-level mechanisms: two flows of control in one thread, no kernel involvement beyond
-//! whatever the switch itself calls (glibc's `swapcontext` makes one system call, the others none).
+//! User-level mechanisms switch between two flows of control on one thread. glibc's
+//! `swapcontext` makes system calls; the other switches make none.
 
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
@@ -72,8 +72,8 @@ pub fn regswitch(plan: &Plan) -> Result<f64, Error> {
     })
 }
 
-/// Two green tasks that yield to each other. One handoff goes task, scheduler, task: two raw
-/// switches plus run queue work, which is what a green thread library pays per task switch.
+/// Two green tasks yield to each other. Each handoff goes through the scheduler and includes two
+/// fiber switches and queue work.
 pub fn green(plan: &Plan) -> Result<f64, Error> {
     pin_to_first_cpu()?;
     let (switches, bytes) = (plan.switches, plan.working_set);

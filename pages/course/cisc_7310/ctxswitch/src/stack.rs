@@ -1,11 +1,10 @@
-//! Stacks for user-level contexts: page aligned `mmap` regions with a `PROT_NONE` guard page below
-//! the usable bytes, the layout used by green thread runtimes such as Dzania's `rsroutine`
-//! (https://github.com/dzania/rsroutine, described in "Green Threads from Scratch",
-//! https://dzania.github.io/green-threads-from-scratch/). `rsroutine` declares no license, so this
-//! is an independent implementation of the technique and no source was copied.
+//! User-level context stacks are page-aligned `mmap` regions with a `PROT_NONE` guard page below
+//! the usable bytes. This is an independent implementation of the layout used by Dzania's
+//! `rsroutine` (https://github.com/dzania/rsroutine), described in "Green Threads from Scratch"
+//! (https://dzania.github.io/green-threads-from-scratch/). `rsroutine` declares no license.
 //!
-//! The C examples used `malloc(STACK_SIZE)` for context stacks. A heap block has no guard, so an
-//! overflow would silently corrupt neighbouring objects; these ports use guarded stacks instead.
+//! The C examples use heap blocks for stacks. These have no guard page, so an overflow can corrupt
+//! neighbouring objects. The Rust ports use guarded stacks instead.
 
 use std::io;
 use std::ptr::NonNull;

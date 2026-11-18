@@ -1,14 +1,12 @@
-//! Green threads: a run queue and `yield_now` on top of the register-only [`Fiber`] switch, on
-//! guarded 32 KiB stacks, inside one worker thread (so the kernel sees one schedulable task).
+//! Green threads use a run queue and `yield_now` on top of the register-only [`Fiber`] switch.
+//! Tasks have guarded 32 KiB stacks and run on one worker thread, which the kernel schedules.
 //!
-//! The shape (spawn / yield_now / join, a scheduler loop that dispatches tasks, tasks pinned to
-//! the worker that started them, 32 KiB `mmap`ed stacks with a guard page) follows Dzania's
+//! The API, scheduler, worker-local tasks, and guarded stacks follow Dzania's
 //! "Green Threads from Scratch" (https://dzania.github.io/green-threads-from-scratch/) and the
 //! `rsroutine` repository (https://github.com/dzania/rsroutine). `rsroutine` declares no license
-//! and targets Apple Silicon macOS, so nothing is copied: this is an independent implementation
-//! for Linux. The article's M:N work stealing across worker threads is deliberately omitted; a
-//! second worker would add a second kernel task, which is not what this experiment measures.
-//! `join` is reduced to [`JoinHandle::take`] after [`run`] has drained the queue.
+//! and targets Apple Silicon macOS. This is an independent Linux implementation. It omits M:N
+//! work stealing: a second worker would add another kernel task to the experiment.
+//! [`JoinHandle::take`] retrieves a result after [`run`] drains the queue.
 
 use std::cell::{Cell, RefCell};
 use std::collections::VecDeque;

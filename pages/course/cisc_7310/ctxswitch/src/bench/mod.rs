@@ -1,6 +1,6 @@
-//! The switching cost benchmark: five mechanisms and two baselines, one CSV row per
-//! (mechanism, working set). Every mechanism performs exactly `switches` task-to-task handoffs per
-//! repetition, and every side touches its private working set before each handoff it makes.
+//! The benchmark records one CSV row per mechanism and working-set size. Each switching
+//! mechanism performs `switches` task-to-task handoffs per repetition. Each task touches its
+//! private working set before handing off control. The two baselines do not switch tasks.
 
 pub mod observe;
 pub mod user;
@@ -82,7 +82,7 @@ impl Mechanism {
     }
 }
 
-/// A private buffer touched one byte per cache line, standing in for a thread's working set.
+/// A private buffer used as a working set. Touches one byte every 64 bytes.
 pub struct WorkingSet(Vec<u8>);
 
 impl WorkingSet {
@@ -165,8 +165,8 @@ impl Counters {
     }
 }
 
-/// Run `rep` for `warmup + reps` repetitions and return the median ns per switch of the measured ones.
-/// `min_runtime` keeps a snapshot run alive long enough for the observer process to look.
+/// Run an optional warmup, then measure `rep` and return the median nanoseconds per handoff.
+/// Snapshot mode may run extra repetitions to give the observer time to inspect the process.
 pub fn measure(plan: &Plan, mut rep: impl FnMut() -> Result<(), Error>) -> Result<f64, Error> {
     if !plan.no_warmup {
         rep()?;

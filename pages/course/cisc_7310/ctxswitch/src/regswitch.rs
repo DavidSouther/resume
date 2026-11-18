@@ -2,9 +2,9 @@
 //! pointer of the current execution, load another's, and return into it. No system call, no
 //! signal mask, no floating point control state beyond the callee saved registers.
 //!
-//! This is the "user-level thread switch" of the slides in its smallest form, and the primitive
-//! under the `green` runtime. The technique (AAPCS64 callee saved set, a bootstrap trampoline for
-//! new tasks, `br`/`ret` into the saved link address) follows the description in Dzania's "Green
+//! This switch is the primitive behind the `green` runtime. The technique uses AAPCS64 callee
+//! saved registers, a bootstrap trampoline for new tasks, and `br`/`ret` to the saved link address.
+//! It follows the description in Dzania's "Green
 //! Threads from Scratch" (https://dzania.github.io/green-threads-from-scratch/) and the
 //! `rsroutine` repository; the code here is an independent Linux implementation for `aarch64` and
 //! `x86_64`.
