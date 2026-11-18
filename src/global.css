@@ -575,21 +575,22 @@ section:has(img.float) + section {
 
   .cv h1 {
     margin: 0 0 2pt;
-    text-align: center;
   }
 
-  /* Positional selector for the contact details.  */
-  .cv h1 + p {
-    --font-size-base: 9.5pt;
-    margin: 0 0 6pt;
-    text-align: center;
+  /* The shared AboutMe header: its subtitle is not a section heading. */
+  .cv > header h2 {
+    margin: 0;
+    padding: 0;
+    text-transform: none;
+    letter-spacing: normal;
+    font-size: 11pt;
   }
 
   /*
    * The rule-under separates sections on paper, so it replaces both the
    * <hr>s below and the card edges zeroed above.
    */
-  .cv h2 {
+  .cv main h2 {
     /* Roughly three lines of 10pt/1.35 body text. */
     --keep-with-next: 40pt;
 
@@ -605,7 +606,7 @@ section:has(img.float) + section {
    * border-bottom, which --keep-with-next would otherwise push down the page.
    * It stays a border, so it prints even with background printing turned off.
    */
-  .cv h2::after {
+  .cv main h2::after {
     content: "";
     position: absolute;
     inset: auto 0 calc(var(--keep-with-next) - 2pt);

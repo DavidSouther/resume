@@ -63,4 +63,44 @@ describe("src/resume.toml CV markers", () => {
 		expect(ids.length).toBeGreaterThan(0);
 		for (const id of ids) expect(known, id).toContain(id);
 	});
+
+	it("states the Code Fellows NPS as a bound, not a perfect score", () => {
+		expect(raw).toContain("above 80 net promoter");
+		expect(raw).not.toContain("100 net promoter");
+	});
+
+	it("keeps the defensive publication's first-author and full-text link in its shared description", () => {
+		const dpub = publicArtifacts.find((a) =>
+			a.tags?.includes("Defensive Publication"),
+		);
+		expect(dpub?.details.description).toContain("first author");
+		expect(dpub?.details.description).toContain("Full text (PDF)");
+	});
+
+	it("marks excerpts for the Mentorship, Talks and Curriculum sections in shared text", () => {
+		for (const section of ["mentorship", "talks", "curriculum"]) {
+			expect(raw, section).toMatch(
+				new RegExp(`<span data-cv="${section}" data-title="[^"]+">`),
+			);
+		}
+		const opens = raw.match(/<span data-cv=/g)?.length ?? 0;
+		expect(raw.match(/<\/span>/g)?.length ?? 0).toBe(opens);
+	});
+
+	it("flags the two curriculum projects, and no artifact is also a curriculum group in publications", () => {
+		const flagged = data.experience.projects
+			.filter((p) => p.details?.cvSection === "curriculum")
+			.map((p) => p.details?.name);
+		expect(new Set(flagged)).toEqual(
+			new Set(["DavidSouther/software_craftsmanship", "nand2tetris/web-ide"]),
+		);
+		const groups = (data.cv?.publications ?? []).map((g) => g.heading);
+		expect(groups).not.toContain("Curriculum");
+	});
+
+	it("lists only talk posts that exist", () => {
+		const known = new Set(getSortedPosts().map((p) => p.id));
+		expect(data.cv?.talks).toEqual(["ilities"]);
+		for (const id of data.cv?.talks ?? []) expect(known, id).toContain(id);
+	});
 });

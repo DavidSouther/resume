@@ -16,7 +16,10 @@ import type * as ResumeTypes from "../../lib/resume";
 
 // The resume header block: name/title hgroup, avatar, location, and contacts.
 // Returns a Node[] so the caller can spread it directly into a <header>.
-export function AboutMe(aboutMe: ResumeTypes.AboutMe): DenormChildren[] {
+export function AboutMe(
+	aboutMe: ResumeTypes.AboutMe,
+	{ pdf }: { pdf?: string } = {},
+): DenormChildren[] {
 	return [
 		hgroup(
 			h1(
@@ -31,7 +34,7 @@ export function AboutMe(aboutMe: ResumeTypes.AboutMe): DenormChildren[] {
 			? Avatar(aboutMe.profile.avatar, aboutMe.profile.name)
 			: null,
 		aboutMe.profile.location ? Location(aboutMe.profile.location) : null,
-		Contact(aboutMe.relevantLinks, aboutMe.profile.contact),
+		Contact(aboutMe.relevantLinks, aboutMe.profile.contact, pdf),
 	];
 }
 
@@ -39,6 +42,7 @@ export function AboutMe(aboutMe: ResumeTypes.AboutMe): DenormChildren[] {
 export function Contact(
 	links: ResumeTypes.Link[] = [],
 	contact: ResumeTypes.ContactMeans = {},
+	pdf?: string,
 ): HTMLElement {
 	const contactLinks: ResumeTypes.Link[] = [
 		...(contact.publicProfiles ?? []),
@@ -51,7 +55,7 @@ export function Contact(
 			URL: `tel:+${phoneEntry.countryCode} ${phoneEntry.number}`,
 		})) ?? []),
 	];
-	return Links([...links, ...contactLinks], "contact");
+	return Links([...links, ...contactLinks], "contact", pdf);
 }
 
 function Avatar(avatar: ResumeTypes.Image, name: string): HTMLElement {
@@ -80,7 +84,11 @@ function Location(location: ResumeTypes.Location): HTMLElement {
 
 // On-screen the semantic type ("github", "email", "tel") is the label; the
 // print-only span carries the full URL.
-function Links(links: ResumeTypes.Link[], className = ""): HTMLElement {
+function Links(
+	links: ResumeTypes.Link[],
+	className = "",
+	pdf?: string,
+): HTMLElement {
 	return nav(
 		{ class: className },
 		ul(
@@ -90,6 +98,13 @@ function Links(links: ResumeTypes.Link[], className = ""): HTMLElement {
 					span({ class: "print-only" }, link.URL),
 				),
 			),
+			// A printed copy needs no link to itself.
+			pdf
+				? li(
+						{ class: "pdf no-print" },
+						a({ href: pdf, download: pdf.split("/").pop() }, "PDF"),
+					)
+				: null,
 		),
 	);
 }

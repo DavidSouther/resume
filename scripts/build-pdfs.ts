@@ -3,16 +3,16 @@ import { join } from "node:path";
 import { cwd } from "node:process";
 import { makeServer } from "@davidsouther/jiffies/server/http/index.ts";
 import { chromium } from "playwright";
+import { CV_PDF, RESUME_PDF } from "../src/lib/pdfs.ts";
 
 // Prints the built resume (/) and academic CV (/cv/) to PDF with Chromium, using
 // each page's own print stylesheet, so the PDFs cannot drift from
 // src/resume.toml. Run after `npm run build:site`; writes into docs/.
 // Set CHROMIUM_PATH to use a browser other than Playwright's own download.
 
-// File names carry the author so they stay distinct in a Downloads folder.
 export const PDFS = [
-	{ route: "/", file: "david_souther_resume.pdf" },
-	{ route: "/cv/", file: "david_souther_cv.pdf" },
+	{ route: "/", file: RESUME_PDF },
+	{ route: "/cv/", file: CV_PDF },
 ] as const;
 
 /** Throws unless the route answered with a 2xx status. */

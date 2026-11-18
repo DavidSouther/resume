@@ -169,3 +169,14 @@ Recommended: approach 1. Every entry is written once in `src/resume.toml`. A `cv
 - **`cv.note` wording:** it still names SUNY Downstate. The print test requires only the words "Draft CV".
   Proposed: keep it until the user retargets the note.
 - **Replacing the hand-written CV:** the Markdown source stays in git history only (quick-loop disposition 2, open for the user).
+
+## Amendment 2026-11-18 (user feedback at the review pause)
+
+Decisions the user made after the quick loop went green. They supersede the matching lines above.
+
+- **NPS.** Both figures were true; the shared text now says "above 80", because a flat 100 claims a perfect score and reads as less credible. Both views show it.
+- **Curriculum Development, Mentorship and Advising, Invited Talks are kept.** They are not re-authored. A sentence in shared text (a job role, or a study description) is marked `<span data-cv="mentorship" data-title="Engineering management">...</span>`. The span is inline and invisible, so the resume and the CV's own role blocks print the text unchanged, and the topical CV section quotes the same words under the title, source and dates. Projects flagged `cvSection = "curriculum"` and artifacts tagged "Curriculum" also print under Curriculum Development (and not under Software or Publications). `cv.talks` lists lecture posts by id. A marker is a span rather than an HTML comment because a paragraph starting with a comment renders as a split HTML block.
+- **The defensive publication keeps its first-author line and full-text link,** as it does on the resume: the CV prints the whole shared description of an artifact, not its first paragraph. "(first author)" moved into the shared description.
+- **Posts are not CV or resume content,** so the whiteboarding series appearing as posts and once as a Curriculum artifact and in the Code Fellows text is the intended complementary amount. No change.
+- **One header.** `/` and `/cv` render the same `AboutMe` header inside the same `Layout`, each with a screen-only link to its own PDF (`src/lib/pdfs.ts` holds the names, shared with `scripts/build-pdfs.ts`). `cvMarkdown` no longer emits a name or contact block, and `cv.website` is removed. The `.cv` print sheet scopes its section-heading rules to `main`, so the header's subtitle keeps its own style.
+- **Still dropped:** Service, the manuscript, NVD3 and JEFRi, the ProTech and Google internal-instruction entries.

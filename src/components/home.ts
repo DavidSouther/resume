@@ -1,5 +1,6 @@
 import { Card } from "@davidsouther/jiffies/components/card.ts";
 import { a, div, h3, h4, p } from "@davidsouther/jiffies/dom/html.ts";
+import { RESUME_PDF } from "../lib/pdfs.ts";
 import type { Post } from "../lib/posts.ts";
 import type { ResumeData } from "../lib/resume";
 import { Layout } from "./layout.ts";
@@ -20,7 +21,7 @@ export function Home(resume: ResumeData, posts: Post[]): HTMLElement {
 	return Layout(
 		{
 			lastUpdate: resume.settings.lastUpdate,
-			header: AboutMe(resume.aboutMe),
+			header: AboutMe(resume.aboutMe, { pdf: `/${RESUME_PDF}` }),
 		},
 		Card(
 			{

@@ -89,6 +89,8 @@ export interface PublicEntityDetails {
 	URL?: string;
 	image?: Image;
 	location?: Location;
+	/** On a project: print it under Curriculum Development instead of Software. */
+	cvSection?: "curriculum";
 }
 
 export interface Role {
@@ -222,10 +224,11 @@ export interface CvData {
 	/** Screen-only note shown above the CV, never printed. Raw HTML. */
 	note?: string;
 	footer?: string;
-	website?: string;
 	interests?: { title: string; body: string }[];
 	competencies?: { label: string; items: string }[];
 	publications?: CvPublicationGroup[];
+	/** Post ids of lectures, listed under Invited Talks after the excerpts. */
+	talks?: string[];
 }
 
 /** One publication group: artifacts carrying a tag, or an ordered list of post ids. */

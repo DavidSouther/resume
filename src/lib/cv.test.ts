@@ -105,10 +105,9 @@ describe("cvMarkdown", () => {
 		expect(monthYear("2011")).toBe("2011");
 	});
 
-	it("leads with contact details from the shared profile", () => {
-		expect(md).toMatch(/^# Ada Lovelace/);
-		expect(md).toContain("ada@example.com · (650) 495-5402");
-		expect(md).toContain("[github.com/ada](https://github.com/ada)");
+	it("leaves the header to the page, which shares the resume's", () => {
+		expect(md).not.toMatch(/^# /m);
+		expect(md).not.toContain("ada@example.com");
 	});
 
 	it("orders scholarship and teaching ahead of professional roles", () => {
@@ -173,7 +172,7 @@ describe("cvMarkdown", () => {
 	it("does not throw without a cv table", () => {
 		const bare = structuredClone(resume);
 		bare.cv = undefined;
-		expect(cvMarkdown(bare)).toMatch(/^# Ada Lovelace/);
+		expect(() => cvMarkdown(bare)).not.toThrow();
 	});
 
 	it("takes roles and education from the resume sections", () => {
@@ -260,7 +259,7 @@ describe("publication groups", () => {
 		const group = sectionOf(md, "Publications and Public Scholarship");
 		expect(group).toContain("Shown");
 		expect(group).toContain("About Shown.");
-		expect(group).not.toContain("More detail.");
+		expect(group).toContain("More detail.");
 		expect(group).not.toContain("Hidden");
 		expect(group.indexOf("Other tag")).toBeGreaterThan(
 			group.indexOf("### Other Publications"),
@@ -310,5 +309,115 @@ describe("publication groups", () => {
 		);
 		expect(md).toContain("Alpha");
 		expect(md).not.toContain("Beta");
+	});
+});
+
+/** A resume whose Programmer role carries marked excerpts. */
+function withExcerpts(description: string): ResumeData {
+	const r = structuredClone(resume);
+	r.experience.jobs[0].roles[0].challenges = [{ description }];
+	return r;
+}
+
+describe("excerpts from shared role text", () => {
+	const marked = withExcerpts(
+		`Led a team. <span data-cv="mentorship" data-title="Engineering management">I promoted two engineers.</span> Shipped it. <span data-cv="talks" data-title="Invited talk">I spoke at a meetup.</span>`,
+	);
+	const md = cvMarkdown(marked);
+
+	it("pulls a marked sentence into the topical section under the source's name and dates", () => {
+		const mentorship = sectionOf(md, "Mentorship and Advising");
+		expect(mentorship).toContain(
+			"**Engineering management** — Analytical Engines · May 2026 – present",
+		);
+		expect(mentorship).toContain("I promoted two engineers.");
+		expect(mentorship).not.toContain("Shipped it.");
+		expect(sectionOf(md, "Invited Talks and Presentations")).toContain(
+			"I spoke at a meetup.",
+		);
+	});
+
+	it("keeps the whole role text in its own section, and no marker markup in any excerpt", () => {
+		expect(sectionOf(md, "Professional Appointments")).toContain("Shipped it.");
+		expect(sectionOf(md, "Mentorship and Advising")).not.toContain("<span");
+	});
+
+	it("excerpts from a study description with the institution as source", () => {
+		const r = structuredClone(resume);
+		r.knowledge.studies = [
+			{
+				...(r.knowledge.studies?.[0] as NonNullable<
+					typeof r.knowledge.studies
+				>[0]),
+				description: `<span data-cv="mentorship" data-title="Undergraduate tutoring">Tutored for three years.</span> Studied.`,
+			},
+		];
+		expect(sectionOf(cvMarkdown(r), "Mentorship and Advising")).toContain(
+			"**Undergraduate tutoring** — Rocky Mountain College · 2007 – 2011  \nTutored for three years.",
+		);
+	});
+
+	it("omits a section nothing is marked for", () => {
+		expect(cvMarkdown(resume)).not.toContain("## Mentorship and Advising");
+	});
+
+	it("lists talk posts by id after the excerpts", () => {
+		const r = withExcerpts("Plain.");
+		r.cv = { ...(r.cv as NonNullable<typeof r.cv>), talks: ["a"] };
+		const talks = sectionOf(
+			cvMarkdown(r, [postA]),
+			"Invited Talks and Presentations",
+		);
+		expect(talks).toContain("[Alpha](/blog/a)");
+	});
+});
+
+describe("curriculum development", () => {
+	it("collects flagged projects and Curriculum-tagged artifacts, and keeps flagged projects out of Software", () => {
+		const r = structuredClone(resume);
+		r.experience.projects.push({
+			type: "openSource",
+			details: {
+				name: "Craft Book",
+				description: "An introductory book.",
+				cvSection: "curriculum",
+			},
+			roles: [{ name: "Developer", startDate: "2013-07-01" }],
+		});
+		r.experience.publicArtifacts = [
+			artifact("Whiteboarding", { tags: ["Curriculum"] }),
+		] as unknown as ResumeData["experience"]["publicArtifacts"];
+		const md = cvMarkdown(r);
+		const curriculum = sectionOf(md, "Curriculum Development");
+		expect(curriculum).toContain("Craft Book");
+		expect(curriculum).toContain("Whiteboarding");
+		const software = sectionOf(md, "Software and Open Source");
+		expect(software).toContain("Ailly");
+		expect(software).not.toContain("Craft Book");
+		expect(md.indexOf("## Curriculum Development")).toBeLessThan(
+			md.indexOf("## Professional Appointments"),
+		);
+	});
+});
+
+describe("publication entries", () => {
+	it("keep every paragraph of the shared description, so a defensive publication keeps its full-text link", () => {
+		const md = cvMarkdown(
+			withPublications(
+				[{ heading: "Defensive Publication", tag: "Dpub" }],
+				[
+					artifact("Graphs", {
+						tags: ["Dpub"],
+						details: {
+							name: "Graphs",
+							description:
+								"Souther et al. (first author). Hulls.\n\nTechnical Disclosure Commons.\n[Full text (PDF)](https://example.com/x.pdf)",
+						},
+					}),
+				],
+			),
+		);
+		expect(md).toContain("(first author)");
+		expect(md).toContain("[Full text (PDF)](https://example.com/x.pdf)");
 	});
 });

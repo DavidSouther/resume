@@ -191,8 +191,9 @@ describe("the shared build action prints the resume and CV PDFs", () => {
 			scripts: Record<string, string>;
 		};
 		expect(pkg.scripts.pdfs).toBe("node scripts/build-pdfs.ts");
-		const script = load("scripts/build-pdfs.ts");
-		expect(script).toContain('"david_souther_resume.pdf"');
-		expect(script).toContain('"david_souther_cv.pdf"');
+		expect(load("scripts/build-pdfs.ts")).toContain("../src/lib/pdfs.ts");
+		const names = load("src/lib/pdfs.ts");
+		expect(names).toContain('"david_souther_resume.pdf"');
+		expect(names).toContain('"david_souther_cv.pdf"');
 	});
 });

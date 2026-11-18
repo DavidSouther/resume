@@ -34,13 +34,6 @@ function span(start: string, finish?: string): string {
 	return `${monthYear(start)} – ${finish ? monthYear(finish) : "present"}`;
 }
 
-function phone({ number }: { number: string }): string {
-	const d = number.replace(/\D/g, "");
-	return d.length === 10
-		? `(${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}`
-		: number;
-}
-
 function section(heading: string, blocks: string[]): string[] {
 	return blocks.length ? [`## ${heading}`, ...blocks] : [];
 }
@@ -99,34 +92,8 @@ function project({ details, roles }: ProjectExperience): string {
  * `MD()`: the print stylesheet targets its markup.
  */
 export function cvMarkdown(resume: ResumeData, posts: PostRef[] = []): string {
-	const { profile } = resume.aboutMe;
 	const cv = resume.cv;
-	const { location, contact } = profile;
-	const where = [location?.municipality, location?.region]
-		.filter(Boolean)
-		.join(", ");
-	const github = contact?.publicProfiles?.find((p) => p.type === "github");
-	const links = [
-		cv?.website && `[${cv.website.replace(/^https?:\/\//, "")}](${cv.website})`,
-		github && `[${github.URL.replace(/^https?:\/\//, "")}](${github.URL})`,
-	].filter(Boolean);
-
-	const header = [
-		`# ${profile.name} ${profile.surnames ?? ""}`.trim(),
-		[
-			where,
-			[
-				contact?.contactMails?.[0],
-				contact?.phoneNumbers?.[0] && phone(contact.phoneNumbers[0]),
-			]
-				.filter(Boolean)
-				.join(" · "),
-			links.join(" · "),
-		]
-			.filter(Boolean)
-			.join("  \n"),
-		cv?.note ? `<p class="no-print"><em>${cv.note}</em></p>` : "",
-	].filter(Boolean);
+	const note = cv?.note ? `<p class="no-print"><em>${cv.note}</em></p>` : "";
 
 	const education = (resume.knowledge.studies ?? []).map((s) => {
 		const when = s.degreeAchieved
@@ -142,10 +109,12 @@ export function cvMarkdown(resume: ResumeData, posts: PostRef[] = []): string {
 		),
 		...section("Education", education),
 		...section("Teaching Appointments", jobBlocks(jobsIn(resume, "teaching"))),
+		...section("Curriculum Development", curriculumBlocks(resume)),
 		...section(
 			"Professional Appointments",
 			jobBlocks(jobsIn(resume, "professional")),
 		),
+		...section("Mentorship and Advising", excerpts(resume, "mentorship")),
 		...section(
 			"Publications and Public Scholarship",
 			publicationGroups(resume, posts).map(
@@ -154,8 +123,11 @@ export function cvMarkdown(resume: ResumeData, posts: PostRef[] = []): string {
 		),
 		...section(
 			"Software and Open Source",
-			(resume.experience.projects ?? []).map(project),
+			(resume.experience.projects ?? [])
+				.filter((p) => p.details?.cvSection !== "curriculum")
+				.map(project),
 		),
+		...section("Invited Talks and Presentations", talkBlocks(resume, posts)),
 		...section(
 			"Technical Competencies",
 			(cv?.competencies ?? []).map((c) => `**${c.label}** — ${c.items}`),
@@ -164,12 +136,79 @@ export function cvMarkdown(resume: ResumeData, posts: PostRef[] = []): string {
 	].filter(Boolean);
 
 	// Horizontal rules separate sections on screen only; print hides them.
-	const out: string[] = [...header];
+	const out: string[] = note ? [note] : [];
 	for (const block of sections) {
-		if (block.startsWith("## ")) out.push("---");
+		if (block.startsWith("## ") && out.length) out.push("---");
 		out.push(block);
 	}
 	return out.join("\n\n");
+}
+
+const MARK = /<span data-cv="(\w+)" data-title="([^"]*)">([\s\S]*?)<\/span>/g;
+
+/** The CV-only tag of artifacts printed under Curriculum Development. */
+const CURRICULUM_TAG = "Curriculum";
+
+/**
+ * Sentences marked in shared text with
+ * `<span data-cv="SECTION" data-title="Title">...</span>`. The span is inline
+ * and invisible, so the resume and the CV's own role blocks print the text
+ * unchanged; the topical CV sections quote the same words, with the title and
+ * the source's name and dates, so no fact is written twice.
+ */
+export function excerpts(resume: ResumeData, section: string): string[] {
+	const found = (text: string | undefined, source: string) =>
+		[...(text ?? "").matchAll(MARK)]
+			.filter((m) => m[1] === section)
+			.map(
+				(m) =>
+					`**${m[2].trim()}** — ${source}  \n${m[3].replace(/\s+/g, " ").trim()}`,
+			);
+	const jobs = [...resume.experience.jobs]
+		.sort((a, b) => latestStart(b).localeCompare(latestStart(a)))
+		.flatMap((job) =>
+			job.roles.flatMap((r) =>
+				(r.challenges ?? []).flatMap((c) =>
+					found(
+						c.description,
+						`${job.organization.name} · ${span(r.startDate, r.finishDate)}`,
+					),
+				),
+			),
+		);
+	const studies = (resume.knowledge.studies ?? []).flatMap((s) =>
+		found(
+			s.description,
+			`${s.institution?.name ?? s.name} · ${s.startDate.slice(0, 4)} – ${(s.finishDate ?? "").slice(0, 4) || "present"}`,
+		),
+	);
+	return [...jobs, ...studies];
+}
+
+/** Excerpts, then flagged projects, then Curriculum-tagged artifacts. */
+function curriculumBlocks(resume: ResumeData): string[] {
+	return [
+		...excerpts(resume, "curriculum"),
+		...(resume.experience.projects ?? [])
+			.filter((p) => p.details?.cvSection === "curriculum")
+			.map(project),
+		...resume.experience.publicArtifacts
+			.filter((a) => !a.hide && a.tags?.includes(CURRICULUM_TAG))
+			.map(artifactEntry),
+	];
+}
+
+function talkBlocks(resume: ResumeData, posts: PostRef[]): string[] {
+	const byId = new Map(posts.map((p) => [p.id, p]));
+	const lectures = (resume.cv?.talks ?? []).map((id) => {
+		const post = byId.get(id);
+		if (!post) throw new Error(`cv.talks: unknown post id ${id}`);
+		return post;
+	});
+	return [
+		...excerpts(resume, "talks"),
+		...lectures.filter((p) => p.show).map(postBlock),
+	];
 }
 
 /** The slice of a post the CV needs; injected so tests need no filesystem. */
@@ -179,13 +218,24 @@ function year(date?: string): string {
 	return date ? date.slice(0, 4) : "";
 }
 
-function artifactBlock({ details, publishingDate }: PublicArtifact): string {
+/** An artifact's title, year and its whole shared description, on one line. */
+function artifactText({ details, publishingDate }: PublicArtifact): string {
 	const title = details.URL
 		? `[${details.name}](${details.URL})`
 		: details.name;
 	const when = publishingDate ? ` (${year(publishingDate)})` : "";
-	const summary = (details.description ?? "").trim().split(/\n\s*\n/)[0];
-	return `- ${[`${title}${when}.`, summary.replace(/\s+/g, " ")].filter((x) => x.length > 1).join(" ")}`;
+	const description = (details.description ?? "").replace(/\s+/g, " ").trim();
+	return [`${title}${when}.`, description]
+		.filter((x) => x.length > 1)
+		.join(" ");
+}
+
+function artifactBlock(artifact: PublicArtifact): string {
+	return `- ${artifactText(artifact)}`;
+}
+
+function artifactEntry(artifact: PublicArtifact): string {
+	return artifactText(artifact);
 }
 
 function postBlock(post: PostRef): string {
@@ -199,7 +249,8 @@ function postBlock(post: PostRef): string {
  * items, in `cv.publications` order. A `tag` group takes the visible artifacts
  * carrying the tag; a `posts` group is rendered from the posts' own front
  * matter, so no essay text lives in the TOML. Visible artifacts that no group
- * claims print last under "Other Publications".
+ * claims print last under "Other Publications", except Curriculum artifacts,
+ * which print under Curriculum Development.
  */
 export function publicationGroups(
 	resume: ResumeData,
@@ -226,7 +277,9 @@ export function publicationGroups(
 		};
 	});
 
-	const other = artifacts.filter((a) => !claimed.has(a));
+	const other = artifacts.filter(
+		(a) => !claimed.has(a) && !a.tags?.includes(CURRICULUM_TAG),
+	);
 	if (other.length)
 		groups.push({
 			heading: "Other Publications",

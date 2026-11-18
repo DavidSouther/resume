@@ -80,7 +80,7 @@ The MCP Gateway deploys as a stand alone component in a customer's environment, 
 I designed the runtime components, allowing clean deployments in environments ranging from local dev to small docker compose instances through full Kubernetes operator orchestration.
 I championed an organizational pivot away from direct control-plane-to-gateway configuration into an infrastructure-as-code centered approach that grows from click-ops to git-ops.
 I implemented portions of those and other designs in the Rust codebase.
-I mentor and guide new-to-Rust engineers across the company, with a focus on finding composable design patterns that work with the grain in both Rust and the application.
+<span data-cv="mentorship" data-title="Technical mentorship">I mentor and guide new-to-Rust engineers across the company, with a focus on finding composable design patterns that work with the grain in both Rust and the application.</span>
 """
 
 [[experience.jobs.roles.competences]]
@@ -153,7 +153,7 @@ finishDate = "2024-12-01"
 description = """
 AI Lab is an org-wide cross-functional group of technologists exploring the application of AI, especially LLMs, to TCX's authoring and educational workflows. AI Lab workshopped many LLM applications, with some entering production, and ran numerous experiments to validate others.
 
-* Code Explainer - Prompt-based tooling for generating explanations of example code, targeted to AWS Learner levels.
+* Code Explainer - <span data-cv="curriculum" data-title="Code Explainer">Prompt-based tooling for generating explanations of example code, targeted to AWS Learner levels.</span>
 * Style Guide Checker - Experiment using prompt engineering to identify and correct style guide issues, both in general grammatical concerns as well as AWS-specific content recommendations.
 """
 
@@ -241,13 +241,13 @@ description = """
 Lead instructor for [Code 401: Advanced Software Development in Full Stack 
 JavaScript](https://www.codefellows.org/courses/code-401/advanced-software-development-in-full-stack-JavaScript/).
 
-Educational duties include online classroom instruction, career coaching, 
-curriculum development, and student evaluation. Students consistently ranked my 
-courses at 100 net promoter score, both on weekly survey and course final 
-evaluations. Organized & lead an instructor-wide project revamping the school's 
+<span data-cv="mentorship" data-title="Career coaching">Educational duties include online classroom instruction, career coaching, 
+curriculum development, and student evaluation.</span> Students consistently ranked my 
+courses above 80 net promoter score, both on weekly survey and course final 
+evaluations. <span data-cv="curriculum" data-title="Technical whiteboarding curriculum and rubric">Organized & lead an instructor-wide project revamping the school's 
 white-boarding process. This project rewrote the white-boarding guide, 
 formalized a rubric for grading whiteboards & tech interviews, and revamped 
-problem & training materials for a dozen instructors across four languages. 
+problem & training materials for a dozen instructors across four languages.</span> 
 Code Fellows was ranked as a [2023 top coding boot 
 camp](https://fortune.com/education/bootcamps/best-cybersecurity-bootcamps/) by 
 Fortune Education.
@@ -335,13 +335,13 @@ mentoring and guiding my team in their engineering and career. I Lead a team of
 the migration, I organized additional feature work to maintain market parity 
 and leadership during the migration.
 
-As a manager, I developed junior and Noogler engineers in Cloud, Angular, and 
+<span data-cv="mentorship" data-title="Engineering management">As a manager, I developed junior and Noogler engineers in Cloud, Angular, and 
 typescript. I successfully promoted an L4 Noogler to L5 in three performance 
 review cycles and an L3 Googler to L4 during the second cycle as manager, and 
 guided an L3 who received an NI through a PIP who was then promoted to L4 two 
 cycles after departure. I achieved this through managing and mentoring junior 
 engineers, writing performance reviews and promotion packets, and coordinating 
-task priority and HR concerns.
+task priority and HR concerns.</span>
 """
 
 [[experience.jobs.roles.competences]]
@@ -469,9 +469,9 @@ prior quarters, I contributed to an effort across several working groups to
 migrate from existing GWT web UIs to modern, component-base Angular 
 architectures. I brought a strong emphasis to Test Driven Development in our FE 
 environment, including techniques, best practices, and general cheer leading. I 
-worked with several groups to offer, and personally taught, several collegiate 
+worked with several groups to offer, and personally taught, <span data-cv="talks" data-title="Test-driven development and industry practices">several collegiate 
 courses including a two-week intensive course on TDD & industry practices at Mt 
-Holyoke College.
+Holyoke College.</span>
 """
 
 [[experience.jobs.roles.competences]]
@@ -610,9 +610,9 @@ handles 45 million unique monthly visitors in 2012. Core member of the
 Prototype team, building and testing potential new features for the 
 proto.nytimes.com domain. Responsible for the backend stack, including Node 
 servers for data management and AB testing, as well as a variety of systems 
-administration to handle our traffic. Invited to speak on emerging technologies 
+administration to handle our traffic. <span data-cv="talks" data-title="Emerging technologies">Invited to speak on emerging technologies 
 to internal development groups, as well as on behalf of the Times at regional 
-college tech events and tech meetups. Internal git guru.
+college tech events and tech meetups.</span> Internal git guru.
 """
 
 [[experience.jobs.roles.competences]]
@@ -798,6 +798,7 @@ type = "openSource"
 
 [experience.projects.details]
 name = "nand2tetris/web-ide"
+cvSection = "curriculum"
 description = """
 Online web IDE for the [nand2tetris](https://www.nand2tetris.org/) computer architecture & language course.
 """
@@ -812,6 +813,7 @@ type = "openSource"
 
 [experience.projects.details]
 name = "DavidSouther/software_craftsmanship"
+cvSection = "curriculum"
 description = """
 Software Craftsmanship for the Lay Person is an introduction project based book 
 for a first exposure to programming. The main text is language agnostic, while 
@@ -885,7 +887,7 @@ tags = [ "Defensive Publication" ]
 [experience.publicArtifacts.details]
 name = "Graph Visualization by Organizing Connections in Collapsible Hierarchical Graphs"
 description = """
-Souther et al. Network graphs in certain applications, e.g., cloud-network
+Souther et al. (first author). Network graphs in certain applications, e.g., cloud-network
 graphs, have connections in multiple dimensions. At present, it is difficult or
 inconvenient for a user to visualize such graphs at varying levels of
 granularity or hierarchy. Per the techniques of this disclosure, a hull is
@@ -1046,10 +1048,10 @@ name = "B.S. Mathematics"
 startDate = "2007-08-01"
 finishDate = "2011-05-31"
 description = """
-Tutored for three years. Brought a group of math majors together for regular 
+<span data-cv="mentorship" data-title="Undergraduate tutoring">Tutored for three years. Brought a group of math majors together for regular 
 study sessions, helping all of us work through not just our homework, but the 
 big ideas on topics from philosophy to religion to science, and how they fit 
-together with the material we studied.
+together with the material we studied.</span>
 """
 
 [knowledge.studies.institution]
@@ -1107,9 +1109,10 @@ URL = "https://github.com/davidsouther"
 # roles, education, projects, and artifacts from the shared sections above, so
 # the resume and CV share one source. A job's `cvSection` places it on the CV.
 [cv]
-website = "https://davidsouther.com"
 note = "Draft CV — prepared for the Department of Pediatrics, SUNY Downstate Health Sciences University."
 footer = "References available on request."
+# Posts that record a lecture; other talks are excerpted from the role text.
+talks = [ "ilities" ]
 
 [[cv.interests]]
 title = "Computing education for domain experts"
@@ -1159,10 +1162,6 @@ tag = "Defensive Publication"
 [[cv.publications]]
 heading = "Industry Writing"
 tag = "Industry Writing"
-
-[[cv.publications]]
-heading = "Curriculum"
-tag = "Curriculum"
 
 [[cv.publications]]
 heading = "Computing Education"

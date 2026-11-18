@@ -8,7 +8,10 @@
 //   When a reader opens the resume (/) and the CV (/cv),
 //   Then the Code Fellows role reads the same in both,
 //     and the CV lists it once, under teaching, not again under professional,
-//     and the CV lists every job, while the interests appear on the CV alone.
+//     and the CV lists every job, while the interests appear on the CV alone,
+//     and both pages open with the same header, each linking its own PDF,
+//     and the CV keeps curriculum, mentorship and talks, drawn from the same
+//     role text, and the defensive publication with its full-text link.
 //   When CI prints the built site,
 //   Then docs/ holds david_souther_resume.pdf and david_souther_cv.pdf.
 //
@@ -107,6 +110,39 @@ describe("the resume and the CV share one source and both print to PDF", () => {
 				job.organization.name,
 			);
 		}
+
+		// Both pages open with the same header; only the PDF link differs.
+		const resumeRoot = (await resumePage.default()) as HTMLElement;
+		const headerOf = (root: HTMLElement) => {
+			const header = root.querySelector("header")?.cloneNode(true) as
+				| HTMLElement
+				| undefined;
+			expect(header, "page has no header").toBeDefined();
+			const pdf = header?.querySelector("li.pdf a")?.getAttribute("href");
+			header?.querySelector("li.pdf")?.remove();
+			return { html: header?.innerHTML, pdf };
+		};
+		const resumeHeader = headerOf(resumeRoot);
+		const cvHeader = headerOf(cvRoot);
+		expect(cvHeader.html).toBe(resumeHeader.html);
+		expect(resumeHeader.pdf).toBe("/david_souther_resume.pdf");
+		expect(cvHeader.pdf).toBe("/david_souther_cv.pdf");
+
+		// Curriculum, mentorship and talks come from shared text, not copies.
+		expect(cvSection(cvRoot, /curriculum development/i)).toContain(
+			"Software Craftsmanship",
+		);
+		expect(cvSection(cvRoot, /mentorship and advising/i)).toContain(
+			"promoted an L4",
+		);
+		expect(cvSection(cvRoot, /invited talks/i)).toContain(
+			"emerging technologies",
+		);
+
+		// The defensive publication keeps its first-author line and full text.
+		const publications = cvSection(cvRoot, /publications and public/i);
+		expect(publications).toContain("first author");
+		expect(publications).toContain("Full text (PDF)");
 
 		// Research interests are CV-only content.
 		const interests = toml.cv?.interests ?? [];
