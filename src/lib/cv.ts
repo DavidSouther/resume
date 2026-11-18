@@ -1,8 +1,8 @@
 import type { Post } from "./posts.ts";
 import type {
-	CvEntry,
 	CvSection,
 	JobExperience,
+	ProjectExperience,
 	ResumeData,
 	Role,
 } from "./resume";
@@ -40,13 +40,6 @@ function phone({ number }: { number: string }): string {
 		: number;
 }
 
-// Two trailing spaces are a Markdown hard line break, keeping `meta` on its own line.
-function entry({ title, meta, body }: CvEntry): string {
-	return meta
-		? `${title} — ${meta}  \n${body.trim()}`
-		: `${title} — ${body.trim()}`;
-}
-
 function section(heading: string, blocks: string[]): string[] {
 	return blocks.length ? [`## ${heading}`, ...blocks] : [];
 }
@@ -64,23 +57,56 @@ function role(org: string, r: Role): string {
 	);
 }
 
+/** Newest role start in a job; jobs sort by it, descending. */
+function latestStart(job: JobExperience): string {
+	return job.roles
+		.map((r) => r.startDate)
+		.reduce((a, b) => (a > b ? a : b), "");
+}
+
+/** Jobs printed under one CV section, newest first. */
+export function jobsIn(
+	resume: ResumeData,
+	cvSection: CvSection,
+): JobExperience[] {
+	return resume.experience.jobs
+		.filter((j) => (j.cvSection ?? "professional") === cvSection)
+		.sort((a, b) => latestStart(b).localeCompare(latestStart(a)));
+}
+
+function jobBlocks(jobs: JobExperience[]): string[] {
+	return jobs.flatMap((j) => j.roles.map((r) => role(j.organization.name, r)));
+}
+
+function project({ details, roles }: ProjectExperience): string {
+	const name = details?.name ?? "";
+	const title = details?.URL ? `[${name}](${details.URL})` : name;
+	const start = roles.map((r) => r.startDate).sort()[0];
+	const since = start ? ` · since ${monthYear(start)}` : "";
+	return [`**${title}**${since}  `, (details?.description ?? "").trim()].join(
+		"\n",
+	);
+}
+
 /**
- * Arranges the resume's data for an academic reader: scholarship and teaching
- * ahead of industry roles. Roles, education, and contact come from the shared
- * resume sections; the rest from `academic`. Sections with no entries are
- * omitted, and `academic.note` becomes a paragraph the print stylesheet hides.
- * Render the result with `MD()`: the print stylesheet targets its markup.
+ * Arranges the resume's data for an academic reader: interests and teaching
+ * ahead of industry roles. Every job, study and project comes from the shared
+ * resume sections, each in exactly one place (a job's `cvSection` picks teaching
+ * or professional); only the interests, competencies, note and footer come from
+ * the CV-only `cv` table. Sections with no entries are omitted, and `cv.note`
+ * becomes a paragraph the print stylesheet hides. Render the result with
+ * `MD()`: the print stylesheet targets its markup.
  */
 export function cvMarkdown(resume: ResumeData): string {
 	const { profile } = resume.aboutMe;
-	const ac = resume.academic;
+	const cv = resume.cv;
 	const { location, contact } = profile;
 	const where = [location?.municipality, location?.region]
 		.filter(Boolean)
 		.join(", ");
 	const github = contact?.publicProfiles?.find((p) => p.type === "github");
 	const links = [
-		ac?.website && `[${ac.website.replace(/^https?:\/\//, "")}](${ac.website})`,
+		cv?.website && `[${cv.website.replace(/^https?:\/\//, "")}](${cv.website})`,
 		github && `[${github.URL.replace(/^https?:\/\//, "")}](${github.URL})`,
 	].filter(Boolean);
 
@@ -98,7 +124,7 @@ export function cvMarkdown(resume: ResumeData): string {
 		]
 			.filter(Boolean)
 			.join("  \n"),
-		ac?.note ? `<p class="no-print"><em>${ac.note}</em></p>` : "",
+		cv?.note ? `<p class="no-print"><em>${cv.note}</em></p>` : "",
 	].filter(Boolean);
 
 	const education = (resume.knowledge.studies ?? []).map((s) => {
@@ -108,40 +134,26 @@ export function cvMarkdown(resume: ResumeData): string {
 		return `**${s.name}** — ${s.institution?.name ?? ""} · ${when}  \n${(s.description ?? "").trim()}`;
 	});
 
-	const jobs = resume.experience.jobs.flatMap((j) =>
-		j.roles.map((r) => role(j.organization.name, r)),
-	);
-
 	const sections = [
 		...section(
 			"Research and Teaching Interests",
-			(ac?.interests ?? []).map((i) => `**${i.title}.** ${i.body.trim()}`),
+			(cv?.interests ?? []).map((i) => `**${i.title}.** ${i.body.trim()}`),
 		),
 		...section("Education", education),
+		...section("Teaching Appointments", jobBlocks(jobsIn(resume, "teaching"))),
 		...section(
-			"Academic and Teaching Appointments",
-			(ac?.teaching ?? []).map(entry),
+			"Professional Appointments",
+			jobBlocks(jobsIn(resume, "professional")),
 		),
-		...section("Curriculum Development", (ac?.curriculum ?? []).map(entry)),
-		...section("Professional Appointments", jobs),
-		...section("Mentorship and Advising", (ac?.mentorship ?? []).map(entry)),
 		...section(
-			"Publications and Public Scholarship",
-			(ac?.publications ?? []).map(
-				(p) => `### ${p.heading}\n\n${p.body.trim()}`,
-			),
+			"Software and Open Source",
+			(resume.experience.projects ?? []).map(project),
 		),
-		...section("Software and Open Source", (ac?.software ?? []).map(entry)),
-		...section(
-			"Invited Talks and Presentations",
-			(ac?.talks ?? []).map((t) => t.body.trim()),
-		),
-		...section("Service", (ac?.service ?? []).map(entry)),
 		...section(
 			"Technical Competencies",
-			(ac?.competencies ?? []).map((c) => `**${c.label}** — ${c.items}`),
+			(cv?.competencies ?? []).map((c) => `**${c.label}** — ${c.items}`),
 		),
-		ac?.footer ? `*${ac.footer}*` : "",
+		cv?.footer ? `*${cv.footer}*` : "",
 	].filter(Boolean);
 
 	// Horizontal rules separate sections on screen only; print hides them.
@@ -155,14 +167,6 @@ export function cvMarkdown(resume: ResumeData): string {
 
 /** The slice of a post the CV needs; injected so tests need no filesystem. */
 export type PostRef = Pick<Post, "id" | "title" | "date" | "summary" | "show">;
-
-/** Jobs printed under one CV section, newest first. */
-export function jobsIn(
-	_resume: ResumeData,
-	_section: CvSection,
-): JobExperience[] {
-	throw new Error("not implemented");
-}
 
 /** The Publications and Public Scholarship groups, each a heading and its blocks. */
 export function publicationGroups(

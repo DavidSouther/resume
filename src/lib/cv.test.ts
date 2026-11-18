@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cvMarkdown, monthYear } from "./cv.ts";
+import { cvMarkdown, jobsIn, monthYear } from "./cv.ts";
 import type { ResumeData } from "./resume";
 
 const resume = {
@@ -28,8 +28,45 @@ const resume = {
 					},
 				],
 			},
+			{
+				organization: { name: "Chatham" },
+				cvSection: "teaching",
+				roles: [
+					{
+						name: "Lecturer",
+						startDate: "2016-01-01",
+						challenges: [{ description: "Taught." }],
+					},
+				],
+			},
+			{
+				organization: { name: "Code Fellows" },
+				cvSection: "teaching",
+				roles: [
+					{
+						name: "Instructor",
+						startDate: "2018-01-01",
+						challenges: [{ description: "Taught bootcamps." }],
+					},
+				],
+			},
+			{
+				organization: { name: "Old Shop" },
+				cvSection: "professional",
+				roles: [{ name: "Intern", startDate: "2005-01-01" }],
+			},
 		],
-		projects: [],
+		projects: [
+			{
+				type: "openSource",
+				details: {
+					name: "Ailly",
+					description: "Prompt tooling.",
+					URL: "https://github.com/DavidSouther/ailly",
+				},
+				roles: [{ name: "Developer", startDate: "2023-10-04" }],
+			},
+		],
 		publicArtifacts: [],
 	},
 	knowledge: {
@@ -44,22 +81,20 @@ const resume = {
 			},
 		],
 	},
-	academic: {
+	cv: {
 		note: "Draft",
 		footer: "References available on request.",
 		interests: [{ title: "Teaching", body: "Domain experts." }],
-		teaching: [
-			{ title: "**Lecturer**", meta: "Chatham · 2016", body: "Taught." },
-		],
-		curriculum: [],
-		mentorship: [],
-		software: [],
-		service: [],
-		publications: [{ heading: "Essays", body: "- one" }],
-		talks: [],
 		competencies: [{ label: "Languages", items: "Rust" }],
 	},
 } as unknown as ResumeData;
+
+/** Everything under a `## heading` up to the next `## `. */
+function sectionOf(md: string, heading: string): string {
+	const start = md.indexOf(`## ${heading}`);
+	const next = md.indexOf("\n## ", start + 1);
+	return md.slice(start, next < 0 ? undefined : next);
+}
 
 describe("cvMarkdown", () => {
 	const md = cvMarkdown(resume);
@@ -80,11 +115,65 @@ describe("cvMarkdown", () => {
 		expect(headings).toEqual([
 			"## Research and Teaching Interests",
 			"## Education",
-			"## Academic and Teaching Appointments",
+			"## Teaching Appointments",
 			"## Professional Appointments",
-			"## Publications and Public Scholarship",
+			"## Software and Open Source",
 			"## Technical Competencies",
 		]);
+	});
+
+	it("puts each job in exactly one section", () => {
+		const teaching = sectionOf(md, "Teaching Appointments");
+		const professional = sectionOf(md, "Professional Appointments");
+		expect(teaching).toContain("Code Fellows");
+		expect(teaching).toContain("Chatham");
+		expect(teaching).not.toContain("Analytical Engines");
+		expect(professional).toContain("Analytical Engines");
+		expect(professional).toContain("Old Shop");
+		expect(professional).not.toContain("Code Fellows");
+		expect(md.split("Code Fellows").length - 1).toBe(1);
+	});
+
+	it("treats a job with no cvSection as professional", () => {
+		expect(
+			jobsIn(resume, "professional").map((j) => j.organization.name),
+		).toContain("Analytical Engines");
+		expect(
+			jobsIn(resume, "teaching").map((j) => j.organization.name),
+		).not.toContain("Analytical Engines");
+	});
+
+	it("lists each section newest first", () => {
+		expect(jobsIn(resume, "teaching").map((j) => j.organization.name)).toEqual([
+			"Code Fellows",
+			"Chatham",
+		]);
+		expect(
+			jobsIn(resume, "professional").map((j) => j.organization.name),
+		).toEqual(["Analytical Engines", "Old Shop"]);
+	});
+
+	it("lists interests, projects and unfinished studies", () => {
+		expect(md).toContain("**Teaching.** Domain experts.");
+		expect(md).toContain("[Ailly](https://github.com/DavidSouther/ailly)");
+		expect(md).toContain("Prompt tooling.");
+		const unfinished = structuredClone(resume);
+		unfinished.knowledge.studies?.push({
+			studyType: "officialDegree",
+			degreeAchieved: false,
+			name: "Ph.D. Education",
+			startDate: "2025-09-01",
+			institution: { name: "Somewhere" },
+		});
+		expect(cvMarkdown(unfinished)).toContain(
+			"**Ph.D. Education** — Somewhere · September 2025 – present",
+		);
+	});
+
+	it("does not throw without a cv table", () => {
+		const bare = structuredClone(resume);
+		bare.cv = undefined;
+		expect(cvMarkdown(bare)).toMatch(/^# Ada Lovelace/);
 	});
 
 	it("takes roles and education from the resume sections", () => {
@@ -97,17 +186,6 @@ describe("cvMarkdown", () => {
 		);
 	});
 
-	it("separates a title from its body when there is no meta", () => {
-		const md = cvMarkdown({
-			...resume,
-			academic: {
-				...(resume.academic as NonNullable<ResumeData["academic"]>),
-				service: [{ title: "**Open source**", body: "Ongoing." }],
-			},
-		});
-		expect(md).toContain("**Open source** — Ongoing.");
-	});
-
 	it("drops salary-page links from role titles", () => {
 		const linked = structuredClone(resume);
 		linked.experience.jobs[0].roles[0].name =
@@ -118,7 +196,7 @@ describe("cvMarkdown", () => {
 
 	it("keeps the draft note out of print and omits empty sections", () => {
 		expect(md).toContain('<p class="no-print"><em>Draft</em></p>');
-		expect(md).not.toContain("Curriculum Development");
+		expect(md).not.toContain("Publications");
 		expect(md).toContain("*References available on request.*");
 	});
 });
