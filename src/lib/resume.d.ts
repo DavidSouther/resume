@@ -12,6 +12,7 @@ export interface ResumeData {
 		softSkills?: Skill[];
 		studies?: Study[];
 	};
+	cv?: CvData;
 }
 
 export interface Settings {
@@ -25,7 +26,12 @@ export interface JobExperience {
 	type?: OrganizationType;
 	roles: Role[];
 	full?: boolean;
+	/** CV placement, an extension to the MAC schema; the resume ignores it. */
+	cvSection?: CvSection;
 }
+
+/** Which CV section a job prints under; a job without the key is professional. */
+export type CvSection = "teaching" | "professional";
 
 export interface ProjectExperience {
 	details?: PublicEntityDetails;
@@ -83,6 +89,8 @@ export interface PublicEntityDetails {
 	URL?: string;
 	image?: Image;
 	location?: Location;
+	/** On a project: print it under Curriculum Development instead of Software. */
+	cvSection?: "curriculum";
 }
 
 export interface Role {
@@ -128,7 +136,7 @@ export interface Competence {
 	URL?: string;
 }
 
-export interface Tags {}
+export type Tags = string[];
 
 export type LanguageCompetence =
 	| "Elementary proficiency"
@@ -207,3 +215,23 @@ export interface Contact {
 	contactMails?: string[];
 	publicProfiles?: Link[];
 }
+
+/**
+ * CV-only material, an extension to the MAC schema: everything the `/cv` view
+ * needs that the resume's own entries do not already say.
+ */
+export interface CvData {
+	/** Screen-only note shown above the CV, never printed. Raw HTML. */
+	note?: string;
+	footer?: string;
+	interests?: { title: string; body: string }[];
+	competencies?: { label: string; items: string }[];
+	publications?: CvPublicationGroup[];
+	/** Post ids of lectures, listed under Invited Talks after the excerpts. */
+	talks?: string[];
+}
+
+/** One publication group: artifacts carrying a tag, or an ordered list of post ids. */
+export type CvPublicationGroup =
+	| { heading: string; tag: string; posts?: never }
+	| { heading: string; posts: string[]; tag?: never };

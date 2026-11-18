@@ -555,9 +555,8 @@ section:has(img.float) + section {
    * Keep headings with their content.
    *
    * `break-after: avoid` says exactly this and is what Chromium honors. WebKit
-   * ignores it, and WebKit is the engine behind the macOS print pipeline that
-   * produced public/David_Souther_CV.pdf — where "ACADEMIC AND TEACHING
-   * APPOINTMENTS" stranded at the foot of page 1.
+   * (Safari and the macOS print pipeline) ignores it, so a heading can strand
+   * at the foot of a page there.
    *
    * WebKit does honor `break-inside`, so h2 and h3 below additionally carry a
    * --keep-with-next padding deep enough to cover the first lines of the block
@@ -576,21 +575,22 @@ section:has(img.float) + section {
 
   .cv h1 {
     margin: 0 0 2pt;
-    text-align: center;
   }
 
-  /* Positional selector for the contact details.  */
-  .cv h1 + p {
-    --font-size-base: 9.5pt;
-    margin: 0 0 6pt;
-    text-align: center;
+  /* The shared AboutMe header: its subtitle is not a section heading. */
+  .cv > header h2 {
+    margin: 0;
+    padding: 0;
+    text-transform: none;
+    letter-spacing: normal;
+    font-size: 11pt;
   }
 
   /*
    * The rule-under separates sections on paper, so it replaces both the
    * <hr>s below and the card edges zeroed above.
    */
-  .cv h2 {
+  .cv main h2 {
     /* Roughly three lines of 10pt/1.35 body text. */
     --keep-with-next: 40pt;
 
@@ -606,7 +606,7 @@ section:has(img.float) + section {
    * border-bottom, which --keep-with-next would otherwise push down the page.
    * It stays a border, so it prints even with background printing turned off.
    */
-  .cv h2::after {
+  .cv main h2::after {
     content: "";
     position: absolute;
     inset: auto 0 calc(var(--keep-with-next) - 2pt);

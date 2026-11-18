@@ -80,7 +80,7 @@ The MCP Gateway deploys as a stand alone component in a customer's environment, 
 I designed the runtime components, allowing clean deployments in environments ranging from local dev to small docker compose instances through full Kubernetes operator orchestration.
 I championed an organizational pivot away from direct control-plane-to-gateway configuration into an infrastructure-as-code centered approach that grows from click-ops to git-ops.
 I implemented portions of those and other designs in the Rust codebase.
-I mentor and guide new-to-Rust engineers across the company, with a focus on finding composable design patterns that work with the grain in both Rust and the application.
+<span data-cv="mentorship" data-title="Technical mentorship">I mentor and guide new-to-Rust engineers across the company, with a focus on finding composable design patterns that work with the grain in both Rust and the application.</span>
 """
 
 [[experience.jobs.roles.competences]]
@@ -153,7 +153,7 @@ finishDate = "2024-12-01"
 description = """
 AI Lab is an org-wide cross-functional group of technologists exploring the application of AI, especially LLMs, to TCX's authoring and educational workflows. AI Lab workshopped many LLM applications, with some entering production, and ran numerous experiments to validate others.
 
-* Code Explainer - Prompt-based tooling for generating explanations of example code, targeted to AWS Learner levels.
+* Code Explainer - <span data-cv="curriculum" data-title="Code Explainer">Prompt-based tooling for generating explanations of example code, targeted to AWS Learner levels.</span>
 * Style Guide Checker - Experiment using prompt engineering to identify and correct style guide issues, both in general grammatical concerns as well as AWS-specific content recommendations.
 """
 
@@ -227,6 +227,7 @@ name = "technical writing"
 type = "practice"
 
 [[experience.jobs]]
+cvSection = "teaching"
 [experience.jobs.organization]
 name = "Code Fellows"
 
@@ -238,16 +239,15 @@ finishDate = "2023-06-30"
 [[experience.jobs.roles.challenges]]
 description = """
 Lead instructor for [Code 401: Advanced Software Development in Full Stack 
-JavaScript](https://www.codefellows.org/courses/code-401/advanced-software-devel
-opment-in-full-stack-JavaScript/).
+JavaScript](https://www.codefellows.org/courses/code-401/advanced-software-development-in-full-stack-JavaScript/).
 
-Educational duties include online classroom instruction, career coaching, 
-curriculum development, and student evaluation. Students consistently ranked my 
-courses at 100 net promoter score, both on weekly survey and course final 
-evaluations. Organized & lead an instructor-wide project revamping the school's 
+<span data-cv="mentorship" data-title="Career coaching">Educational duties include online classroom instruction, career coaching, 
+curriculum development, and student evaluation.</span> Students consistently ranked my 
+courses above 80 net promoter score, both on weekly survey and course final 
+evaluations. <span data-cv="curriculum" data-title="Technical whiteboarding curriculum and rubric">Organized & lead an instructor-wide project revamping the school's 
 white-boarding process. This project rewrote the white-boarding guide, 
 formalized a rubric for grading whiteboards & tech interviews, and revamped 
-problem & training materials for a dozen instructors across four languages. 
+problem & training materials for a dozen instructors across four languages.</span> 
 Code Fellows was ranked as a [2023 top coding boot 
 camp](https://fortune.com/education/bootcamps/best-cybersecurity-bootcamps/) by 
 Fortune Education.
@@ -297,7 +297,7 @@ including global data acquisition, Data Center Infrastructure Management
 (DCIM), automated authentication, and more. Migrated and managed these systems 
 in a variety of VM & Service Mesh settings. RE and Subject Matter Expert for a 
 DDoS detection, alerting, and mitigation system protecting a global ISP's core 
-infrastructure and Xm customers. Responsible Engineer for managing and 
+infrastructure and millions of customers. Responsible Engineer for managing and 
 optimizing cloud spend, migrating ~30% on prem and reducing overall utilization 
 ~10% while user base grew ~50%.
 """
@@ -335,13 +335,13 @@ mentoring and guiding my team in their engineering and career. I Lead a team of
 the migration, I organized additional feature work to maintain market parity 
 and leadership during the migration.
 
-As a manager, I developed junior and Noogler engineers in Cloud, Angular, and 
+<span data-cv="mentorship" data-title="Engineering management">As a manager, I developed junior and Noogler engineers in Cloud, Angular, and 
 typescript. I successfully promoted an L4 Noogler to L5 in three performance 
 review cycles and an L3 Googler to L4 during the second cycle as manager, and 
 guided an L3 who received an NI through a PIP who was then promoted to L4 two 
 cycles after departure. I achieved this through managing and mentoring junior 
 engineers, writing performance reviews and promotion packets, and coordinating 
-task priority and HR concerns.
+task priority and HR concerns.</span>
 """
 
 [[experience.jobs.roles.competences]]
@@ -429,6 +429,7 @@ name = "Visualization"
 type = "domain"
 
 [[experience.jobs]]
+cvSection = "teaching"
 [experience.jobs.organization]
 name = "Chatham University"
 
@@ -468,9 +469,9 @@ prior quarters, I contributed to an effort across several working groups to
 migrate from existing GWT web UIs to modern, component-base Angular 
 architectures. I brought a strong emphasis to Test Driven Development in our FE 
 environment, including techniques, best practices, and general cheer leading. I 
-worked with several groups to offer, and personally taught, several collegiate 
+worked with several groups to offer, and personally taught, <span data-cv="talks" data-title="Test-driven development and industry practices">several collegiate 
 courses including a two-week intensive course on TDD & industry practices at Mt 
-Holyoke College.
+Holyoke College.</span>
 """
 
 [[experience.jobs.roles.competences]]
@@ -490,6 +491,7 @@ name = "typescript"
 type = "technology"
 
 [[experience.jobs]]
+cvSection = "teaching"
 [experience.jobs.organization]
 name = "Mt Holyoke College & Google"
 
@@ -502,7 +504,7 @@ finishDate = "2017-01-31"
 description = """
 Working with colleagues at Google, I developed and taught winter courses in 
 mobile software development and team software engineering at Mt Holyoke College 
-and Smith University. Our materials covered test-driven development in Python, 
+and Smith College. Our materials covered test-driven development in Python, 
 Android development on real devices, and included significant team project 
 components.
 """
@@ -608,9 +610,9 @@ handles 45 million unique monthly visitors in 2012. Core member of the
 Prototype team, building and testing potential new features for the 
 proto.nytimes.com domain. Responsible for the backend stack, including Node 
 servers for data management and AB testing, as well as a variety of systems 
-administration to handle our traffic. Invited to speak on emerging technologies 
+administration to handle our traffic. <span data-cv="talks" data-title="Emerging technologies">Invited to speak on emerging technologies 
 to internal development groups, as well as on behalf of the Times at regional 
-college tech events and tech meetups. Internal git guru.
+college tech events and tech meetups.</span> Internal git guru.
 """
 
 [[experience.jobs.roles.competences]]
@@ -796,6 +798,7 @@ type = "openSource"
 
 [experience.projects.details]
 name = "nand2tetris/web-ide"
+cvSection = "curriculum"
 description = """
 Online web IDE for the [nand2tetris](https://www.nand2tetris.org/) computer architecture & language course.
 """
@@ -810,6 +813,7 @@ type = "openSource"
 
 [experience.projects.details]
 name = "DavidSouther/software_craftsmanship"
+cvSection = "curriculum"
 description = """
 Software Craftsmanship for the Lay Person is an introduction project based book 
 for a first exposure to programming. The main text is language agnostic, while 
@@ -844,6 +848,7 @@ finishDate = "2017-07-31"
 [[experience.publicArtifacts]]
 type = "post"
 publishingDate = "2023-06-23"
+tags = [ "Industry Writing" ]
 
 [experience.publicArtifacts.details]
 name = "Cloud Journeys: Building a Serverless Image Recognition Website with Machine Learning"
@@ -858,6 +863,7 @@ URL = "https://community.aws/posts/cloud-journeys/01-serverless-image-recognitio
 [[experience.publicArtifacts]]
 type = "post"
 publishingDate = "2023-04-01"
+tags = [ "Curriculum" ]
 
 [experience.publicArtifacts.details]
 name = "Technical Whiteboarding"
@@ -881,7 +887,7 @@ tags = [ "Defensive Publication" ]
 [experience.publicArtifacts.details]
 name = "Graph Visualization by Organizing Connections in Collapsible Hierarchical Graphs"
 description = """
-Souther et al. Network graphs in certain applications, e.g., cloud-network
+Souther et al. (first author). Network graphs in certain applications, e.g., cloud-network
 graphs, have connections in multiple dimensions. At present, it is difficult or
 inconvenient for a user to visualize such graphs at varying levels of
 granularity or hierarchy. Per the techniques of this disclosure, a hull is
@@ -899,6 +905,7 @@ URL = "https://www.tdcommons.org/dpubs_series/2996/"
 [[experience.publicArtifacts]]
 type = "post"
 publishingDate = "2013-06-01"
+tags = [ "Community" ]
 
 [experience.publicArtifacts.details]
 name = "Is stat() an expensive system call?"
@@ -907,6 +914,7 @@ URL = "https://stackoverflow.com/questions/17149668/is-stat-an-expensive-system-
 [[experience.publicArtifacts]]
 type = "post"
 publishingDate = "2012-10-01"
+tags = [ "Community" ]
 
 [experience.publicArtifacts.details]
 name = "Format Date time in AngularJS"
@@ -939,6 +947,7 @@ URL = "https://stackoverflow.com/questions/12920892/format-date-time-in-angularj
 [[experience.publicArtifacts]]
 type = "achievement"
 publishingDate = "2022-03-04"
+tags = [ "Community" ]
 
 [experience.publicArtifacts.details]
 name = "Top 5% at Stack Overflow answers"
@@ -973,6 +982,7 @@ type = "technology"
 [[experience.publicArtifacts]]
 type = "achievement"
 publishingDate = "2022-03-04"
+tags = [ "Community" ]
 
 [experience.publicArtifacts.details]
 name = "Top 10% at Stack Overflow answers"
@@ -999,6 +1009,7 @@ type = "technology"
 [[experience.publicArtifacts]]
 type = "achievement"
 publishingDate = "2022-03-04"
+tags = [ "Community" ]
 
 [experience.publicArtifacts.details]
 name = "Top 20% at Stack Overflow answers"
@@ -1037,10 +1048,10 @@ name = "B.S. Mathematics"
 startDate = "2007-08-01"
 finishDate = "2011-05-31"
 description = """
-Tutored for three years. Brought a group of math majors together for regular 
+<span data-cv="mentorship" data-title="Undergraduate tutoring">Tutored for three years. Brought a group of math majors together for regular 
 study sessions, helping all of us work through not just our homework, but the 
 big ideas on topics from philosophy to religion to science, and how they fit 
-together with the material we studied.
+together with the material we studied.</span>
 """
 
 [knowledge.studies.institution]
@@ -1093,3 +1104,116 @@ type = "technology"
 [[careerPreferences.contact.publicProfiles]]
 type = "other"
 URL = "https://github.com/davidsouther"
+
+# CV-only material for /cv; the resume page never renders it. The CV reads its
+# roles, education, projects, and artifacts from the shared sections above, so
+# the resume and CV share one source. A job's `cvSection` places it on the CV.
+[cv]
+note = "Draft CV — prepared for the Department of Pediatrics, SUNY Downstate Health Sciences University."
+footer = "References available on request."
+# Posts that record a lecture; other talks are excerpted from the role text.
+talks = [ "ilities" ]
+
+[[cv.interests]]
+title = "Computing education for domain experts"
+body = """
+Nineteen years of industrial software
+engineering alongside a decade of teaching, with a consistent focus on teaching
+domain experts with little to no programming exposure to the point where they
+can build, deploy, operate, and troubleshoot real software in their own field. This
+extends to the subject of my current graduate research, approaches to teaching software
+engineering to mid-career professionals with little to no programming experience.
+"""
+
+[[cv.interests]]
+title = "Auditable AI-assisted software engineering"
+body = """
+Agentic large-language-model systems
+can absorb substantial portions of the software development lifecycle, but only where
+human guidance in the form of prompts, context, and generated output are durable, reviewable, artifacts guided with an understanding of the tooling in the holistic context of software engineering. My open-source work and recent writing pursue this
+effort directly.
+"""
+
+[[cv.interests]]
+title = "Research software, analytics, and visualization"
+body = """
+Building the data, service, and
+interface layers that let a research group ask questions of large, heterogeneous
+datasets — and rendering the answers so a non-specialist users can act on them.
+"""
+
+[[cv.interests]]
+title = "The software development lifecycle as collaborative practice"
+body = """
+Engineers, program
+and project managers, interface designers, subject-matter experts, and end users each
+take part in a working system. Teaching that collaboration is as much of the work as
+teaching the practice of programming.
+"""
+
+# Publication groups, in print order. A `tag` group lists the public artifacts
+# above that carry the tag; a `posts` group lists essays by id, rendered from
+# each post's own front matter.
+
+[[cv.publications]]
+heading = "Defensive Publication"
+tag = "Defensive Publication"
+
+[[cv.publications]]
+heading = "Industry Writing"
+tag = "Industry Writing"
+
+[[cv.publications]]
+heading = "Computing Education"
+posts = [
+	"interview_01_whiteboard",
+	"interview_02_drawing",
+	"interview_03_tracing",
+	"interview_04_forward_backward",
+	"interview_06_glossary",
+	"forward_backward_method",
+	"ilities",
+	"behavioral_interviewing",
+]
+
+[[cv.publications]]
+heading = "Large Language Models"
+posts = [
+	"jeopardy_search",
+	"ailly_ooda",
+	"llm_review_is_not_human_review",
+	"knowledge_that_by_of",
+	"fuzzy_homomorphic_endofunctor",
+]
+
+[[cv.publications]]
+heading = "Software Architecture"
+posts = [
+	"arrow_of_maturity",
+	"fielding-rest",
+]
+
+[[cv.publications]]
+heading = "Community"
+tag = "Community"
+
+[[cv.competencies]]
+label = "Languages"
+items = "Rust, Python, TypeScript, JavaScript, Java, Go, C, C++, Scala, PHP, Dart, SQL, Bash"
+
+[[cv.competencies]]
+label = "Machine learning and AI"
+items = "Large language models, prompt engineering, agentic systems, Model Context Protocol, Amazon Bedrock, retrieval and semantic search, LLM evaluation harnesses"
+
+[[cv.competencies]]
+label = "Data, analytics, and visualization"
+items = "Large-scale graph rendering and layout, D3, SVG, NVD3, data pipeline design, dashboard and reporting systems"
+
+[[cv.competencies]]
+label = "Systems and infrastructure"
+items = "Kubernetes, Istio, service mesh, Docker, AWS, Google Cloud Platform, distributed systems, CI/CD automation, Linux, Node.js, GraphQL"
+
+[[cv.competencies]]
+label = "Practice"
+items = "Test-driven development, software development lifecycle facilitation, technical writing and documentation systems, curriculum design, code review, technical interviewing and assessment, team leadership and people management"
+

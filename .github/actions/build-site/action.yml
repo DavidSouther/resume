@@ -58,3 +58,16 @@ runs:
     - name: Build site
       shell: bash
       run: npm run check && npm run build:site
+
+    # PDFs are printed into docs/ so the build CI approves is the one that
+    # deploys, for every caller of this action. This must run after the site
+    # build and stay the last step; a
+    # failure here fails CI and blocks the deploy, so it is never
+    # continue-on-error.
+    - name: Install Chromium for PDFs
+      shell: bash
+      run: npx playwright install --with-deps chromium
+
+    - name: Build resume and CV PDFs
+      shell: bash
+      run: npm run pdfs

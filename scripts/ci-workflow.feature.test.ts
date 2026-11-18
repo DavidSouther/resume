@@ -163,3 +163,37 @@ describe("PR builds gate merge and the release reuses the approved build", () =>
 		expect(action.runs.steps.length).toBeGreaterThan(0);
 	});
 });
+
+describe("the shared build action prints the resume and CV PDFs", () => {
+	const action = parse(load(".github/actions/build-site/action.yml")) as {
+		runs: { steps: (Step & { "continue-on-error"?: boolean })[] };
+	};
+	const runs = action.runs.steps.map((x) => x.run ?? "");
+
+	it("installs Chromium and runs the PDF build after the site build", () => {
+		const chromium = runs.findIndex((r) => r.includes("playwright install"));
+		const pdfs = runs.findIndex((r) => r.includes("npm run pdfs"));
+		const site = runs.findIndex((r) => r.includes("npm run build:site"));
+		expect(chromium).toBeGreaterThan(site);
+		expect(pdfs).toBeGreaterThan(chromium);
+	});
+
+	it("a failed PDF build fails the action, so it blocks the deploy", () => {
+		const step = action.runs.steps.find((x) => x.run?.includes("npm run pdfs"));
+		expect(step, "the action has no PDF step").toBeDefined();
+		expect(step).not.toHaveProperty("continue-on-error");
+		const last = action.runs.steps.at(-1);
+		expect(last?.run).toContain("npm run pdfs");
+	});
+
+	it("the pdfs script is wired to build-pdfs.ts and names both outputs", () => {
+		const pkg = JSON.parse(load("package.json")) as {
+			scripts: Record<string, string>;
+		};
+		expect(pkg.scripts.pdfs).toBe("node scripts/build-pdfs.ts");
+		expect(load("scripts/build-pdfs.ts")).toContain("../src/lib/pdfs.ts");
+		const names = load("src/lib/pdfs.ts");
+		expect(names).toContain('"david_souther_resume.pdf"');
+		expect(names).toContain('"david_souther_cv.pdf"');
+	});
+});
