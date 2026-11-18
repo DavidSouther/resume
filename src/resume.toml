@@ -227,6 +227,7 @@ name = "technical writing"
 type = "practice"
 
 [[experience.jobs]]
+cvSection = "teaching"
 [experience.jobs.organization]
 name = "Code Fellows"
 
@@ -428,6 +429,7 @@ name = "Visualization"
 type = "domain"
 
 [[experience.jobs]]
+cvSection = "teaching"
 [experience.jobs.organization]
 name = "Chatham University"
 
@@ -489,6 +491,7 @@ name = "typescript"
 type = "technology"
 
 [[experience.jobs]]
+cvSection = "teaching"
 [experience.jobs.organization]
 name = "Mt Holyoke College & Google"
 
@@ -501,7 +504,7 @@ finishDate = "2017-01-31"
 description = """
 Working with colleagues at Google, I developed and taught winter courses in 
 mobile software development and team software engineering at Mt Holyoke College 
-and Smith University. Our materials covered test-driven development in Python, 
+and Smith College. Our materials covered test-driven development in Python, 
 Android development on real devices, and included significant team project 
 components.
 """
@@ -843,6 +846,7 @@ finishDate = "2017-07-31"
 [[experience.publicArtifacts]]
 type = "post"
 publishingDate = "2023-06-23"
+tags = [ "Industry Writing" ]
 
 [experience.publicArtifacts.details]
 name = "Cloud Journeys: Building a Serverless Image Recognition Website with Machine Learning"
@@ -857,6 +861,7 @@ URL = "https://community.aws/posts/cloud-journeys/01-serverless-image-recognitio
 [[experience.publicArtifacts]]
 type = "post"
 publishingDate = "2023-04-01"
+tags = [ "Curriculum" ]
 
 [experience.publicArtifacts.details]
 name = "Technical Whiteboarding"
@@ -898,6 +903,7 @@ URL = "https://www.tdcommons.org/dpubs_series/2996/"
 [[experience.publicArtifacts]]
 type = "post"
 publishingDate = "2013-06-01"
+tags = [ "Community" ]
 
 [experience.publicArtifacts.details]
 name = "Is stat() an expensive system call?"
@@ -906,6 +912,7 @@ URL = "https://stackoverflow.com/questions/17149668/is-stat-an-expensive-system-
 [[experience.publicArtifacts]]
 type = "post"
 publishingDate = "2012-10-01"
+tags = [ "Community" ]
 
 [experience.publicArtifacts.details]
 name = "Format Date time in AngularJS"
@@ -938,6 +945,7 @@ URL = "https://stackoverflow.com/questions/12920892/format-date-time-in-angularj
 [[experience.publicArtifacts]]
 type = "achievement"
 publishingDate = "2022-03-04"
+tags = [ "Community" ]
 
 [experience.publicArtifacts.details]
 name = "Top 5% at Stack Overflow answers"
@@ -972,6 +980,7 @@ type = "technology"
 [[experience.publicArtifacts]]
 type = "achievement"
 publishingDate = "2022-03-04"
+tags = [ "Community" ]
 
 [experience.publicArtifacts.details]
 name = "Top 10% at Stack Overflow answers"
@@ -998,6 +1007,7 @@ type = "technology"
 [[experience.publicArtifacts]]
 type = "achievement"
 publishingDate = "2022-03-04"
+tags = [ "Community" ]
 
 [experience.publicArtifacts.details]
 name = "Top 20% at Stack Overflow answers"
