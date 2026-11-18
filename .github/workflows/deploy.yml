@@ -79,23 +79,28 @@ jobs:
         if: steps.reuse.outputs.hit != 'true'
         uses: ./.github/actions/build-site
 
-      # A reused site artifact can contain an older published WASM build.
+      # A reused site artifact can contain an older published WASM build, so
+      # take the latest one. Deploy never waits on Deep Field: a missing or
+      # older bundle is a warning, and Deep Field CI redeploys when it publishes
+      # a bundle for the new sources.
       - name: Fetch current Deep Field WASM
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release download deep-field-wasm --repo "$GITHUB_REPOSITORY" \
-            --pattern deep-field-wasm.tar.gz --dir "$RUNNER_TEMP" --clobber
+          if ! gh release download deep-field-wasm --repo "$GITHUB_REPOSITORY" \
+            --pattern deep-field-wasm.tar.gz --dir "$RUNNER_TEMP" --clobber; then
+            echo "::warning::No Deep Field WASM release to fetch; deploying without a refreshed detector."
+            exit 0
+          fi
           rm -rf docs/deep_field/detect
           mkdir -p docs/deep_field/detect
           tar -xzf "$RUNNER_TEMP/deep-field-wasm.tar.gz" -C docs/deep_field/detect
           expected=$(git ls-tree -r HEAD -- pages/deep_field/detect mise.toml package.json | sha256sum | cut -d ' ' -f 1)
-          actual=$(cat docs/deep_field/detect/.source-hash)
+          actual=$(cat docs/deep_field/detect/.source-hash 2>/dev/null || true)
           if [ "$actual" != "$expected" ]; then
-            echo "Deep Field WASM is not built from this commit's detector sources; waiting for its workflow to publish and redeploy." >&2
-            exit 1
+            echo "::warning::Deep Field WASM was built from older detector sources; deploying it anyway. Deep Field CI publishes a new build and redeploys."
           fi
-          rm docs/deep_field/detect/.source-hash
+          rm -f docs/deep_field/detect/.source-hash
 
       - uses: actions/configure-pages@v5
 
