@@ -56,7 +56,6 @@ const resume = {
 		],
 	},
 	cv: {
-		note: "Draft",
 		footer: "References available on request.",
 		interests: [{ title: "Teaching", body: "Domain experts." }],
 		competencies: [{ label: "Languages", items: "Rust" }],
@@ -146,7 +145,6 @@ describe("cvMarkdown", () => {
 			"[Ailly](https://github.com/DavidSouther/ailly)",
 			"**Teaching.** Domain experts.",
 			"**Languages** — Rust",
-			'<p class="no-print"><em>Draft</em></p>',
 			"*References available on request.*",
 		]) {
 			expect(md).toContain(expected);

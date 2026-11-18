@@ -1109,7 +1109,6 @@ URL = "https://github.com/davidsouther"
 # roles, education, projects, and artifacts from the shared sections above, so
 # the resume and CV share one source. A job's `cvSection` places it on the CV.
 [cv]
-note = "Draft CV — prepared for the Department of Pediatrics, SUNY Downstate Health Sciences University."
 footer = "References available on request."
 # Posts that record a lecture; other talks are excerpted from the role text.
 talks = [ "ilities" ]

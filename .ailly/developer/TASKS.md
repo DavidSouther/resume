@@ -55,7 +55,7 @@ Next-step queue for `developer:ailly` sessions in this repo.
   reconcile the education descriptions; a test that no entry's first sentence
   appears twice on the CV (only Code Fellows and lecture posts are guarded
   today); decide whether `[[cv.competencies]]` can move to the resume. To
-  confirm: `cv.note` still names SUNY Downstate; the Stack Overflow answers and
+  confirm: the Stack Overflow answers and
   rankings print under Publications as "Community"; the old `/resume.pdf` and
   `/David_Souther_CV.pdf` URLs now 404 (GitHub Pages has no redirects).
 

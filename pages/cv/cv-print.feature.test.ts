@@ -121,16 +121,6 @@ describe("the CV page prints as a compact academic CV", () => {
 		);
 	});
 
-	it("marks the draft disclaimer .no-print so it never reaches the committee", async () => {
-		const root = await renderCv();
-
-		const draft = [...root.querySelectorAll("p")].find((p) =>
-			p.textContent?.includes("Draft CV"),
-		);
-		expect(draft, "the draft disclaimer paragraph is missing").toBeDefined();
-		expect(draft?.classList.contains("no-print")).toBe(true);
-	});
-
 	it("sets US Letter page geometry with compact vertical margins", () => {
 		expect(pageRule, "src/global.css declares no @page rule").toBeDefined();
 		// jsdom's CSS parser drops the unknown `size` property from the CSSOM, so
