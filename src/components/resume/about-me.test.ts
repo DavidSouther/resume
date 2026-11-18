@@ -135,3 +135,28 @@ describe("AboutMe", () => {
 		expect(container.querySelector("figure")).toBeNull();
 	});
 });
+
+describe("AboutMe PDF link", () => {
+	const aboutMe = {
+		profile: { name: "Ada", surnames: "L" },
+	} as ResumeTypes.AboutMe;
+
+	it("offers a screen-only download link when given a PDF path", () => {
+		const container = mount(AboutMe(aboutMe, { pdf: "/ada.pdf" }));
+		const link = getAllByRole(container, "link").find(
+			(a) => a.getAttribute("href") === "/ada.pdf",
+		);
+		expect(link?.textContent).toBe("PDF");
+		expect(link?.closest("li")?.classList.contains("no-print")).toBe(true);
+		expect(link?.getAttribute("download")).toBe("ada.pdf");
+	});
+
+	it("renders no download link by default", () => {
+		const container = mount(AboutMe(aboutMe));
+		expect(
+			getAllByRole(container, "link").some((a) =>
+				a.getAttribute("href")?.endsWith(".pdf"),
+			),
+		).toBe(false);
+	});
+});

@@ -43,3 +43,19 @@ Next-step queue for `developer:ailly` sessions in this repo.
   folder-wins). **Trigger:** any post needs colocated assets / a folder home — the
   manifold post already does, and `posts/llm_manifold/post.md` will not render until
   this lands.
+
+- **CV follow-ups (resume and CV from one source)** — Deferred from the
+  2026-11-18 CV and PDF session; the CV renders from `src/resume.toml` and CI
+  prints `david_souther_resume.pdf` and `david_souther_cv.pdf`. Dropped from the
+  CV for now: Service; the manuscript in preparation (draft post `llm_manifold`,
+  `show: false`); NVD3 and JEFRi as software entries (they would be new
+  `experience.projects`, which also reach the resume); the synthesized ProTech
+  and Google internal-instruction teaching entries. Shared data: group AWS and
+  Google teams under one employer heading; one voice across shared text;
+  reconcile the education descriptions; a test that no entry's first sentence
+  appears twice on the CV (only Code Fellows and lecture posts are guarded
+  today); decide whether `[[cv.competencies]]` can move to the resume. To
+  confirm: `cv.note` still names SUNY Downstate; the Stack Overflow answers and
+  rankings print under Publications as "Community"; the old `/resume.pdf` and
+  `/David_Souther_CV.pdf` URLs now 404 (GitHub Pages has no redirects).
+
