@@ -1,4 +1,3 @@
-import { copyFileSync } from "node:fs";
 import { join } from "node:path";
 import { cwd } from "node:process";
 import { makeServer } from "@davidsouther/jiffies/server/http/index.ts";
@@ -8,14 +7,13 @@ import { chromium } from "playwright";
 // each page's own print stylesheet, so the PDFs track src/resume.toml instead of
 // being committed binaries. Run after `npm run build:site`; writes into docs/.
 //
-// `David_Souther_CV.pdf` is kept as a copy of cv.pdf so old links keep working.
+// Names carry the author so the files stay distinct in a Downloads folder.
 // Set CHROMIUM_PATH to use a browser other than Playwright's own download.
 
 export const PDFS = [
-	{ route: "/", file: "resume.pdf" },
-	{ route: "/cv/", file: "cv.pdf" },
+	{ route: "/", file: "david_souther_resume.pdf" },
+	{ route: "/cv/", file: "david_souther_cv.pdf" },
 ] as const;
-export const LEGACY_CV = "David_Souther_CV.pdf";
 
 export async function buildPdfs(root = join(cwd(), "docs")): Promise<string[]> {
 	const server = await makeServer({ root });
@@ -42,8 +40,7 @@ export async function buildPdfs(root = join(cwd(), "docs")): Promise<string[]> {
 		await browser.close();
 		server.close();
 	}
-	copyFileSync(join(root, "cv.pdf"), join(root, LEGACY_CV));
-	return [...PDFS.map(({ file }) => file), LEGACY_CV];
+	return PDFS.map(({ file }) => file);
 }
 
 if (import.meta.main) {
