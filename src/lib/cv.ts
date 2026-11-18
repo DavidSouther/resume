@@ -1,4 +1,11 @@
-import type { CvEntry, ResumeData, Role } from "./resume";
+import type { Post } from "./posts.ts";
+import type {
+	CvEntry,
+	CvSection,
+	JobExperience,
+	ResumeData,
+	Role,
+} from "./resume";
 
 const MONTHS = [
 	"January",
@@ -144,4 +151,23 @@ export function cvMarkdown(resume: ResumeData): string {
 		out.push(block);
 	}
 	return out.join("\n\n");
+}
+
+/** The slice of a post the CV needs; injected so tests need no filesystem. */
+export type PostRef = Pick<Post, "id" | "title" | "date" | "summary" | "show">;
+
+/** Jobs printed under one CV section, newest first. */
+export function jobsIn(
+	_resume: ResumeData,
+	_section: CvSection,
+): JobExperience[] {
+	throw new Error("not implemented");
+}
+
+/** The Publications and Public Scholarship groups, each a heading and its blocks. */
+export function publicationGroups(
+	_resume: ResumeData,
+	_posts: PostRef[],
+): { heading: string; blocks: string[] }[] {
+	throw new Error("not implemented");
 }
