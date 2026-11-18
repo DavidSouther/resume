@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { parse } from "smol-toml";
 import { describe, expect, it } from "vitest";
+import { getSortedPosts } from "./posts.ts";
 import type { ResumeData } from "./resume";
 
 const raw = readFileSync(
@@ -54,5 +55,12 @@ describe("src/resume.toml CV markers", () => {
 			"Top 10% at Stack Overflow answers",
 			"Top 20% at Stack Overflow answers",
 		]);
+	});
+
+	it("lists only posts that exist in cv.publications", () => {
+		const known = new Set(getSortedPosts().map((p) => p.id));
+		const ids = (data.cv?.publications ?? []).flatMap((g) => g.posts ?? []);
+		expect(ids.length).toBeGreaterThan(0);
+		for (const id of ids) expect(known, id).toContain(id);
 	});
 });

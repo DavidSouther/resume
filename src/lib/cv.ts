@@ -3,6 +3,7 @@ import type {
 	CvSection,
 	JobExperience,
 	ProjectExperience,
+	PublicArtifact,
 	ResumeData,
 	Role,
 } from "./resume";
@@ -97,7 +98,7 @@ function project({ details, roles }: ProjectExperience): string {
  * becomes a paragraph the print stylesheet hides. Render the result with
  * `MD()`: the print stylesheet targets its markup.
  */
-export function cvMarkdown(resume: ResumeData): string {
+export function cvMarkdown(resume: ResumeData, posts: PostRef[] = []): string {
 	const { profile } = resume.aboutMe;
 	const cv = resume.cv;
 	const { location, contact } = profile;
@@ -146,6 +147,12 @@ export function cvMarkdown(resume: ResumeData): string {
 			jobBlocks(jobsIn(resume, "professional")),
 		),
 		...section(
+			"Publications and Public Scholarship",
+			publicationGroups(resume, posts).map(
+				(g) => `### ${g.heading}\n\n${g.blocks.join("\n")}`,
+			),
+		),
+		...section(
 			"Software and Open Source",
 			(resume.experience.projects ?? []).map(project),
 		),
@@ -168,10 +175,62 @@ export function cvMarkdown(resume: ResumeData): string {
 /** The slice of a post the CV needs; injected so tests need no filesystem. */
 export type PostRef = Pick<Post, "id" | "title" | "date" | "summary" | "show">;
 
-/** The Publications and Public Scholarship groups, each a heading and its blocks. */
+function year(date?: string): string {
+	return date ? date.slice(0, 4) : "";
+}
+
+function artifactBlock({ details, publishingDate }: PublicArtifact): string {
+	const title = details.URL
+		? `[${details.name}](${details.URL})`
+		: details.name;
+	const when = publishingDate ? ` (${year(publishingDate)})` : "";
+	const summary = (details.description ?? "").trim().split(/\n\s*\n/)[0];
+	return `- ${[`${title}${when}.`, summary.replace(/\s+/g, " ")].filter((x) => x.length > 1).join(" ")}`;
+}
+
+function postBlock(post: PostRef): string {
+	const when = post.date ? ` ${year(post.date)}.` : "";
+	const summary = post.summary ? ` ${post.summary.trim()}` : "";
+	return `- Souther, D. "[${post.title ?? post.id}](/blog/${post.id})."${when}${summary}`;
+}
+
+/**
+ * The Publications and Public Scholarship groups, each a heading and its list
+ * items, in `cv.publications` order. A `tag` group takes the visible artifacts
+ * carrying the tag; a `posts` group is rendered from the posts' own front
+ * matter, so no essay text lives in the TOML. Visible artifacts that no group
+ * claims print last under "Other Publications".
+ */
 export function publicationGroups(
-	_resume: ResumeData,
-	_posts: PostRef[],
+	resume: ResumeData,
+	posts: PostRef[],
 ): { heading: string; blocks: string[] }[] {
-	throw new Error("not implemented");
+	const artifacts = resume.experience.publicArtifacts.filter((a) => !a.hide);
+	const byId = new Map(posts.map((p) => [p.id, p]));
+	const claimed = new Set<PublicArtifact>();
+
+	const groups = (resume.cv?.publications ?? []).map((group) => {
+		if (group.tag !== undefined) {
+			const tagged = artifacts.filter((a) => a.tags?.includes(group.tag));
+			for (const a of tagged) claimed.add(a);
+			return { heading: group.heading, blocks: tagged.map(artifactBlock) };
+		}
+		const found = group.posts.map((id) => {
+			const post = byId.get(id);
+			if (!post) throw new Error(`cv.publications: unknown post id ${id}`);
+			return post;
+		});
+		return {
+			heading: group.heading,
+			blocks: found.filter((p) => p.show).map(postBlock),
+		};
+	});
+
+	const other = artifacts.filter((a) => !claimed.has(a));
+	if (other.length)
+		groups.push({
+			heading: "Other Publications",
+			blocks: other.map(artifactBlock),
+		});
+	return groups.filter((g) => g.blocks.length);
 }

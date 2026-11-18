@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { cvMarkdown, jobsIn, monthYear } from "./cv.ts";
-import type { ResumeData } from "./resume";
+import { cvMarkdown, jobsIn, monthYear, type PostRef } from "./cv.ts";
+import type { CvPublicationGroup, ResumeData } from "./resume";
 
 const resume = {
 	settings: { language: "EN", lastUpdate: "2026-01-01" },
@@ -198,5 +198,117 @@ describe("cvMarkdown", () => {
 		expect(md).toContain('<p class="no-print"><em>Draft</em></p>');
 		expect(md).not.toContain("Publications");
 		expect(md).toContain("*References available on request.*");
+	});
+});
+
+const postA: PostRef = {
+	id: "a",
+	show: true,
+	title: "Alpha",
+	date: "2024-03-01T00:00:00.000Z",
+	summary: "First essay.",
+};
+const postB: PostRef = {
+	id: "b",
+	show: true,
+	title: "Beta",
+	date: "2025-07-01T00:00:00.000Z",
+	summary: "Second essay.",
+};
+
+function artifact(name: string, extra: object = {}) {
+	return {
+		type: "post",
+		publishingDate: "2023-06-23",
+		details: { name, description: `About ${name}.\n\nMore detail.` },
+		...extra,
+	};
+}
+
+function withPublications(
+	groups: CvPublicationGroup[],
+	artifacts: object[] = [],
+): ResumeData {
+	const copy = structuredClone(resume);
+	copy.cv = { ...copy.cv, publications: groups };
+	copy.experience.publicArtifacts = artifacts as never;
+	return copy;
+}
+
+describe("publication groups", () => {
+	it("renders a posts group from front matter, in the listed order", () => {
+		const md = cvMarkdown(
+			withPublications([{ heading: "Essays", posts: ["b", "a"] }]),
+			[postA, postB],
+		);
+		expect(md).toContain("### Essays");
+		expect(md.indexOf("Beta")).toBeLessThan(md.indexOf("Alpha"));
+		expect(md).toContain('Souther, D. "[Alpha](/blog/a)." 2024. First essay.');
+	});
+
+	it("takes a tag group from tagged, visible artifacts only", () => {
+		const md = cvMarkdown(
+			withPublications(
+				[{ heading: "Writing", tag: "Writing" }],
+				[
+					artifact("Shown", { tags: ["Writing"] }),
+					artifact("Hidden", { tags: ["Writing"], hide: true }),
+					artifact("Other tag", { tags: ["Else"] }),
+				],
+			),
+		);
+		const group = sectionOf(md, "Publications and Public Scholarship");
+		expect(group).toContain("Shown");
+		expect(group).toContain("About Shown.");
+		expect(group).not.toContain("More detail.");
+		expect(group).not.toContain("Hidden");
+		expect(group.indexOf("Other tag")).toBeGreaterThan(
+			group.indexOf("### Other Publications"),
+		);
+	});
+
+	it("links an artifact's title to its URL and shows its year", () => {
+		const md = cvMarkdown(
+			withPublications(
+				[{ heading: "Writing", tag: "Writing" }],
+				[
+					artifact("Linked", {
+						tags: ["Writing"],
+						details: { name: "Linked", URL: "https://example.com/x" },
+					}),
+				],
+			),
+		);
+		expect(md).toContain("[Linked](https://example.com/x) (2023)");
+	});
+
+	it("collects artifacts in no group under Other Publications", () => {
+		const md = cvMarkdown(
+			withPublications(
+				[{ heading: "Writing", tag: "Writing" }],
+				[artifact("Tagged", { tags: ["Writing"] }), artifact("Loose")],
+			),
+		);
+		expect(md).toContain("### Other Publications");
+		const other = md.slice(md.indexOf("### Other Publications"));
+		expect(other).toContain("Loose");
+		expect(other).not.toContain("Tagged");
+	});
+
+	it("fails the build on an unknown post id", () => {
+		expect(() =>
+			cvMarkdown(withPublications([{ heading: "Essays", posts: ["nope"] }]), [
+				postA,
+			]),
+		).toThrow("cv.publications: unknown post id nope");
+	});
+
+	it("skips a hidden post without failing", () => {
+		const md = cvMarkdown(
+			withPublications([{ heading: "Essays", posts: ["a", "b"] }]),
+			[postA, { ...postB, show: false }],
+		);
+		expect(md).toContain("Alpha");
+		expect(md).not.toContain("Beta");
 	});
 });
