@@ -85,6 +85,8 @@ Site style, themes, and look & feel are by David.
 
 - NextJS writes static website files.
 - GitHub Actions publishes static website files.
+- The resume (`/`) and the CV (`/cv`) are two views of `src/resume.toml`. Each role, study, project and artifact is written once; a job's `cvSection` and an artifact's `tags` place it on the CV, and the small `[cv]` table holds only CV-only material (interests, competencies, note, footer, publication groups).
+- The build-site action prints both pages with `scripts/build-pdfs.ts` into `docs/david_souther_resume.pdf` and `docs/david_souther_cv.pdf`, so they ship with the approved build. A missing or empty PDF fails CI and blocks the deploy. The old `/resume.pdf` and `/David_Souther_CV.pdf` URLs no longer exist.
 
 ## Architectural Decisions
 

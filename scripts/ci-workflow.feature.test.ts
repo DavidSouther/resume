@@ -166,7 +166,7 @@ describe("PR builds gate merge and the release reuses the approved build", () =>
 
 describe("the shared build action prints the resume and CV PDFs", () => {
 	const action = parse(load(".github/actions/build-site/action.yml")) as {
-		runs: { steps: Step[] };
+		runs: { steps: (Step & { "continue-on-error"?: boolean })[] };
 	};
 	const runs = action.runs.steps.map((x) => x.run ?? "");
 
@@ -176,6 +176,14 @@ describe("the shared build action prints the resume and CV PDFs", () => {
 		const site = runs.findIndex((r) => r.includes("npm run build:site"));
 		expect(chromium).toBeGreaterThan(site);
 		expect(pdfs).toBeGreaterThan(chromium);
+	});
+
+	it("a failed PDF build fails the action, so it blocks the deploy", () => {
+		const step = action.runs.steps.find((x) => x.run?.includes("npm run pdfs"));
+		expect(step, "the action has no PDF step").toBeDefined();
+		expect(step).not.toHaveProperty("continue-on-error");
+		const last = action.runs.steps.at(-1);
+		expect(last?.run).toContain("npm run pdfs");
 	});
 
 	it("the pdfs script is wired to build-pdfs.ts and names both outputs", () => {
