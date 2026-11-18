@@ -221,8 +221,6 @@ export interface Contact {
  * needs that the resume's own entries do not already say.
  */
 export interface CvData {
-	/** Screen-only note shown above the CV, never printed. Raw HTML. */
-	note?: string;
 	footer?: string;
 	interests?: { title: string; body: string }[];
 	competencies?: { label: string; items: string }[];
