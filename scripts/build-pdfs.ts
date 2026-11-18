@@ -4,12 +4,11 @@ import { makeServer } from "@davidsouther/jiffies/server/http/index.ts";
 import { chromium } from "playwright";
 
 // Prints the built resume (/) and academic CV (/cv/) to PDF with Chromium, using
-// each page's own print stylesheet, so the PDFs track src/resume.toml instead of
-// being committed binaries. Run after `npm run build:site`; writes into docs/.
-//
-// Names carry the author so the files stay distinct in a Downloads folder.
+// each page's own print stylesheet, so the PDFs cannot drift from
+// src/resume.toml. Run after `npm run build:site`; writes into docs/.
 // Set CHROMIUM_PATH to use a browser other than Playwright's own download.
 
+// File names carry the author so they stay distinct in a Downloads folder.
 export const PDFS = [
 	{ route: "/", file: "david_souther_resume.pdf" },
 	{ route: "/cv/", file: "david_souther_cv.pdf" },
@@ -29,7 +28,10 @@ export async function buildPdfs(root = join(cwd(), "docs")): Promise<string[]> {
 		const page = await browser.newPage();
 		await page.emulateMedia({ media: "print" });
 		for (const { route, file } of PDFS) {
-			await page.goto(origin + route, { waitUntil: "networkidle" });
+			await page.goto(origin + route, {
+				waitUntil: "networkidle" /* fonts and CSS loaded */,
+			});
+			// The print stylesheet owns page size and uses no background fills.
 			await page.pdf({
 				path: join(root, file),
 				preferCSSPageSize: true,

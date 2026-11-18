@@ -97,6 +97,25 @@ describe("cvMarkdown", () => {
 		);
 	});
 
+	it("separates a title from its body when there is no meta", () => {
+		const md = cvMarkdown({
+			...resume,
+			academic: {
+				...(resume.academic as NonNullable<ResumeData["academic"]>),
+				service: [{ title: "**Open source**", body: "Ongoing." }],
+			},
+		});
+		expect(md).toContain("**Open source** — Ongoing.");
+	});
+
+	it("drops salary-page links from role titles", () => {
+		const linked = structuredClone(resume);
+		linked.experience.jobs[0].roles[0].name =
+			"[Programmer](https://www.levels.fyi/x)";
+		expect(cvMarkdown(linked)).toContain("**Programmer** — Analytical Engines");
+		expect(cvMarkdown(linked)).not.toContain("levels.fyi");
+	});
+
 	it("keeps the draft note out of print and omits empty sections", () => {
 		expect(md).toContain('<p class="no-print"><em>Draft</em></p>');
 		expect(md).not.toContain("Curriculum Development");

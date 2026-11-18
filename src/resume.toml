@@ -238,8 +238,7 @@ finishDate = "2023-06-30"
 [[experience.jobs.roles.challenges]]
 description = """
 Lead instructor for [Code 401: Advanced Software Development in Full Stack 
-JavaScript](https://www.codefellows.org/courses/code-401/advanced-software-devel
-opment-in-full-stack-JavaScript/).
+JavaScript](https://www.codefellows.org/courses/code-401/advanced-software-development-in-full-stack-JavaScript/).
 
 Educational duties include online classroom instruction, career coaching, 
 curriculum development, and student evaluation. Students consistently ranked my 
@@ -297,7 +296,7 @@ including global data acquisition, Data Center Infrastructure Management
 (DCIM), automated authentication, and more. Migrated and managed these systems 
 in a variety of VM & Service Mesh settings. RE and Subject Matter Expert for a 
 DDoS detection, alerting, and mitigation system protecting a global ISP's core 
-infrastructure and Xm customers. Responsible Engineer for managing and 
+infrastructure and millions of customers. Responsible Engineer for managing and 
 optimizing cloud spend, migrating ~30% on prem and reducing overall utilization 
 ~10% while user base grew ~50%.
 """
@@ -1093,8 +1092,9 @@ type = "technology"
 [[careerPreferences.contact.publicProfiles]]
 type = "other"
 URL = "https://github.com/davidsouther"
-# Academic-only material for /cv. Everything else on the CV (roles, education,
-# contact) is read from the sections above, so the resume and CV share one source.
+# Academic-only material for /cv; the resume page never renders it. The CV reads
+# its roles, education, and contact from aboutMe, experience, and knowledge, so
+# the resume and CV share one source.
 [academic]
 website = "https://davidsouther.com"
 note = "Draft CV — prepared for the Department of Pediatrics, SUNY Downstate Health Sciences University."
@@ -1116,7 +1116,7 @@ title = "Auditable AI-assisted software engineering"
 body = """
 Agentic large-language-model systems
 can absorb substantial portions of the software development lifecycle, but only where
-human guidance in the form of prompts, context, and generated output are durable, reviewable, artifacts guided with an understanding of the tooling in the holisitic context of software engineering. My open-source work and recent writing pursue this
+human guidance in the form of prompts, context, and generated output are durable, reviewable, artifacts guided with an understanding of the tooling in the holistic context of software engineering. My open-source work and recent writing pursue this
 effort directly.
 """
 
@@ -1141,7 +1141,7 @@ teaching the practice of programming.
 title = "**Lead Instructor**"
 meta = "Code Fellows · March 2022 – June 2023"
 body = """
-Lead instructor across the code fellows curriculium, an intensive career-change
+Lead instructor across the code fellows curriculum, an intensive career-change
 program for adult learners. Responsible for
 classroom instruction, curriculum development, student evaluation, and career
 coaching. Courses consistently earned **above an 80 net promoter score** on both weekly
@@ -1166,9 +1166,8 @@ invisible ways engineering tools shape daily life.
 
 [[academic.teaching]]
 title = "**Instructor**"
-meta = "Mount Holyoke College and Smith College, in partnership with Google ·"
+meta = "Mount Holyoke College and Smith College, in partnership with Google · November 2015 – January 2017"
 body = """
-November 2015 – January 2017
 Developed and taught January-term intensive courses in mobile software development and
 team software engineering. Materials covered test-driven development in Python and
 Android development on physical devices, centering a substantial team project
@@ -1190,7 +1189,7 @@ meta = "Google · 2015 – 2017"
 body = """
 Taught internal courses on TypeScript and Angular to engineering teams, and delivered a
 two-week intensive on test-driven development and industry practices at Mount Holyoke
-College. Tought interview training courses for Google interviewers, and technical
+College. Taught interview training courses for Google interviewers, and technical
 interviewing courses for prospective candidates and collegiate students.
 """
 

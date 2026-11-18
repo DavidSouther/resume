@@ -209,7 +209,10 @@ export interface Contact {
 	publicProfiles?: Link[];
 }
 
-/** Academic-only CV material, an extension to the MAC schema. Bodies are Markdown. */
+/**
+ * Academic-only CV material, an extension to the MAC schema. `body` fields are
+ * Markdown; `note` is raw HTML, so it must be trusted author content.
+ */
 export interface AcademicData {
 	/** Screen-only note shown above the CV, never printed. */
 	note?: string;
@@ -226,7 +229,7 @@ export interface AcademicData {
 	competencies: { label: string; items: string }[];
 }
 
-/** `title` is Markdown (already bold); `meta` follows the em dash on the first line. */
+/** `title` carries its own Markdown emphasis; `meta` is an optional trailing qualifier. */
 export interface CvEntry {
 	title: string;
 	meta?: string;

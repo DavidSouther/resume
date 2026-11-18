@@ -8,9 +8,7 @@ export default {
 	head: () => pageHead("David Souther CV"),
 	// Same data as the resume (src/resume.toml), arranged for an academic reader
 	// by cvMarkdown. `cv` scopes the print stylesheet in src/global.css to this
-	// page alone; `no-print-href` opts into the repo's existing suppression of
-	// the blanket `a::after { content: " (" attr(href) ")" }` print rule, which
-	// would otherwise trail a raw URL after every link in the document.
+	// page; `no-print-href` suppresses its blanket `a::after` URL print rule.
 	default: async () =>
 		Object.assign(MD(cvMarkdown(await tomlLoader())), {
 			className: "cv no-print-href",

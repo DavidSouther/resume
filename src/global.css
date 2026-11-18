@@ -555,9 +555,8 @@ section:has(img.float) + section {
    * Keep headings with their content.
    *
    * `break-after: avoid` says exactly this and is what Chromium honors. WebKit
-   * ignores it, and WebKit is the engine behind the macOS print pipeline that
-   * produced public/David_Souther_CV.pdf — where "ACADEMIC AND TEACHING
-   * APPOINTMENTS" stranded at the foot of page 1.
+   * (Safari and the macOS print pipeline) ignores it, so a heading can strand
+   * at the foot of a page there.
    *
    * WebKit does honor `break-inside`, so h2 and h3 below additionally carry a
    * --keep-with-next padding deep enough to cover the first lines of the block

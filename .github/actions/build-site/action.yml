@@ -59,8 +59,8 @@ runs:
       shell: bash
       run: npm run check && npm run build:site
 
-    # david_souther_resume.pdf and david_souther_cv.pdf are printed from the built pages (so they follow
-    # src/resume.toml) into docs/, which ci.yml uploads and deploy.yml reuses.
+    # PDFs are printed into docs/ so the build CI approves is the one that
+    # deploys. This must run after the site build.
     - name: Install Chromium for PDFs
       shell: bash
       run: npx playwright install --with-deps chromium

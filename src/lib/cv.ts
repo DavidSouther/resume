@@ -33,25 +33,36 @@ function phone({ number }: { number: string }): string {
 		: number;
 }
 
+// Two trailing spaces are a Markdown hard line break, keeping `meta` on its own line.
 function entry({ title, meta, body }: CvEntry): string {
-	return `${title}${meta ? ` — ${meta}  ` : ""}\n${body.trim()}`;
+	return meta
+		? `${title} — ${meta}  \n${body.trim()}`
+		: `${title} — ${body.trim()}`;
 }
 
 function section(heading: string, blocks: string[]): string[] {
 	return blocks.length ? [`## ${heading}`, ...blocks] : [];
 }
 
+/** Role names may link to a salary page on the resume; the CV keeps the text only. */
+function plainTitle(name: string): string {
+	return name.replace(/\[([^\]]+)\]\([^)]*\)/g, "$1");
+}
+
 function role(org: string, r: Role): string {
 	const dates = span(r.startDate, r.finishDate);
 	const body = (r.challenges ?? []).map((c) => c.description.trim());
-	return [`**${r.name}** — ${org} · ${dates}  `, ...body].join("\n");
+	return [`**${plainTitle(r.name)}** — ${org} · ${dates}  `, ...body].join(
+		"\n",
+	);
 }
 
 /**
  * Arranges the resume's data for an academic reader: scholarship and teaching
  * ahead of industry roles. Roles, education, and contact come from the shared
- * resume sections; the rest from `academic`. The Markdown renders through the
- * same jiffdown path the print stylesheet was tuned against.
+ * resume sections; the rest from `academic`. Sections with no entries are
+ * omitted, and `academic.note` becomes a paragraph the print stylesheet hides.
+ * Render the result with `MD()`: the print stylesheet targets its markup.
  */
 export function cvMarkdown(resume: ResumeData): string {
 	const { profile } = resume.aboutMe;
@@ -126,7 +137,7 @@ export function cvMarkdown(resume: ResumeData): string {
 		ac?.footer ? `*${ac.footer}*` : "",
 	].filter(Boolean);
 
-	// Rules between sections, as the hand-written CV had; print hides them.
+	// Horizontal rules separate sections on screen only; print hides them.
 	const out: string[] = [...header];
 	for (const block of sections) {
 		if (block.startsWith("## ")) out.push("---");

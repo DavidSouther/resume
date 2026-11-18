@@ -178,7 +178,7 @@ describe("the shared build action prints the resume and CV PDFs", () => {
 		expect(pdfs).toBeGreaterThan(chromium);
 	});
 
-	it("the pdfs script prints / and /cv/ into docs/", () => {
+	it("the pdfs script is wired to build-pdfs.ts and names both outputs", () => {
 		const pkg = JSON.parse(load("package.json")) as {
 			scripts: Record<string, string>;
 		};
