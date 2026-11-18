@@ -83,15 +83,12 @@ function project({ details, roles }: ProjectExperience): string {
  * Arranges the resume's data for an academic reader: interests and teaching
  * ahead of industry roles. Every job, study and project comes from the shared
  * resume sections, each in exactly one place (a job's `cvSection` picks teaching
- * or professional); only the interests, competencies, note and footer come from
- * the CV-only `cv` table. Sections with no entries are omitted, and `cv.note`
- * becomes a paragraph the print stylesheet hides. Render the result with
- * `MD()`: the print stylesheet targets its markup.
+ * or professional); only the interests, competencies and footer come from the
+ * CV-only `cv` table. Sections with no entries are omitted. Render the result
+ * with `MD()`: the print stylesheet targets its markup.
  */
 export function cvMarkdown(resume: ResumeData, posts: PostRef[] = []): string {
 	const cv = resume.cv;
-	const note = cv?.note ? `<p class="no-print"><em>${cv.note}</em></p>` : "";
-
 	const education = (resume.knowledge.studies ?? []).map((s) => {
 		const when = s.degreeAchieved
 			? (s.finishDate ?? s.startDate).slice(0, 4)
@@ -133,7 +130,7 @@ export function cvMarkdown(resume: ResumeData, posts: PostRef[] = []): string {
 	].filter(Boolean);
 
 	// Horizontal rules separate sections on screen only; print hides them.
-	const out: string[] = note ? [note] : [];
+	const out: string[] = [];
 	for (const block of sections) {
 		if (block.startsWith("## ") && out.length) out.push("---");
 		out.push(block);
