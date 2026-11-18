@@ -194,6 +194,17 @@ describe("publication groups", () => {
 		expect(md).not.toContain("Gamma");
 	});
 
+	it("prints a lecture post once: under Invited Talks, not again in an essay group", () => {
+		const r = withPublications([{ heading: "Essays", posts: ["a", "b"] }]);
+		r.cv = { ...r.cv, talks: ["a"] };
+		const md = cvMarkdown(r, [postA, postB]);
+		expect(md.split("[Alpha](/blog/a)").length - 1).toBe(1);
+		expect(sectionOf(md, "Invited Talks and Presentations")).toContain("Alpha");
+		expect(sectionOf(md, "Publications and Public Scholarship")).toContain(
+			"Beta",
+		);
+	});
+
 	it("fails the build on an unknown post id", () => {
 		expect(() =>
 			cvMarkdown(withPublications([{ heading: "E", posts: ["nope"] }]), [

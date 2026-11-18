@@ -60,7 +60,8 @@ runs:
       run: npm run check && npm run build:site
 
     # PDFs are printed into docs/ so the build CI approves is the one that
-    # deploys. This must run after the site build and stay the last step; a
+    # deploys, for every caller of this action. This must run after the site
+    # build and stay the last step; a
     # failure here fails CI and blocks the deploy, so it is never
     # continue-on-error.
     - name: Install Chromium for PDFs

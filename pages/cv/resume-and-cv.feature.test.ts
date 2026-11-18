@@ -15,7 +15,8 @@
 //   When CI prints the built site,
 //   Then docs/ holds david_souther_resume.pdf and david_souther_cv.pdf.
 //
-// Design: .ailly/developer/2026-11-18-A-cv-pdfs/design.md
+// How the two views share one source is described in ARCHITECTURE.md
+// (Deployment).
 
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync, rmSync, statSync } from "node:fs";

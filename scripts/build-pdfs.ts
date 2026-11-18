@@ -2,7 +2,7 @@ import { existsSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { cwd } from "node:process";
 import { makeServer } from "@davidsouther/jiffies/server/http/index.ts";
-import { chromium } from "playwright";
+import { type Browser, chromium } from "playwright";
 import { CV_PDF, RESUME_PDF } from "../src/lib/pdfs.ts";
 
 // Prints the built resume (/) and academic CV (/cv/) to PDF with Chromium, using
@@ -31,15 +31,18 @@ export function verifyPdf(path: string): void {
 
 export async function buildPdfs(root = join(cwd(), "docs")): Promise<string[]> {
 	const server = await makeServer({ root });
-	await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
-	const address = server.address();
-	if (!address || typeof address === "string") throw new Error("no port");
-	const origin = `http://127.0.0.1:${address.port}`;
-
-	const browser = await chromium.launch({
-		executablePath: process.env.CHROMIUM_PATH || undefined,
-	});
+	let browser: Browser | undefined;
 	try {
+		await new Promise<void>((resolve) =>
+			server.listen(0, "127.0.0.1", resolve),
+		);
+		const address = server.address();
+		if (!address || typeof address === "string") throw new Error("no port");
+		const origin = `http://127.0.0.1:${address.port}`;
+
+		browser = await chromium.launch({
+			executablePath: process.env.CHROMIUM_PATH || undefined,
+		});
 		const page = await browser.newPage();
 		await page.emulateMedia({ media: "print" });
 		for (const { route, file } of PDFS) {
@@ -60,7 +63,7 @@ export async function buildPdfs(root = join(cwd(), "docs")): Promise<string[]> {
 			verifyPdf(join(root, file));
 		}
 	} finally {
-		await browser.close();
+		await browser?.close();
 		server.close();
 	}
 	return PDFS.map(({ file }) => file);

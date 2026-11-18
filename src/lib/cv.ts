@@ -59,10 +59,7 @@ function latestStart(job: JobExperience): string {
 }
 
 /** Jobs printed under one CV section, newest first. */
-export function jobsIn(
-	resume: ResumeData,
-	cvSection: CvSection,
-): JobExperience[] {
+function jobsIn(resume: ResumeData, cvSection: CvSection): JobExperience[] {
 	return resume.experience.jobs
 		.filter((j) => (j.cvSection ?? "professional") === cvSection)
 		.sort((a, b) => latestStart(b).localeCompare(latestStart(a)));
@@ -156,7 +153,7 @@ const CURRICULUM_TAG = "Curriculum";
  * unchanged; the topical CV sections quote the same words, with the title and
  * the source's name and dates, so no fact is written twice.
  */
-export function excerpts(resume: ResumeData, section: string): string[] {
+function excerpts(resume: ResumeData, section: string): string[] {
 	const found = (text: string | undefined, source: string) =>
 		[...(text ?? "").matchAll(MARK)]
 			.filter((m) => m[1] === section)
@@ -194,7 +191,7 @@ function curriculumBlocks(resume: ResumeData): string[] {
 			.map(project),
 		...resume.experience.publicArtifacts
 			.filter((a) => !a.hide && a.tags?.includes(CURRICULUM_TAG))
-			.map(artifactEntry),
+			.map(artifactText),
 	];
 }
 
@@ -234,10 +231,6 @@ function artifactBlock(artifact: PublicArtifact): string {
 	return `- ${artifactText(artifact)}`;
 }
 
-function artifactEntry(artifact: PublicArtifact): string {
-	return artifactText(artifact);
-}
-
 function postBlock(post: PostRef): string {
 	const when = post.date ? ` ${year(post.date)}.` : "";
 	const summary = post.summary ? ` ${post.summary.trim()}` : "";
@@ -248,16 +241,19 @@ function postBlock(post: PostRef): string {
  * The Publications and Public Scholarship groups, each a heading and its list
  * items, in `cv.publications` order. A `tag` group takes the visible artifacts
  * carrying the tag; a `posts` group is rendered from the posts' own front
- * matter, so no essay text lives in the TOML. Visible artifacts that no group
+ * matter, so no essay text lives in the TOML (a post also listed in `cv.talks`
+ * is left to that section). Visible artifacts that no group
  * claims print last under "Other Publications", except Curriculum artifacts,
  * which print under Curriculum Development.
  */
-export function publicationGroups(
+function publicationGroups(
 	resume: ResumeData,
 	posts: PostRef[],
 ): { heading: string; blocks: string[] }[] {
 	const artifacts = resume.experience.publicArtifacts.filter((a) => !a.hide);
 	const byId = new Map(posts.map((p) => [p.id, p]));
+	// A lecture prints under Invited Talks, so an essay group skips it.
+	const talks = new Set(resume.cv?.talks ?? []);
 	const claimed = new Set<PublicArtifact>();
 
 	const groups = (resume.cv?.publications ?? []).map((group) => {
@@ -273,7 +269,7 @@ export function publicationGroups(
 		});
 		return {
 			heading: group.heading,
-			blocks: found.filter((p) => p.show).map(postBlock),
+			blocks: found.filter((p) => p.show && !talks.has(p.id)).map(postBlock),
 		};
 	});
 
