@@ -474,7 +474,7 @@ article > header > h3 {
 
 /*
  * The AboutMe header on paper: one row, with the photo, then name, title and
- * place, then the contact links in a line that never wraps. The screen styles
+ * place, then the contact details in a small column whose lines never wrap. The screen styles
  * above fill it with the brand colour and stack the links, so on paper the
  * fill and the link colours are reset to plain black text on white.
  */
@@ -519,10 +519,12 @@ article > header > h3 {
   .root > header h2 {
     font-size: 10pt;
     font-weight: normal;
+    line-height: 1.3;
   }
 
   .root > header p.location {
     font-size: 9pt;
+    line-height: 1.3;
   }
 
   .root > header figure img {
@@ -541,19 +543,16 @@ article > header > h3 {
     content: "";
   }
 
-  .root > header nav ul {
+  /* The contact details sit in their own small column, one per line. */
+  .root > header nav .print-contact {
     display: flex;
-    flex-direction: row;
-    gap: 0 14pt;
-  }
-
-  .root > header nav li {
-    display: block;
-    white-space: nowrap;
-  }
-
-  .root > header nav .print-only {
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 1pt 0;
+    margin: 0;
     font-size: 9pt;
+    line-height: 1.3;
+    white-space: nowrap;
   }
 }
 

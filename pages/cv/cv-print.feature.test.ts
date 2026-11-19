@@ -240,9 +240,10 @@ describe("the CV page prints as a compact academic CV", () => {
 		);
 	});
 
-	it("prints the shared header as one row whose links never wrap", () => {
-		expect(printValue(".root > header nav ul", "display")).toBe("flex");
-		expect(printValue(".root > header nav ul", "flex-direction")).toBe("row");
-		expect(printValue(".root > header nav li", "white-space")).toBe("nowrap");
+	it("prints the shared header as one row, with the contacts in their own column that never wraps", () => {
+		const line = ".root > header nav .print-contact";
+		expect(printValue(line, "display")).toBe("flex");
+		expect(printValue(line, "flex-direction")).toBe("column");
+		expect(printValue(line, "white-space")).toBe("nowrap");
 	});
 });
