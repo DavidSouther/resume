@@ -160,3 +160,50 @@ describe("AboutMe PDF link", () => {
 		).toBe(false);
 	});
 });
+
+describe("Contact print text", () => {
+	const printed = (container: HTMLElement) =>
+		[...container.querySelectorAll("span.print-only")].map(
+			(s) => s.textContent,
+		);
+
+	it("prints an email without mailto: or its +tag; the link keeps both", () => {
+		const container = mount(
+			Contact(undefined, { contactMails: ["me+resume@b.com"] }),
+		);
+
+		expect(printed(container)).toEqual(["me@b.com"]);
+		expect(getByRole(container, "link").getAttribute("href")).toBe(
+			"mailto:me+resume@b.com",
+		);
+	});
+
+	it("prints a phone number without tel:", () => {
+		const container = mount(
+			Contact(undefined, {
+				phoneNumbers: [{ countryCode: 1, number: "650.495.5402" }],
+			}),
+		);
+
+		expect(printed(container)).toEqual(["+1 650.495.5402"]);
+	});
+
+	it("prints a link's printURL in place of its URL, keeping the href", () => {
+		const container = mount(
+			Contact(undefined, {
+				publicProfiles: [
+					{
+						type: "github",
+						URL: "https://github.com/d",
+						printURL: "https://d.example",
+					},
+				],
+			}),
+		);
+
+		expect(printed(container)).toEqual(["https://d.example"]);
+		expect(getByRole(container, "link").getAttribute("href")).toBe(
+			"https://github.com/d",
+		);
+	});
+});

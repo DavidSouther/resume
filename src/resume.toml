@@ -29,6 +29,7 @@ countryCode = 1
 [[aboutMe.profile.contact.publicProfiles]]
 type = "github"
 URL = "https://github.com/davidsouther"
+printURL = "https://davidsouther.com"
 
 [experience]
 [[experience.jobs]]

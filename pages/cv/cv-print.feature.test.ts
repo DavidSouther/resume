@@ -224,4 +224,25 @@ describe("the CV page prints as a compact academic CV", () => {
 			"the print sheet never clears the tinted body background",
 		).not.toBe("");
 	});
+
+	it("prints in a standard serif, not the screen web fonts", () => {
+		for (const token of [
+			"--brand-body-font-family",
+			"--brand-header-font-family",
+		]) {
+			expect(printValue(":root", token), token).toMatch(/Liberation Serif/);
+		}
+	});
+
+	it("keeps the margins tight: a half-inch top and bottom, 0.6in at the sides", () => {
+		expect(pageRule?.style.getPropertyValue("margin")).toMatch(
+			/0\.5in\s+0\.6in/,
+		);
+	});
+
+	it("prints the shared header as one row whose links never wrap", () => {
+		expect(printValue(".root > header nav ul", "display")).toBe("flex");
+		expect(printValue(".root > header nav ul", "flex-direction")).toBe("row");
+		expect(printValue(".root > header nav li", "white-space")).toBe("nowrap");
+	});
 });

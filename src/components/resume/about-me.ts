@@ -82,6 +82,19 @@ function Location(location: ResumeTypes.Location): HTMLElement {
 	);
 }
 
+/**
+ * What a link reads as on paper: its `printURL` if it has one, otherwise the
+ * address without its scheme. An email also loses any `+tag`, which exists to
+ * tell clicks apart and means nothing to someone typing the address.
+ */
+function printText({ URL, printURL }: ResumeTypes.Link): string {
+	if (printURL) return printURL;
+	if (URL.startsWith("mailto:"))
+		return URL.slice("mailto:".length).replace(/\+[^@]*@/, "@");
+	if (URL.startsWith("tel:")) return URL.slice("tel:".length);
+	return URL;
+}
+
 // On-screen the semantic type ("github", "email", "tel") is the label; the
 // print-only span carries the full URL.
 function Links(
@@ -95,7 +108,7 @@ function Links(
 			...links.map((link) =>
 				li(
 					a({ href: link.URL, class: "no-print" }, span(link.type)),
-					span({ class: "print-only" }, link.URL),
+					span({ class: "print-only" }, printText(link)),
 				),
 			),
 			// A printed copy needs no link to itself.

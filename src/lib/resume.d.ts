@@ -183,6 +183,8 @@ export interface Link {
 	type: string;
 	URL: string;
 	description?: string;
+	/** Shown on paper in place of `URL`; the link on screen still goes to `URL`. */
+	printURL?: string;
 }
 
 export interface PublicProfile extends Link {}
