@@ -24,6 +24,11 @@ export const MACHINES: {
 
 export const MECHANISMS: { id: Mechanism; label: string; note: string }[] = [
 	{
+		id: "socket",
+		label: "Socket baseline",
+		note: "Socket calls without a second task",
+	},
+	{
 		id: "thread",
 		label: "Linux thread",
 		note: "Socket calls, wakeup and scheduling",
@@ -47,11 +52,6 @@ export const MECHANISMS: { id: Mechanism; label: string; note: string }[] = [
 		id: "regswitch",
 		label: "Register fiber",
 		note: "Save/restore registers and stack pointer",
-	},
-	{
-		id: "socket",
-		label: "Socket baseline",
-		note: "Socket calls without a second task",
 	},
 ];
 

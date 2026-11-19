@@ -24,7 +24,7 @@ import {
 	type Mechanism,
 	NS,
 } from "./data.ts";
-import { frames, ladder, scheduler, sweep } from "./figures.ts";
+import { direct, frames, ladder, scheduler, sweep } from "./figures.ts";
 
 // Page role: a scrolling write-up of the ctxswitch experiment. Every figure is
 // static inline SVG generated from data.ts, so the page needs no client script.
@@ -41,6 +41,13 @@ const CSS = `
 .cs-legend { display: flex; flex-wrap: wrap; gap: 0.4rem 1.2rem; font-size: 0.85rem; margin: 0.5rem 0; }
 .cs-legend i { display: inline-block; width: 0.9rem; height: 0.9rem; border-radius: 2px; margin-right: 0.35rem; vertical-align: -0.1rem; }
 .cs-callout { border-left: 4px solid var(--m-b); padding: 0.4rem 1rem; background: color-mix(in srgb, var(--m-b) 10%, Canvas); }
+.cs-toggle input { position: absolute; opacity: 0; }
+.cs-toggle label { display: inline-block; cursor: pointer; border: 1px solid currentColor; padding: 0.35rem 1rem; }
+.cs-toggle input:checked + label { background: CanvasText; color: Canvas; }
+.cs-toggle input:focus-visible + label { outline: 3px solid var(--m-a); outline-offset: 2px; }
+.cs-toggle .direct-view { display: none; }
+.cs-toggle #chart-direct:checked ~ .total-view { display: none; }
+.cs-toggle #chart-direct:checked ~ .direct-view { display: block; }
 .cs-table { overflow-x: auto; }
 .cs-table table { border-collapse: collapse; font-size: 0.85rem; width: 100%; }
 .cs-table th, .cs-table td { border: 1px solid var(--grid); padding: 0.25rem 0.6rem; text-align: right; }
@@ -52,6 +59,7 @@ svg.fig .tick, svg.fig .note, svg.fig .zonelabel { font-size: 11px; opacity: 0.7
 svg.fig .panel { font-weight: 600; font-size: 13px; }
 svg.fig .rowlabel, svg.fig .val { font-size: 12px; }
 svg.fig .grid { stroke: var(--grid); stroke-width: 1; }
+svg.fig .axis-center { stroke: currentColor; stroke-width: 1.5; }
 svg.fig .ref { stroke: var(--k); stroke-width: 1.5; stroke-dasharray: 5 4; }
 svg.fig .reftext { fill: var(--k); font-size: 11px; }
 svg.fig .m-a { fill: var(--m-a); } svg.fig .m-b { fill: var(--m-b); } svg.fig .m-c { fill: var(--m-c); }
@@ -188,11 +196,25 @@ export default {
 				section(
 					h2("2. The experiment"),
 					prose(
-						"The <code>switchbench</code> program compares two Linux threads, two processes, glibc <code>ucontext</code>, a register-only fiber, and a small green-thread scheduler. Two tasks share one pinned CPU. Each repetition performs 200,000 handoffs. We report the median of five repetitions after a warmup. The threads and processes exchange one byte over a Unix socket. Each task touches its own working set.",
+						"The <code>switchbench</code> program compares Linux threads, processes, glibc <code>ucontext</code>, a register-only fiber and a green-thread scheduler. All participants are pinned to one logical CPU. The thread and process tests pass a one-byte token over a Unix socket: one side writes and waits for a reply while the other reads, touches its buffer and replies. The user-space tests transfer control explicitly between two flows on one OS thread.",
 					),
 					prose(
-						"The Nov. 18 EC2 run used Intel c7i, AMD c7a and Graviton c7g instances, with Debian 13 containers limited to one CPU and 256 MiB. Intel and AMD ran kernel 6.12.117+deb13-cloud-amd64; Graviton ran 6.12.117+deb13-cloud-arm64. Each task touched one byte every 64 bytes with a read-modify-write, using working sets of 0, 32 KiB and 256 KiB.",
+						"Each task reads and increments one byte every 64 bytes of its private buffer. We test 0, 32 KiB and 256 KiB per task. After one warmup, each of five repetitions times 200,000 planned handoffs using a monotonic clock. We divide elapsed time by the planned count and report the median. Kernel switch counters come from that median repetition; they include additional switches caused by preemption.",
 					),
+					prose(
+						"We use the median of the five repetition averages to reduce the influence of an unusually slow repetition caused by scheduling or VM noise. Li’s paper uses averages over repeated round trips. Our subtraction combines separately measured medians; it does not report the average cost or the median of paired differences.",
+					),
+					prose(
+						"The socket control touches one buffer and writes and reads its own socket without a peer. The memory control touches one buffer without a handoff. Each uses the same number of buffer touches per planned handoff. We subtract the matching control at each working-set size to estimate the additional handoff cost.",
+					),
+					prose(
+						"The Nov. 18 EC2 instances ran Debian 13 with Docker 26.1.5. Each instance exposed two virtual CPUs; the container was limited to one CPU and 256 MiB. Cache sizes below are the totals and instance counts reported by lscpu inside each virtual machine.",
+					),
+					raw(`<div class="cs-table"><table><thead><tr><th>Instance</th><th>CPU and topology</th><th>Linux kernel</th><th>L1 data</th><th>L2</th><th>L3</th></tr></thead><tbody>
+<tr><td>Intel c7i.large</td><td>Xeon Platinum 8488C; 2 threads, 1 core</td><td>6.12.117+deb13-cloud-amd64</td><td>48 KiB (1)</td><td>2 MiB (1)</td><td>105 MiB (1)</td></tr>
+<tr><td>AMD c7a.large</td><td>EPYC 9R14; 2 cores, 1 thread/core</td><td>6.12.117+deb13-cloud-amd64</td><td>64 KiB (2)</td><td>2 MiB (2)</td><td>8 MiB (1)</td></tr>
+<tr><td>Graviton c7g.large</td><td>Neoverse V1; 2 cores, 1 thread/core</td><td>6.12.117+deb13-cloud-arm64</td><td>128 KiB (2)</td><td>2 MiB (2)</td><td>32 MiB (1)</td></tr>
+</tbody></table></div>`),
 				),
 				section(
 					h2("3. Results at zero working set"),
@@ -201,9 +223,18 @@ export default {
 						["--m-b", "AMD c7a"],
 						["--m-c", "Graviton c7g"],
 					]),
+					raw(`<div class="cs-toggle" role="group" aria-label="Kernel handoff chart view">
+<input type="radio" name="chart-view" id="chart-total" checked><label for="chart-total">Total</label>
+<input type="radio" name="chart-view" id="chart-direct"><label for="chart-direct">Direct</label>
+<figure class="total-view">${ladder("kernel")}<figcaption>Total elapsed time per handoff.</figcaption></figure>
+<figure class="direct-view">${direct()}<figcaption>Socket baseline to the left; additional handoff time to the right.</figcaption></figure>
+</div>`),
+					prose(
+						"The left side shows the socket baseline, an indirect component of this handoff measurement. The right side subtracts that baseline from the thread or process total. This baseline measures socket operations; it does not measure the indirect cache cost discussed below.",
+					),
 					fig(
-						ladder(),
-						"Nanoseconds per handoff on a log axis. Each step to the right is ten times slower. The dashed line is the Jansen et al. socket reference.",
+						ladder("user"),
+						"User-space handoffs at zero working set, on a logarithmic axis.",
 					),
 					resultsTable(),
 					p("Values are µs per handoff."),
@@ -273,6 +304,9 @@ export default {
 					),
 					prose(
 						'The Graviton thread repetition at 256 KiB recorded 113,220 involuntary switches for 200,000 planned handoffs. The CSV pairs kernel switch counters with the median timed repetition. For another working-set control, see <a href="https://lmbench.sourceforge.net/man/lat_ctx.8.html">lmbench’s lat_ctx</a>.',
+					),
+					prose(
+						"Each machine contributed one run; the five repetitions share the same instance and measurement order. No cache or TLB counters were collected. The controls use one hot buffer rather than two private buffers, and the socket control does not reproduce blocking or wakeup. These differences limit what the subtraction can attribute to the switch itself.",
 					),
 				),
 				p(

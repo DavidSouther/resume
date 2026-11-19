@@ -35,7 +35,12 @@ const ticks = [10, 100, 1000, 10000];
 const tickLabel = (t: number) => (t >= 1000 ? `${t / 1000} µs` : `${t} ns`);
 
 /** Figure 1: log-scale bars of ns per handoff at zero working set. */
-export function ladder(): string {
+export function ladder(group: "kernel" | "user" = "kernel"): string {
+	const mechanisms = MECHANISMS.filter((m) =>
+		group === "kernel"
+			? ["socket", "thread", "process"].includes(m.id)
+			: ["ucontext", "green", "regswitch"].includes(m.id),
+	);
 	const left = 140,
 		right = 690,
 		top = 28,
@@ -45,13 +50,15 @@ export function ladder(): string {
 		hi = Math.log10(10000);
 	const x = (ns: number) =>
 		left + ((Math.log10(ns) - lo) / (hi - lo)) * (right - left);
-	const h = top + MECHANISMS.length * rowH + 24;
+	const h = top + mechanisms.length * rowH + 24;
 	let b = "";
 	for (const t of ticks) {
 		b += `<line class="grid" x1="${x(t)}" x2="${x(t)}" y1="${top - 8}" y2="${h - 24}"/><text class="tick" x="${x(t)}" y="${top - 14}" text-anchor="middle">${tickLabel(t)}</text>`;
 	}
-	b += `<line class="ref" x1="${x(REFERENCE_NS)}" x2="${x(REFERENCE_NS)}" y1="${top - 8}" y2="${h - 24}"/><text class="reftext" x="${x(REFERENCE_NS) + 4}" y="${h - 8}">Jansen et al.: 3.15 µs</text>`;
-	MECHANISMS.forEach((m, i) => {
+	if (group === "kernel") {
+		b += `<line class="ref" x1="${x(REFERENCE_NS)}" x2="${x(REFERENCE_NS)}" y1="${top - 8}" y2="${h - 24}"/><text class="reftext" x="${x(REFERENCE_NS) + 4}" y="${h - 8}">Jansen et al.: 3.15 µs</text>`;
+	}
+	mechanisms.forEach((m, i) => {
 		const y0 = top + i * rowH;
 		b += `<text class="rowlabel" x="${left - 10}" y="${y0 + 26}" text-anchor="end">${m.label}</text>`;
 		MACHINES.forEach((mc, j) => {
@@ -63,7 +70,55 @@ export function ladder(): string {
 	return svg(
 		720,
 		h,
-		"Log-scale bar chart of nanoseconds per handoff for six mechanisms on three machines",
+		`${group === "kernel" ? "Socket baseline, thread and process" : "User-space mechanisms"}: total nanoseconds per handoff on three machines`,
+		b,
+	);
+}
+
+/** Split socket control and additional handoff cost on a symmetric log-like scale. */
+export function direct(): string {
+	const center = 410,
+		width = 260,
+		top = 48,
+		rowH = 56,
+		barH = 13;
+	const max = 10000;
+	// log1p provides a continuous zero while approaching a logarithmic scale away from zero.
+	const x = (n: number) =>
+		(width * Math.log10(1 + Math.abs(n) / 10)) / Math.log10(1 + max / 10);
+	const mechanisms = MECHANISMS.filter((m) =>
+		["socket", "thread", "process"].includes(m.id),
+	);
+	const h = top + mechanisms.length * rowH + 15;
+	let b = `<text class="panel" x="${center - width / 2}" y="15" text-anchor="middle">Indirect: socket baseline</text><text class="panel" x="${center + width / 2}" y="15" text-anchor="middle">Direct: additional handoff</text>`;
+	for (const t of [10, 100, 1000, 10000]) {
+		for (const sign of [-1, 1]) {
+			const pos = center + sign * x(t);
+			b += `<line class="grid" x1="${pos}" x2="${pos}" y1="38" y2="${h - 10}"/><text class="tick" x="${pos}" y="32" text-anchor="middle">${tickLabel(t)}</text>`;
+		}
+	}
+	b += `<line class="axis-center" x1="${center}" x2="${center}" y1="38" y2="${h - 10}"/><text class="tick" x="${center}" y="32" text-anchor="middle">0</text>`;
+	mechanisms.forEach((m, i) => {
+		const y0 = top + i * rowH;
+		b += `<text class="rowlabel" x="130" y="${y0 + 26}" text-anchor="end">${m.label}</text>`;
+		MACHINES.forEach((mc, j) => {
+			const baseline = NS[mc.id].socket[0];
+			const additional = m.id === "socket" ? 0 : NS[mc.id][m.id][0] - baseline;
+			const y = y0 + j * (barH + 2);
+			const left = x(baseline),
+				right = x(additional);
+			b += `<rect class="${MACHINE_CLASS[mc.id]}" x="${center - left}" y="${y}" width="${left}" height="${barH}" rx="2"><title>${mc.label}, ${m.label}, socket baseline: ${fmt(baseline)}</title></rect>`;
+			b += `<text class="val" x="${center - left - 4}" y="${y + 10.5}" text-anchor="end">${fmt(baseline)}</text>`;
+			if (additional > 0) {
+				b += `<rect class="${MACHINE_CLASS[mc.id]}" x="${center}" y="${y}" width="${right}" height="${barH}" rx="2"><title>${mc.label}, ${m.label}, additional handoff: ${fmt(additional)}</title></rect>`;
+				b += `<text class="val" x="${center + right + 4}" y="${y + 10.5}">${fmt(additional)}</text>`;
+			}
+		});
+	});
+	return svg(
+		710,
+		h,
+		"Socket baseline to the left of zero and additional thread or process handoff time to the right, on a symmetric logarithmic scale",
 		b,
 	);
 }

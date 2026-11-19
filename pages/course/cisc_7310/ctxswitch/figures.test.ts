@@ -1,10 +1,18 @@
 import { describe, expect, it } from "vitest";
 import { NS } from "./data.ts";
-import { frames, ladder, paths, scheduler, sweep } from "./figures.ts";
+import { direct, frames, ladder, paths, scheduler, sweep } from "./figures.ts";
 
 describe("ctxswitch figures", () => {
 	it("renders every figure as a labelled svg", () => {
-		for (const f of [ladder, sweep, paths, scheduler, frames]) {
+		for (const f of [
+			ladder,
+			() => ladder("user"),
+			direct,
+			sweep,
+			paths,
+			scheduler,
+			frames,
+		]) {
 			const html = f();
 			expect(html).toMatch(/^<svg [^>]*role="img" aria-label="[^"]+"/);
 			expect(html).not.toContain("NaN");
