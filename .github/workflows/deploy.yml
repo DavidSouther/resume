@@ -95,12 +95,24 @@ jobs:
           rm -rf docs/deep_field/detect
           mkdir -p docs/deep_field/detect
           tar -xzf "$RUNNER_TEMP/deep-field-wasm.tar.gz" -C docs/deep_field/detect
-          expected=$(git ls-tree -r HEAD -- pages/deep_field/detect mise.toml package.json | sha256sum | cut -d ' ' -f 1)
+          expected=$(git ls-tree -r HEAD -- pages/deep_field/detect mise.toml mise.deepfield.toml package.json | sha256sum | cut -d ' ' -f 1)
           actual=$(cat docs/deep_field/detect/.source-hash 2>/dev/null || true)
           if [ "$actual" != "$expected" ]; then
             echo "::warning::Deep Field WASM was built from older detector sources; deploying it anyway. Deep Field CI publishes a new build and redeploys."
           fi
           rm -f docs/deep_field/detect/.source-hash
+
+      # A reused site artifact can hold an older preprint PDF, so overlay the
+      # current release. Missing is a warning; papers.yml redeploys when it
+      # publishes.
+      - name: Fetch current RRF preprint
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p docs/papers
+          gh release download rrf-preprint --repo "$GITHUB_REPOSITORY" \
+            --pattern rrf-coverage-normalization.pdf --dir docs/papers --clobber \
+            || echo "::warning::No rrf-preprint release to fetch; deploying without a refreshed preprint."
 
       - uses: actions/configure-pages@v5
 
