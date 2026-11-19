@@ -18,7 +18,7 @@ const fmt = (ns: number): string =>
 			: `${ns.toFixed(ns >= 10 ? 1 : 1)} ns`;
 
 export const MACHINE_CLASS: Record<Machine, string> = {
-	m7i: "m-a",
+	c7i: "m-a",
 	c7a: "m-b",
 	c7g: "m-c",
 };
@@ -89,14 +89,18 @@ export function sweep(): string {
 			if (p === 0)
 				b += `<text class="tick" x="${ox - 6}" y="${y(t) + 4}" text-anchor="end">${tickLabel(t)}</text>`;
 		}
-		labels.forEach((l, i) => { b += `<text class="tick" x="${x(i)}" y="${top + ph + 18}" text-anchor="middle">${l}</text>`; });
+		labels.forEach((l, i) => {
+			b += `<text class="tick" x="${x(i)}" y="${top + ph + 18}" text-anchor="middle">${l}</text>`;
+		});
 		for (const id of ["thread", "ucontext", "green"] as Mechanism[]) {
 			const v = NS[mc.id][id];
 			const pts = v
 				.map((n, i) => `${x(i).toFixed(1)},${y(n).toFixed(1)}`)
 				.join(" ");
 			b += `<polyline class="line ${SERIES[id]}" points="${pts}"/>`;
-			v.forEach((n, i) => { b += `<circle class="dot ${SERIES[id]}" cx="${x(i)}" cy="${y(n)}" r="3.5"><title>${mc.label}, ${labels[i]}, ${id}: ${fmt(n)}</title></circle>`; });
+			v.forEach((n, i) => {
+				b += `<circle class="dot ${SERIES[id]}" cx="${x(i)}" cy="${y(n)}" r="3.5"><title>${mc.label}, ${labels[i]}, ${id}: ${fmt(n)}</title></circle>`;
+			});
 		}
 	});
 	return svg(
@@ -165,7 +169,9 @@ export function scheduler(): string {
 		arrow(560, 150, 440, 54, "arrow y");
 	b += `<text class="note" x="35" y="115">yield_now</text><text class="note" x="355" y="115">yield_now</text><text class="note" x="575" y="115">finish</text>`;
 	b += `<text class="panel" x="10" y="226">Run queue (FIFO)</text>`;
-	["task 3", "task 1", "task 2"].forEach((t, i) => { b += box(180 + i * 100, 236, 90, 30, t, i === 0 ? "box u" : "box"); });
+	["task 3", "task 1", "task 2"].forEach((t, i) => {
+		b += box(180 + i * 100, 236, 90, 30, t, i === 0 ? "box u" : "box");
+	});
 	b += `<text class="note" x="500" y="256">next out ← front, yielder → back</text>`;
 	return svg(
 		710,

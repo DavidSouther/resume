@@ -1,7 +1,7 @@
 //! Kernel versus user-level task switching cost. See the crate README.
 //!
 //! switchbench [--mechanisms a,b] [--switches N] [--reps N] [--working-sets 0,32768,262144]
-//!             [--strace-friendly] [--proc-snapshot]
+//!             [--stride BYTES] [--access read|write] [--strace-friendly] [--proc-snapshot]
 use std::process::{Command, ExitCode};
 use std::time::Duration;
 
@@ -12,13 +12,15 @@ struct Args {
     switches: u64,
     reps: u32,
     working_sets: Vec<usize>,
+    stride: usize,
+    read_only: bool,
     strace_friendly: bool,
     proc_snapshot: bool,
 }
 
 enum Mode {
     Bench(Args),
-    Peer { working_set: usize },
+    Peer { working_set: usize, stride: usize, read_only: bool },
     Observe { pid: u32 },
 }
 
@@ -28,6 +30,8 @@ fn parse() -> Result<Mode, Error> {
         switches: 200_000,
         reps: 5,
         working_sets: vec![0, 32 * 1024, 256 * 1024],
+        stride: 64,
+        read_only: false,
         strace_friendly: false,
         proc_snapshot: false,
     };
@@ -44,6 +48,8 @@ fn parse() -> Result<Mode, Error> {
             "--switches" => a.switches = value(&mut it, &flag)?.parse().map_err(|e| Error::Usage(format!("--switches: {e}")))?,
             "--reps" => a.reps = value(&mut it, &flag)?.parse().map_err(|e| Error::Usage(format!("--reps: {e}")))?,
             "--working-sets" => a.working_sets = bench::parse_sizes(&value(&mut it, &flag)?)?,
+            "--stride" => a.stride = value(&mut it, &flag)?.parse().map_err(|e| Error::Usage(format!("--stride: {e}")))?,
+            "--access" => a.read_only = match value(&mut it, &flag)?.as_str() { "read" => true, "write" => false, _ => return Err(Error::Usage("--access must be read or write".into())) },
             "--strace-friendly" => a.strace_friendly = true,
             "--proc-snapshot" => a.proc_snapshot = true,
             "--peer" => peer = true,
@@ -56,7 +62,7 @@ fn parse() -> Result<Mode, Error> {
         return Err(Error::Usage("--reps must be positive".into()));
     }
     Ok(match (peer, observe_pid) {
-        (true, _) => Mode::Peer { working_set: peer_ws },
+        (true, _) => Mode::Peer { working_set: peer_ws, stride: a.stride, read_only: a.read_only },
         (_, Some(pid)) => Mode::Observe { pid },
         _ => Mode::Bench(a),
     })
@@ -74,7 +80,7 @@ fn main() -> ExitCode {
 
 fn real_main() -> Result<(), Error> {
     match parse()? {
-        Mode::Peer { working_set } => bench::peer_main(working_set),
+        Mode::Peer { working_set, stride, read_only } => bench::peer_main(working_set, stride, read_only),
         Mode::Observe { pid } => {
             observe::snapshot(pid, Duration::from_millis(500));
             Ok(())
@@ -88,10 +94,10 @@ fn real_main() -> Result<(), Error> {
             println!("{}", Row::HEADER);
             for &ws in &a.working_sets {
                 for &m in &a.mechanisms {
-                    if m.is_baseline() && ws != 0 {
+                    if m == Mechanism::BaselineSigprocmask && ws != 0 {
                         continue;
                     }
-                    let plan = Plan { switches: a.switches, reps: a.reps, working_set: ws, no_warmup: a.strace_friendly };
+                    let plan = Plan { switches: a.switches, reps: a.reps, working_set: ws, stride: a.stride, read_only: a.read_only, no_warmup: a.strace_friendly };
                     println!("{}", bench::run(m, plan)?.csv());
                 }
             }

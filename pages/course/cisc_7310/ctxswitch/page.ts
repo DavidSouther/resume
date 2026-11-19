@@ -17,8 +17,14 @@ import {
 import type { PageModule } from "@davidsouther/jiffies/ssg/ssg.ts";
 import { Layout } from "../../../../src/components/layout.ts";
 import { pageHead } from "../../../../src/lib/page-head.ts";
-import { MACHINES, MECHANISMS, NS } from "./data.ts";
-import { frames, ladder, paths, scheduler, sweep } from "./figures.ts";
+import {
+	MACHINES,
+	type Machine,
+	MECHANISMS,
+	type Mechanism,
+	NS,
+} from "./data.ts";
+import { frames, ladder, scheduler, sweep } from "./figures.ts";
 
 // Page role: a scrolling write-up of the ctxswitch experiment. Every figure is
 // static inline SVG generated from data.ts, so the page needs no client script.
@@ -100,6 +106,47 @@ function resultsTable(): HTMLElement {
 	);
 }
 
+function indirectTable(): HTMLElement {
+	const rows: [Mechanism, string, "socket" | "work"][] = [
+		["thread", "Linux thread", "socket"],
+		["regswitch", "Register fiber", "work"],
+		["green", "Green scheduler", "work"],
+	];
+	const increment = (
+		machine: Machine,
+		mechanism: Mechanism,
+		control: "socket" | "work",
+		size: number,
+	) => {
+		const values = NS[machine];
+		return (
+			values[mechanism][size] -
+			values[control][size] -
+			(values[mechanism][0] - values[control][0])
+		).toFixed(1);
+	};
+	return div(
+		{ class: "cs-table" },
+		table(
+			thead(
+				tr(th("Mechanism / working set"), ...MACHINES.map((m) => th(m.label))),
+			),
+			tbody(
+				...rows.flatMap(([mechanism, label, control]) =>
+					[1, 2].map((size) =>
+						tr(
+							td(`${label} / ${size === 1 ? "32" : "256"} KiB`),
+							...MACHINES.map((m) =>
+								td(increment(m.id, mechanism, control, size)),
+							),
+						),
+					),
+				),
+			),
+		),
+	);
+}
+
 export default {
 	head: () => [
 		...pageHead("What a Context Switch Costs: David Souther"),
@@ -114,7 +161,7 @@ export default {
 					h1("What does a context switch cost?"),
 					p(
 						{ class: "cs-lede" },
-						"We measured five ways to transfer control between tasks on EC2, with both tasks pinned to one CPU.",
+						"Twenty years later, what does a task handoff cost—and what happens when the task resumes?",
 					),
 				],
 			},
@@ -123,11 +170,16 @@ export default {
 				section(
 					h2("1. What are we measuring?"),
 					prose(
-						"A <strong>handoff</strong> transfers execution from task A to task B. A round trip A → B → A is two handoffs. The cost depends on how the switch is performed. Saving registers takes time; scheduling, waking tasks, synchronization, and changes in cache locality can add more.",
+						"A <strong>handoff</strong> transfers execution from task A to task B. A round trip A → B → A is two handoffs.",
 					),
-					fig(
-						paths(),
-						"A kernel handoff goes through syscalls, a wakeup and the scheduler. A fiber handoff is a function call that returns on another stack.",
+					prose(
+						"A <strong>direct cost</strong> is the work of handing off: saving state, scheduling, synchronization and wakeup. An <strong>indirect cost</strong> is extra work after resumption, including cache and translation misses. Interrupts can also disturb a task without scheduling another.",
+					),
+					prose(
+						'<a href="https://www.cs.rochester.edu/u/kshen/papers/expcs2007.pdf">Li, Ding and Shen’s 2007 study</a> estimated a 3.8 µs direct cost on a Pentium Xeon. Its synthetic total estimates ranged from several microseconds to over a millisecond as working set and access pattern changed.',
+					),
+					prose(
+						'Modern CPUs can retain translations using address-space tags; <a href="https://kernel.org/doc/html/v5.18/x86/pti.html">page-table isolation</a> adds work to some kernel transitions. In a <a href="https://arxiv.org/abs/2508.15703">2025 serverless study</a>, scheduler time reached 28% of CPU time at the highest tested colocation level.',
 					),
 					prose(
 						'<strong>Independent reference.</strong> Jansen, Newsome and Wails (<a href="https://www.usenix.org/system/files/atc22-jansen.pdf">USENIX ATC 2022, Figure 16</a>) measured Linux processes using a Unix socket on one core. They found 6.3 µs per round trip, or about <strong>3.15 µs per handoff</strong>. This measures the whole socket handoff and gives us a rough reference for comparison.',
@@ -139,13 +191,13 @@ export default {
 						"The <code>switchbench</code> program compares two Linux threads, two processes, glibc <code>ucontext</code>, a register-only fiber, and a small green-thread scheduler. Two tasks share one pinned CPU. Each repetition performs 200,000 handoffs. We report the median of five repetitions after a warmup. The threads and processes exchange one byte over a Unix socket. Each task touches its own working set.",
 					),
 					prose(
-						"Runs were EC2 instances in Debian 13 containers limited to one CPU and 256 MiB: Intel on Nov. 4, AMD and Graviton on Nov. 18.",
+						"The Nov. 18 EC2 run used Intel c7i, AMD c7a and Graviton c7g instances, with Debian 13 containers limited to one CPU and 256 MiB. Intel and AMD ran kernel 6.12.117+deb13-cloud-amd64; Graviton ran 6.12.117+deb13-cloud-arm64. Each task touched one byte every 64 bytes with a read-modify-write, using working sets of 0, 32 KiB and 256 KiB.",
 					),
 				),
 				section(
 					h2("3. Results at zero working set"),
 					legend([
-						["--m-a", "Intel m7i"],
+						["--m-a", "Intel c7i"],
 						["--m-b", "AMD c7a"],
 						["--m-c", "Graviton c7g"],
 					]),
@@ -158,11 +210,11 @@ export default {
 					div(
 						{ class: "cs-callout" },
 						prose(
-							"Thread and process handoffs take 0.54 to 1.70 times the published 3.15 µs reference. All are in the microsecond range, but the hardware and kernel differ. Subtracting the socket baseline gives rough additional thread costs of 2.49 µs (AMD) and 1.12 µs (Graviton). These are not isolated kernel switch costs.",
+							"Subtracting the socket control gives rough additional thread handoff costs of 0.83 µs (Intel), 2.51 µs (AMD), and 1.14 µs (Graviton). These include blocking and wakeup differences and are not isolated kernel switch costs.",
 						),
 					),
 					prose(
-						"With no working-set access, a green handoff costs <strong>26 to 34 ns</strong>, and a Linux thread handoff costs <strong>1.7 to 5.2 µs</strong>. Green tasks switch cooperatively; Linux threads are scheduled by the kernel and use a socket to coordinate in this test.",
+						"With no working-set access, a green handoff costs <strong>27 to 36 ns</strong>, and a Linux thread handoff costs <strong>1.7 to 5.2 µs</strong>. Green tasks switch cooperatively; Linux threads are scheduled by the kernel and use a socket to coordinate in this test.",
 					),
 				),
 				section(
@@ -177,21 +229,24 @@ export default {
 						"Nanoseconds per handoff as each task touches a larger working set. The vertical axis is logarithmic. These measurements include the work of touching memory.",
 					),
 					prose(
-						"At 256 KiB per task, green handoffs take 2.28 µs on AMD and 4.99 µs on Graviton. Thread handoffs take 7.49 and 7.60 µs. These measurements include both the handoff and the buffer-touch loop. We did not measure cache misses, so we cannot say how much of the increase comes from cache locality.",
+						"At 256 KiB per task, green handoffs take 2.35 µs on AMD and 4.94 µs on Graviton. The corresponding single-task buffer controls take 2.23 and 4.86 µs.",
 					),
 				),
 				section(
-					h2("5. How the green threads work"),
+					h2("5. Register fibers and green threads"),
+					prose(
+						"A register fiber provides the control-transfer mechanism: it switches directly to a known peer. A green thread is a task managed by a scheduler built on that mechanism. A green handoff runs task A → scheduler → task B, adding queue work and two fiber switches.",
+					),
 					fig(
 						scheduler(),
-						"Every task runs until it calls yield_now or finishes. A yielding task goes to the back of a FIFO queue: task → scheduler → task.",
+						"A yielding task goes to the back of the FIFO queue.",
 					),
 					fig(
 						frames(),
 						"One switch pushes callee-saved registers, swaps the stack pointer, pops the incoming registers, and returns into the suspended code. x86-64 and AArch64 frames differ.",
 					),
 					raw(`<ol>
-<li><code>spawn</code> allocates a <strong>32 KiB guarded stack</strong>, builds an initial frame pointing at a trampoline and the task entry, and queues the task.</li>
+<li><code>spawn</code> maps a <strong>32 KiB stack</strong> with a guard page, builds an initial frame pointing at a trampoline and the task entry, and queues the task.</li>
 <li><code>run</code> switches from the scheduler's stack to the next task's stack.</li>
 <li><code>yield_now</code> requeues the current task and switches back to the scheduler, which picks the next one.</li>
 <li>Assembly saves ABI callee-saved registers and the stack pointer. This is cooperative, and no signal mask is saved per switch.</li>
@@ -202,17 +257,27 @@ export default {
 					),
 				),
 				section(
-					h2("6. Caveats"),
-					raw(`<ul>
-<li>One run per machine; values are medians within a run, not confidence intervals across independent runs.</li>
-<li>The Nov. 18 Intel c7i Spot request failed for insufficient capacity, so Intel is the Nov. 4 m7i run. A second Nov. 4 Intel c6i run measured 1.96 µs per thread handoff and 2.06 µs per process handoff.</li>
-<li>VM scheduling, CPU architecture and container limits matter. Thread versus process differences alone do not establish page-table switch or TLB cost.</li>
-<li>Creation cost and cross-core handoffs are not measured.</li>
-</ul>`),
+					h2("6. Estimating indirect cost"),
+					prose(
+						"At 32 KiB, the Intel thread estimate adds 459 ns per handoff above the zero-size estimate; at 256 KiB it adds 68 ns. On Graviton, the 256 KiB estimate is −81 ns. These figures subtract a no-handoff control at each size and then subtract the zero-size difference.",
+					),
+					raw(
+						`<div class="cs-callout"><p><strong>Estimated total at size</strong> = handoff and work − matched control<br><strong>Estimated increment</strong> = estimated total at size − estimated total at zero</p></div>`,
+					),
+					prose(
+						"The control repeatedly touches one hot buffer; the socket control also reads and writes without a second task. Its read does not block or wake a peer. The estimates are differences of separately measured medians, so noise and imperfect matching can produce negative values.",
+					),
+					indirectTable(),
+					p(
+						"Estimated increment in ns per planned handoff, computed from the median rows above and their matching controls.",
+					),
+					prose(
+						'The Graviton thread repetition at 256 KiB recorded 113,220 involuntary switches for 200,000 planned handoffs. The CSV pairs kernel switch counters with the median timed repetition. For another working-set control, see <a href="https://lmbench.sourceforge.net/man/lat_ctx.8.html">lmbench’s lat_ctx</a>.',
+					),
 				),
 				p(
 					{ class: "cs-close" },
-					"The cost depends on the work being measured. In this experiment, a green handoff with no working-set access takes tens of nanoseconds. A Linux handoff using a socket takes microseconds. Touching memory adds to both measurements.",
+					"The handoff is only the beginning. The work that resumes afterward—and the scheduler load around it—helps determine what the application actually pays.",
 				),
 			),
 		),

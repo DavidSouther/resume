@@ -89,13 +89,17 @@ pub fn yield_now() {
 /// Invariant relied on by `task_main`: while a task executes, this frame holds `task`, a strong
 /// `Rc<Task>`, and does not return until the task's `sched.switch` returns here.
 pub fn run() {
-    STATE.with(|s| loop {
+    run_steps(usize::MAX);
+}
+
+/// Dispatch at most `steps` tasks, leaving yielded tasks queued for the next call.
+pub fn run_steps(steps: usize) {
+    STATE.with(|s| for _ in 0..steps {
         assert!(s.running.borrow().is_none(), "green::run called from inside a task");
         let Some(task) = s.queue.borrow_mut().pop_front() else { break };
         *s.running.borrow_mut() = Some(task.clone());
         s.sched.switch(&task.fiber).expect("queued task is suspended");
         *s.running.borrow_mut() = None;
-        // `task` (the scheduler's strong reference) drops here; a finished task frees its stack.
     });
 }
 

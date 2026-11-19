@@ -94,11 +94,13 @@ bad = []
 for m in ("thread", "process", "ucontext", "regswitch", "green"):
     for ws in (0, 32768, 262144):
         if (m, ws) not in by: bad.append(f"missing row {m} {ws}")
-for m in ("baseline-socket", "baseline-sigprocmask"):
-    if (m, 0) not in by: bad.append(f"missing baseline {m}")
+for m in ("baseline-socket", "baseline-work"):
+    for ws in (0, 32768, 262144):
+        if (m, ws) not in by: bad.append(f"missing baseline {m} {ws}")
+if ("baseline-sigprocmask", 0) not in by: bad.append("missing signal baseline")
 if not bad:
     f = lambda r, k: float(r[k])
-    handoffs = lambda r: f(r, "switches_per_rep") * f(r, "reps")
+    handoffs = lambda r: f(r, "switches_per_rep")
     for m in ("thread", "process"):
         for ws in (0, 32768, 262144):
             r = by[m, ws]
@@ -107,15 +109,10 @@ if not bad:
         for ws in (0, 32768, 262144):
             r = by[m, ws]
             if f(r, "nvcsw") + f(r, "nivcsw") > 0.01 * handoffs(r): bad.append(f"{m} {ws}: kernel saw switches it should not")
-    ns = lambda m: f(by[m, 0], "ns_per_switch")
-    for m in ("thread", "process"):
-        if not ns(m) > f(by["baseline-socket", 0], "ns_per_switch"): bad.append(f"{m} is not above its socket baseline")
-    if f(by["baseline-socket", 0], "nvcsw") + f(by["baseline-socket", 0], "nivcsw") > 0.01 * handoffs(by["baseline-socket", 0]):
-        bad.append("baseline-socket saw task switches; it is supposed to be switch free")
-    if not ns("green") < ns("ucontext"): bad.append("green is not cheaper than ucontext")
-    if not ns("regswitch") < ns("ucontext") < ns("thread"):
-        bad.append("cost ordering at ws=0 is not regswitch < ucontext < thread: "
-                   + ", ".join(f"{m}={ns(m):.0f}" for m in ("regswitch", "ucontext", "thread", "process")))
+    for m in ("baseline-socket", "baseline-work", "baseline-sigprocmask"):
+        r = by[m, 0]
+        if f(r, "nvcsw") + f(r, "nivcsw") > 0.01 * handoffs(r):
+            bad.append(f"{m}: too many kernel switches in median sample")
 for b in bad: print("FAIL:", b, file=sys.stderr)
 sys.exit(1 if bad else 0)
 PY

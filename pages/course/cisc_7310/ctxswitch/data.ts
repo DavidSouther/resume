@@ -1,14 +1,15 @@
-// Median ns per handoff, one run per machine. Copied from results/aws/*/bench.csv
+// Median ns per handoff, one run per machine. Copied from results/aws/20261118T232639Z/*/bench.csv
 // (git-ignored) so the page builds without the raw data.
 
-export type Machine = "m7i" | "c7a" | "c7g";
+export type Machine = "c7i" | "c7a" | "c7g";
 export type Mechanism =
 	| "thread"
 	| "process"
 	| "ucontext"
 	| "regswitch"
 	| "green"
-	| "socket";
+	| "socket"
+	| "work";
 
 export const MACHINES: {
 	id: Machine;
@@ -16,7 +17,7 @@ export const MACHINES: {
 	arch: string;
 	run: string;
 }[] = [
-	{ id: "m7i", label: "Intel m7i.large", arch: "x86-64", run: "Nov. 4" },
+	{ id: "c7i", label: "Intel c7i.large", arch: "x86-64", run: "Nov. 18" },
 	{ id: "c7a", label: "AMD c7a.large", arch: "x86-64", run: "Nov. 18" },
 	{ id: "c7g", label: "Graviton c7g.large", arch: "AArch64", run: "Nov. 18" },
 ];
@@ -57,31 +58,34 @@ export const MECHANISMS: { id: Mechanism; label: string; note: string }[] = [
 /** Working-set sizes in bytes. */
 export const WORKING_SETS = [0, 32768, 262144] as const;
 
-/** ns per handoff, indexed by working set (socket baseline is zero-set only). */
+/** ns per handoff, indexed by working set (controls are present at every size). */
 export const NS: Record<Machine, Record<Mechanism, number[]>> = {
-	m7i: {
-		thread: [1704.2, 2156.1, 5969.8],
-		process: [1779.5, 2226.6, 6029.2],
-		ucontext: [199.4, 725.5, 4621.3],
-		regswitch: [10.8, 550.4, 4421.4],
-		green: [28.9, 560.8, 4442.5],
-		socket: [879.4],
+	c7i: {
+		work: [1.9, 308.7, 4758.4],
+		thread: [1731.6, 2359.2, 6505.2],
+		process: [1796.4, 2421.2, 6580.2],
+		ucontext: [218.8, 788.8, 4991.5],
+		regswitch: [12.5, 597.0, 4767.8],
+		green: [31.7, 602.3, 4799.5],
+		socket: [898.7, 1067.7, 5604.7],
 	},
 	c7a: {
-		thread: [5221.8, 5533.0, 7494.5],
-		process: [5267.4, 5541.8, 7649.6],
-		ucontext: [575.5, 851.7, 2814.3],
-		regswitch: [8.9, 298.3, 2252.9],
-		green: [25.8, 318.3, 2279.6],
-		socket: [2733.0],
+		work: [1.7, 283.3, 2229.3],
+		thread: [5241.0, 5477.6, 7565.2],
+		process: [5148.1, 5421.1, 7581.7],
+		ucontext: [574.0, 849.7, 2814.1],
+		regswitch: [9.3, 298.9, 2249.7],
+		green: [26.6, 321.7, 2349.6],
+		socket: [2726.2, 3187.6, 4969.7],
 	},
 	c7g: {
-		thread: [2476.0, 2961.5, 7597.5],
-		process: [5354.3, 5230.1, 9197.4],
-		ucontext: [519.6, 986.2, 5747.6],
-		regswitch: [11.0, 434.1, 5189.0],
-		green: [34.3, 459.3, 4988.4],
-		socket: [1357.0],
+		work: [2.3, 388.4, 4862.8],
+		thread: [2497.9, 2974.3, 7922.2],
+		process: [5089.4, 5491.0, 10505.7],
+		ucontext: [519.6, 991.4, 5672.1],
+		regswitch: [11.6, 437.8, 5125.9],
+		green: [36.2, 468.3, 4941.8],
+		socket: [1359.7, 1800.0, 6865.3],
 	},
 };
 

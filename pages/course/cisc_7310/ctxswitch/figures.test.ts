@@ -12,10 +12,10 @@ describe("ctxswitch figures", () => {
 	});
 
 	it("matches the figures quoted in PRESENTATION.md", () => {
-		expect(NS.c7a.green[2]).toBeCloseTo(2279.6);
-		expect(NS.c7g.green[2]).toBeCloseTo(4988.4);
-		expect(NS.c7a.thread[2]).toBeCloseTo(7494.5);
-		expect(NS.c7g.thread[2]).toBeCloseTo(7597.5);
-		expect(NS.m7i.process[0] / 3150).toBeCloseTo(0.56, 2);
+		expect(NS.c7a.green[2]).toBeCloseTo(2349.6);
+		expect(NS.c7g.green[2]).toBeCloseTo(4941.8);
+		expect(NS.c7a.thread[2]).toBeCloseTo(7565.2);
+		expect(NS.c7g.thread[2]).toBeCloseTo(7922.2);
+		expect(NS.c7i.process[0] / 3150).toBeCloseTo(0.57, 2);
 	});
 });

@@ -30,6 +30,43 @@ Docker Desktop come from a Linux VM (here `6.12.76-linuxkit`, aarch64); counters
 evidence, absolute nanoseconds are indicative. Run the same `tests/run.sh` on a native Linux host
 for numbers outside a VM.
 
+## Measuring direct and indirect costs
+
+`switchbench` writes CSV with one row per mechanism and working-set size. A timed repetition
+contains the requested number of *planned handoffs*: `ns_per_switch` is elapsed wall time divided
+by that number, not a count of independently verified kernel switches. `nvcsw` and `nivcsw` are
+kernel context switches from the same repetition as the median elapsed time. They include all
+threads in the benchmark process and, for `process`, the live peer's `/proc` counters. Counter
+snapshots bracket the timed loop but do not have exactly the same boundaries; interrupts, other
+work on the pinned CPU and VM scheduling may still affect the sample. `reps` is the requested
+count and `measured_reps` includes any additional snapshot-mode repetitions.
+
+`baseline-socket` touches one hot buffer and performs the same number of socket reads and writes,
+but it does not block on another task. `baseline-work` touches one hot buffer without switching;
+it is the comparison for the user-space mechanisms. Each control runs at every requested size.
+The output includes the byte stride and access mode (`read` or read-modify-`write`). Green tasks
+and their buffers are initialized before timing and are reused across repetitions.
+
+For example, in a Linux container:
+
+```sh
+./scripts-dev.sh run --release --bin switchbench -- --switches 20000 --reps 5 \
+  --working-sets 0,16384,32768,65536,131072,262144,524288,1048576 \
+  --stride 64 --access write > /tmp/switches.csv
+python3 analyze.py < /tmp/switches.csv
+```
+
+Repeat with `--access read` and other strides, selecting sizes around the actual CPU's cache
+capacities. `analyze.py` subtracts each size's matching control from the handoff row, then subtracts
+the zero-size difference. Its `increment_above_zero_ns` is an **estimate**, not a direct measurement
+of cache misses: the control has a single hot buffer while the switching case alternates private
+buffers, and the socket control does not exercise the blocked-read and wakeup paths. Differences
+can be negative because of noise or control mismatch. Keep the raw CSV, repeat runs in varied order,
+and use `perf` hardware counters and scheduler tracing where permissions permit; counters alone do
+not prove causation. For example, on the Linux host, build with `cargo build --release`, then run
+`perf stat -e context-switches,cpu-migrations,cache-references,cache-misses -- target/release/switchbench --mechanisms thread,baseline-socket --switches 20000 --reps 5 --working-sets 0,32768,262144`. Event support and permissions vary by machine; collect architecture-specific cache and TLB events when available. Do not compare this new CSV schema or counter scope directly with the historical
+`results/final/` data and `REVIEW.md`, which record an earlier version of the benchmark.
+
 ## Differences from the C originals
 
 - Context stacks are `mmap`ed with a guard page, not `malloc` or `char[]` (an overflow faults instead of corrupting the heap).
