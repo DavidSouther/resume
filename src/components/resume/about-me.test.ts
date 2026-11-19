@@ -147,7 +147,7 @@ describe("AboutMe PDF link", () => {
 			(a) => a.getAttribute("href") === "/ada.pdf",
 		);
 		expect(link?.textContent).toBe("PDF");
-		expect(link?.closest("li")?.classList.contains("no-print")).toBe(true);
+		expect(link?.closest("ul")?.classList.contains("no-print")).toBe(true);
 		expect(link?.getAttribute("download")).toBe("ada.pdf");
 	});
 
@@ -158,5 +158,66 @@ describe("AboutMe PDF link", () => {
 				a.getAttribute("href")?.endsWith(".pdf"),
 			),
 		).toBe(false);
+	});
+});
+
+describe("Contact print text", () => {
+	const printed = (container: HTMLElement) =>
+		[...container.querySelectorAll("p.print-contact span")].map(
+			(s) => s.textContent,
+		);
+
+	it("prints an email without mailto: or its +tag; the link keeps both", () => {
+		const container = mount(
+			Contact(undefined, { contactMails: ["me+resume@b.com"] }),
+		);
+
+		expect(printed(container)).toEqual(["me@b.com"]);
+		expect(getByRole(container, "link").getAttribute("href")).toBe(
+			"mailto:me+resume@b.com",
+		);
+	});
+
+	it("prints a phone number without tel:", () => {
+		const container = mount(
+			Contact(undefined, {
+				phoneNumbers: [{ countryCode: 1, number: "650.495.5402" }],
+			}),
+		);
+
+		expect(printed(container)).toEqual(["+1 650.495.5402"]);
+	});
+
+	it("prints the line outside the list: a list item puts a zero-width space in the PDF text, which breaks a copied address", () => {
+		const container = mount(Contact(undefined, { contactMails: ["me@b.com"] }));
+
+		const line = container.querySelector("p.print-contact");
+		expect(line).not.toBeNull();
+		expect(line?.closest("li")).toBeNull();
+		expect(line?.querySelector("li")).toBeNull();
+		expect(line?.classList.contains("print-only")).toBe(true);
+		// The list itself is for the screen.
+		expect(container.querySelector("ul")?.classList.contains("no-print")).toBe(
+			true,
+		);
+	});
+
+	it("prints a link's printURL in place of its URL, keeping the href", () => {
+		const container = mount(
+			Contact(undefined, {
+				publicProfiles: [
+					{
+						type: "github",
+						URL: "https://github.com/d",
+						printURL: "https://d.example",
+					},
+				],
+			}),
+		);
+
+		expect(printed(container)).toEqual(["https://d.example"]);
+		expect(getByRole(container, "link").getAttribute("href")).toBe(
+			"https://github.com/d",
+		);
 	});
 });

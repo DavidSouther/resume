@@ -82,8 +82,23 @@ function Location(location: ResumeTypes.Location): HTMLElement {
 	);
 }
 
-// On-screen the semantic type ("github", "email", "tel") is the label; the
-// print-only span carries the full URL.
+/**
+ * What a link reads as on paper: its `printURL` if it has one, otherwise the
+ * address without its scheme. An email also loses any `+tag`, which exists to
+ * tell clicks apart and means nothing to someone typing the address.
+ */
+function printText({ URL, printURL }: ResumeTypes.Link): string {
+	if (printURL) return printURL;
+	if (URL.startsWith("mailto:"))
+		return URL.slice("mailto:".length).replace(/\+[^@]*@/, "@");
+	if (URL.startsWith("tel:")) return URL.slice("tel:".length);
+	return URL;
+}
+
+// On screen the semantic type ("github", "email", "tel") is the label of a
+// list of links. On paper the same links read as one line of plain addresses.
+// That line is not a list: Chromium writes a zero-width space into the PDF text
+// for every <li>, which sits inside a copied email address or URL.
 function Links(
 	links: ResumeTypes.Link[],
 	className = "",
@@ -92,19 +107,18 @@ function Links(
 	return nav(
 		{ class: className },
 		ul(
-			...links.map((link) =>
-				li(
-					a({ href: link.URL, class: "no-print" }, span(link.type)),
-					span({ class: "print-only" }, link.URL),
-				),
-			),
-			// A printed copy needs no link to itself.
+			{ class: "no-print" },
+			...links.map((link) => li(a({ href: link.URL }, span(link.type)))),
 			pdf
 				? li(
-						{ class: "pdf no-print" },
+						{ class: "pdf" },
 						a({ href: pdf, download: pdf.split("/").pop() }, "PDF"),
 					)
 				: null,
+		),
+		p(
+			{ class: "print-contact print-only" },
+			...links.map((link) => span(printText(link))),
 		),
 	);
 }

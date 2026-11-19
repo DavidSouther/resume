@@ -123,6 +123,24 @@
     --spacing-block-vertical: 0.1rem;
     --card-shadow: none;
     --color-surface: white;
+
+    /*
+     * Print in a standard system serif. The web fonts above are subset and
+     * hinted for screens; in a PDF their kerning and uppercase tracking come
+     * out uneven. Liberation Serif is metric-compatible with Times New Roman
+     * and ships with the Chromium that CI installs, so the PDFs also stop
+     * depending on Google Fonts being reachable.
+     */
+    --brand-body-font-family: "Liberation Serif", "Times New Roman", Times, serif;
+    --brand-header-font-family: "Liberation Serif", "Times New Roman", Times, serif;
+
+    /* The theme's 1.6 leaves too much air between lines on paper. */
+    --base-line-height: calc(1.35 * var(--base-font-size));
+  }
+
+  body {
+    font-kerning: normal;
+    text-rendering: optimizeLegibility;
   }
 
   body {
@@ -140,11 +158,11 @@
   }
 
   html {
-    font-size: 10pt;
+    font-size: 9.5pt;
   }
 
   body {
-    --font-size: 10pt;
+    --font-size: 9.5pt;
   }
 
   a {
@@ -454,6 +472,90 @@ article > header > h3 {
   }
 }
 
+/*
+ * The AboutMe header on paper: one row, with the photo, then name, title and
+ * place, then the contact details in a small column whose lines never wrap. The screen styles
+ * above fill it with the brand colour and stack the links, so on paper the
+ * fill and the link colours are reset to plain black text on white.
+ */
+@media print {
+  .root > header {
+    grid:
+      "avatar name links" auto
+      "avatar title links" auto
+      "avatar location links" auto
+      / 44pt 1fr auto;
+    align-items: center;
+    gap: 0 10pt;
+    margin: 0 0 4pt;
+    padding: 0 0 4pt;
+    background: none;
+    border-bottom: 0.5pt solid currentcolor;
+    line-height: 1.3;
+  }
+
+  .root > header,
+  .root > header h1 a,
+  .root > header nav a,
+  .root > header nav a span {
+    color: black;
+  }
+
+  .root > header h1,
+  .root > header h2,
+  .root > header p.location {
+    margin: 0;
+    padding: 0;
+    text-transform: none;
+    letter-spacing: normal;
+  }
+
+  .root > header h1 {
+    font-size: 14pt;
+    line-height: 1.1;
+    text-align: left;
+  }
+
+  .root > header h2 {
+    font-size: 10pt;
+    font-weight: normal;
+    line-height: 1.3;
+  }
+
+  .root > header p.location {
+    font-size: 9pt;
+    line-height: 1.3;
+  }
+
+  .root > header figure img {
+    display: block;
+    width: 44pt;
+    height: 44pt;
+    object-fit: cover;
+  }
+
+  /* The home link needs no "(/)" after it. */
+  .root > header h1 a {
+    text-decoration: none;
+  }
+
+  .root > header h1 a::after {
+    content: "";
+  }
+
+  /* The contact details sit in their own small column, one per line. */
+  .root > header nav .print-contact {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 1pt 0;
+    margin: 0;
+    font-size: 9pt;
+    line-height: 1.3;
+    white-space: nowrap;
+  }
+}
+
 .root > footer > nav {
   display: flex;
   justify-content: space-between;
@@ -515,26 +617,27 @@ section:has(img.float) + section {
  * the site, not just the CV. Anything page-scoped has to be expressed some
  * other way.
  *
- * The 1in side margins hold the measure near 6.5in, which is what keeps a 10pt
- * line readable; the vertical margins are tightened from there to buy density.
+ * The 0.6in side margins leave a 7.3in measure, which a 9.5pt serif carries
+ * at roughly 110 characters a line; the vertical margins are tightened to buy
+ * density.
  * ---------------------------------------------------------------------------
  */
 @page {
   size: letter;
-  margin: 0.6in 1in;
+  margin: 0.5in 0.6in;
 }
 
 /* Print styles for /cv.  */
 @media print {
   .cv {
-    --base-font-size: 10pt;
-    --base-line-height: 1.35;
-    --spacing-block-vertical: 5pt;
+    --base-font-size: 9.5pt;
+    --base-line-height: 1.3;
+    --spacing-block-vertical: 3pt;
 
     /* Heading ladder. Set directly — see above. */
-    --font-size-h1: 15pt;
-    --font-size-h2: 10.5pt;
-    --font-size-h3: 10pt;
+    --font-size-h1: 14pt;
+    --font-size-h2: 10pt;
+    --font-size-h3: 9.5pt;
 
     /*
      * Flatten the section cards. jiffdown nests a <section> per heading level,
@@ -573,32 +676,20 @@ section:has(img.float) + section {
     page-break-inside: avoid;
   }
 
-  .cv h1 {
-    margin: 0 0 2pt;
-  }
-
-  /* The shared AboutMe header: its subtitle is not a section heading. */
-  .cv > header h2 {
-    margin: 0;
-    padding: 0;
-    text-transform: none;
-    letter-spacing: normal;
-    font-size: 11pt;
-  }
 
   /*
    * The rule-under separates sections on paper, so it replaces both the
    * <hr>s below and the card edges zeroed above.
    */
   .cv main h2 {
-    /* Roughly three lines of 10pt/1.35 body text. */
-    --keep-with-next: 40pt;
+    /* Roughly three lines of 9.5pt/1.3 body text. */
+    --keep-with-next: 38pt;
 
     position: relative;
-    margin: 12pt 0 calc(5pt - var(--keep-with-next));
+    margin: 9pt 0 calc(3pt - var(--keep-with-next));
     padding-bottom: var(--keep-with-next);
     text-transform: uppercase;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.02em;
   }
 
   /*
@@ -616,7 +707,7 @@ section:has(img.float) + section {
   .cv h3 {
     --keep-with-next: 30pt;
 
-    margin: 8pt 0 calc(3pt - var(--keep-with-next));
+    margin: 6pt 0 calc(2pt - var(--keep-with-next));
     padding-bottom: var(--keep-with-next);
   }
 
