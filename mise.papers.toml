@@ -1,0 +1,4 @@
+# Toolchain for compiling the RRF preprint.
+[tools]
+pandoc = "3.10"
+typst = "0.15.0"

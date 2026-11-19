@@ -7,6 +7,7 @@ on:
       - src/components/deep_field/**
       - public/deep_field/**
       - mise.toml
+      - mise.deepfield.toml
       - package.json
       - package-lock.json
       - vitest.config.ts
@@ -20,6 +21,7 @@ on:
       - src/components/deep_field/**
       - public/deep_field/**
       - mise.toml
+      - mise.deepfield.toml
       - package.json
       - package-lock.json
       - vitest.config.ts
@@ -38,6 +40,8 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      MISE_ENV: deepfield
     steps:
       - uses: actions/checkout@v4
 
@@ -59,9 +63,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/uv
-          key: deep-field-uv-v1-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('mise.toml') }}-${{ hashFiles('pages/deep_field/detect/oracle/sep_oracle.py', 'pages/deep_field/deep-field.feature.test.ts') }}
+          key: deep-field-uv-v1-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('mise.toml', 'mise.deepfield.toml') }}-${{ hashFiles('pages/deep_field/detect/oracle/sep_oracle.py', 'pages/deep_field/deep-field.feature.test.ts') }}
           restore-keys: |
-            deep-field-uv-v1-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('mise.toml') }}-
+            deep-field-uv-v1-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('mise.toml', 'mise.deepfield.toml') }}-
             deep-field-uv-v1-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Test Deep Field against SEP
@@ -72,7 +76,7 @@ jobs:
       - name: Package Deep Field WASM
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         run: |
-          git ls-tree -r HEAD -- pages/deep_field/detect mise.toml package.json | sha256sum | cut -d ' ' -f 1 > public/deep_field/detect/.source-hash
+          git ls-tree -r HEAD -- pages/deep_field/detect mise.toml mise.deepfield.toml package.json | sha256sum | cut -d ' ' -f 1 > public/deep_field/detect/.source-hash
           tar -czf deep-field-wasm.tar.gz -C public/deep_field/detect .
 
       - uses: actions/upload-artifact@v4

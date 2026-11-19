@@ -81,6 +81,10 @@ describe("PR builds gate merge and the release reuses the approved build", () =>
 		expect(pkg.scripts.test).toContain(
 			"--exclude pages/deep_field/deep-field.feature.test.ts",
 		);
+		// The paper compile test needs pandoc and typst, which only papers.yml has.
+		expect(pkg.scripts.test).toContain(
+			"--exclude scripts/compile-paper.feature.test.ts",
+		);
 	});
 
 	it("ci.yml uploads docs as a tree-hash keyed artifact with bounded retention", () => {
@@ -116,7 +120,7 @@ describe("PR builds gate merge and the release reuses the approved build", () =>
 			(x) => x.name === "Fetch current Deep Field WASM",
 		);
 		const sourceHash =
-			"git ls-tree -r HEAD -- pages/deep_field/detect mise.toml package.json | sha256sum";
+			"git ls-tree -r HEAD -- pages/deep_field/detect mise.toml mise.deepfield.toml package.json | sha256sum";
 		expect(packageStep?.run).toContain(sourceHash);
 		expect(fetch?.run).toContain(sourceHash);
 		// A stale or missing bundle is a warning, never a failed deploy.
@@ -126,6 +130,43 @@ describe("PR builds gate merge and the release reuses the approved build", () =>
 		expect(fetch).not.toHaveProperty("continue-on-error");
 		expect(
 			steps(deepField, "publish").some((x) =>
+				x.run?.includes("gh workflow run deploy.yml"),
+			),
+		).toBe(true);
+	});
+
+	it("site builds add no mise profile and fetch the preprint from a release", () => {
+		const action = parse(load(".github/actions/build-site/action.yml")) as {
+			inputs: Record<string, { default?: string }>;
+			runs: { steps: (Step & { env?: Record<string, string> })[] };
+		};
+		expect(action.inputs["mise-env"]?.default).toBe("");
+		const mise = action.runs.steps.find((x) =>
+			x.uses?.startsWith("jdx/mise-action"),
+		);
+		expect(mise?.env?.MISE_ENV).toContain("inputs.mise-env");
+		const text = JSON.stringify(action.runs.steps);
+		expect(text).toContain("gh release download rrf-preprint");
+		// Site builds must not compile the paper in process.
+		expect(text).not.toContain("compile-rrf-coverage-normalization");
+		const warn = action.runs.steps.find((x) => x.name === "Fetch RRF preprint");
+		expect(warn?.run).toContain("::warning::");
+	});
+
+	it("papers.yml builds with the papers profile and redeploys after publishing", () => {
+		const papers = workflow(".github/workflows/papers.yml");
+		expect(
+			(papers.jobs.build as unknown as { env: Record<string, string> }).env
+				.MISE_ENV,
+		).toBe("papers");
+		expect(steps(papers, "build").map((x) => x.run)).toContain(
+			"mise run papers",
+		);
+		expect(steps(papers, "build").map((x) => x.run)).toContain(
+			"npm run test:site -- scripts/compile-paper.feature.test.ts",
+		);
+		expect(
+			steps(papers, "publish").some((x) =>
 				x.run?.includes("gh workflow run deploy.yml"),
 			),
 		).toBe(true);
