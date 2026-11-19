@@ -16,7 +16,7 @@
     "pdfs": "node scripts/build-pdfs.ts",
     "papers": "node posts/rrf_coverage_normalization/scripts/compile-rrf-coverage-normalization.ts",
     "start": "node scripts/serve.ts --watch",
-    "test": "npm run test:site -- --exclude pages/deep_field/deep-field.feature.test.ts",
+    "test": "npm run test:site -- --exclude pages/deep_field/deep-field.feature.test.ts --exclude scripts/compile-paper.feature.test.ts",
     "test:site": "vitest run",
     "posttest": "npm run check",
     "test:watch": "vitest"

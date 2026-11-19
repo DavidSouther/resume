@@ -66,6 +66,8 @@ async function compareWithSep(...args: string[]) {
 		"uv",
 		[
 			"run",
+			"--python",
+			"3.12",
 			"--with",
 			"sep",
 			"--with",
@@ -148,13 +150,20 @@ describe("Deep Field Volume page", () => {
 		expect(hit.get(1)?.z).toBe(z);
 
 		// mise pins the toolchain that builds the WASM and runs the oracle.
+		// The toolchain lives in the deepfield profile; tasks stay in the base file.
 		const mise = parse(readFileSync(join(ROOT, "mise.toml"), "utf-8")) as {
 			tools: Record<string, unknown>;
 			tasks?: Record<string, unknown>;
 		};
-		for (const tool of ["uv", "python", "rust", "cargo:wasm-pack"]) {
-			expect(Object.keys(mise.tools), `mise tool ${tool}`).toContain(tool);
+		const profile = parse(
+			readFileSync(join(ROOT, "mise.deepfield.toml"), "utf-8"),
+		) as { tools: Record<string, unknown> };
+		for (const tool of ["uv", "rust", "cargo:wasm-pack"]) {
+			expect(Object.keys(profile.tools), `mise tool ${tool}`).toContain(tool);
 		}
+		expect(Object.keys(mise.tools), "base profile stays Node only").toEqual([
+			"node",
+		]);
 		expect(Object.keys(mise.tasks ?? {})).toContain("wasm");
 	}, 120_000);
 
