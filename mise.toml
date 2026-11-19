@@ -1,7 +1,8 @@
 # Node only, so site builds install nothing heavy. Other tools are opt-in
 # profiles in mise.<name>.toml, selected with MISE_ENV (comma separated).
 # uv downloads Python itself from the PEP 723 requires-python header of each
-# script that has one.
+# script that has one; the SEP oracle has none, so its uv call passes
+# --python 3.12.
 [tools]
 node = "24"
 
@@ -63,4 +64,4 @@ run = "wasm-pack build pages/deep_field/detect --target web --release --no-pack 
 
 # Print SEP's objects for the bundled sample, the reference for the detector.
 [tasks.oracle]
-run = "uv run --with sep --with numpy --with pillow python pages/deep_field/detect/oracle/sep_oracle.py public/deep_field/potm2301a.png"
+run = "uv run --python 3.12 --with sep --with numpy --with pillow python pages/deep_field/detect/oracle/sep_oracle.py public/deep_field/potm2301a.png"

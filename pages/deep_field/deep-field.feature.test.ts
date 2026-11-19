@@ -66,6 +66,8 @@ async function compareWithSep(...args: string[]) {
 		"uv",
 		[
 			"run",
+			"--python",
+			"3.12",
 			"--with",
 			"sep",
 			"--with",
